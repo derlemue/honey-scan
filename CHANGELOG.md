@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2] - 2025-12-30
+
+### Fixed
+- 🐛 **Deployment**: Fixed Docker mount error by creating placeholder `feed/index.html` and unignoring it in `.gitignore`.
+
 ## [1.4.1] - 2025-12-30
 
 ### Changed

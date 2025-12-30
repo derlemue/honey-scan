@@ -1,6 +1,8 @@
 hfish_data/
 scans/
-feed/
+feed/*
+!feed/index.html
+!feed/.gitkeep
 __pycache__/
 *.pyc
 .DS_Store
