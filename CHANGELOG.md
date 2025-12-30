@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-12-30
+
+### Changed
+- ⚙️ **Configuration**: Updated `docker-compose.yml` with comprehensive port mappings for 40+ honeypot services.
+- 🕒 **Timezone**: Set HFish container timezone to `Europe/Berlin`.
+- 🔄 **Reliability**: Changed restart policy to `unless-stopped` for all services.
+- 💾 **Resources**: Increased memory limit to 4GB.
+
 ## [1.1.0] - 2025-12-30
 
 ### Changed
