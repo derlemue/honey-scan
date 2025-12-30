@@ -1,5 +1,5 @@
 # 🍯 Honey-Scan: Active Defense Ecosystem
-### Powered by HFish | Version: **1.3.0**
+### Powered by HFish | Version: **1.3.1**
 
 > [!WARNING]
 > **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**
@@ -35,10 +35,10 @@ The system runs as a set of Docker containers extension to the core HFish binary
 
 | Service | Type | Description |
 | :--- | :--- | :--- |
-| **HFish** | 🍯 Core | The base honeypot platform (Management & Nodes). (Ports `8000`/`4430` to avoid conflict) |
+| **HFish** | 🍯 Core | The base honeypot platform (Management & Nodes). (Standard ports `80`/`443`) |
 | **Sidecar** | 🐍 Python | The brain. Watches DB, orchestrates Nmap, updates feeds. |
 | **Feed** | 🌐 Nginx | Serves reports and banlists on port `8888`. |
-| **NPM** | 🔐 Proxy | Nginx Proxy Manager for HTTPS/SSL on ports `80`/`443`. |
+| **NPM** | 🔐 Proxy | Nginx Proxy Manager (Ports `8000`/`4430`). |
 
 ```mermaid
 graph LR
@@ -70,8 +70,10 @@ docker-compose up -d --build
 *   **HFish Admin**: `https://localhost:4433` (Default: `admin` / `HFish2021`)
 
 ### 3. Configure HTTPS (Recommended)
-Login to NPM (`http://localhost:81`) and create Proxy Hosts:
-1.  **HFish Admin**: Forward `https://hfish:4433` -> `hfish.yourdomain.com` (Enable Websockets & SSL)
+Login to NPM (`http://localhost:81`) and create Proxy Hosts.
+*Note: Since NPM is on port 8000/4430, you will need to point your DNS or load balancer accordingly if you want valid SSL certificates via HTTP-01 challenge, or use DNS-01 challenge.*
+
+1.  **HFish Admin**: Forward `https://hfish:4433` -> `hfish.yourdomain.com`
 2.  **Defense Feed**: Forward `http://feed:80` -> `scan.yourdomain.com`
 
 ### 3. Deploy Client Shield

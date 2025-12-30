@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2025-12-30
+
+### Changed
+- 🔄 **Networking**: Swapped ports back. HFish now listens on standard `80`/`443` for honeypot services.
+- 🔐 **NPM**: Nginx Proxy Manager moved to `8000`/`4430`.
+
 ## [1.3.0] - 2025-12-30
 
 ### Added
