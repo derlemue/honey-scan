@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2025-12-30
+
+### Added
+- 🛠️ **Automation**: Added `scripts/setup_host.sh` for one-click Debian 13 initialization.
+- 🔐 **Security**: Setup script now changes SSH port to `2222` to reserve Port 22 for the honeypot.
+
 ## [1.3.4] - 2025-12-30
 
 ### Added
