@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-12-30
+
+### Added
+- 🔐 **NPM**: Integrated Nginx Proxy Manager for easy HTTPS certificate management.
+- ⚙️ **Architecture**: Moved HFish ports to `8000`/`4430` to allow NPM to handle ports `80`/`443`.
+
 ## [1.2.2] - 2025-12-30
 
 ### Fixed
