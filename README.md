@@ -1,5 +1,5 @@
 # 🍯 Honey-Scan: Active Defense Ecosystem
-### Powered by HFish | Version: **1.4.0**
+### Powered by HFish | Version: **1.4.1**
 
 > [!WARNING]
 > **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**
@@ -76,7 +76,7 @@ clone the repo and launch the stack:
 ```bash
 git clone https://github.com/derlemue/honey-scan.git
 cd honey-scan
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### 2. Access Dashboards

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2025-12-30
+
+### Changed
+- 🛠️ **Refactor**: Replaced deprecated `docker-compose` command with modern `docker compose` CLI in documentation.
+
 ## [1.4.0] - 2025-12-30
 
 ### Added
