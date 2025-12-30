@@ -11,19 +11,9 @@
     <path fill="#bd3d44" d="M0 0h512v512H0z"/>
     <path stroke="#fff" stroke-width="37" d="M0 55h512M0 128h512M0 201h512M0 274h512M0 347h512M0 420h512"/>
     <path fill="#192f5d" d="M0 0h278v278H0z"/>
-    <!-- Simplified stars representation -->
-    <g fill="#fff">
-      <circle cx="35" cy="35" r="15"/> <circle cx="104" cy="35" r="15"/> <circle cx="173" cy="35" r="15"/> <circle cx="242" cy="35" r="15"/>
-      <circle cx="70" cy="70" r="15"/> <circle cx="139" cy="70" r="15"/> <circle cx="208" cy="70" r="15"/>
-      <circle cx="35" cy="105" r="15"/> <circle cx="104" cy="105" r="15"/> <circle cx="173" cy="105" r="15"/> <circle cx="242" cy="105" r="15"/>
-      <circle cx="70" cy="140" r="15"/> <circle cx="139" cy="140" r="15"/> <circle cx="208" cy="140" r="15"/>
-      <circle cx="35" cy="175" r="15"/> <circle cx="104" cy="175" r="15"/> <circle cx="173" cy="175" r="15"/> <circle cx="242" cy="175" r="15"/>
-      <circle cx="70" cy="210" r="15"/> <circle cx="139" cy="210" r="15"/> <circle cx="208" cy="210" r="15"/>
-      <circle cx="35" cy="245" r="15"/> <circle cx="104" cy="245" r="15"/> <circle cx="173" cy="245" r="15"/> <circle cx="242" cy="245" r="15"/>
-    </g>
   </symbol>
 
-  <!-- China (CN) Common in HFish -->
+  <!-- China (CN) -->
   <symbol id="flag-cn" viewBox="0 0 512 512">
     <path fill="#de2910" d="M0 0h512v512H0z"/>
     <path fill="#ffde00" d="M85 75l10 32h32l-25 20 8 32-25-20-25 20 8-32-25-20h32zM167 43l5 15h15l-12 10 4 15-12-10-12 10 4-15-12-10h15zM196 90l5 15h15l-12 10 4 15-12-10-12 10 4-15-12-10h15zM196 150l5 15h15l-12 10 4 15-12-10-12 10 4-15-12-10h15zM167 197l5 15h15l-12 10 4 15-12-10-12 10 4-15-12-10h15z"/>
@@ -34,5 +24,102 @@
     <path fill="#000" d="M0 0h512v170H0z"/>
     <path fill="#d00" d="M0 170h512v170H0z"/>
     <path fill="#ffce00" d="M0 340h512v172H0z"/>
+  </symbol>
+  
+  <!-- Great Britain (GB) -->
+  <symbol id="flag-gb" viewBox="0 0 512 512">
+    <path fill="#00247d" d="M0 0h512v512H0z"/>
+    <path stroke="#fff" stroke-width="60" d="M0 0L512 512M512 0L0 512"/>
+    <path stroke="#cf142b" stroke-width="40" d="M0 0L512 512M512 0L0 512"/>
+    <path stroke="#fff" stroke-width="100" d="M256 0v512M0 256h512"/>
+    <path stroke="#cf142b" stroke-width="60" d="M256 0v512M0 256h512"/>
+  </symbol>
+
+  <!-- Russia (RU) -->
+  <symbol id="flag-ru" viewBox="0 0 512 512">
+    <path fill="#fff" d="M0 0h512v170H0z"/>
+    <path fill="#0039a6" d="M0 170h512v170H0z"/>
+    <path fill="#d52b1e" d="M0 340h512v172H0z"/>
+  </symbol>
+
+  <!-- Vietnam (VN) -->
+  <symbol id="flag-vn" viewBox="0 0 512 512">
+    <path fill="#da251d" d="M0 0h512v512H0z"/>
+    <path fill="#ff0" d="M256 100l40 120h126l-102 75 39 120-103-75-103 75 39-120-102-75h126z"/>
+  </symbol>
+
+  <!-- Indonesia (ID) -->
+  <symbol id="flag-id" viewBox="0 0 512 512">
+    <path fill="#ce1126" d="M0 0h512v256H0z"/>
+    <path fill="#fff" d="M0 256h512v256H0z"/>
+  </symbol>
+
+  <!-- Brazil (BR) -->
+  <symbol id="flag-br" viewBox="0 0 512 512">
+      <path fill="#009c3b" d="M0 0h512v512H0z"/>
+      <path fill="#ffdf00" d="M256 50L462 256 256 462 50 256z"/>
+      <circle fill="#002776" cx="256" cy="256" r="140"/>
+  </symbol>
+
+  <!-- India (IN) -->
+  <symbol id="flag-in" viewBox="0 0 512 512">
+    <path fill="#ff9933" d="M0 0h512v170H0z"/>
+    <path fill="#fff" d="M0 170h512v170H0z"/>
+    <path fill="#138808" d="M0 340h512v172H0z"/>
+    <circle fill="#000080" cx="256" cy="256" r="50"/>
+  </symbol>
+
+  <!-- France (FR) -->
+  <symbol id="flag-fr" viewBox="0 0 512 512">
+      <path fill="#002395" d="M0 0h170.7v512H0z"/>
+      <path fill="#fff" d="M170.7 0h170.6v512H170.7z"/>
+      <path fill="#ed2939" d="M341.3 0h170.7v512H341.3z"/>
+  </symbol>
+
+  <!-- Netherlands (NL) -->
+  <symbol id="flag-nl" viewBox="0 0 512 512">
+      <path fill="#ae1c28" d="M0 0h512v170H0z"/>
+      <path fill="#fff" d="M0 170h512v170H0z"/>
+      <path fill="#21468b" d="M0 340h512v172H0z"/>
+  </symbol>
+
+  <!-- Italy (IT) -->
+  <symbol id="flag-it" viewBox="0 0 512 512">
+      <path fill="#009246" d="M0 0h170.7v512H0z"/>
+      <path fill="#fff" d="M170.7 0h170.6v512H170.7z"/>
+      <path fill="#ce2b37" d="M341.3 0h170.7v512H341.3z"/>
+  </symbol>
+
+   <!-- Japan (JP) -->
+  <symbol id="flag-jp" viewBox="0 0 512 512">
+      <path fill="#fff" d="M0 0h512v512H0z"/>
+      <circle fill="#bc002d" cx="256" cy="256" r="150"/>
+  </symbol>
+
+   <!-- South Korea (KR) -->
+  <symbol id="flag-kr" viewBox="0 0 512 512">
+      <path fill="#fff" d="M0 0h512v512H0z"/>
+      <circle fill="#c60c30" cx="256" cy="256" r="100"/> <!-- simplified -->
+  </symbol>
+  
+  <!-- Canada (CA) -->
+  <symbol id="flag-ca" viewBox="0 0 512 512">
+      <path fill="#d80621" d="M0 0h128v512H0zM384 0h128v512H384z"/>
+      <path fill="#fff" d="M128 0h256v512H128z"/>
+      <!-- Leaf placeholder -->
+       <path fill="#d80621" d="M256 120l50 100 80 10-60 60 20 80-90-50-90 50 20-80-60-60 80-10z"/>
+  </symbol>
+
+  <!-- Australia (AU) -->
+  <symbol id="flag-au" viewBox="0 0 512 512">
+      <path fill="#00008b" d="M0 0h512v512H0z"/>
+      <!-- Union Jack placeholder -->
+      <path fill="#c00" d="M0 0h256v256H0z"/> 
+      <circle fill="#fff" cx="128" cy="384" r="50"/>
+      <circle fill="#fff" cx="384" cy="128" r="10"/>
+      <circle fill="#fff" cx="340" cy="100" r="10"/>
+      <circle fill="#fff" cx="420" cy="150" r="10"/>
+      <circle fill="#fff" cx="420" cy="100" r="10"/>
+      <circle fill="#fff" cx="340" cy="150" r="10"/>
   </symbol>
 </svg>
