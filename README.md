@@ -3,7 +3,7 @@
 # 🍯 Honey-Scan
 ### Active Defense Ecosystem
 
-![Version](https://img.shields.io/badge/version-3.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-3.4.0-blue.svg)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 
 *Turn your honeypot into an active defense system that bites back.*

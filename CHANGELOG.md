@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2025-12-30
+
+### Changed
+- 🔧 **System**: Hardening and stability improvements.
+
 ## [3.3.0] - 2025-12-30
 
 ### Changed
