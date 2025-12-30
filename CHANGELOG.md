@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2025-12-30
+
+### Changed
+- 🚨 **Rebranding**: Updated name to "**lemueIO SecMonitor**".
+
 ## [2.1.0] - 2025-12-30
 
 ### Changed
