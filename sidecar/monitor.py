@@ -147,7 +147,7 @@ def update_index():
 <!DOCTYPE html>
 <html>
 <head>
-    <title>lemueIO SecMonitor</title>
+    <title>lemueIO Active Intelligence Feed</title>
     <style>
         body { font-family: monospace; padding: 20px; background: #f0f0f0; }
         h1 { color: #333; }
@@ -159,7 +159,7 @@ def update_index():
     </style>
 </head>
 <body>
-    <h1>lemueIO SecMonitor</h1>
+    <h1>lemueIO Active Intelligence Feed</h1>
     <div class="list">
         <h3>Resources</h3>
         <div class="item">

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2025-12-30
+
+### Added
+- 🌍 **Localization**: Added German (`README_DE.md`) and Ukrainian (`README_UA.md`) documentation.
+- 🏳️ **Navigation**: Added language flags to README.
+
+### Changed
+- 🚨 **Rebranding**: Renamed feed to "**lemueIO Active Intelligence Feed**" with updated personalization.
+- 🆙 **Major Release**: Version bump to 3.0.0 marking stable multi-language support and system resilience.
+
 ## [2.1.1] - 2025-12-30
 
 ### Changed

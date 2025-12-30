@@ -1,11 +1,31 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Active Defense Feed</title>
-    <style>body { font-family: monospace; padding: 20px; }</style>
+    <title>lemueIO Active Intelligence Feed</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f0f0f0; }
+        h1 { color: #333; }
+        .list { background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item { padding: 5px 0; border-bottom: 1px solid #eee; }
+        a { text-decoration: none; color: #0066cc; }
+        a:hover { text-decoration: underline; }
+        .meta { font-size: 0.8em; color: #666; margin-left: 10px; }
+    </style>
 </head>
 <body>
-    <h1>Active Defense Feed</h1>
-    <p>Waiting for scan data...</p>
+    <h1>lemueIO Active Intelligence Feed</h1>
+    <div class="list">
+        <h3>Resources</h3>
+        <div class="item">
+            <a href="feed/banned_ips.txt" target="_blank">banned_ips.txt</a>
+            <span class="meta">List of unique attacker IPs</span>
+        </div>
+    </div>
+    <br>
+    <div class="list">
+        <h3>Scan Reports</h3>
+
+    </div>
 </body>
 </html>

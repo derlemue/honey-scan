@@ -3,10 +3,12 @@
 # 🍯 Honey-Scan
 ### Active Defense Ecosystem
 
-![Version](https://img.shields.io/badge/version-2.1.1-blue.svg)
+![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 
 *Turn your honeypot into an active defense system that bites back.*
+
+[🇬🇧 English](README.md) | [🇩🇪 Deutsch](README_DE.md) | [🇺🇦 Українська](README_UA.md)
 
 </div>
 
@@ -113,8 +115,8 @@ docker compose up -d --build
 ```
 
 ### 2. Access Dashboards
-*   **Active Defense Feed**: `http://localhost:8888`
-*   **HFish Admin**: `https://localhost:4433` (Default: `admin` / `HFish2021`)
+*   **lemueIO Active Intelligence Feed**: `http://23.88.40.46:8888/`
+*   **HFish Admin**: `https://23.88.40.46:4433` (Default: `admin` / `HFish2021`)
 
 ### 3. Deploy Client Shield
 Protect your *other* servers by automatically banning IPs detected by this honeypot.
