@@ -26,7 +26,7 @@ services:
         protocol: tcp
 
       # Remote Zugriff & Shells
-      - "22:22" # SSH Honeypot (Host Port 22 is now free)
+      - "2223:22" # SSH Honeypot (Port 2223, since Host uses 22 or 2222)
       - "23:23" # Telnet
       - "3389:3389" # RDP (Remote Desktop)
       - "5900:5900" # VNC

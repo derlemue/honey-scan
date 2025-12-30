@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.5] - 2025-12-30
+
+### Fixed
+- 🐛 **Networking**: Moved HFish SSH honeypot port to `2223` as Host SSH is blocking Port `22` (Setup script issue or no reboot).
+
 ## [1.4.4] - 2025-12-30
 
 ### Fixed
