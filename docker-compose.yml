@@ -4,7 +4,7 @@ services:
     container_name: hfish
     restart: unless-stopped
     environment:
-      - TZ=Europe/Berlin
+      - TZ=Europe/Amsterdam
     ports:
       - mode: ingress
         target: 4433
@@ -69,6 +69,7 @@ services:
     volumes:
       - hfish_data:/usr/share/hfish
       - ./web/index.html:/opt/hfish/3.3.6/web/index.html:ro
+      - ./web/assets:/opt/hfish/3.3.6/web/assets:ro
     deploy:
       resources:
         limits:
