@@ -1,0 +1,6 @@
+hfish_data/
+scans/
+feed/
+__pycache__/
+*.pyc
+.DS_Store

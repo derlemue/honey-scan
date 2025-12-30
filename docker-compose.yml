@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  hfish:
+    image: threatbook/hfish-server:latest
+    container_name: hfish
+    network_mode: "host" # Docs say host mode is recommended/required for some features? 
+    # But user asked for 2222:22. If I use host mode, I can't map ports easily like that (it uses host ports).
+    # Docs: "Docker version uses host mode... if you don't want... stop default node".
+    # User says: "HFish Server (mit Port-Mapping 2222:22)".
+    # This implies bridge mode.
+    # If I use bridge mode, HFish might complain or need config.
+    # Let's try bridge mode.
+    ports:
+      - "2222:22"
+      - "4433:4433" # Web UI
+    volumes:
+      - ./hfish_data:/usr/share/hfish
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    privileged: true
+
+  sidecar:
+    build: ./sidecar
+    container_name: hfish-sidecar
+    volumes:
+      - ./hfish_data/database:/data:ro # Read-only access to DB
+      - ./scans:/app/scans
+      - ./feed:/app/feed
+    depends_on:
+      - hfish
+    restart: always
+
+  feed:
+    image: nginx:alpine
+    container_name: hfish-feed
+    ports:
+      - "8888:80"
+    volumes:
+      - ./feed:/usr/share/nginx/html/feed:ro
+      - ./scans:/usr/share/nginx/html/scans:ro
+      - ./feed/index.html:/usr/share/nginx/html/index.html:ro
+    restart: always
