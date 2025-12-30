@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.3] - 2025-12-30
+
+### Removed
+- 🗑️ **NPM**: Removed Nginx Proxy Manager integration to simplify architecture and reduce potential conflicts.
+
 ## [1.3.2] - 2025-12-30
 
 ### Fixed
