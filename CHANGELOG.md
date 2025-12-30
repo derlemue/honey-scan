@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.1] - 2025-12-30
+
+### Fixed
+- 🌐 **Frontend**: Fixed missing country flags regarding the "Attack" list (Injected custom SVG).
+- 🎨 **Branding**: Aggressively patched "XX Company" text to "lemueIO SecMonitor".
+- 🗺️ **Map**: Fixed incorrect "Built-in Nodes" location (Moved to Falkenstein, Sachsen).
+- 🕒 **Timezone**: Changed Docker timezone to `Europe/Amsterdam`.
+
 ## [3.4.0] - 2025-12-30
 
 ### Changed

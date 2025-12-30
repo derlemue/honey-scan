@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <!-- Romania (RO) -->
+  <symbol id="flag-ro" viewBox="0 0 512 512">
+    <path fill="#002B7F" d="M0 0h170.7v512H0z"/>
+    <path fill="#FCD116" d="M170.7 0h170.6v512H170.7z"/>
+    <path fill="#CE1126" d="M341.3 0h170.7v512H341.3z"/>
+  </symbol>
+  
+  <!-- United States (US) -->
+  <symbol id="flag-us" viewBox="0 0 512 512">
+    <path fill="#bd3d44" d="M0 0h512v512H0z"/>
+    <path stroke="#fff" stroke-width="37" d="M0 55h512M0 128h512M0 201h512M0 274h512M0 347h512M0 420h512"/>
+    <path fill="#192f5d" d="M0 0h278v278H0z"/>
+    <!-- Simplified stars representation -->
+    <g fill="#fff">
+      <circle cx="35" cy="35" r="15"/> <circle cx="104" cy="35" r="15"/> <circle cx="173" cy="35" r="15"/> <circle cx="242" cy="35" r="15"/>
+      <circle cx="70" cy="70" r="15"/> <circle cx="139" cy="70" r="15"/> <circle cx="208" cy="70" r="15"/>
+      <circle cx="35" cy="105" r="15"/> <circle cx="104" cy="105" r="15"/> <circle cx="173" cy="105" r="15"/> <circle cx="242" cy="105" r="15"/>
+      <circle cx="70" cy="140" r="15"/> <circle cx="139" cy="140" r="15"/> <circle cx="208" cy="140" r="15"/>
+      <circle cx="35" cy="175" r="15"/> <circle cx="104" cy="175" r="15"/> <circle cx="173" cy="175" r="15"/> <circle cx="242" cy="175" r="15"/>
+      <circle cx="70" cy="210" r="15"/> <circle cx="139" cy="210" r="15"/> <circle cx="208" cy="210" r="15"/>
+      <circle cx="35" cy="245" r="15"/> <circle cx="104" cy="245" r="15"/> <circle cx="173" cy="245" r="15"/> <circle cx="242" cy="245" r="15"/>
+    </g>
+  </symbol>
+
+  <!-- China (CN) Common in HFish -->
+  <symbol id="flag-cn" viewBox="0 0 512 512">
+    <path fill="#de2910" d="M0 0h512v512H0z"/>
+    <path fill="#ffde00" d="M85 75l10 32h32l-25 20 8 32-25-20-25 20 8-32-25-20h32zM167 43l5 15h15l-12 10 4 15-12-10-12 10 4-15-12-10h15zM196 90l5 15h15l-12 10 4 15-12-10-12 10 4-15-12-10h15zM196 150l5 15h15l-12 10 4 15-12-10-12 10 4-15-12-10h15zM167 197l5 15h15l-12 10 4 15-12-10-12 10 4-15-12-10h15z"/>
+  </symbol>
+
+  <!-- Germany (DE) -->
+  <symbol id="flag-de" viewBox="0 0 512 512">
+    <path fill="#000" d="M0 0h512v170H0z"/>
+    <path fill="#d00" d="M0 170h512v170H0z"/>
+    <path fill="#ffce00" d="M0 340h512v172H0z"/>
+  </symbol>
+</svg>
