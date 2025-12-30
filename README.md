@@ -3,7 +3,7 @@
 # 🍯 Honey-Scan
 ### Active Defense Ecosystem
 
-![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-3.2.0-blue.svg)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 
 *Turn your honeypot into an active defense system that bites back.*
@@ -118,19 +118,20 @@ docker compose up -d --build
 *   **lemueIO Active Intelligence Feed**: `http://23.88.40.46:8888/`
 *   **HFish Admin**: `https://23.88.40.46:4433` (Default: `admin` / `HFish2021`)
 
-### 3. Deploy Client Shield
+### 3. Deploy Client Shield (Fail2Ban Integration)
 Protect your *other* servers by automatically banning IPs detected by this honeypot.
+Requires **Fail2Ban**. The script will offer to install it if missing.
 
 Run this on your production servers:
 ```bash
-# Download the script (Point to your Honey-Scan server IP)
-wget http://<HONEY-SCAN-IP>:8888/scripts/client_banned_ips.sh
+# Download Script
+wget http://23.88.40.46:8888/scripts/client_banned_ips.sh
 
 # Make executable
 chmod +x client_banned_ips.sh
 
-# Run (Add to Crontab for auto-updates!)
-./client_banned_ips.sh
+# Run (Requires Root for Fail2Ban interaction)
+sudo ./client_banned_ips.sh
 ```
 
 ## 📜 About Core HFish

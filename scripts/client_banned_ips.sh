@@ -1,48 +1,78 @@
 #!/bin/bash
 
-# HFish Active Defense - Client Feed Script
-# Fetches blocked IPs from the central HFish feed and adds them to a local Fail2Ban jail or ipset.
+# ==========================================
+#  lemueIO Active Intelligence Feed - Client Shield
+# ==========================================
+#  Version: 3.2.0
+#  Description: Fetches malicious IPs from honey-scan and bans them via Fail2Ban.
+# ==========================================
 
-if [ -z "$1" ]; then
-    echo "Usage: $0 <HONEY-SCAN-URL>"
-    echo "Example: $0 http://192.168.1.100:8888"
-    # Fallback/Default for legacy support or manual editing
-    FEED_BASE="http://YOUR_HFISH_IP:8888"
-else
-    FEED_BASE="$1"
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# 1. Dependency Check: Fail2Ban
+if ! command -v fail2ban-client &> /dev/null; then
+    echo -e "${RED}"
+    echo "################################################"
+    echo "#     FAIL2BAN IST NICHT INSTALLIERT!          #"
+    echo "#     SYSTEM IST NICHT GESCHÜTZT!              #"
+    echo "################################################"
+    echo -e "${NC}"
+    
+    read -p "Soll Fail2Ban jetzt installiert werden? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [ "$EUID" -ne 0 ]; then
+             echo "Bitte als root ausführen (sudo)."
+             exit 1
+        fi
+        apt-get update && apt-get install -y fail2ban
+        if [ $? -ne 0 ]; then
+            echo "Installation fehlgeschlagen."
+            exit 1
+        fi
+    else
+        echo "Abbruch. Ohne Fail2Ban kann dieser Schutz nicht aktiviert werden."
+        exit 1
+    fi
 fi
 
-FEED_URL="${FEED_BASE}/feed/banned_ips.txt"
-IPSET_NAME="hfish_blacklist"
-TMP_FILE="/tmp/hfish_banned_ips.txt"
-
-# Ensure ipset exists
-ipset -L $IPSET_NAME >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "Creating ipset $IPSET_NAME..."
-    ipset create $IPSET_NAME hash:ip hashsize 4096
+# 2. Service Check
+if ! systemctl is-active --quiet fail2ban; then
+    echo "Fail2Ban läuft nicht. Starte Service..."
+    systemctl start fail2ban
+    if [ $? -ne 0 ]; then
+        echo "Konnte Fail2Ban nicht starten."
+        exit 1
+    fi
 fi
 
-# Fetch the feed
-echo "Fetching feed from $FEED_URL..."
-curl -s -o $TMP_FILE $FEED_URL
+# 3. Fetch Feed
+FEED_URL="http://23.88.40.46:8888/feed/banned_ips.txt"
+TMP_FILE="/tmp/banned_ips.txt"
 
-if [ $? -ne 0 ]; then
-    echo "Error fetching feed."
+echo "Lade Feed von $FEED_URL..."
+wget -q -O $TMP_FILE $FEED_URL || curl -s -o $TMP_FILE $FEED_URL
+
+if [ ! -s $TMP_FILE ]; then
+    echo "Fehler: Feed ist leer oder nicht erreichbar."
     exit 1
 fi
 
-# Add IPs to ipset
-count=0
+# 4. Ban Execution
+JAIL="sshd" # Default Jail
+COUNT=0
+
+echo "Verarbeite IPs..."
 while read ip; do
+    # Simple IP validation
     if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        ipset add $IPSET_NAME $ip -exist
-        ((count++))
+        # Check if already banned to avoid noise (fail2ban handles duplicates usually fine, but cleaner log)
+        # fail2ban-client set $JAIL banip $ip
+        fail2ban-client set $JAIL banip $ip > /dev/null 2>&1
+        ((COUNT++))
     fi
 done < $TMP_FILE
 
-echo "Processed $count IPs."
+echo "Fertig. $COUNT IPs wurden an Fail2Ban übergeben."
 rm $TMP_FILE
-
-# To use with iptables:
-# iptables -I INPUT -m set --match-set hfish_blacklist src -j DROP
