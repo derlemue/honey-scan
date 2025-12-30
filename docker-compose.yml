@@ -73,17 +73,40 @@ services:
         limits:
           memory: 4G
     privileged: true
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:10.6
+    container_name: hfish-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - default
 
   sidecar:
     build: ./sidecar
     container_name: hfish-sidecar
     restart: unless-stopped
+    environment:
+      - DB_TYPE=${DB_TYPE}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
     volumes:
-      - hfish_data:/hfish_ro:ro # Read-only access to HFish volume
       - ./scans:/app/scans
       - ./feed:/app/feed
     depends_on:
       - hfish
+      - mariadb
 
   feed:
     image: nginx:alpine
@@ -98,3 +121,4 @@ services:
 
 volumes:
   hfish_data:
+  db_data:

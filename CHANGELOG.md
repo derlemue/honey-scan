@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2025-12-30
+
+### Added
+- ✨ **Database**: Added embedded **MariaDB** service for scalable data storage.
+- 🔄 **Sidecar**: Updated `sidecar` to support MySQL/MariaDB connections for attacker monitoring.
+
 ## [1.4.6] - 2025-12-30
 
 ### Changed

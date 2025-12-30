@@ -1,5 +1,5 @@
 # 🍯 Honey-Scan: Active Defense Ecosystem
-### Powered by HFish | Version: **1.4.6**
+### Powered by HFish | Version: **1.5.0**
 
 > [!WARNING]
 > **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**
@@ -51,7 +51,22 @@ graph LR
 
 ## 🛠️ Installation
 
-## 🛠️ Installation
+### 📦 Database Setup (MariaDB)
+1.  Copy the example environment file:
+    ```bash
+    cp .env.example .env
+    ```
+2.  **Edit `.env`** and set secure passwords for `DB_PASSWORD` and `MYSQL_ROOT_PASSWORD`.
+3.  Use these values when configuring HFish wizard.
+
+| Setting | Value |
+| :--- | :--- |
+| **Database Type** | **MySQL / MariaDB** |
+| **Address** | `mariadb` |
+| **Port** | `3306` |
+| **Name** | `hfish` |
+| **Username** | `hfish` |
+| **Password** | *(The value you set in `.env`)* |
 
 ### 0. Automated Host Setup (Debian 13)
 We provide a setup script that:

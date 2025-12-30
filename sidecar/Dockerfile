@@ -1,7 +1,9 @@
 FROM python:3.9-slim
 
 # Install Nmap and sqlite3
-RUN apt-get update && apt-get install -y nmap sqlite3 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y nmap sqlite3 && \
+    pip install pymysql && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
