@@ -57,114 +57,86 @@
     }
 
     // PERMANENT BRANDING & ASSET FIX
-    const BRAND_TITLE = "lemueIO SecMonitor";
-    const OLD_TITLE_TEXT = "XX Company Threat Monitor";
-
-    // 1. Force Document Title (Aggressive)
-    const forceTitle = () => {
-      if (document.title !== BRAND_TITLE) {
-        document.title = BRAND_TITLE;
-      }
-    };
-    forceTitle();
-    // Observer
-    new MutationObserver(forceTitle).observe(document.querySelector('title'), { subtree: true, characterData: true, childList: true });
-    // Interval fallback
-    setInterval(forceTitle, 500);
-
-    // 2. Inject Flag Icons (Fixes '?' issue)
-    fetch('/assets/flags.svg')
-      .then(r => r.text())
-      .then(svgContent => {
-        const div = document.createElement('div');
-        div.style.display = 'none';
-        div.innerHTML = svgContent;
-
-        // Rewrite IDs to match HFish
-        const symbols = div.querySelectorAll('symbol');
-        symbols.forEach(sym => {
-          const countryCode = sym.id.replace('flag-', '');
-          const newId = 'icon-' + countryCode;
-          // Avoid duplicate IDs if multiple scripts run
-          if (!document.getElementById(newId)) {
-            const clone = sym.cloneNode(true);
-            clone.id = newId;
-            div.querySelector('svg').appendChild(clone);
-          }
-        });
-        document.body.insertBefore(div, document.body.firstChild);
-      }).catch(e => console.error("Flag injection failed", e));
-
-    // 3. Map Location Fix (DISABLED - Causing hanging issues)
-    /*
-    const ORIGINAL_JSON = Response.prototype.json;
-    Response.prototype.json = async function () {
-      const data = await ORIGINAL_JSON.call(this);
+    // WRAPPED IN DOMContentLoaded TO PREVENT 'document.body is null' ERROR
+    window.addEventListener('DOMContentLoaded', () => {
       try {
-        const fixCoords = (obj) => {
-          if (!obj || typeof obj !== 'object') return;
+        const BRAND_TITLE = "lemueIO SecMonitor";
+        const OLD_TITLE_TEXT = "XX Company Threat Monitor";
 
-          // Detection heuristic for the node
-          const isBuiltIn = (obj.node_name && obj.node_name.includes("Built-in")) ||
-            (obj.name && obj.name.includes("Built-in"));
+        // 1. Force Document Title (Aggressive)
+        const forceTitle = () => {
+          if (document.title !== BRAND_TITLE) {
+            document.title = BRAND_TITLE;
+          }
+        };
+        forceTitle();
+        // Observer
+        new MutationObserver(forceTitle).observe(document.querySelector('title'), { subtree: true, characterData: true, childList: true });
+        // Interval fallback
+        setInterval(forceTitle, 1000);
 
-          if (isBuiltIn) {
-            // Update to Falkenstein, Sachsen (50.47788, 12.37311)
-            // ECharts typically uses [lon, lat] for 'value' or 'coord'
-            const FALKENSTEIN = [12.37311, 50.47788];
+        // 2. Inject Flag Icons (Fixes '?' issue)
+        fetch('/assets/flags.svg')
+          .then(r => r.text())
+          .then(svgContent => {
+            const div = document.createElement('div');
+            div.style.display = 'none';
+            div.innerHTML = svgContent;
 
-            if (Array.isArray(obj.value) && obj.value.length >= 2) {
-              // Preserve other values (like count), only update coords
-              obj.value[0] = FALKENSTEIN[0];
-              obj.value[1] = FALKENSTEIN[1];
+            // Rewrite IDs to match HFish
+            const symbols = div.querySelectorAll('symbol');
+            symbols.forEach(sym => {
+              const countryCode = sym.id.replace('flag-', '');
+              const newId = 'icon-' + countryCode;
+              // Avoid duplicate IDs
+              if (!document.getElementById(newId)) {
+                const clone = sym.cloneNode(true);
+                clone.id = newId;
+                div.querySelector('svg').appendChild(clone);
+              }
+            });
+            if (document.body) {
+              document.body.insertBefore(div, document.body.firstChild);
             }
-            if (Array.isArray(obj.coord)) {
-              obj.coord = FALKENSTEIN;
+          }).catch(e => console.error("Flag injection failed", e));
+
+        // 3. Text Replacement & CSS Injection
+        const style = document.createElement('style');
+        style.innerHTML = `
+              .screen-header-left-title, .screen-title { 
+                  visibility: hidden !important; 
+                  position: relative !important;
+              }
+              .screen-header-left-title::after, .screen-title::after {
+                  visibility: visible !important;
+                  content: "${BRAND_TITLE}" !important;
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  color: #fff !important; 
+              }
+            `;
+        document.head.appendChild(style);
+
+        const replaceBranding = () => {
+          if (!document.body) return;
+          const treeWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          while (treeWalker.nextNode()) {
+            const node = treeWalker.currentNode;
+            if (node.nodeValue.includes(OLD_TITLE_TEXT)) {
+              node.nodeValue = node.nodeValue.replace(OLD_TITLE_TEXT, BRAND_TITLE);
+            }
+            if (node.nodeValue.includes("HFish")) {
+              node.nodeValue = node.nodeValue.replace("HFish", "lemueIO SecMonitor");
             }
           }
-          Object.values(obj).forEach(fixCoords);
         };
-        fixCoords(data);
+
+        setInterval(replaceBranding, 500);
       } catch (e) {
-        // fail silently to not break app
+        console.error("Critical Branding Script Error:", e);
       }
-      return data;
-    };
-    */
-
-
-    // 4. Text Replacement (Aggressive) & CSS Injection
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .screen-header-left-title, .screen-title { 
-          visibility: hidden !important; 
-          position: relative !important;
-      }
-      .screen-header-left-title::after, .screen-title::after {
-          visibility: visible !important;
-          content: "${BRAND_TITLE}" !important;
-          position: absolute !important;
-          left: 0 !important;
-          top: 0 !important;
-          color: #fff !important; 
-      }
-    `;
-    document.head.appendChild(style);
-
-    const replaceBranding = () => {
-      const treeWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      while (treeWalker.nextNode()) {
-        const node = treeWalker.currentNode;
-        if (node.nodeValue.includes(OLD_TITLE_TEXT)) {
-          node.nodeValue = node.nodeValue.replace(OLD_TITLE_TEXT, BRAND_TITLE);
-        }
-        if (node.nodeValue.includes("HFish")) {
-          node.nodeValue = node.nodeValue.replace("HFish", "lemueIO SecMonitor");
-        }
-      }
-    };
-
-    setInterval(replaceBranding, 100); 
+    }); 
   </script>
   <link rel="shortcut icon" href="/assets/favicon.ico">
 </head>
