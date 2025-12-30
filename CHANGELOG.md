@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0] - 2025-12-30
+
+### Changed
+- 🔧 **Internal**: General housekeeping and internal configuration cleanup.
+
 ## [3.2.0] - 2025-12-30
 
 ### Changed
