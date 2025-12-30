@@ -1,5 +1,5 @@
 # 🍯 Honey-Scan: Active Defense Ecosystem
-### Powered by HFish | Version: **1.4.5**
+### Powered by HFish | Version: **1.4.6**
 
 > [!WARNING]
 > **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**

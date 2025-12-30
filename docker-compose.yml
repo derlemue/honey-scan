@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   hfish:
     image: threatbook/hfish-server:latest

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.6] - 2025-12-30
+
+### Changed
+- 🧹 **Cleanup**: Removed obsolete `version:` top-level key from `docker-compose.yml`.
+
 ## [1.4.5] - 2025-12-30
 
 ### Fixed
