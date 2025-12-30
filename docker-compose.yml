@@ -97,12 +97,12 @@ services:
     container_name: hfish-sidecar
     restart: unless-stopped
     environment:
-      - DB_TYPE=${DB_TYPE}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - DB_TYPE=${DB_TYPE:-mysql}
+      - DB_HOST=${DB_HOST:-mariadb}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-hfish}
+      - DB_PASSWORD=${DB_PASSWORD:-hfish}
+      - DB_NAME=${DB_NAME:-hfish}
     volumes:
       - ./scans:/app/scans
       - ./feed:/app/feed
