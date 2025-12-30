@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.4] - 2025-12-30
+
+### Added
+- 📚 **Docs**: Added "Prerequisites" section to README with copy-paste commands for Debian 13 setup.
+
 ## [1.3.3] - 2025-12-30
 
 ### Removed

@@ -1,5 +1,5 @@
 # 🍯 Honey-Scan: Active Defense Ecosystem
-### Powered by HFish | Version: **1.3.3**
+### Powered by HFish | Version: **1.3.4**
 
 > [!WARNING]
 > **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**
@@ -50,6 +50,33 @@ graph LR
 ```
 
 ## 🛠️ Installation
+
+### 0. Prerequisites (Debian 13 / Trixie)
+Ensure your system is up to date and has Docker & Docker connection installed.
+
+```bash
+# 1. Update system & install dependencies
+sudo apt update && sudo apt install -y ca-certificates curl gnupg
+
+# 2. Add Docker's official GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# 3. Set up the repository
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 4. Install Docker Engine & Compose
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# 5. Verify & Git
+sudo docker run hello-world
+sudo apt install -y git
+```
 
 ### 1. Start the Server
 clone the repo and launch the stack:
