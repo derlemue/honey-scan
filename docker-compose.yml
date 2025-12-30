@@ -68,6 +68,7 @@ services:
 
     volumes:
       - hfish_data:/usr/share/hfish
+      - ./web/index.html:/opt/hfish/3.3.6/web/index.html:ro
     deploy:
       resources:
         limits:
