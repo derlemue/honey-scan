@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2025-12-30
+
+### Fixed
+- 🐛 **Reliability**: Fixed blocking loop in `monitor.py` using `ThreadPoolExecutor`.
+- 📂 **Deployment**: Added missing `feed` and `scans` directories to prevent Docker volume errors.
+- 🐚 **Scripts**: Updated `client_banned_ips.sh` to support custom server URL argument.
+
 ## [1.2.1] - 2025-12-30
 
 ### Fixed

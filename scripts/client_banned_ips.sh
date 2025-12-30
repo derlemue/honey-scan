@@ -3,7 +3,16 @@
 # HFish Active Defense - Client Feed Script
 # Fetches blocked IPs from the central HFish feed and adds them to a local Fail2Ban jail or ipset.
 
-FEED_URL="http://YOUR_HFISH_IP:8888/feed/banned_ips.txt"
+if [ -z "$1" ]; then
+    echo "Usage: $0 <HONEY-SCAN-URL>"
+    echo "Example: $0 http://192.168.1.100:8888"
+    # Fallback/Default for legacy support or manual editing
+    FEED_BASE="http://YOUR_HFISH_IP:8888"
+else
+    FEED_BASE="$1"
+fi
+
+FEED_URL="${FEED_BASE}/feed/banned_ips.txt"
 IPSET_NAME="hfish_blacklist"
 TMP_FILE="/tmp/hfish_banned_ips.txt"
 

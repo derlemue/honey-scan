@@ -4,6 +4,7 @@ import subprocess
 import os
 import signal
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 # Configuration
 DB_PATH = "/data/hfish.db"
@@ -11,6 +12,7 @@ SCANS_DIR = "/app/scans"
 FEED_DIR = "/app/feed"
 BANNED_IPS_FILE = os.path.join(FEED_DIR, "banned_ips.txt")
 INDEX_FILE = os.path.join(FEED_DIR, "index.html")
+MAX_WORKERS = 5 # Number of concurrent scans
 
 def signal_handler(sig, frame):
     print("Exiting...")
@@ -40,8 +42,8 @@ def get_new_attackers():
         ips = [row[0] for row in cursor.fetchall()]
         conn.close()
         return ips
-    except sqlite3.OperationalError as e:
-        print(f"Database error: {e}")
+    except sqlite3.OperationalError:
+        # DB might be locked or not ready yet, just return empty list
         return []
     except Exception as e:
         print(f"Error fetching attackers: {e}")
@@ -51,7 +53,7 @@ def scan_ip(ip):
     """Run nmap scan on IP."""
     report_path = os.path.join(SCANS_DIR, f"{ip}.txt")
     if os.path.exists(report_path):
-        return False # Already scanned
+        return None # Already scanned
 
     print(f"Scanning {ip}...")
     try:
@@ -67,17 +69,17 @@ def scan_ip(ip):
             if result.stderr:
                 f.write("\nErrors:\n")
                 f.write(result.stderr)
-        return True
+        return ip
     except subprocess.TimeoutExpired:
         print(f"Scan for {ip} timed out.")
         with open(report_path, "w") as f:
             f.write(f"Scan Time: {time.ctime()}\n")
             f.write(f"Target: {ip}\n")
             f.write("Error: Scan timed out after 300s.")
-        return True # Considered scanned/attempted
+        return ip # Considered scanned/attempted
     except Exception as e:
         print(f"Error scanning {ip}: {e}")
-        return False
+        return None
 
 def update_banned_list(ips):
     """Update banned_ips.txt with unique IPs."""
@@ -127,7 +129,9 @@ def update_index():
         <h3>Scan Reports</h3>
 """
         for f in scanned_files:
-            html += f'        <div class="item"><a href="scans/{f}" target="_blank">{f}</a></div>\n'
+            # Basic sanitization
+            safe_f = os.path.basename(f)
+            html += f'        <div class="item"><a href="scans/{safe_f}" target="_blank">{safe_f}</a></div>\n'
             
         html += """
     </div>
@@ -143,28 +147,40 @@ def main():
     init_env()
     print("Monitor started.")
     
-    while True:
-        try:
-            attackers = get_new_attackers()
-            scanned_something = False
-            
-            for ip in attackers:
-                # Basic IP validation (skip empty or weird strings)
-                if len(ip) < 7: continue
+    executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
+    try:
+        while True:
+            try:
+                attackers = get_new_attackers()
                 
-                if scan_ip(ip):
-                    scanned_something = True
-            
-            if attackers:
-                update_banned_list(attackers)
-            
-            if scanned_something:
-                update_index()
+                futures = []
+                for ip in attackers:
+                    # Basic IP validation (skip empty or weird strings)
+                    if len(ip) < 7: continue
+                    
+                    futures.append(executor.submit(scan_ip, ip))
                 
-        except Exception as e:
-            print(f"Loop error: {e}")
-        
-        time.sleep(10) # Poll every 10 seconds
+                # Collect results
+                scanned_ips = []
+                for future in futures:
+                    result = future.result()
+                    if result:
+                        scanned_ips.append(result)
+                
+                if attackers:
+                    update_banned_list(attackers) # Ban everyone we see
+                
+                if scanned_ips:
+                    update_index()
+                    
+            except Exception as e:
+                print(f"Loop error: {e}")
+            
+            time.sleep(10) # Poll every 10 seconds
+            
+    finally:
+        executor.shutdown(wait=False)
 
 if __name__ == "__main__":
     main()
