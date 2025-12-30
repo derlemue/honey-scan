@@ -9,7 +9,11 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 
 # Configuration
-DB_TYPE = os.getenv("DB_TYPE", "sqlite")
+# Configuration
+DB_TYPE = os.getenv("DB_TYPE", "mysql")
+if not DB_TYPE: # Handle empty string
+    DB_TYPE = "mysql"
+    
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
 DB_USER = os.getenv("DB_USER", "hfish")
@@ -46,7 +50,7 @@ def init_env():
 def get_db_connection():
     """Establishes connection to SQLite or MariaDB based on DB_TYPE."""
     try:
-        if DB_TYPE == "mysql":
+        if DB_TYPE.lower() in ("mysql", "mariadb"):
             return pymysql.connect(
                 host=DB_HOST,
                 port=DB_PORT,
