@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>lemueIO SecMonitor</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="/assets/hfish-ui.1.2.12.css" />
+  <style type="text/css">
+    .main-loading-wrap {
+      text-align: center;
+      margin-top: 100px;
+      color: rgba(17, 18, 34, 0.6);
+      font-size: 12px;
+    }
+
+    .lds-dual-ring {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      margin-bottom: 10px;
+    }
+
+    .lds-dual-ring:after {
+      content: " ";
+      display: block;
+      width: 24px;
+      height: 24px;
+      margin: 8px;
+      border-radius: 50%;
+      border: 2px solid rgba(17, 18, 34, 0.8);
+      border-color: rgba(17, 18, 34, 0.8) transparent rgba(17, 18, 34, 0.8) transparent;
+      animation: lds-dual-ring 1.2s linear infinite;
+      animation: lds-dual-ring 1.2s linear infinite;
+    }
+
+    @keyframes lds-dual-ring {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+  <!-- <link rel="stylesheet" href="/styles/index.css"> -->
+  <script type="text/javascript">
+    if (!('remove' in Element.prototype)) {
+      Element.prototype.remove = function () {
+        if (this.parentNode) {
+          this.parentNode.removeChild(this);
+        }
+      };
+    }
+    
+    // PERMANENT BRANDING FIX
+    // Force title to remain "lemueIO SecMonitor" even if the SPA tries to change it
+    const targetTitle = "lemueIO SecMonitor";
+    document.title = targetTitle;
+    
+    new MutationObserver(function(mutations) {
+        if (document.title !== targetTitle) {
+            document.title = targetTitle;
+        }
+    }).observe(document.querySelector('title'), { subtree: true, characterData: true, childList: true });
+  </script>
+<link rel="shortcut icon" href="/assets/favicon.ico"></head>
+
+<body>
+  <div id="app">
+    <div class="main-loading-wrap">
+      <div class="spinner-wrapper">
+        <div class="lds-dual-ring"></div>
+        <div class="spinner-txt">加载中...</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    __REACT_DEVTOOLS_GLOBAL_HOOK__ = parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+  </script>
+  <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
+<script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script><script type="text/javascript" src="/assets/app.6539b5af.js"></script></body>
+
+</html>

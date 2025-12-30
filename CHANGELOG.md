@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2025-12-30
+
+### Fixed
+- 🐛 **Branding**: Permanently patched HFish Dashboard title to "**lemueIO SecMonitor**" via frontend injection.
+- 🐛 **Feed**: Verified Feed title is "**lemueIO Active Intelligence Feed**".
+
 ## [3.0.0] - 2025-12-30
 
 ### Added
