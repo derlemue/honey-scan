@@ -27,6 +27,11 @@ When an attacker touches your honeypot, Honey-Scan automatically:
 *   **📊 Automated Intel**: Generates detailed `.txt` reports for every unique attacker IP.
 *   **🚫 Network Shield**: Serves a dynamic `banned_ips.txt` list that your other servers can consume to preemptively block threats.
 *   **🖥️ Dashboard**: Simple web interface to browse scan reports and ban lists.
+*   **🖼️ Visuals**:
+    *   **Dashboard** (Live Monitoring):
+        ![Dashboard](/home/elliot/.gemini/antigravity/brain/227546cb-0f19-421a-9400-4e509b680324/dashboard_v2_anonymized_1767122817408.png)
+    *   **Login** (HFish Platform):
+        ![Login](/home/elliot/.gemini/antigravity/brain/227546cb-0f19-421a-9400-4e509b680324/hfish_login_v2_1767122783525.png)
 
 ## 🏗️ Architecture
 
