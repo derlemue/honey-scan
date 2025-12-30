@@ -1,5 +1,5 @@
 # 🍯 Honey-Scan: Active Defense Ecosystem
-### Powered by HFish | Version: **1.3.1**
+### Powered by HFish | Version: **1.3.2**
 
 > [!WARNING]
 > **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**
@@ -73,8 +73,8 @@ docker-compose up -d --build
 Login to NPM (`http://localhost:81`) and create Proxy Hosts.
 *Note: Since NPM is on port 8000/4430, you will need to point your DNS or load balancer accordingly if you want valid SSL certificates via HTTP-01 challenge, or use DNS-01 challenge.*
 
-1.  **HFish Admin**: Forward `https://hfish:4433` -> `hfish.yourdomain.com`
-2.  **Defense Feed**: Forward `http://feed:80` -> `scan.yourdomain.com`
+1.  **HFish Admin**: Domain `hfish.yourdomain.com` -> Forward to `https://hfish:4433` (Scheme: HTTPS)
+2.  **Defense Feed**: Domain `scan.yourdomain.com` -> Forward to `http://feed:80` (Scheme: HTTP)
 
 ### 3. Deploy Client Shield
 Protect your *other* servers by automatically banning IPs detected by this honeypot.

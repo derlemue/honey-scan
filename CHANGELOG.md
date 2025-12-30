@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2025-12-30
+
+### Fixed
+- 📝 **Documentation**: Corrected logic for NPM Proxy Host configuration (Domain -> Forward).
+
 ## [1.3.1] - 2025-12-30
 
 ### Changed
