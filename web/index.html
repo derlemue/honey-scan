@@ -95,8 +95,8 @@
         document.body.insertBefore(div, document.body.firstChild);
       }).catch(e => console.error("Flag injection failed", e));
 
-    // 3. Map Location Fix (Interceptor)
-    // Intercepts JSON responses to correct the 'Built-in Nodes' location to Falkenstein
+    // 3. Map Location Fix (DISABLED - Causing hanging issues)
+    /*
     const ORIGINAL_JSON = Response.prototype.json;
     Response.prototype.json = async function () {
       const data = await ORIGINAL_JSON.call(this);
@@ -130,6 +130,7 @@
       }
       return data;
     };
+    */
 
 
     // 4. Text Replacement (Aggressive) & CSS Injection
