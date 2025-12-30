@@ -1,94 +1,90 @@
-# HFish - High Fidelity Honeypot Platform
+# 🍯 Honey-Scan: Active Defense Ecosystem
+### Powered by HFish | Version: **1.1.0**
 
-hfISH is a community-driven free honeypot product, focusing on enterprise security scenarios. Starting from three scenarios: intranet intrusion detection, external threat perception, and threat intelligence production, it provides users with independently operable and practical functions. Through safe, agile, and reliable low-to-medium interaction honeypots, it increases users' capabilities in intrusion perception and threat intelligence.
-
-## Contact Us
-
-HFish is a community-based free honeypot product under Beijing Weibu Online Technology Co., Ltd.
-
-![joinus](/images/joinus.png)
-
-HFish supports over 90 types of honeypot services including basic network services, OA systems, CRM systems, NAS storage systems, Web servers, operation and maintenance platforms, security products, wireless APs, switches/routers, mail systems, IoT devices, etc. It supports users in creating custom Web honeypots, traffic diversion to free cloud honeynets, toggleable full-port scanning perception capabilities, customizable bait configurations, one-click deployment, cross-platform multi-architecture support (Linux x32/x64/ARM, Windows x32/x64 platforms and various domestic operating systems), and supports domestic CPUs like Loongson, Hygon, Phytium, Kunpeng, Tengyun, Zhaoxin, etc. It has extremely low performance requirements and features multiple alerting methods like Email/Syslog/Webhook/WeCom/DingTalk/Lark, helping users reduce operation and maintenance costs and improve operational efficiency.
-
-Users need to deploy the management end first, and then deploy built-in honeypot nodes or new nodes through the management end:
-
-*   [Linux AMD64 Management End Download](https://hfish.net/#/2-2-linux)
-*   [Linux ARM64 Management End Download](https://hfish.net/#/2-2-linux)
-*   [Windows Management End Download](https://hfish.net/#/2-3-windows)
-*   [Docker Image Download](https://hfish.net/#/2-1-docker)
-
-If there are enterprise download needs, you can also go to the [HFish Documentation Area](https://hfish.net/#/docs) to download deployment document plans.
-
-## Why Choose HFish
-
-### Free, Simple, and Safe Honeypot Product
-Honeypots are usually defined as detection products with lightweight detection capabilities and low false positive rates. At the same time, they are also one of the high-quality sources for enterprises to produce local threat intelligence. HFish can help small and medium-sized enterprise users avoid alert floods and increase threat perception and intelligence production capabilities at low cost in daily security operations. Currently, the strength of the community is constantly helping HFish improve itself and jointly explore the best practices of deception defense.
-
-### Safe and Agile Threat Perception Nodes
-HFish is widely used effectively to perceive lateral movement of compromised hosts in office intranets, production environments, cloud intranets, and other environments, employee account leaks, scanning and probing behaviors, private intelligence production, and even internal drills and security awareness training. HFish's various alert output forms combined with situation awareness, NDR, XDR, or log platforms greatly expand the detection field of view.
-
-## HFish Architecture
-
-HFish adopts a B/S architecture, composed of a management end (server) and a node end (client). The management end is used to generate and manage node ends, and receive, analyze, and display data returned by node ends. The node end accepts control from the management end and is responsible for building honeypot services.
-
-In HFish, the **Management End** is only used for **data analysis and display**, the **Node End** performs **virtual honeypot** functions, and finally the **Honeypot bears the attack**.
+> [!WARNING]
+> **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**
+>
+> This tool performs **ACTIVE RECONNAISSANCE** (Nmap scans) against IP addresses that connect to your honeypot.
+> *   **Legal Risk**: Scanning systems without permission may be illegal in your jurisdiction.
+> *   **Retaliation**: Aggressively scanning attackers may provoke stronger attacks (DDoS) or expose your infrastructure.
+> *   **Usage**: Use strictly for educational purposes or within controlled environments where you accept all liability. **The authors are not responsible for any misuse or legal consequences.**
 
 ---
 
-# Active Defense Extension (Honey-Scan)
+## 📖 Overview
 
-This repository includes a custom "Active Defense" ecosystem built on top of HFish. It automates the process of identifying attackers and blocking them while gathering intelligence.
+**Honey-Scan** transforms a passive HFish honeypot into an **Active Defense System**. Instead of just logging attacks, it bites back (informatively).
 
-## Features
+When an attacker touches your honeypot, Honey-Scan automatically:
+1.  **🕵️ Detects** the intrusion via the HFish database.
+2.  **🔍 Scans** the attacker immediately using `nmap`.
+3.  **📢 Publishes** the intelligence to a local feed.
+4.  **🛡️ Blocks** the attacker on your production infrastructure (via client scripts).
 
-*   **Automated Reconnaissance**: A Python 'sidecar' container monitors the HFish database. When a new attacker IP is detected, it automatically runs an `nmap -A -T4` scan against them.
-*   **Intelligence Feed**: An Nginx container serves a live feed of blocked IPs (`banned_ips.txt`) and hosts the full Nmap scan reports.
-*   **Active Blocking**: A client-side script (`scripts/client_banned_ips.sh`) can be deployed on your production servers to fetch the ban list and automatically drop traffic from attackers.
+## 🚀 Key Features
 
-## Architecture Diagram
+*   **⚡ Real-Time Reaction**: Python sidecar monitors `hfish.db` and triggers scans within seconds of an attack.
+*   **📊 Automated Intel**: Generates detailed `.txt` reports for every unique attacker IP.
+*   **🚫 Network Shield**: Serves a dynamic `banned_ips.txt` list that your other servers can consume to preemptively block threats.
+*   **🖥️ Dashboard**: Simple web interface to browse scan reports and ban lists.
+
+## 🏗️ Architecture
+
+The system runs as a set of Docker containers extension to the core HFish binary:
+
+| Service | Type | Description |
+| :--- | :--- | :--- |
+| **HFish** | 🍯 Core | The base honeypot platform (Management & Nodes). |
+| **Sidecar** | 🐍 Python | The brain. Watches DB, orchestrates Nmap, updates feeds. |
+| **Feed** | 🌐 Nginx | Serves reports and banlists on port `8888`. |
 
 ```mermaid
-graph TD
-    Attacker[Attacker] -- Attacks --> HFish[HFish Honeypot]
-    HFish -- Writes --> DB[(hfish.db)]
-    Sidecar[Python Sidecar] -- Monitors --> DB
-    Sidecar -- Scans --> Attacker
-    Sidecar -- Updates --> Feed[Feed Directory]
-    Nginx[Nginx Web Server] -- Serves --> Feed
-    Production[Production Server] -- Pulls Banlist --> Nginx
-    Production -- Blocks --> Attacker
+graph LR
+    A[👹 Attacker] -- 1. Hacks --> B(🍯 HFish)
+    B -- 2. Logs --> C[(💽 DB)]
+    D[🐍 Sidecar] -- 3. Watches --> C
+    D -- 4. Nmap Scan --> A
+    D -- 5. Updates --> E[📂 Feed]
+    F[💻 Dashboard] -- Reads --> E
+    G[🛡️ Prod Server] -- 6. Feeds & Blocks --> E
 ```
 
-## Installation & Usage
+## 🛠️ Installation
 
-1.  **Clone the Repository**:
-    ```bash
-    git clone https://github.com/derlemue/honey-scan.git
-    cd honey-scan
-    ```
+### 1. Start the Server
+clone the repo and launch the stack:
 
-2.  **Start the Ecosystem**:
-    ```bash
-    docker-compose up -d --build
-    ```
-    This launches:
-    *   Honeypot Server (Ports 4433, 2222, etc.)
-    *   Sidecar Scanner
-    *   Feed Server (Port 8888)
+```bash
+git clone https://github.com/derlemue/honey-scan.git
+cd honey-scan
+docker-compose up -d --build
+```
 
-3.  **Access the Dashboard**:
-    *   Open `http://localhost:8888` to view the Active Defense Dashboard (Scan reports and Ban list).
-    *   Open `https://localhost:4433` for the HFish Administration Console.
+### 2. Access Dashboards
+*   **Active Defense Feed**: `http://localhost:8888`
+*   **HFish Admin**: `https://localhost:4433` (Default: `admin` / `HFish2021`)
 
-4.  **Deploy Protection (Client Side)**:
-    On your other servers (the ones you want to protect), download and run the client script:
-    ```bash
-    wget http://<HONEYPOT_IP>:8888/scripts/client_banned_ips.sh
-    chmod +x client_banned_ips.sh
-    # Edit the script to set your HONEYPOT_IP
-    ./client_banned_ips.sh
-    ```
+### 3. Deploy Client Shield
+Protect your *other* servers by automatically banning IPs detected by this honeypot.
 
-## Customization
+Run this on your production servers:
+```bash
+# Download the script (Point to your Honey-Scan server IP)
+wget http://<HONEY-SCAN-IP>:8888/scripts/client_banned_ips.sh
 
-The active defense logic is located in `sidecar/monitor.py`. You can modify the scan parameters or the logic for adding IPs to the ban list (e.g., whitelist certain ranges).
+# Make executable
+chmod +x client_banned_ips.sh
+
+# Run (Add to Crontab for auto-updates!)
+./client_banned_ips.sh
+```
+
+## 📜 About Core HFish
+
+This project is built upon [HFish](https://hfish.net), a high-performance community honeypot.
+*   **Base Features**: Supports SSH, Redis, Mysql web honeypots, and more.
+*   **Visualization**: Beautiful attack maps and statistics in the native HFish admin panel.
+*   **Note**: This repository focuses on the *Active Defense* extension. For core HFish documentation, please refer to the [official docs](https://hfish.net/#/docs).
+
+---
+*Maintained by the Honey-Scan Community.*
