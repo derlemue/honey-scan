@@ -1,5 +1,14 @@
-# 🍯 Honey-Scan: Active Defense Ecosystem
-### Powered by HFish | Version: **2.0.0**
+<div align="center">
+
+# 🍯 Honey-Scan
+### Active Defense Ecosystem
+
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
+![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
+
+*Turn your honeypot into an active defense system that bites back.*
+
+</div>
 
 > [!WARNING]
 > **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**
@@ -28,10 +37,14 @@ When an attacker touches your honeypot, Honey-Scan automatically:
 *   **🚫 Network Shield**: Serves a dynamic `banned_ips.txt` list that your other servers can consume to preemptively block threats.
 *   **🖥️ Dashboard**: Simple web interface to browse scan reports and ban lists.
 *   **🖼️ Visuals**:
-    *   **Dashboard** (Live Monitoring):
-        ![Dashboard](/home/elliot/.gemini/antigravity/brain/227546cb-0f19-421a-9400-4e509b680324/dashboard_v2_anonymized_1767122817408.png)
-    *   **Login** (HFish Platform):
-        ![Login](/home/elliot/.gemini/antigravity/brain/227546cb-0f19-421a-9400-4e509b680324/hfish_login_v2_1767122783525.png)
+    *   **Live Threat Monitor** (The "Feed"):
+        ![Feed Dashboard](docs/img/feed_dashboard_v2.png)
+    *   **HFish Attack Map** (Internal):
+        ![Attack Map](docs/img/hfish_screen_v2.png)
+    *   **HFish Statistics** (Internal):
+        ![Statistics](docs/img/hfish_dashboard_v2.png)
+    *   **Login Interface**:
+        ![Login](docs/img/login_v2.png)
 
 ## 🏗️ Architecture
 

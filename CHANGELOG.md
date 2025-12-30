@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-12-30
+
+### Changed
+- 🚨 **Rebranding**: Rebranded "XX Company Threat Monitor" to "**lemue.org SecMonitor**".
+- 📸 **Visuals**: Updated screenshots for Login and Dashboard with **IP obfuscation** to protect privacy.
+- 📖 **Documentation**: Updated README header with a new design.
+
+## [2.0.1] - 2025-12-30
+
+### Fixed
+- 🐛 **Documentation**: Fixed broken image links in README by moving screenshots to `docs/img/`.
+- 📸 **Visuals**: Added internal HFish dashboard screenshots (Screen & Stats) to README.
+
 ## [2.0.0] - 2025-12-30
 
 ### Changed
