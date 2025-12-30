@@ -7,7 +7,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 
 # Configuration
-DB_PATH = "/data/hfish.db"
+DB_PATH = "/hfish_ro/database/hfish.db"
 SCANS_DIR = "/app/scans"
 FEED_DIR = "/app/feed"
 BANNED_IPS_FILE = os.path.join(FEED_DIR, "banned_ips.txt")

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.4] - 2025-12-30
+
+### Fixed
+- 🐛 **Deployment**: Fixed HFish Admin 404 error. Changed storage from Host Bind Mount to Docker Named Volume (`hfish_data`) to prevent overwriting web application files in the container.
+
 ## [1.4.3] - 2025-12-30
 
 ### Fixed
