@@ -3,7 +3,7 @@
 # 🍯 Honey-Scan
 ### Aktives Verteidigungs-Ökosystem
 
-![Version](https://img.shields.io/badge/version-3.4.2-blue.svg)
+![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -45,11 +45,11 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
 *   **🖥️ Dashboard**: Einfache Weboberfläche zum Durchsuchen von Scan-Berichten und Bannlisten.
 *   **🖼️ Visualisierungen**:
     *   **Live Threat Monitor** (Der "Feed"):
-        ![Feed Dashboard](docs/img/feed_dashboard_v2.png)
+        ![Feed Dashboard](docs/img/feed_dashboard_v4.png)
     *   **HFish Angriffs-Karte** (Intern):
-        ![Attack Map](docs/img/hfish_screen_v2.png)
+        ![Attack Map](docs/img/hfish_screen_v4.png)
     *   **HFish Statistiken** (Intern):
-        ![Statistics](docs/img/hfish_dashboard_v2.png)
+        ![Statistics](docs/img/hfish_dashboard_v4.png)
     *   **Login Interface**:
         ![Login](docs/img/login_v2.png)
 
