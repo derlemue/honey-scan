@@ -1,0 +1,90 @@
+version: '3'
+
+services:
+  hfish:
+    image: threatbook/hfish-server:latest
+    container_name: hfish
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Berlin
+    ports:
+      # Management & Web-Fallen
+      - "4433:4433" # Web UI (Management)
+      - "80:80" # HTTP Default
+      - "443:443" # HTTPS Default
+      - "8080:8080" # HTTP Alternate / Jenkins / Tomcat
+      - "8081:8081" # HTTP Alternate
+      - "9000:9000" # Portainer / PHP-FPM
+
+      # Remote Zugriff & Shells
+      - "2222:22" # SSH Honeypot (Dein Zielport für Firewall 22->2222)
+      - "23:23" # Telnet
+      - "3389:3389" # RDP (Remote Desktop)
+      - "5900:5900" # VNC
+      - "5985:5985" # WinRM
+
+      # Datenbanken
+      - "3306:3306" # MySQL
+      - "6379:6379" # Redis
+      - "5432:5432" # PostgreSQL
+      - "27017:27017" # MongoDB
+      - "1433:1433" # MS-SQL
+      - "1521:1521" # Oracle DB
+      - "9200:9200" # Elasticsearch
+      - "2181:2181" # ZooKeeper
+      - "5672:5672" # RabbitMQ
+      - "11211:11211" # Memcached
+
+      # File- & Netzwerk-Dienste
+      - "21:21" # FTP
+      - "445:445" # SMB (Windows File Sharing)
+      - "161:161/udp" # SNMP
+      - "53:53/tcp" # DNS
+      - "53:53/udp" # DNS
+      - "123:123/udp" # NTP
+
+      # Mail-Protokolle
+      - "25:25" # SMTP
+      - "110:110" # POP3
+      - "143:143" # IMAP
+
+      # DevOps & Cloud
+      - "2375:2375" # Docker API
+      - "6443:6443" # Kubernetes API
+      - "10250:10250" # Kubelet
+
+      # IoT & Spezial-Protokolle
+      - "5060:5060" # SIP (VoIP)
+      - "1883:1883" # MQTT (IoT)
+      - "102:102" # Siemens S7 (SPS/Industrie)
+      - "502:502" # Modbus (Industrie)
+
+    volumes:
+      - ./hfish_data:/usr/share/hfish
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    privileged: true
+
+  sidecar:
+    build: ./sidecar
+    container_name: hfish-sidecar
+    restart: unless-stopped
+    volumes:
+      - ./hfish_data/database:/data:ro # Read-only access to DB
+      - ./scans:/app/scans
+      - ./feed:/app/feed
+    depends_on:
+      - hfish
+
+  feed:
+    image: nginx:alpine
+    container_name: hfish-feed
+    restart: unless-stopped
+    ports:
+      - "8888:80"
+    volumes:
+      - ./feed:/usr/share/nginx/html/feed:ro
+      - ./scans:/usr/share/nginx/html/scans:ro
+      - ./feed/index.html:/usr/share/nginx/html/index.html:ro
