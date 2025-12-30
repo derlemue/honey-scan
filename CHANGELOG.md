@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.3] - 2025-12-30
+
+### Fixed
+- 🐛 **Networking**: Changed HFish SSH honeypot port to `22` (Host) since `2222` is now used by the real Host SSH.
+
 ## [1.4.2] - 2025-12-30
 
 ### Fixed
