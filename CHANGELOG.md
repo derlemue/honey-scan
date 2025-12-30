@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] - 2025-12-30
+
+### Changed
+- 🛡️ **Client Shield**: Completely overhauled `client_banned_ips.sh`.
+    - Automatically checks for Fail2Ban (ASCII warning + install prompt).
+    - Starts Fail2Ban daemon if inactive.
+    - Bans IPs directly into the `sshd` jail.
+
 ## [3.1.0] - 2025-12-30
 
 ### Fixed

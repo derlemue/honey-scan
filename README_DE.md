@@ -118,19 +118,20 @@ docker compose up -d --build
 *   **lemueIO Active Intelligence Feed**: `http://localhost:8888`
 *   **HFish Admin**: `https://localhost:4433` (Standard: `admin` / `HFish2021`)
 
-### 3. Client Shield deployen
+### 3. Client Shield deployen (Fail2Ban Integration)
 Schütze deine *anderen* Server, indem du IPs automatisch bannst, die von diesem Honeypot erkannt wurden.
+Benötigt **Fail2Ban**. Das Skript bietet die Installation an, falls es fehlt.
 
 Führe dies auf deinen Produktionsservern aus:
 ```bash
-# Skript herunterladen (Auf deine Honey-Scan Server-IP zeigen)
-wget http://<HONEY-SCAN-IP>:8888/scripts/client_banned_ips.sh
+# Skript herunterladen
+wget http://23.88.40.46:8888/scripts/client_banned_ips.sh
 
 # Ausführbar machen
 chmod +x client_banned_ips.sh
 
-# Ausführen (Zu Crontab hinzufügen für Auto-Updates!)
-./client_banned_ips.sh
+# Ausführen (Benötigt Root für Fail2Ban)
+sudo ./client_banned_ips.sh
 ```
 
 ## 📜 Über Core HFish
