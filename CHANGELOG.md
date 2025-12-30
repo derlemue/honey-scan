@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-12-30
+
+### Changed
+- 🚨 **Rebranding**: Renamed dashboards and feeds to **lemue.org Threat Live Monitoring**.
+- 📸 **Documentation**: Added screenshots for Login and Dashboard to README.
+- 🆙 **Major Release**: Consolidated all recent architecture changes (MariaDB, Sidecar v2, Named Volumes) into a stable 2.0.0 release.
+
 ## [1.5.0] - 2025-12-30
 
 ### Added

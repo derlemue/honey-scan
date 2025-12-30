@@ -147,7 +147,7 @@ def update_index():
 <!DOCTYPE html>
 <html>
 <head>
-    <title>HFish Active Defense Dashboard</title>
+    <title>lemue.org Threat Live Monitoring</title>
     <style>
         body { font-family: monospace; padding: 20px; background: #f0f0f0; }
         h1 { color: #333; }
@@ -159,7 +159,7 @@ def update_index():
     </style>
 </head>
 <body>
-    <h1>Active Defense Feed</h1>
+    <h1>lemue.org Threat Live Monitoring</h1>
     <div class="list">
         <h3>Resources</h3>
         <div class="item">
