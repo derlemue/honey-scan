@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.1] - 2025-12-31
+
+### Fixed
+- 🐛 **Configuration**: Fixed HFish crash in Host Mode by injecting `DB_HOST=127.0.0.1` (Container -> Host -> DB).
+- 🐛 **Visuals**: Fixed missing Belgium flag (`?`) in attack list.
+- 🎨 **UI**: Updated project logo and location data (Germany/Falkenstein) for built-in nodes.
+
 ## [3.5.0] - 2025-12-31
 
 ### Changed

@@ -174,6 +174,7 @@
       "Ukraine": "ua",
       "Romania": "ro",
       "Uzbekistan": "uz",
+      "Belgium": "be", "Belgique": "be",
       "Unknown": "unknown"
     };
 
@@ -199,7 +200,8 @@
         if (url.indexOf('/v1/index/map') !== -1) {
           if (data && data.data && data.data.attack_map) {
             data.data.attack_map.forEach(node => {
-              if (node.attacked_client_name.includes("Built-in") || node.country_name === "美国") {
+              // Patch ANY Built-in node or USA node that should be Germany
+              if (node.attacked_client_name.includes("Built-in") || node.attacked_client_name.includes("hfish") || node.country_name === "美国" || node.country_name_en === "United States") {
                 node.country_name_en = "Germany";
                 node.country_name = "德国";
                 node.province_name = "Sachsen";
