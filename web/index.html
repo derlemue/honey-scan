@@ -121,52 +121,67 @@
         // Safely patch Branding using MutationObserver to avoid breaking Vue/React hydration
         const patchBrandingSafe = () => {
           const observer = new MutationObserver((mutations) => {
-            // 1. Force Logo Replacement (Handle SVG/Div background cases)
-            const logoContainers = document.querySelectorAll('.login-logo, .logo, [class*="logo"]');
-            logoContainers.forEach(container => {
-              // Check if it's the main login logo (heuristic size/position)
-              const rect = container.getBoundingClientRect();
-              if (!container.dataset.patched && (rect.width > 50 || container.querySelector('svg'))) {
-                // Clear existing content (like the trident SVG)
-                container.innerHTML = '';
-                const newLogo = document.createElement('img');
-                newLogo.src = '/assets/logo_bear.png';
-                newLogo.style.width = '100%';
-                newLogo.style.height = '100%';
-                newLogo.style.maxWidth = '200px';
-                newLogo.style.objectFit = 'contain';
-                container.appendChild(newLogo);
-                container.dataset.patched = 'true';
+            // 1. Force Logo Replacement (Target SVG content directly)
+            const svgs = document.querySelectorAll('svg');
+            svgs.forEach(svg => {
+              if (svg.innerHTML.includes('#hfish') || svg.innerHTML.includes('hfish')) {
+                // Found the trident! Find its main container (usually 1 or 2 levels up)
+                let container = svg.parentElement;
+                // Walk up to find a container with substantial size (the logo wrapper)
+                while (container && container !== document.body && container.getBoundingClientRect().width < 50) {
+                  container = container.parentElement;
+                }
+
+                if (container && !container.dataset.patched) {
+                  container.innerHTML = '';
+                  const newLogo = document.createElement('img');
+                  newLogo.src = '/assets/logo_bear.png';
+                  newLogo.style.width = '100%';
+                  newLogo.style.height = '100%';
+                  newLogo.style.maxWidth = '300px';
+                  newLogo.style.maxHeight = '300px';
+                  newLogo.style.objectFit = 'contain';
+                  newLogo.style.display = 'block';
+                  newLogo.style.margin = '0 auto';
+                  container.appendChild(newLogo);
+                  container.dataset.patched = 'true';
+                  container.style.display = 'flex';
+                  container.style.justifyContent = 'center';
+                  container.style.alignItems = 'center';
+                }
               }
             });
 
-            // Fallback for simple IMG tags and fix text
-            if (document.location.hash.includes('login') || document.location.pathname.includes('login')) {
-              // Images
-              const images = document.querySelectorAll('img');
-              images.forEach(img => {
-                if (!img.dataset.patched && (img.src.includes('logo') || img.src.includes('svg'))) {
-                  img.src = "/assets/logo_bear.png";
-                  img.dataset.patched = "true";
+            // Fallback for IMG based logos
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+              const src = img.getAttribute('src');
+              if (src && (src.includes('logo') || src.includes('svg'))) {
+                if (!img.dataset.patched && img.src.indexOf('bear') === -1) {
+                  // Check context - if it's large and on the left, it's the logo
+                  const rect = img.getBoundingClientRect();
+                  if (rect.width > 50 && rect.left < window.innerWidth / 2) {
+                    img.src = "/assets/logo_bear.png";
+                    img.dataset.patched = "true";
+                  }
                 }
-              });
+              }
+            });
 
-              // Text
+            // 2. Fix Text & Color
+            if (document.location.hash.includes('login') || document.location.pathname.includes('login')) {
               const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
               let node;
               while (node = walker.nextNode()) {
-                // HFish -> Honey Scan Active Defense
                 if (node.nodeValue && (node.nodeValue.includes("HFish") || node.nodeValue.includes("Honeypot Platform"))) {
                   node.nodeValue = node.nodeValue.replace(/HFish/g, "Honey Scan Active Defense");
                   if (node.parentElement) {
-                    // Apply Green Styling
                     node.parentElement.style.color = "#4ade80";
                     node.parentElement.style.fontWeight = "bold";
                     node.parentElement.classList.remove('text-red-500', 'text-danger');
                   }
                 }
               }
-
               if (document.title.includes('HFish')) {
                 document.title = "Honey Scan Active Defense";
               }
