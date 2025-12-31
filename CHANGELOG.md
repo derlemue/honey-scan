@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.11] - 2025-12-31
+
+### Changed
+- 🗑️ **UI**: Completely Removed Original Header Bar (using `display: none`).
+- ✨ **UI**: Injected Detached Title directly into `body` for clean positioning.
+- 🔗 **Link**: Updated "Banned IPs" link to full URL `https://feed.sec.lemue.org/feed/banned_ips.txt`.
+
 ## [3.6.10] - 2025-12-31
 
 ### Changed
