@@ -178,14 +178,32 @@
                   /* Fix JPG Logo Transparency & Size */
                   img[src*="logo_bear.png"] {
                       mix-blend-mode: screen !important;
-                      width: 80% !important; /* Resize to 80% */
-                      max-width: 350px !important; /* Increased constraint */
+                      width: 80% !important; 
+                      max-width: 350px !important;
                       display: block;
                       margin: 0 auto;
+                      padding: 10px !important; /* Prevent clipping */
+                      box-sizing: border-box !important;
                   }
             `;
                 document.head.appendChild(style);
             }
+
+            // 6. Inject Favicons
+            const addFavicon = (rel, href, sizes) => {
+                let link = document.createElement('link');
+                link.rel = rel;
+                link.href = href;
+                if (sizes) link.sizes = sizes;
+                document.head.appendChild(link);
+            };
+            // Remove existing
+            document.querySelectorAll('link[rel="shortcut icon"]').forEach(e => e.remove());
+
+            addFavicon('icon', '/assets/favicon.ico');
+            addFavicon('icon', '/assets/favicon-32x32.png', '32x32');
+            addFavicon('icon', '/assets/favicon-16x16.png', '16x16');
+            addFavicon('apple-touch-icon', '/assets/apple-touch-icon.png');
         };
 
         // Run aggressively

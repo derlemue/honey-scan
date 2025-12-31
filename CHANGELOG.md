@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.3] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Fixed Logo clipping issues.
+    - Added `padding` and `box-sizing` to the Bear Logo.
+- ✨ **Assets**: Added custom Favicons (generated from Bear Logo) for Dashboard and Feed.
+
 ## [3.6.2] - 2025-12-31
 
 ### Changed
