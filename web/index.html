@@ -109,85 +109,68 @@
                 });
             }
 
-            // 3. Central Title & Subtitle Replacement
-            // Target the Red HFish text and Grey Pill
+            // 3. Central Branding Replacement (SVG -> HTML)
+            // The "HFish" red text is inside an SVG with class *onefish-logo* or uses #hfish symbol
             const rightWrapper = document.querySelector('div[class*="right-wrapper"]');
+            if (rightWrapper) {
+                const brandSvgs = rightWrapper.querySelectorAll('svg');
+                brandSvgs.forEach(svg => {
+                    // Check if this SVG is the branding one (symbol #hfish-hfish-logo-en)
+                    if (svg.innerHTML.includes('hfish') || svg.getAttribute('class')?.includes('onefish-logo')) {
+                        if (!svg.dataset.patched) {
+                            // Create Replacement Container
+                            const container = document.createElement('div');
+                            container.style.textAlign = 'center';
+                            container.style.marginBottom = '20px';
+                            container.style.display = 'flex';
+                            container.style.flexDirection = 'column';
+                            container.style.alignItems = 'center';
+                            container.style.justifyContent = 'center';
 
-            // Helper to replace text nodes deeply
-            const replaceTextInNode = (node, targetText, replacementHTML, styleCallback) => {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    if (node.nodeValue.trim() === targetText) {
-                        // Found exact match
-                        const span = document.createElement('span');
-                        span.innerHTML = replacementHTML;
-                        if (styleCallback) styleCallback(span);
-                        node.parentNode.replaceChild(span, node);
-                        return true;
+                            // Title "Honey Scan"
+                            const title = document.createElement('div');
+                            title.innerText = "Honey Scan";
+                            title.style.color = "#4ade80"; // Cyber Green
+                            title.style.fontSize = "36px";
+                            title.style.fontWeight = "900";
+                            title.style.fontFamily = "sans-serif";
+                            title.style.letterSpacing = "1px";
+                            title.style.marginBottom = "8px";
+                            title.style.lineHeight = "1.2";
+
+                            // Subtitle Pill "Active Defense Platform"
+                            const pill = document.createElement('div');
+                            pill.innerText = "Active Defense Platform";
+                            pill.style.backgroundColor = "rgba(255, 255, 255, 0.1)"; // Greyish transparent
+                            pill.style.color = "rgba(255, 255, 255, 0.8)";
+                            pill.style.padding = "4px 12px";
+                            pill.style.borderRadius = "12px";
+                            pill.style.fontSize = "14px";
+                            pill.style.fontWeight = "500";
+                            pill.style.display = "inline-block";
+
+                            container.appendChild(title);
+                            container.appendChild(pill);
+
+                            // Replace the SVG with our HTML Container
+                            svg.replaceWith(container);
+
+                            // Mark as patched (actually not needed on new element, but good practice if we check parent)
+                            container.dataset.patched = 'true';
+                        }
                     }
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    // Check regular elements
-                    if (node.innerText.trim() === targetText) {
-                        node.innerHTML = replacementHTML;
-                        if (styleCallback) styleCallback(node);
-                        return true;
-                    }
-                    // Recurse
-                    for (let child of node.childNodes) {
-                        if (replaceTextInNode(child, targetText, replacementHTML, styleCallback)) return true;
-                    }
-                }
-                return false;
-            };
-
-            // Replace "HFish" -> "Honey Scan" (Green)
-            // Look specifically for the Red HFish Title
-            const hfishElements = document.querySelectorAll('div, span, h1, h2');
-            hfishElements.forEach(el => {
-                if (el.innerText.trim() === "HFish" && !el.dataset.patched) {
-                    // Start Patching
-                    el.innerText = "Honey Scan";
-                    el.style.color = "#4ade80"; // Green
-                    el.style.fontWeight = "bold";
-                    // Ensure it stays updated
-                    el.dataset.patched = 'true';
-                }
-            });
-
-            // Replace "Honeypot Platform" -> "Active Defense Platform" (Keep Style)
-            const platformElements = document.querySelectorAll('div, span');
-            platformElements.forEach(el => {
-                if (el.innerText.trim() === "Honeypot Platform" && !el.dataset.patched) {
-                    el.innerText = "Active Defense Platform";
-                    // Keep existing pill style (usually grey background)
-                    el.dataset.patched = 'true';
-                }
-            });
-
-
-            // 4. General Text Replacement (Fallback for any missed ones)
-            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-            let node;
-            while (node = walker.nextNode()) {
-                if (node.nodeValue && (node.nodeValue.includes("HFish") || node.nodeValue.includes("XX Company"))) {
-                    // Skip if already patched
-                    if (node.parentElement && node.parentElement.dataset.patched) continue;
-
-                    // Careful replacement
-                    if (node.nodeValue.trim() === "HFish") {
-                        node.nodeValue = "Honey Scan";
-                        if (node.parentElement) node.parentElement.style.color = "#4ade80";
-                    } else {
-                        node.nodeValue = node.nodeValue.replace(/HFish|XX Company/g, "lemueIO SecMonitor");
-                    }
-                }
+                });
             }
+
+            // 4. General Text Replacement (Fallback for leftovers)
+            // (Removed aggressive text walker to avoid conflicts, SVG replacement covers the main issue)
 
             // 5. CSS Injection for persistence and Login Button
             if (!document.getElementById('branding-style')) {
                 const style = document.createElement('style');
                 style.id = 'branding-style';
                 style.innerHTML = `
-                  /* NUCLEAR FIX v4: CLEANUP & REBRANDING */
+                  /* NUCLEAR FIX v5: SVG REPLACEMENT & CLEANUP */
                   html, body {
                       background-color: #0f172a !important; /* Cyber Dark */
                       margin: 0 !important;
@@ -217,9 +200,9 @@
 
                   /* DO NOT hide .right-wrapper (contains login form & title) */
 
-                  /* Fix Title Spacing - Push Inputs Down slightly if needed */
+                  /* Fix Title Spacing - Push Inputs Down */
                   div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
-                      margin-top: 20px !important; 
+                      margin-top: 10px !important; 
                   }
                   
                   /* Login Button Green */
