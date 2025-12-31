@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.2] - 2025-12-31
+
+### Fixed
+- 🚑 **Critical**: Fixed HFish crash loop by externalizing `config.toml` and explicitly setting database host to `127.0.0.1` (Host Networking fix).
+- ⚙️ **Config**: Added `config/hfish.toml` to repository for persistent configuration management.
+
 ## [3.5.1] - 2025-12-31
 
 ### Fixed
