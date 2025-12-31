@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.2] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Enhanced title typography.
+    - Increased Title font size to **28px**.
+    - Added vertical spacing (`margin-bottom`) to separate Title from Input fields.
+
 ## [3.6.1] - 2025-12-31
 
 ### Changed
