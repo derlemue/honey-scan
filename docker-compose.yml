@@ -9,14 +9,9 @@ services:
       - 1.0.0.1
     environment:
       - TZ=Europe/Amsterdam
-      - DB_TYPE=mysql
-      - DB_HOST=127.0.0.1
-      - DB_PORT=3306
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
     volumes:
       - hfish_data:/usr/share/hfish
+      - ./config/hfish.toml:/usr/share/hfish/config.toml
       - ./web/index.html:/opt/hfish/current/web/index.html:ro
       - ./web/index.html:/opt/hfish/3.3.6/web/index.html:ro
       - ./web/assets/flags.svg:/opt/hfish/current/web/assets/flags.svg:ro

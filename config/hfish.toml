@@ -1,0 +1,29 @@
+[default]
+    appname = "HFish"
+    version = "3.3.6"
+    run_mode = "release"
+
+[webapp]
+    web_addr = ":4433"
+    api_addr = ":4434"
+
+[title]
+    test = "HFish Test"
+    system = "HFish System Alert"
+    threat = "HFish Threat Alert"
+    node = "HFish Node Alert"
+    honeypot = "HFish Honeypot Alert"
+
+[session]
+    max_life_time = 3600
+
+[database]
+    type = "mysql"
+    max_open = 50
+    max_idle = 20
+    max_size = 1
+    debug = false
+    [[database.mysql]]
+        link = "hfish:HoneyScan_DB_Pass_2025!@tcp(127.0.0.1:3306)/hfish?charset=utf8mb4&parseTime=true&loc=Local"
+    [[database.sqlite]]
+        link = "hfish.db?cache=shared&mode=rwc"
