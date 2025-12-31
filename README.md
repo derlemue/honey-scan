@@ -1,10 +1,9 @@
+<div align="center">
+
 # 🍯 Honey-Scan
 ### Active Defense Ecosystem
 
-[🇬🇧 English](README.md) | [🇩🇪 Deutsch](README_DE.md) | [🇺🇦 Українська](README_UA.md)
-
-- **Dashboard**: [sec.lemue.org](https://sec.lemue.org/web/login)
-- **Feed**: [feed.sec.lemue.org](https://feed.sec.lemue.org/)
+<img src="docs/img/logo.png" width="200">
 
 
 ![Version](https://img.shields.io/badge/version-3.6.7-blue.svg)
