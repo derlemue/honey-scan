@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.6.15] - 2025-12-31
+## [3.6.16] - 2025-12-31
+
+### Fixed
+- 🐛 **Branding**: Enforced universal text replacement for "XX Company" branding on all pages (Dashboard & Login).
+- 🐛 **UI**: Added `MutationObserver` independent logic to catch and replace branding text that bypasses initial checks.
+
 
 ### Changed
 - 🐛 **UI**: **Route-Specific Branding**. Scoped the aggressive Login styles to `/login` only.
