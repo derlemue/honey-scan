@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.15] - 2025-12-31
+
+### Changed
+- 🐛 **UI**: **Route-Specific Branding**. Scoped the aggressive Login styles to `/login` only.
+- 🎨 **Dashboard**: Restored original dashboard UI (Header, Light/Default Mode) by removing injections when not on login page.
+- 🐛 **UI**: Fixed issue where "Header Menu" disappeared on dashboard.
+
 ## [3.6.14] - 2025-12-31
 
 ### Changed
