@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.8] - 2025-12-31
+
+### Changed
+- 🐛 **Fix**: Hardened CSS for Header Transparency and Title Centering.
+- 🎨 **UI**: Reduced Title Font Size to 24px.
+- 🎨 **UI**: Forced `display: block` on title elements to ensure correct rendering.
+
 ## [3.6.7] - 2025-12-31
 
 ### Changed

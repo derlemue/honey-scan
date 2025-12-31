@@ -149,10 +149,16 @@
                   /* Header & Title Fixes */
                   .screen-header-left-title, .screen-title { 
                       visibility: hidden !important; 
-                      position: relative !important;
+                      position: absolute !important; /* Force absolute to span screen if needed */
+                      left: 0 !important;
+                      right: 0 !important;
+                      top: 0 !important;
+                      width: 100% !important;
+                      text-align: center !important;
+                      z-index: 100 !important;
                   }
                   /* Aggressive Header Transparency */
-                  div[class*="header"], header, .el-header, .header-wrapper {
+                  div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"] {
                       background: transparent !important;
                       background-color: transparent !important;
                       box-shadow: none !important;
@@ -162,16 +168,14 @@
                   .screen-header-left-title::after, .screen-title::after {
                       visibility: visible !important;
                       content: "${BRAND_TITLE}" !important;
-                      position: absolute !important;
-                      left: 0 !important;
-                      right: 0 !important;
+                      display: block !important; /* Ensure block for centering */
+                      position: relative !important; /* Relative to the absolutely positioned parent */
                       text-align: center !important;
-                      top: 0px !important; 
                       color: #4ade80 !important; 
-                      font-size: 26px !important; /* Smaller, flush with fields */
+                      font-size: 24px !important; /* Reduced to 24px */
                       font-weight: bold !important;
                       white-space: nowrap !important;
-                      width: 100% !important;
+                      margin-top: 10px !important; /* Slight adjustments */
                   }
 
                   /* Fix Title Spacing - Push Inputs Down */
