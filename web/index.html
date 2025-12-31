@@ -152,16 +152,21 @@
                       top: 0 !important;
                       color: #4ade80 !important; 
                   }
-                  /* Login Button Green */
-                  button[class*="index-cssmodule__btn"], .el-button--primary {
+                  /* Login Button Green - Target DIV and BUTTON */
+                  div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
                       background-color: #4ade80 !important;
                       border-color: #4ade80 !important;
                       color: #0f172a !important; /* Dark text */
                       font-weight: bold !important;
                   }
-                  button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover {
+                  div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover {
                       background-color: #22c55e !important;
                       border-color: #22c55e !important;
+                  }
+                  
+                  /* Fix JPG Logo Transparency */
+                  img[src*="logo_bear.png"] {
+                      mix-blend-mode: screen !important;
                   }
             `;
                 document.head.appendChild(style);
