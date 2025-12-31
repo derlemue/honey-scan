@@ -353,6 +353,24 @@
                 // resets the inner DOM of the router-view, but global/higher-level fixes might depend entirely on CSS removal.
             }
 
+            // 5. General Dashboard Text Replacements (Only when !isLogin)
+            if (!isLogin) {
+                const textReplacements = {
+                    "HFish Attack Map": "lemueIO SecMonitor",
+                    "HFish Statistics": "lemueIO SecStatistics",
+                    "Live Threat Monitor": "lemueIO Active Intelligence Feed",
+                };
+
+                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+                let node;
+                while (node = walker.nextNode()) {
+                    const val = node.nodeValue.trim();
+                    if (textReplacements[val]) {
+                        node.nodeValue = textReplacements[val];
+                    }
+                }
+            }
+
             // Always Inject Favicons (Safe to check continuously)
             const addFavicon = (rel, href, sizes) => {
                 // ... (Logic to add if missing) ...
