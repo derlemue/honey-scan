@@ -80,18 +80,12 @@
         const LOGO_PATH = '/assets/logo_bear.png';
 
         const patchBrandingAggressive = () => {
-            // 1. Title Replacement (Detached)
+            // 1. Title Replacement (Browser Tab)
             if (document.title !== "lemueIO SecMonitor") {
                 document.title = "lemueIO SecMonitor";
             }
 
-            // Inject detached title if not present
-            if (!document.getElementById('lemue-detached-title')) {
-                const title = document.createElement('div');
-                title.id = 'lemue-detached-title';
-                title.innerText = BRAND_TITLE;
-                document.body.appendChild(title);
-            }
+            // REMOVED: Detached Title Injection (User wanted it gone)
 
             // 2. Logo Replacement (Left Side - SVG Wrapper)
             const leftWrapper = document.querySelector('div[class*="left-wrapper"]');
@@ -115,15 +109,76 @@
                 });
             }
 
-            // 3. Text Logo Replacement (Right Side / Top) - Hide originals
-            // (Handled by CSS display: none below)
+            // 3. Central Title & Subtitle Replacement
+            // Target the Red HFish text and Grey Pill
+            const rightWrapper = document.querySelector('div[class*="right-wrapper"]');
 
-            // 4. General Text Replacement (Fallback)
+            // Helper to replace text nodes deeply
+            const replaceTextInNode = (node, targetText, replacementHTML, styleCallback) => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    if (node.nodeValue.trim() === targetText) {
+                        // Found exact match
+                        const span = document.createElement('span');
+                        span.innerHTML = replacementHTML;
+                        if (styleCallback) styleCallback(span);
+                        node.parentNode.replaceChild(span, node);
+                        return true;
+                    }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    // Check regular elements
+                    if (node.innerText.trim() === targetText) {
+                        node.innerHTML = replacementHTML;
+                        if (styleCallback) styleCallback(node);
+                        return true;
+                    }
+                    // Recurse
+                    for (let child of node.childNodes) {
+                        if (replaceTextInNode(child, targetText, replacementHTML, styleCallback)) return true;
+                    }
+                }
+                return false;
+            };
+
+            // Replace "HFish" -> "Honey Scan" (Green)
+            // Look specifically for the Red HFish Title
+            const hfishElements = document.querySelectorAll('div, span, h1, h2');
+            hfishElements.forEach(el => {
+                if (el.innerText.trim() === "HFish" && !el.dataset.patched) {
+                    // Start Patching
+                    el.innerText = "Honey Scan";
+                    el.style.color = "#4ade80"; // Green
+                    el.style.fontWeight = "bold";
+                    // Ensure it stays updated
+                    el.dataset.patched = 'true';
+                }
+            });
+
+            // Replace "Honeypot Platform" -> "Active Defense Platform" (Keep Style)
+            const platformElements = document.querySelectorAll('div, span');
+            platformElements.forEach(el => {
+                if (el.innerText.trim() === "Honeypot Platform" && !el.dataset.patched) {
+                    el.innerText = "Active Defense Platform";
+                    // Keep existing pill style (usually grey background)
+                    el.dataset.patched = 'true';
+                }
+            });
+
+
+            // 4. General Text Replacement (Fallback for any missed ones)
             const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
             let node;
             while (node = walker.nextNode()) {
-                if (node.nodeValue && (node.nodeValue.includes("HFish") || node.nodeValue.includes("Honeypot Platform") || node.nodeValue.includes("XX Company"))) {
-                    node.nodeValue = node.nodeValue.replace(/HFish|XX Company/g, "lemueIO SecMonitor").replace(/Honeypot Platform/g, BRAND_TITLE);
+                if (node.nodeValue && (node.nodeValue.includes("HFish") || node.nodeValue.includes("XX Company"))) {
+                    // Skip if already patched
+                    if (node.parentElement && node.parentElement.dataset.patched) continue;
+
+                    // Careful replacement
+                    if (node.nodeValue.trim() === "HFish") {
+                        node.nodeValue = "Honey Scan";
+                        if (node.parentElement) node.parentElement.style.color = "#4ade80";
+                    } else {
+                        node.nodeValue = node.nodeValue.replace(/HFish|XX Company/g, "lemueIO SecMonitor");
+                    }
                 }
             }
 
@@ -132,32 +187,17 @@
                 const style = document.createElement('style');
                 style.id = 'branding-style';
                 style.innerHTML = `
-                  /* NUCLEAR FIX v3: REMOVE HEADER BAR COMPLETELY */
+                  /* NUCLEAR FIX v4: CLEANUP & REBRANDING */
                   html, body {
                       background-color: #0f172a !important; /* Cyber Dark */
                       margin: 0 !important;
                       padding: 0 !important;
                       overflow-x: hidden !important;
                   }
-                  
-                  /* DETACHED TITLE STYLING */
-                  #lemue-detached-title {
-                      position: absolute;
-                      top: 40px; /* Positioned where the header was */
-                      left: 0;
-                      right: 0;
-                      text-align: center;
-                      width: 100%;
-                      color: #4ade80;
-                      font-size: 24px;
-                      font-weight: bold;
-                      z-index: 1000;
-                      pointer-events: none;
-                  }
 
-                  /* HIDE ORIGINAL HEADER COMPLETELY */
+                  /* HIDE ORIGINAL HEADER ONLY */
                   div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"], 
-                  .screen-header-left-title, .screen-title, .right-wrapper,
+                  .screen-header-left-title, .screen-title,
                   div[class*="top"], .el-card__header {
                       display: none !important;
                       opacity: 0 !important;
@@ -175,9 +215,11 @@
                       display: none !important;
                   }
 
-                  /* Fix Title Spacing - Push Inputs Down based on new detached title */
+                  /* DO NOT hide .right-wrapper (contains login form & title) */
+
+                  /* Fix Title Spacing - Push Inputs Down slightly if needed */
                   div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
-                      margin-top: 80px !important; /* Adjusted for detached title */
+                      margin-top: 20px !important; 
                   }
                   
                   /* Login Button Green */
