@@ -103,17 +103,34 @@
         // 3. Text Replacement & CSS Injection
         const style = document.createElement('style');
         style.innerHTML = `
-              .screen-header-left-title, .screen-title { 
-                  visibility: hidden !important; 
-                  position: relative !important;
+              /* Hide Original SVG Logo */
+              svg[class*="left-img"], svg.index-cssmodule__left-img--yTWQ { 
+                  display: none !important; 
               }
-              .screen-header-left-title::after, .screen-title::after {
-                  visibility: visible !important;
-                  content: "${BRAND_TITLE}" !important;
-                  position: absolute !important;
-                  left: 0 !important;
-                  top: 0 !important;
-                  color: #fff !important; 
+              /* Hide Original SVG Title */
+              svg[class*="onefish-logo"], svg.index-cssmodule__onefish-logo-1_LSp {
+                  display: none !important;
+              }
+              /* Force Login Button Color to Green */
+              div[class*="btn"], .index-cssmodule__btn-1i8f8 {
+                  background-color: #4ade80 !important;
+                  border-color: #4ade80 !important;
+              }
+              /* Ensure inserted branding looks good */
+              .custom-branding-title {
+                  font-size: 24px;
+                  font-weight: bold;
+                  color: #4ade80 !important;
+                  text-align: center;
+                  display: block;
+                  margin-bottom: 20px;
+                  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+              }
+              /* Custom Bear Logo Style */
+              .custom-bear-logo {
+                  max-width: 400px;
+                  margin: 0 auto;
+                  display: block;
               }
             `;
         document.head.appendChild(style);
@@ -121,51 +138,58 @@
         const replaceBranding = () => {
           if (!document.body) return;
 
-          // 4. Login Page Specifics (Logo & Title)
-          // Replace Trident Logo (or any Data URI / Logo image on login)
+          // A: Inject Custom Bear Logo (Replacer for SVG)
+          // Selector for the container of the left image
+          const leftLogoSvg = document.querySelector('svg.index-cssmodule__left-img--yTWQ');
+          if (leftLogoSvg && leftLogoSvg.parentElement && !leftLogoSvg.parentElement.querySelector('.custom-bear-logo')) {
+            const newLogo = document.createElement('img');
+            newLogo.src = "/assets/logo_hb.png";
+            newLogo.className = "custom-bear-logo";
+            leftLogoSvg.parentElement.appendChild(newLogo);
+          }
+
+          // B: Inject Custom Title (Replacer for SVG Title)
+          const titleSvg = document.querySelector('svg.index-cssmodule__onefish-logo-1_LSp');
+          if (titleSvg && titleSvg.parentElement && !titleSvg.parentElement.querySelector('.custom-branding-title')) {
+            const newTitle = document.createElement('div');
+            newTitle.innerText = "Honey Scan Active Defense Honeypot Platform";
+            newTitle.className = "custom-branding-title";
+            titleSvg.parentElement.appendChild(newTitle);
+          }
+
+          // C: General Image Replacement (Sanity Check for any other leaks, but PROTECT CAPTCHA)
           const images = document.querySelectorAll('img');
           images.forEach(img => {
-            // Target images on the login page
-            if (img.parentElement.className.includes("login") || document.location.hash.includes("login") || document.location.pathname.includes("login")) {
-              // Check for "logo" filename OR base64 data URI (Trident is often base64)
-              if (!img.dataset.patched && (img.src.includes('logo') || img.src.includes('png') || img.src.includes('svg') || img.src.startsWith('data:image'))) {
+            // CRITICAL: IGNORE CAPTCHA IMAGES
+            // Exclude if class contains 'verify' or src contains 'captcha' or 'verify'
+            if (img.className.includes('verify') || img.className.includes('index-cssmodule__verify-OnqDS')) return;
+
+            // If we are on login page, replace other non-patched logos
+            if (img.parentElement.className.includes("login") || document.location.pathname.includes("login")) {
+              if (!img.dataset.patched && (img.src.includes('logo') || img.src.includes('trident'))) {
                 img.src = "/assets/logo_hb.png";
-                img.style.maxWidth = "200px";
                 img.dataset.patched = "true";
               }
             }
           });
 
-          // Replace Login Text & Color
+          // D: Text Node Replacements (Footer etc)
           const treeWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
           while (treeWalker.nextNode()) {
             const node = treeWalker.currentNode;
-
-            // Check for HFish Title text nodes
-            if (node.nodeValue.includes("HFish") || node.nodeValue.includes("Honeypot Platform")) {
-              // Change text to full branding
-              // Use a regex to be safer against partial matches if needed, but simple replace works for now
-              if (node.nodeValue.includes("HFish")) {
-                node.nodeValue = "Honey Scan Active Defense Honeypot Platform";
-              }
-
-              // Force Green Color on parent
-              if (node.parentElement) {
-                node.parentElement.style.color = "#4ade80"; // Cyber Green
-                node.parentElement.style.fontWeight = "bold";
-                // Optional: Add a text shadow for better readability
-                node.parentElement.style.textShadow = "0 0 10px rgba(74, 222, 128, 0.3)";
+            if (node.nodeValue.includes("HFish")) {
+              if (node.parentElement && node.parentElement.tagName !== "SCRIPT" && node.parentElement.tagName !== "STYLE") {
+                node.nodeValue = node.nodeValue.replace("HFish", "Honey Scan Active Defense");
               }
             }
-
-            // General Title Replacement (Document title etc is handled elsewhere, this is for body text)
             if (node.nodeValue.includes(OLD_TITLE_TEXT)) {
               node.nodeValue = node.nodeValue.replace(OLD_TITLE_TEXT, BRAND_TITLE);
             }
           }
         };
 
-        setInterval(replaceBranding, 500);
+        // Run aggressively to handle React re-renders
+        setInterval(replaceBranding, 200);
       } catch (e) {
         console.error("Critical Branding Script Error:", e);
       }
