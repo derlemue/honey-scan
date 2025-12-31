@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.5] - 2025-12-31
+
+### Fixed
+- 🐛 **UI**: Fixed Login Button color to "Cyber Green" (`#4ade80`).
+- 🎨 **Assets**: Replaced Bear Logo with user-provided transparent version (via `logo_bear.png`).
+
 ## [3.5.4] - 2025-12-31
 
 ### Fixed
