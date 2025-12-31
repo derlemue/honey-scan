@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.4] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Refined Title Spacing & Logo.
+    - Added spacing between the "Honey Scan" title and input fields.
+    - Enforced `aspect-ratio: 1/1` on Bear Logo to prevent clipping and ensuring a perfect circle.
+
 ## [3.6.3] - 2025-12-31
 
 ### Changed
