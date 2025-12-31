@@ -149,16 +149,22 @@
                       content: "${BRAND_TITLE}" !important;
                       position: absolute !important;
                       left: 0 !important;
-                      top: -25px !important; /* Increased spacing (moved up) */
+                      top: -40px !important; /* Adjusted for better spacing */
                       color: #4ade80 !important; 
-                      font-size: 28px !important; /* Date requested larger font */
+                      font-size: 28px !important; 
                       font-weight: bold !important;
                   }
-                  /* Login Button Green - Target DIV and BUTTON */
+
+                  /* Fix Title Spacing - Push Inputs Down */
+                  div[class*="index-cssmodule__login-wrapper"] {
+                      margin-top: 40px !important;
+                  }
+                  
+                  /* Login Button Green */
                   div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
                       background-color: #4ade80 !important;
                       border-color: #4ade80 !important;
-                      color: #0f172a !important; /* Dark text */
+                      color: #0f172a !important; 
                       font-weight: bold !important;
                   }
                   div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover {
@@ -169,8 +175,8 @@
                   /* Footer IPv6 Button Green */
                   .index-cssmodule__ipv6-1nOCE {
                       background-color: #4ade80 !important;
-                      color: #ffffff !important; /* White text */
-                      font-weight: bold !important; /* Bold text */
+                      color: #ffffff !important; 
+                      font-weight: bold !important; 
                       border-color: #4ade80 !important; 
                       border: 1px solid #4ade80 !important;
                   }
@@ -182,8 +188,11 @@
                       max-width: 350px !important;
                       display: block;
                       margin: 0 auto;
-                      padding: 10px !important; /* Prevent clipping */
+                      padding: 10px !important; 
                       box-sizing: border-box !important;
+                      aspect-ratio: 1 / 1 !important; /* Force Square */
+                      object-fit: contain !important; /* Prevent Clipping */
+                      height: auto !important;
                   }
             `;
                 document.head.appendChild(style);
