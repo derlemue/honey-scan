@@ -140,46 +140,58 @@
                 const style = document.createElement('style');
                 style.id = 'branding-style';
                 style.innerHTML = `
-                  /* General Layout Fixes */
-                  body {
+                  /* NUCLEAR FIX: Force Dark Background & Reset */
+                  html, body {
+                      background-color: #0f172a !important; /* Cyber Dark */
                       margin: 0 !important;
                       padding: 0 !important;
+                      overflow-x: hidden !important;
                   }
                   
                   /* Header & Title Fixes */
                   .screen-header-left-title, .screen-title { 
                       visibility: hidden !important; 
-                      position: absolute !important; /* Force absolute to span screen if needed */
+                      position: absolute !important; 
                       left: 0 !important;
                       right: 0 !important;
                       top: 0 !important;
                       width: 100% !important;
                       text-align: center !important;
                       z-index: 100 !important;
+                      pointer-events: none !important; /* Let clicks pass through if needed */
                   }
-                  /* Aggressive Header Transparency */
-                  div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"] {
+
+                  /* Aggressive Header Transparency & Removal of White Backgrounds */
+                  div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"],
+                  div[class*="top"], .el-card__header {
                       background: transparent !important;
                       background-color: transparent !important;
                       box-shadow: none !important;
+                      border: none !important;
+                  }
+                  
+                  /* Ensure children of header don't have white background (except buttons) */
+                  div[class*="header"] > div, header > div, .el-header > div {
+                      background: transparent !important;
                       border: none !important;
                   }
 
                   .screen-header-left-title::after, .screen-title::after {
                       visibility: visible !important;
                       content: "${BRAND_TITLE}" !important;
-                      display: block !important; /* Ensure block for centering */
-                      position: relative !important; /* Relative to the absolutely positioned parent */
+                      display: block !important; 
+                      position: relative !important; 
                       text-align: center !important;
                       color: #4ade80 !important; 
-                      font-size: 24px !important; /* Reduced to 24px */
+                      font-size: 24px !important; 
                       font-weight: bold !important;
                       white-space: nowrap !important;
-                      margin-top: 10px !important; /* Slight adjustments */
+                      margin-top: 15px !important; 
+                      pointer-events: auto !important;
                   }
 
                   /* Fix Title Spacing - Push Inputs Down */
-                  div[class*="index-cssmodule__login-wrapper"] {
+                  div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
                       margin-top: 50px !important; 
                   }
                   
