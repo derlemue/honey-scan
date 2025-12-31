@@ -153,6 +153,120 @@
   <script>
     __REACT_DEVTOOLS_GLOBAL_HOOK__ = parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
   </script>
+  <script>
+    // --- Advanced Interceptor for Flags & Location ---
+    (function () {
+      // Prevent multiple injections
+      if (window.__SecMonitorIntercepted) return;
+      window.__SecMonitorIntercepted = true;
+
+      console.log("%c [SecMonitor] Initializing API Interceptors...", "color: cyan; font-weight: bold;");
+
+      const COUNTRY_MAP = {
+        "United States": "us", "USA": "us", "America": "us",
+        "China": "cn", "CN": "cn",
+        "Germany": "de", "Deutschland": "de",
+        "Great Britain": "gb", "Britain": "gb", "UK": "gb", "United Kingdom": "gb",
+        "Russia": "ru", "Russian Federation": "ru",
+        "Netherlands": "nl", "The Netherlands": "nl",
+        "France": "fr",
+        "Canada": "ca",
+        "India": "in",
+        "Japan": "jp",
+        "South Korea": "kr", "Korea": "kr", "Republic of Korea": "kr",
+        "Australia": "au",
+        "Vietnam": "vn", "Viet Nam": "vn",
+        "Indonesia": "id",
+        "Brazil": "br", "Brasil": "br",
+        "Italy": "it",
+        "Lithuania": "lt",
+        "Singapore": "sg",
+        "Spain": "es",
+        "Poland": "pl",
+        "Sweden": "se",
+        "Ukraine": "ua",
+        "Romania": "ro",
+        "Unknown": "unknown"
+      };
+
+      const originalXHR = window.XMLHttpRequest;
+
+      function newXHR() {
+        const xhr = new originalXHR();
+
+        const originalOpen = xhr.open;
+        xhr.open = function (method, url) {
+          this._url = url;
+          return originalOpen.apply(this, arguments);
+        };
+
+        const originalResponseTextDescriptor = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'responseText');
+        Object.defineProperty(xhr, 'responseText', {
+          get: function () {
+            let originalText = "";
+            try {
+              originalText = originalResponseTextDescriptor.get.call(this);
+            } catch (e) { return ""; }
+
+            if (this._url && originalText) {
+              try {
+                // 1. Fix Missing Flags in "Recent Attacks" (/v1/index/latest_info)
+                if (this._url.indexOf('/v1/index/latest_info') !== -1) {
+                  const data = JSON.parse(originalText);
+                  if (data && data.data) {
+                    data.data.forEach(item => {
+                      if (!item.source_ip_country_no) {
+                        const name = item.source_ip_country_name_en;
+                        // Fuzzy lookup
+                        let code = COUNTRY_MAP[name] || COUNTRY_MAP[name.split(' ')[0]];
+                        if (code) {
+                          item.source_ip_country_no = code;
+                        }
+                      }
+                      // Specific Override
+                      if (item.source_ip_country_name_en === "Netherlands") item.source_ip_country_no = "nl";
+                      if (item.source_ip_country_name_en === "Lithuania") item.source_ip_country_no = "lt";
+                    });
+                    return JSON.stringify(data);
+                  }
+                }
+
+                // 2. Fix Built-in Node Location (/v1/index/map)
+                if (this._url.indexOf('/v1/index/map') !== -1) {
+                  const data = JSON.parse(originalText);
+                  if (data && data.data && data.data.attack_map) {
+                    data.data.attack_map.forEach(node => {
+                      // Identify the main node (usually "Built-in Nodes" or checks by internal IP)
+                      if (node.attacked_client_name.includes("Built-in") || node.country_name === "美国") {
+                        node.country_name_en = "Germany";
+                        node.country_name = "德国";
+                        node.province_name = "Sachsen";
+                        node.city_name = "Falkenstein";
+                        node.latitude = "50.477";
+                        node.longitude = "12.373";
+                        node.country_code = "DEU";
+                      }
+                    });
+                    return JSON.stringify(data);
+                  }
+                }
+              } catch (e) {
+                // console.warn("Patch error", e);
+              }
+            }
+            return originalText;
+          }
+        });
+
+        return xhr;
+      }
+
+      Object.assign(newXHR, originalXHR);
+      newXHR.prototype = originalXHR.prototype;
+      window.XMLHttpRequest = newXHR;
+      console.log("%c [SecMonitor] API Interceptors Active.", "color: green; font-weight: bold;");
+    })();
+  </script>
   <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
   <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
   <script type="text/javascript" src="/assets/app.6539b5af.js"></script>
