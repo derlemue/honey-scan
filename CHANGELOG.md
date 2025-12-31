@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.3] - 2025-12-31
+
+### Changed
+- 🎨 **Branding**: Major UI overhaul for the Login Screen.
+    - Replaced the Trident character with the **Honey-Scan Bear** logo.
+    - Updated Title to "**Honey Scan Active Defense**" (Green).
+- 📝 **Documentation**: Synchronized all README languages (EN/DE/UA) with the new logo and versioning.
+
 ## [3.5.2] - 2025-12-31
 
 ### Fixed

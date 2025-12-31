@@ -3,7 +3,10 @@
 # 🍯 Honey-Scan
 ### Екосистема Активного Захисту
 
-![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)
+<img src="docs/img/logo.png" width="200">
+
+
+![Version](https://img.shields.io/badge/version-3.5.3-blue.svg)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)

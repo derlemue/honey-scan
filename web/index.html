@@ -120,14 +120,48 @@
 
         const replaceBranding = () => {
           if (!document.body) return;
+
+          // 4. Login Page Specifics (Logo & Title)
+          // Replace Trident Logo
+          const images = document.querySelectorAll('img');
+          images.forEach(img => {
+            // Identify trident character by typical placement or src (usually in a login-box)
+            // The old logo often has 'logo' in the name or is the largest image on login
+            if (!img.dataset.patched && (img.src.includes('logo') || img.src.includes('png') || img.src.includes('svg'))) {
+              // Heuristic: If it's a prominent image on the login page (not a detailed check, assuming mostly just branding)
+              // But better to be precise if possible. For now, let's target the likely container
+              if (img.parentElement.className.includes("login") || document.location.hash.includes("login") || document.location.pathname.includes("login")) {
+                img.src = "/assets/logo_hb.png";
+                img.style.maxWidth = "200px"; // Adjust size if needed
+                img.dataset.patched = "true";
+              }
+            }
+          });
+
+          // Replace Login Text "HFish Phoneypot Platform" -> "Honey Scan Active Defense..."
+          // Change Red to Green
           const treeWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
           while (treeWalker.nextNode()) {
             const node = treeWalker.currentNode;
+
+            // Check for HFish Title
+            if (node.nodeValue.includes("HFish") || node.nodeValue.includes("Honeypot Platform")) {
+              // Parent element color change
+              if (node.parentElement) {
+                const style = window.getComputedStyle(node.parentElement);
+                // If text is red (approx), change to green
+                // HFish red is often around #f5222d or rgb(245, 34, 45)
+                // Or simply force green if it contains 'HFish'
+                node.parentElement.style.color = "#4ade80"; // Cyber Green
+                node.parentElement.style.fontWeight = "bold";
+              }
+              node.nodeValue = node.nodeValue
+                .replace("HFish", "Honey Scan Active Defense")
+                .replace("Honeypot Platform", "Honeypot Platform"); // Just ensuring consistency
+            }
+
             if (node.nodeValue.includes(OLD_TITLE_TEXT)) {
               node.nodeValue = node.nodeValue.replace(OLD_TITLE_TEXT, BRAND_TITLE);
-            }
-            if (node.nodeValue.includes("HFish")) {
-              node.nodeValue = node.nodeValue.replace("HFish", "lemueIO SecMonitor");
             }
           }
         };
