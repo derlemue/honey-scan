@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.1] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Refined visual weighting.
+    - Increased Bear Logo width to 80% (max 350px).
+    - Fixed "IPv6" Footer Button having a red border (forced to Green).
+
 ## [3.6.0] - 2025-12-31
 
 ### Changed

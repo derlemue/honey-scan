@@ -169,13 +169,15 @@
                   .index-cssmodule__ipv6-1nOCE {
                       background-color: #4ade80 !important;
                       color: #0f172a !important;
+                      border-color: #4ade80 !important; /* Fix red border */
+                      border: 1px solid #4ade80 !important;
                   }
 
                   /* Fix JPG Logo Transparency & Size */
                   img[src*="logo_bear.png"] {
                       mix-blend-mode: screen !important;
-                      width: 60% !important; /* Resize to 60% */
-                      max-width: 250px !important; /* Constraint */
+                      width: 80% !important; /* Resize to 80% */
+                      max-width: 350px !important; /* Increased constraint */
                       display: block;
                       margin: 0 auto;
                   }
