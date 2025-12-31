@@ -2,340 +2,176 @@
 <html>
 
 <head>
-  <meta charset="utf-8" />
-  <title>lemueIO SecMonitor</title>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="description" content="" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="/assets/hfish-ui.1.2.12.css" />
-  <style type="text/css">
-    .main-loading-wrap {
-      text-align: center;
-      margin-top: 100px;
-      color: rgba(17, 18, 34, 0.6);
-      font-size: 12px;
-    }
-
-    .lds-dual-ring {
-      display: inline-block;
-      width: 30px;
-      height: 30px;
-      margin-bottom: 10px;
-    }
-
-    .lds-dual-ring:after {
-      content: " ";
-      display: block;
-      width: 24px;
-      height: 24px;
-      margin: 8px;
-      border-radius: 50%;
-      border: 2px solid rgba(17, 18, 34, 0.8);
-      border-color: rgba(17, 18, 34, 0.8) transparent rgba(17, 18, 34, 0.8) transparent;
-      animation: lds-dual-ring 1.2s linear infinite;
-      animation: lds-dual-ring 1.2s linear infinite;
-    }
-
-    @keyframes lds-dual-ring {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-  </style>
-  <!-- <link rel="stylesheet" href="/styles/index.css"> -->
-  <script type="text/javascript">
-    if (!('remove' in Element.prototype)) {
-      Element.prototype.remove = function () {
-        if (this.parentNode) {
-          this.parentNode.removeChild(this);
+    <meta charset="utf-8" />
+    <title>lemueIO SecMonitor</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="/assets/hfish-ui.1.2.12.css" />
+    <style type="text/css">
+        .main-loading-wrap {
+            text-align: center;
+            margin-top: 100px;
+            color: rgba(17, 18, 34, 0.6);
+            font-size: 12px;
         }
-      };
-    }
 
-    // PERMANENT BRANDING & ASSET FIX
-    // WRAPPED IN DOMContentLoaded TO PREVENT 'document.body is null' ERROR
-    window.addEventListener('DOMContentLoaded', () => {
-      try {
-        const BRAND_TITLE = "lemueIO SecMonitor";
+        .lds-dual-ring {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            margin-bottom: 10px;
+        }
 
-        // 1. Force Document Title
-        const forceTitle = () => {
-          if (document.title !== BRAND_TITLE) {
-            document.title = BRAND_TITLE;
-          }
-        };
-        setInterval(forceTitle, 1000);
+        .lds-dual-ring:after {
+            content: " ";
+            display: block;
+            width: 24px;
+            height: 24px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 2px solid rgba(17, 18, 34, 0.8);
+            border-color: rgba(17, 18, 34, 0.8) transparent rgba(17, 18, 34, 0.8) transparent;
+            animation: lds-dual-ring 1.2s linear infinite;
+            animation: lds-dual-ring 1.2s linear infinite;
+        }
 
-        // 2. Inject Flag Icons (Fixes '?' issue)
-        fetch('/assets/flags.svg')
-          .then(r => r.text())
-          .then(svgContent => {
-            const div = document.createElement('div');
-            div.style.display = 'none';
-            div.innerHTML = svgContent;
-            const symbols = div.querySelectorAll('symbol');
-            symbols.forEach(sym => {
-              const countryCode = sym.id.replace('flag-', '');
-              const newId = 'icon-' + countryCode;
-              if (!document.getElementById(newId)) {
-                const clone = sym.cloneNode(true);
-                clone.id = newId;
-                div.querySelector('svg').appendChild(clone);
-              }
-            });
-            if (document.body) {
-              document.body.insertBefore(div, document.body.firstChild);
+        @keyframes lds-dual-ring {
+            0% {
+                transform: rotate(0deg);
             }
-          }).catch(e => console.error("Flag injection failed", e));
 
-        // 3. REMOVED OFFENDING CSS (White Bar Issue)
-        // We handle title replacement via JS only now.
-
-        // 4. AGGRESSIVE BRANDING PATCHER
-        // Runs explicitly on interval to fight Hydration/Re-renders
-        const patchBrandingAggressive = () => {
-          // A. Logo Replacement (Left Side)
-          // Look for the large container on the left that holds the SVG
-          const leftWrapper = document.querySelector('div[class*="left-wrapper"]');
-          if (leftWrapper) {
-            // Try to find the inner SVG container
-            const svgs = leftWrapper.querySelectorAll('svg');
-            svgs.forEach(svg => {
-              // If we find the HFish SVG (Trident)
-              if (svg.innerHTML.includes('#hfish') || svg.innerHTML.includes('hfish')) {
-                const container = svg.parentElement;
-                // Replace content if not already patched
-                if (container && !container.dataset.patched) {
-                  container.innerHTML = '';
-                  const newLogo = document.createElement('img');
-                  newLogo.src = '/assets/logo_bear.png';
-                  newLogo.style.width = '100%';
-                  newLogo.style.height = '100%';
-                  newLogo.style.maxWidth = '400px';
-                  newLogo.style.maxHeight = '400px';
-                  newLogo.style.objectFit = 'contain';
-                  // Center it
-                  newLogo.style.display = 'block';
-                  newLogo.style.margin = '0 auto';
-
-                  container.appendChild(newLogo);
-                  container.dataset.patched = 'true';
-                  // Ensure container layout supports centering
-                  container.style.display = 'flex';
-                  container.style.justifyContent = 'center';
-                  container.style.alignItems = 'center';
-                }
-              }
-            });
-          }
-
-          // B. Text/Right Logo Replacement
-          // Look for the HFish text/logo above the login form
-          const rightWrapper = document.querySelector('div[class*="right-wrapper"]');
-          if (rightWrapper) {
-            // Find SVGs in the right wrapper
-            const rightSvgs = rightWrapper.querySelectorAll('svg');
-            rightSvgs.forEach(svg => {
-              // This targets the HFish text SVG (usually id="hfish-logo-en")
-              if (svg.innerHTML.includes('hfish') || svg.innerHTML.includes('logo')) {
-                if (!svg.dataset.patched) {
-                  // Replace SVG with our Title Text
-                  const titleDiv = document.createElement('div');
-                  titleDiv.innerText = "Honey Scan Active Defense";
-                  titleDiv.style.color = "#4ade80"; // Cyber Green
-                  titleDiv.style.fontSize = "24px";
-                  titleDiv.style.fontWeight = "bold";
-                  titleDiv.style.textAlign = "center";
-                  titleDiv.style.marginBottom = "24px";
-
-                  svg.replaceWith(titleDiv);
-                  titleDiv.dataset.patched = 'true';
-                }
-              }
-            });
-          }
-
-          // C. Fallback Text Replacement (TreeWalker)
-          // Only strictly replace "HFish ..." text nodes if they appear
-          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-          let node;
-          while (node = walker.nextNode()) {
-            if (node.nodeValue && (node.nodeValue.includes("HFish") || node.nodeValue.includes("Honeypot Platform") || node.nodeValue.includes("XX Company"))) {
-              node.nodeValue = node.nodeValue.replace(/HFish|XX Company/g, "Honey Scan Active Defense").replace(/Honeypot Platform/g, "");
-              if (node.parentElement) {
-                node.parentElement.style.color = "#4ade80";
-              }
+            100% {
+                transform: rotate(360deg);
             }
-          }
-        };
-
-        // Run immediately, then frequently
-        patchBrandingAggressive();
-        setInterval(patchBrandingAggressive, 200); // Check every 200ms forever to catch any re-renders
-      } catch (e) {
-        console.error("Critical Branding Script Error:", e);
-      }
-    }); 
-  </script>
-  <link rel="shortcut icon" href="/assets/favicon.ico">
+        }
+    </style>
+    <!-- <link rel="stylesheet" href="/styles/index.css"> -->
+    <script type="text/javascript">
+        if (!('remove' in Element.prototype)) {
+            Element.prototype.remove = function () {
+                if (this.parentNode) {
+                    this.parentNode.removeChild(this);
+                }
+            };
+        }
+    </script>
+    <link rel="shortcut icon" href="/assets/favicon.ico">
 </head>
-<script>
-  // --- Advanced Interceptor for Flags & Location (XHR + Fetch) ---
-  // Moved to HEAD to ensure early execution before any other network requests
-  (function () {
-    if (window.__SecMonitorIntercepted) return;
-    window.__SecMonitorIntercepted = true;
-
-    console.log("%c [SecMonitor] Initializing API Interceptors (XHR + Fetch)...", "color: cyan; font-weight: bold;");
-
-    const COUNTRY_MAP = {
-      "United States": "us", "USA": "us", "America": "us",
-      "China": "cn", "CN": "cn",
-      "Germany": "de", "Deutschland": "de",
-      "Great Britain": "gb", "Britain": "gb", "UK": "gb", "United Kingdom": "gb",
-      "Russia": "ru", "Russian Federation": "ru",
-      "Netherlands": "nl", "The Netherlands": "nl",
-      "France": "fr",
-      "Canada": "ca",
-      "India": "in",
-      "Japan": "jp",
-      "South Korea": "kr", "Korea": "kr", "Republic of Korea": "kr",
-      "Australia": "au",
-      "Vietnam": "vn", "Viet Nam": "vn",
-      "Indonesia": "id",
-      "Brazil": "br", "Brasil": "br",
-      "Italy": "it",
-      "Lithuania": "lt",
-      "Singapore": "sg",
-      "Spain": "es",
-      "Poland": "pl",
-      "Sweden": "se",
-      "Ukraine": "ua",
-      "Romania": "ro",
-      "Uzbekistan": "uz",
-      "Belgium": "be", "Belgique": "be",
-      "Unknown": "unknown"
-    };
-
-    // --- Helper to patching data ---
-    function patchData(url, data) {
-      try {
-        // 1. Fix Missing Flags (/v1/index/latest_info)
-        if (url.indexOf('/v1/index/latest_info') !== -1) {
-          if (data && data.data) {
-            data.data.forEach(item => {
-              if (!item.source_ip_country_no) {
-                const name = item.source_ip_country_name_en;
-                let code = COUNTRY_MAP[name] || COUNTRY_MAP[name.split(' ')[0]];
-                if (code) item.source_ip_country_no = code;
-              }
-              if (item.source_ip_country_name_en === "Netherlands") item.source_ip_country_no = "nl";
-              if (item.source_ip_country_name_en === "Lithuania") item.source_ip_country_no = "lt";
-            });
-          }
-        }
-
-        // 2. Fix Built-in Node Location (/v1/index/map)
-        if (url.indexOf('/v1/index/map') !== -1) {
-          if (data && data.data && data.data.attack_map) {
-            data.data.attack_map.forEach(node => {
-              // Patch ANY Built-in node or USA node that should be Germany
-              if (node.attacked_client_name.includes("Built-in") || node.attacked_client_name.includes("hfish") || node.country_name === "美国" || node.country_name_en === "United States") {
-                node.country_name_en = "Germany";
-                node.country_name = "德国";
-                node.province_name = "Sachsen";
-                node.city_name = "Falkenstein";
-                node.latitude = "50.477";
-                node.longitude = "12.373";
-                node.country_code = "DEU";
-              }
-            });
-          }
-        }
-      } catch (e) { console.warn("Patch logic error", e); }
-      return data;
-    }
-
-    // --- Patch Fetch ---
-    const originalFetch = window.fetch;
-    window.fetch = async function (input, init) {
-      const response = await originalFetch(input, init);
-      const url = (typeof input === 'string') ? input : input.url;
-
-      // Only intercept specific endpoints
-      if (url.indexOf('/v1/index/latest_info') !== -1 || url.indexOf('/v1/index/map') !== -1) {
-        const clone = response.clone();
-        try {
-          const data = await clone.json();
-          const patched = patchData(url, data);
-          const blob = new Blob([JSON.stringify(patched)], { type: 'application/json' });
-          const newResponse = new Response(blob, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers
-          });
-          Object.defineProperty(newResponse, 'url', { value: response.url });
-          return newResponse;
-        } catch (e) {
-          return response;
-        }
-      }
-      return response;
-    };
-
-    // --- Patch XHR (Backup) ---
-    const originalXHR = window.XMLHttpRequest;
-    function newXHR() {
-      const xhr = new originalXHR();
-      const originalOpen = xhr.open;
-      xhr.open = function (method, url) {
-        this._url = url;
-        return originalOpen.apply(this, arguments);
-      };
-      const originalResponseTextDescriptor = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'responseText');
-      Object.defineProperty(xhr, 'responseText', {
-        get: function () {
-          let originalText = "";
-          try { originalText = originalResponseTextDescriptor.get.call(this); } catch (e) { return ""; }
-          if (this._url && originalText) {
-            try {
-              const data = JSON.parse(originalText);
-              const patched = patchData(this._url, data);
-              return JSON.stringify(patched);
-            } catch (e) { }
-          }
-          return originalText;
-        }
-      });
-      return xhr;
-    }
-    Object.assign(newXHR, originalXHR);
-    newXHR.prototype = originalXHR.prototype;
-    window.XMLHttpRequest = newXHR;
-
-    console.log("%c [SecMonitor] API Interceptors (Fetch + XHR) Active.", "color: green; font-weight: bold;");
-  })();
-</script>
 
 <body>
-  <div id="app">
-    <div class="main-loading-wrap">
-      <div class="spinner-wrapper">
-        <div class="lds-dual-ring"></div>
-        <div class="spinner-txt">加载中...</div>
-      </div>
+    <div id="app">
+        <div class="main-loading-wrap">
+            <div class="spinner-wrapper">
+                <div class="lds-dual-ring"></div>
+                <div class="spinner-txt">加载中...</div>
+            </div>
+        </div>
     </div>
-  </div>
-  <script>
-    __REACT_DEVTOOLS_GLOBAL_HOOK__ = parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-  </script>
-  <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
-  <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
-  <script type="text/javascript" src="/assets/app.6539b5af.js"></script>
+    <script>
+        __REACT_DEVTOOLS_GLOBAL_HOOK__ = parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    </script>
+    <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
+    <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
+    <script type="text/javascript" src="/assets/app.6539b5af.js"></script>
+    <script>
+        // Branding Configuration
+        const BRAND_TITLE = "Honey Scan Active Defense";
+        const LOGO_PATH = '/assets/logo_bear.png';
+
+        const patchBrandingAggressive = () => {
+            // 1. Title Replacement
+            if (document.title !== "lemueIO SecMonitor") {
+                document.title = "lemueIO SecMonitor";
+            }
+
+            // 2. Logo Replacement (Left Side - SVG Wrapper)
+            const leftWrapper = document.querySelector('div[class*="left-wrapper"]');
+            if (leftWrapper) {
+                const svgs = leftWrapper.querySelectorAll('svg');
+                svgs.forEach(svg => {
+                    // Check if it's the Trident logo by content or context
+                    if (svg.innerHTML.includes('#hfish') || svg.innerHTML.includes('hfish')) {
+                        const container = svg.parentElement;
+                        // Ensure we are targeted and don't wipe the form
+                        if (container && !container.dataset.patched && !container.querySelector('input')) {
+                            container.innerHTML = '';
+                            const newLogo = document.createElement('img');
+                            newLogo.src = LOGO_PATH;
+                            newLogo.style.maxWidth = '100%'; // Fit container
+                            newLogo.style.height = 'auto';
+                            container.appendChild(newLogo);
+                            container.dataset.patched = 'true';
+                        }
+                    }
+                });
+            }
+
+            // 3. Text Logo Replacement (Right Side / Top)
+            const rightWrapper = document.querySelector('div[class*="right-wrapper"]');
+            if (rightWrapper) {
+                const rightSvgs = rightWrapper.querySelectorAll('svg');
+                rightSvgs.forEach(svg => {
+                    if (svg.innerHTML.includes('hfish') || svg.innerHTML.includes('logo')) {
+                        if (!svg.dataset.patched) {
+                            const titleDiv = document.createElement('div');
+                            titleDiv.innerText = BRAND_TITLE;
+                            titleDiv.style.color = "#4ade80"; // Cyber Green
+                            titleDiv.style.fontSize = "20px";
+                            titleDiv.style.fontWeight = "bold";
+                            svg.replaceWith(titleDiv);
+                            titleDiv.dataset.patched = 'true';
+                        }
+                    }
+                });
+            }
+
+            // 4. General Text Replacement (Fallback)
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.nodeValue && (node.nodeValue.includes("HFish") || node.nodeValue.includes("Honeypot Platform") || node.nodeValue.includes("XX Company"))) {
+                    node.nodeValue = node.nodeValue.replace(/HFish|XX Company/g, "lemueIO SecMonitor").replace(/Honeypot Platform/g, BRAND_TITLE);
+                }
+            }
+
+            // 5. CSS Injection for persistence and Login Button
+            if (!document.getElementById('branding-style')) {
+                const style = document.createElement('style');
+                style.id = 'branding-style';
+                style.innerHTML = `
+                  .screen-header-left-title, .screen-title { 
+                      visibility: hidden !important; 
+                      position: relative !important;
+                  }
+                  .screen-header-left-title::after, .screen-title::after {
+                      visibility: visible !important;
+                      content: "${BRAND_TITLE}" !important;
+                      position: absolute !important;
+                      left: 0 !important;
+                      top: 0 !important;
+                      color: #4ade80 !important; 
+                  }
+                  /* Login Button Green */
+                  button[class*="index-cssmodule__btn"], .el-button--primary {
+                      background-color: #4ade80 !important;
+                      border-color: #4ade80 !important;
+                      color: #0f172a !important; /* Dark text */
+                      font-weight: bold !important;
+                  }
+                  button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover {
+                      background-color: #22c55e !important;
+                      border-color: #22c55e !important;
+                  }
+            `;
+                document.head.appendChild(style);
+            }
+        };
+
+        // Run aggressively
+        patchBrandingAggressive();
+        setInterval(patchBrandingAggressive, 200);
+    </script>
 </body>
 
 </html>
