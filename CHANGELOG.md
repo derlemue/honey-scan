@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.0] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Refined Login Screen aesthetics.
+    - Resized Bear Logo to 60% with centered alignment.
+    - Increased "Honey Scan Active Defense" title font size and adjusted spacing.
+    - Updated "IPv6" footer button to Cyber Green (`#4ade80`).
+
 ## [3.5.5] - 2025-12-31
 
 ### Fixed
