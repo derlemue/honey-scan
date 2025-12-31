@@ -124,16 +124,16 @@
             // 1. Force Logo Replacement (Target SVG content directly)
             const svgs = document.querySelectorAll('svg');
             svgs.forEach(svg => {
+              // CASE A: The Trident Logo (Left Side)
               if (svg.innerHTML.includes('#hfish') || svg.innerHTML.includes('hfish')) {
-                // Found the trident! Find its main container (usually 1 or 2 levels up)
                 let container = svg.parentElement;
                 let depth = 0;
 
-                // Walk up to find a container with substantial size (the logo wrapper)
-                // Safety: Stop if we hit body, max depth, or a container that is too wide (likely layout wrapper)
+                // Walk up to find the main logo wrapper
                 while (container && container !== document.body && depth < 5) {
                   const rect = container.getBoundingClientRect();
-                  if (rect.width > 50 && rect.width < 500) {
+                  // Width check: Main Logo Wrapper is usually >600px
+                  if (rect.width > 50 && rect.width < 1000 && !container.classList.contains('login-form')) {
                     break;
                   }
                   container = container.parentElement;
@@ -141,15 +141,16 @@
                 }
 
                 // Safety: Ensure we aren't clearing a form or the body
-                if (container && container !== document.body && !container.querySelector('input') && !container.classList.contains('login-form')) {
+                // Note: The left logo container normally has NO inputs.
+                if (container && container !== document.body && !container.querySelector('input')) {
                   if (!container.dataset.patched) {
                     container.innerHTML = '';
                     const newLogo = document.createElement('img');
                     newLogo.src = '/assets/logo_bear.png';
                     newLogo.style.width = '100%';
                     newLogo.style.height = '100%';
-                    newLogo.style.maxWidth = '300px';
-                    newLogo.style.maxHeight = '300px';
+                    newLogo.style.maxWidth = '400px';
+                    newLogo.style.maxHeight = '400px';
                     newLogo.style.objectFit = 'contain';
                     newLogo.style.display = 'block';
                     newLogo.style.margin = '0 auto';
@@ -158,6 +159,22 @@
                     container.style.display = 'flex';
                     container.style.justifyContent = 'center';
                     container.style.alignItems = 'center';
+                  }
+                }
+                // CASE B: The Text Logo (Right Side - "HFish Honeypot Platform")
+                else if (container && container.querySelector('input')) {
+                  // This is the logo ABOVE the inputs. Replace the SVG itself.
+                  if (!svg.dataset.patched) {
+                    const replacementTitle = document.createElement('div');
+                    replacementTitle.innerText = "Honey Scan Active Defense";
+                    replacementTitle.style.color = "#4ade80";
+                    replacementTitle.style.fontSize = "24px";
+                    replacementTitle.style.fontWeight = "bold";
+                    replacementTitle.style.textAlign = "center";
+                    replacementTitle.style.marginBottom = "20px";
+
+                    svg.replaceWith(replacementTitle);
+                    replacementTitle.dataset.patched = 'true';
                   }
                 }
               }
@@ -169,7 +186,6 @@
               const src = img.getAttribute('src');
               if (src && (src.includes('logo') || src.includes('svg'))) {
                 if (!img.dataset.patched && img.src.indexOf('bear') === -1) {
-                  // Check context - if it's large and on the left, it's the logo
                   const rect = img.getBoundingClientRect();
                   if (rect.width > 50 && rect.left < window.innerWidth / 2) {
                     img.src = "/assets/logo_bear.png";
