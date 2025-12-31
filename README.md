@@ -7,7 +7,7 @@
 - **Feed**: [feed.sec.lemue.org](https://feed.sec.lemue.org/)
 
 
-![Version](https://img.shields.io/badge/version-3.5.4-blue.svg)
+![Version](https://img.shields.io/badge/version-3.6.5-blue.svg)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)

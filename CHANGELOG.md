@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.5] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Added "Transparency Link Bar" to Top-Right Header (GitHub, Feed, Banned IPs, Web).
+- 🎨 **UI**: Added "for you by lemue.org ♥️" Footer.
+- ✨ **Feed**: Added Favicons to Feed Page.
+- 🐛 **Fix**: Fixed Header White Border and increased Title Font Size (36px).
+
 ## [3.6.4] - 2025-12-31
 
 ### Changed
