@@ -85,15 +85,34 @@
                 document.title = "lemueIO SecMonitor";
             }
 
-            // Route Detection: Only apply aggressive branding on Login Page
-            // HFish uses Hash routing or Path routing, check both to be safe
+            // === UNIVERSAL TEXT REPLACEMENT (Runs everywhere) ===
+            // This fixes "XX Company Threat Monitor" on the dashboard
+            const replaceTextContent = (selector, target, replacement) => {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        // Check exact match or includes depending on need
+                        if (el.innerText.includes(target) && !el.dataset.branded) {
+                            el.innerHTML = el.innerHTML.replace(target, replacement);
+                            el.dataset.branded = 'true';
+                        }
+                    });
+                } catch (e) { console.error('Branding patch error:', e); }
+            };
+
+            // Specific HFish Dashboard Elements
+            replaceTextContent('div, span, h1, h2, h3, h4, p', 'XX Company Threat Monitor', 'lemueIO SecMonitor');
+            replaceTextContent('*', 'HFish Attack Map', 'lemueIO SecMonitor');
+            replaceTextContent('*', 'HFish Statistics', 'lemueIO SecStatistics');
+            replaceTextContent('*', 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
+
+            // Route Detection: Only apply aggressive layout changes on Login Page
             const isLogin = location.href.includes('/login') || location.hash.includes('login');
 
             if (isLogin) {
                 // === LOGIN PAGE LOGIC ===
 
                 // 1. Logo Replacement (Left Side - SVG Wrapper)
-                // Only relevant if the element exists (Login Layout)
                 const leftWrapper = document.querySelector('div[class*="left-wrapper"]');
                 if (leftWrapper) {
                     const svgs = leftWrapper.querySelectorAll('svg');
@@ -104,7 +123,7 @@
                                 container.innerHTML = '';
                                 const newLogo = document.createElement('img');
                                 newLogo.src = LOGO_PATH;
-                                newLogo.style.maxWidth = '100%'; // Fit container
+                                newLogo.style.maxWidth = '100%';
                                 newLogo.style.height = 'auto';
                                 container.appendChild(newLogo);
                                 container.dataset.patched = 'true';
@@ -120,7 +139,6 @@
                     brandSvgs.forEach(svg => {
                         if (svg.innerHTML.includes('hfish') || svg.getAttribute('class')?.includes('onefish-logo')) {
                             if (!svg.dataset.patched) {
-                                // Create Replacement Container
                                 const container = document.createElement('div');
                                 container.style.textAlign = 'center';
                                 container.style.marginBottom = '20px';
@@ -129,10 +147,9 @@
                                 container.style.alignItems = 'center';
                                 container.style.justifyContent = 'center';
 
-                                // Title "Honey Scan"
                                 const title = document.createElement('div');
                                 title.innerText = "Honey Scan";
-                                title.style.color = "#4ade80"; // Cyber Green
+                                title.style.color = "#4ade80";
                                 title.style.fontSize = "36px";
                                 title.style.fontWeight = "900";
                                 title.style.fontFamily = "sans-serif";
@@ -140,10 +157,9 @@
                                 title.style.marginBottom = "8px";
                                 title.style.lineHeight = "1.2";
 
-                                // Subtitle Pill "Active Defense Platform"
                                 const pill = document.createElement('div');
                                 pill.innerText = "Active Defense Platform";
-                                pill.style.backgroundColor = "rgba(255, 255, 255, 0.1)"; // Greyish transparent
+                                pill.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
                                 pill.style.color = "rgba(255, 255, 255, 0.8)";
                                 pill.style.padding = "4px 12px";
                                 pill.style.borderRadius = "12px";
@@ -347,33 +363,10 @@
                 // Remove Footer (Only for Login)
                 const footer = document.getElementById('lemue-footer');
                 if (footer) footer.remove();
-
-                // Note: Modified DOM elements (like the replaced SVG title) persist until a page refresh 
-                // or component re-render. Usually hitting "Login" -> "Dashboard" triggers a view change that
-                // resets the inner DOM of the router-view, but global/higher-level fixes might depend entirely on CSS removal.
-            }
-
-            // 5. General Dashboard Text Replacements (Only when !isLogin)
-            if (!isLogin) {
-                const textReplacements = {
-                    "HFish Attack Map": "lemueIO SecMonitor",
-                    "HFish Statistics": "lemueIO SecStatistics",
-                    "Live Threat Monitor": "lemueIO Active Intelligence Feed",
-                };
-
-                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-                let node;
-                while (node = walker.nextNode()) {
-                    const val = node.nodeValue.trim();
-                    if (textReplacements[val]) {
-                        node.nodeValue = textReplacements[val];
-                    }
-                }
             }
 
             // Always Inject Favicons (Safe to check continuously)
             const addFavicon = (rel, href, sizes) => {
-                // ... (Logic to add if missing) ...
                 if (!document.querySelector(`link[href="${href}"]`)) {
                     let link = document.createElement('link');
                     link.rel = rel;
