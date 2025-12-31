@@ -127,27 +127,38 @@
               if (svg.innerHTML.includes('#hfish') || svg.innerHTML.includes('hfish')) {
                 // Found the trident! Find its main container (usually 1 or 2 levels up)
                 let container = svg.parentElement;
+                let depth = 0;
+
                 // Walk up to find a container with substantial size (the logo wrapper)
-                while (container && container !== document.body && container.getBoundingClientRect().width < 50) {
+                // Safety: Stop if we hit body, max depth, or a container that is too wide (likely layout wrapper)
+                while (container && container !== document.body && depth < 5) {
+                  const rect = container.getBoundingClientRect();
+                  if (rect.width > 50 && rect.width < 500) {
+                    break;
+                  }
                   container = container.parentElement;
+                  depth++;
                 }
 
-                if (container && !container.dataset.patched) {
-                  container.innerHTML = '';
-                  const newLogo = document.createElement('img');
-                  newLogo.src = '/assets/logo_bear.png';
-                  newLogo.style.width = '100%';
-                  newLogo.style.height = '100%';
-                  newLogo.style.maxWidth = '300px';
-                  newLogo.style.maxHeight = '300px';
-                  newLogo.style.objectFit = 'contain';
-                  newLogo.style.display = 'block';
-                  newLogo.style.margin = '0 auto';
-                  container.appendChild(newLogo);
-                  container.dataset.patched = 'true';
-                  container.style.display = 'flex';
-                  container.style.justifyContent = 'center';
-                  container.style.alignItems = 'center';
+                // Safety: Ensure we aren't clearing a form or the body
+                if (container && container !== document.body && !container.querySelector('input') && !container.classList.contains('login-form')) {
+                  if (!container.dataset.patched) {
+                    container.innerHTML = '';
+                    const newLogo = document.createElement('img');
+                    newLogo.src = '/assets/logo_bear.png';
+                    newLogo.style.width = '100%';
+                    newLogo.style.height = '100%';
+                    newLogo.style.maxWidth = '300px';
+                    newLogo.style.maxHeight = '300px';
+                    newLogo.style.objectFit = 'contain';
+                    newLogo.style.display = 'block';
+                    newLogo.style.margin = '0 auto';
+                    container.appendChild(newLogo);
+                    container.dataset.patched = 'true';
+                    container.style.display = 'flex';
+                    container.style.justifyContent = 'center';
+                    container.style.alignItems = 'center';
+                  }
                 }
               }
             });
