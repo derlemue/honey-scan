@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.6] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Increased Title Font Size to **42px** (with Glow Effect).
+- 🎨 **UI**: Attempted to remove White Header Background (Transparency Fix).
+- 🐛 **Fix**: Fixed missing Favicons in Feed (`monitor.py` update) and Dashboard (Docker Mounts).
+
 ## [3.6.5] - 2025-12-31
 
 ### Changed

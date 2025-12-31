@@ -151,21 +151,29 @@
                       visibility: hidden !important; 
                       position: relative !important;
                   }
+                  /* Try to target the parent header to remove white background */
+                  div[class*="screen-header"], div[class*="header-wrapper"] {
+                      background: transparent !important;
+                      box-shadow: none !important;
+                      border: none !important;
+                  }
+
                   .screen-header-left-title::after, .screen-title::after {
                       visibility: visible !important;
                       content: "${BRAND_TITLE}" !important;
                       position: absolute !important;
                       left: 0 !important;
-                      top: -10px !important; /* Adjusted to fix white border/clipping */
+                      top: -10px !important; 
                       color: #4ade80 !important; 
-                      font-size: 36px !important; /* Increased font size */
+                      font-size: 42px !important; /* Larger font as requested */
                       font-weight: bold !important;
                       white-space: nowrap !important;
+                      text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); /* Glow effect */
                   }
 
                   /* Fix Title Spacing - Push Inputs Down */
                   div[class*="index-cssmodule__login-wrapper"] {
-                      margin-top: 80px !important; /* Increased spacing */
+                      margin-top: 60px !important; /* Adjusted spacing */
                   }
                   
                   /* Login Button Green */
