@@ -140,6 +140,141 @@
   </script>
   <link rel="shortcut icon" href="/assets/favicon.ico">
 </head>
+<script>
+  // --- Advanced Interceptor for Flags & Location (XHR + Fetch) ---
+  // Moved to HEAD to ensure early execution before any other network requests
+  (function () {
+    if (window.__SecMonitorIntercepted) return;
+    window.__SecMonitorIntercepted = true;
+
+    console.log("%c [SecMonitor] Initializing API Interceptors (XHR + Fetch)...", "color: cyan; font-weight: bold;");
+
+    const COUNTRY_MAP = {
+      "United States": "us", "USA": "us", "America": "us",
+      "China": "cn", "CN": "cn",
+      "Germany": "de", "Deutschland": "de",
+      "Great Britain": "gb", "Britain": "gb", "UK": "gb", "United Kingdom": "gb",
+      "Russia": "ru", "Russian Federation": "ru",
+      "Netherlands": "nl", "The Netherlands": "nl",
+      "France": "fr",
+      "Canada": "ca",
+      "India": "in",
+      "Japan": "jp",
+      "South Korea": "kr", "Korea": "kr", "Republic of Korea": "kr",
+      "Australia": "au",
+      "Vietnam": "vn", "Viet Nam": "vn",
+      "Indonesia": "id",
+      "Brazil": "br", "Brasil": "br",
+      "Italy": "it",
+      "Lithuania": "lt",
+      "Singapore": "sg",
+      "Spain": "es",
+      "Poland": "pl",
+      "Sweden": "se",
+      "Ukraine": "ua",
+      "Romania": "ro",
+      "Uzbekistan": "uz",
+      "Unknown": "unknown"
+    };
+
+    // --- Helper to patching data ---
+    function patchData(url, data) {
+      try {
+        // 1. Fix Missing Flags (/v1/index/latest_info)
+        if (url.indexOf('/v1/index/latest_info') !== -1) {
+          if (data && data.data) {
+            data.data.forEach(item => {
+              if (!item.source_ip_country_no) {
+                const name = item.source_ip_country_name_en;
+                let code = COUNTRY_MAP[name] || COUNTRY_MAP[name.split(' ')[0]];
+                if (code) item.source_ip_country_no = code;
+              }
+              if (item.source_ip_country_name_en === "Netherlands") item.source_ip_country_no = "nl";
+              if (item.source_ip_country_name_en === "Lithuania") item.source_ip_country_no = "lt";
+            });
+          }
+        }
+
+        // 2. Fix Built-in Node Location (/v1/index/map)
+        if (url.indexOf('/v1/index/map') !== -1) {
+          if (data && data.data && data.data.attack_map) {
+            data.data.attack_map.forEach(node => {
+              if (node.attacked_client_name.includes("Built-in") || node.country_name === "美国") {
+                node.country_name_en = "Germany";
+                node.country_name = "德国";
+                node.province_name = "Sachsen";
+                node.city_name = "Falkenstein";
+                node.latitude = "50.477";
+                node.longitude = "12.373";
+                node.country_code = "DEU";
+              }
+            });
+          }
+        }
+      } catch (e) { console.warn("Patch logic error", e); }
+      return data;
+    }
+
+    // --- Patch Fetch ---
+    const originalFetch = window.fetch;
+    window.fetch = async function (input, init) {
+      const response = await originalFetch(input, init);
+      const url = (typeof input === 'string') ? input : input.url;
+
+      // Only intercept specific endpoints
+      if (url.indexOf('/v1/index/latest_info') !== -1 || url.indexOf('/v1/index/map') !== -1) {
+        const clone = response.clone();
+        try {
+          const data = await clone.json();
+          const patched = patchData(url, data);
+          const blob = new Blob([JSON.stringify(patched)], { type: 'application/json' });
+          const newResponse = new Response(blob, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers
+          });
+          Object.defineProperty(newResponse, 'url', { value: response.url });
+          return newResponse;
+        } catch (e) {
+          return response;
+        }
+      }
+      return response;
+    };
+
+    // --- Patch XHR (Backup) ---
+    const originalXHR = window.XMLHttpRequest;
+    function newXHR() {
+      const xhr = new originalXHR();
+      const originalOpen = xhr.open;
+      xhr.open = function (method, url) {
+        this._url = url;
+        return originalOpen.apply(this, arguments);
+      };
+      const originalResponseTextDescriptor = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'responseText');
+      Object.defineProperty(xhr, 'responseText', {
+        get: function () {
+          let originalText = "";
+          try { originalText = originalResponseTextDescriptor.get.call(this); } catch (e) { return ""; }
+          if (this._url && originalText) {
+            try {
+              const data = JSON.parse(originalText);
+              const patched = patchData(this._url, data);
+              return JSON.stringify(patched);
+            } catch (e) { }
+          }
+          return originalText;
+        }
+      });
+      return xhr;
+    }
+    Object.assign(newXHR, originalXHR);
+    newXHR.prototype = originalXHR.prototype;
+    window.XMLHttpRequest = newXHR;
+
+    console.log("%c [SecMonitor] API Interceptors (Fetch + XHR) Active.", "color: green; font-weight: bold;");
+  })();
+</script>
 
 <body>
   <div id="app">
@@ -152,142 +287,6 @@
   </div>
   <script>
     __REACT_DEVTOOLS_GLOBAL_HOOK__ = parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-  </script>
-  <script>
-    // --- Advanced Interceptor for Flags & Location (XHR + Fetch) ---
-    (function () {
-      if (window.__SecMonitorIntercepted) return;
-      window.__SecMonitorIntercepted = true;
-
-      console.log("%c [SecMonitor] Initializing API Interceptors (XHR + Fetch)...", "color: cyan; font-weight: bold;");
-
-      const COUNTRY_MAP = {
-        "United States": "us", "USA": "us", "America": "us",
-        "China": "cn", "CN": "cn",
-        "Germany": "de", "Deutschland": "de",
-        "Great Britain": "gb", "Britain": "gb", "UK": "gb", "United Kingdom": "gb",
-        "Russia": "ru", "Russian Federation": "ru",
-        "Netherlands": "nl", "The Netherlands": "nl",
-        "France": "fr",
-        "Canada": "ca",
-        "India": "in",
-        "Japan": "jp",
-        "South Korea": "kr", "Korea": "kr", "Republic of Korea": "kr",
-        "Australia": "au",
-        "Vietnam": "vn", "Viet Nam": "vn",
-        "Indonesia": "id",
-        "Brazil": "br", "Brasil": "br",
-        "Italy": "it",
-        "Lithuania": "lt",
-        "Singapore": "sg",
-        "Spain": "es",
-        "Poland": "pl",
-        "Sweden": "se",
-        "Ukraine": "ua",
-        "Romania": "ro",
-        "Uzbekistan": "uz",
-        "Unknown": "unknown"
-      };
-
-      // --- Helper to patching data ---
-      function patchData(url, data) {
-        try {
-          // 1. Fix Missing Flags (/v1/index/latest_info)
-          if (url.indexOf('/v1/index/latest_info') !== -1) {
-            if (data && data.data) {
-              data.data.forEach(item => {
-                if (!item.source_ip_country_no) {
-                  const name = item.source_ip_country_name_en;
-                  let code = COUNTRY_MAP[name] || COUNTRY_MAP[name.split(' ')[0]];
-                  if (code) item.source_ip_country_no = code;
-                }
-                if (item.source_ip_country_name_en === "Netherlands") item.source_ip_country_no = "nl";
-                if (item.source_ip_country_name_en === "Lithuania") item.source_ip_country_no = "lt";
-              });
-            }
-          }
-
-          // 2. Fix Built-in Node Location (/v1/index/map)
-          if (url.indexOf('/v1/index/map') !== -1) {
-            if (data && data.data && data.data.attack_map) {
-              data.data.attack_map.forEach(node => {
-                if (node.attacked_client_name.includes("Built-in") || node.country_name === "美国") {
-                  node.country_name_en = "Germany";
-                  node.country_name = "德国";
-                  node.province_name = "Sachsen";
-                  node.city_name = "Falkenstein";
-                  node.latitude = "50.477";
-                  node.longitude = "12.373";
-                  node.country_code = "DEU";
-                }
-              });
-            }
-          }
-        } catch (e) { console.warn("Patch logic error", e); }
-        return data;
-      }
-
-      // --- Patch Fetch ---
-      const originalFetch = window.fetch;
-      window.fetch = async function (input, init) {
-        const response = await originalFetch(input, init);
-        const url = (typeof input === 'string') ? input : input.url;
-
-        // Only intercept specific endpoints
-        if (url.indexOf('/v1/index/latest_info') !== -1 || url.indexOf('/v1/index/map') !== -1) {
-          const clone = response.clone();
-          try {
-            const data = await clone.json();
-            const patched = patchData(url, data);
-            const blob = new Blob([JSON.stringify(patched)], { type: 'application/json' });
-            const newResponse = new Response(blob, {
-              status: response.status,
-              statusText: response.statusText,
-              headers: response.headers
-            });
-            // Define url property if needed by some libs
-            Object.defineProperty(newResponse, 'url', { value: response.url });
-            return newResponse;
-          } catch (e) {
-            // console.warn("Fetch intercept failed", e);
-            return response;
-          }
-        }
-        return response;
-      };
-
-      // --- Patch XHR (Backup) ---
-      const originalXHR = window.XMLHttpRequest;
-      function newXHR() {
-        const xhr = new originalXHR();
-        const originalOpen = xhr.open;
-        xhr.open = function (method, url) {
-          this._url = url;
-          return originalOpen.apply(this, arguments);
-        };
-        const originalResponseTextDescriptor = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'responseText');
-        Object.defineProperty(xhr, 'responseText', {
-          get: function () {
-            let originalText = "";
-            try { originalText = originalResponseTextDescriptor.get.call(this); } catch (e) { return ""; }
-            if (this._url && originalText) {
-              try {
-                const data = JSON.parse(originalText);
-                const patched = patchData(this._url, data);
-                return JSON.stringify(patched);
-              } catch (e) { }
-            }
-            return originalText;
-          }
-        });
-        return xhr;
-      }
-      Object.assign(newXHR, originalXHR);
-      newXHR.prototype = originalXHR.prototype;
-      window.XMLHttpRequest = newXHR;
-
-      console.log("%c [SecMonitor] API Interceptors (Fetch + XHR) Active.", "color: green; font-weight: bold;");
-    })();
   </script>
   <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
   <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>

@@ -68,7 +68,9 @@ services:
 
     volumes:
       - hfish_data:/usr/share/hfish
+      - ./web/index.html:/opt/hfish/current/web/index.html:ro
       - ./web/index.html:/opt/hfish/3.3.6/web/index.html:ro
+      - ./web/assets/flags.svg:/opt/hfish/current/web/assets/flags.svg:ro
       - ./web/assets/flags.svg:/opt/hfish/3.3.6/web/assets/flags.svg:ro
     deploy:
       resources:
