@@ -103,93 +103,74 @@
         // 3. Text Replacement & CSS Injection
         const style = document.createElement('style');
         style.innerHTML = `
-              /* Hide Original SVG Logo */
-              svg[class*="left-img"], svg.index-cssmodule__left-img--yTWQ { 
-                  display: none !important; 
+              .screen-header-left-title, .screen-title { 
+                  visibility: hidden !important; 
+                  position: relative !important;
               }
-              /* Hide Original SVG Title */
-              svg[class*="onefish-logo"], svg.index-cssmodule__onefish-logo-1_LSp {
-                  display: none !important;
-              }
-              /* Force Login Button Color to Green */
-              div[class*="btn"], .index-cssmodule__btn-1i8f8 {
-                  background-color: #4ade80 !important;
-                  border-color: #4ade80 !important;
-              }
-              /* Ensure inserted branding looks good */
-              .custom-branding-title {
-                  font-size: 24px;
-                  font-weight: bold;
-                  color: #4ade80 !important;
-                  text-align: center;
-                  display: block;
-                  margin-bottom: 20px;
-                  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
-              }
-              /* Custom Bear Logo Style */
-              .custom-bear-logo {
-                  max-width: 400px;
-                  margin: 0 auto;
-                  display: block;
+              .screen-header-left-title::after, .screen-title::after {
+                  visibility: visible !important;
+                  content: "${BRAND_TITLE}" !important;
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  color: #fff !important; 
               }
             `;
         document.head.appendChild(style);
 
-        const replaceBranding = () => {
-          if (!document.body) return;
+        // Safely patch Branding using MutationObserver to avoid breaking Vue/React hydration
+        const patchBrandingSafe = () => {
+          // Observer to catch dynamic renders
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'childList') {
+                // 1. Fix Logo
+                const images = document.querySelectorAll('img');
+                images.forEach(img => {
+                  if (!img.dataset.patched && (img.src.includes('logo') || img.src.includes('svg') || img.src.includes('png'))) {
+                    // Heuristic: Login page image or Main Logo
+                    if (document.location.hash.includes('login') || document.location.pathname.includes('login') || document.body.innerText.includes("Verification code")) {
+                      // Only replace if it looks like the main logo (size check or position)
+                      if (img.parentElement.className.includes("login") || img.style.width || img.height > 50) {
+                        img.src = "/assets/logo_bear.png";
+                        img.style.maxWidth = "200px";
+                        img.style.objectFit = "contain";
+                        img.dataset.patched = "true";
+                      }
+                    }
+                  }
+                });
 
-          // A: Inject Custom Bear Logo (Replacer for SVG)
-          // Selector for the container of the left image
-          const leftLogoSvg = document.querySelector('svg.index-cssmodule__left-img--yTWQ');
-          if (leftLogoSvg && leftLogoSvg.parentElement && !leftLogoSvg.parentElement.querySelector('.custom-bear-logo')) {
-            const newLogo = document.createElement('img');
-            newLogo.src = "/assets/logo_hb.png";
-            newLogo.className = "custom-bear-logo";
-            leftLogoSvg.parentElement.appendChild(newLogo);
-          }
-
-          // B: Inject Custom Title (Replacer for SVG Title)
-          const titleSvg = document.querySelector('svg.index-cssmodule__onefish-logo-1_LSp');
-          if (titleSvg && titleSvg.parentElement && !titleSvg.parentElement.querySelector('.custom-branding-title')) {
-            const newTitle = document.createElement('div');
-            newTitle.innerText = "Honey Scan Active Defense Honeypot Platform";
-            newTitle.className = "custom-branding-title";
-            titleSvg.parentElement.appendChild(newTitle);
-          }
-
-          // C: General Image Replacement (Sanity Check for any other leaks, but PROTECT CAPTCHA)
-          const images = document.querySelectorAll('img');
-          images.forEach(img => {
-            // CRITICAL: IGNORE CAPTCHA IMAGES
-            // Exclude if class contains 'verify' or src contains 'captcha' or 'verify'
-            if (img.className.includes('verify') || img.className.includes('index-cssmodule__verify-OnqDS')) return;
-
-            // If we are on login page, replace other non-patched logos
-            if (img.parentElement.className.includes("login") || document.location.pathname.includes("login")) {
-              if (!img.dataset.patched && (img.src.includes('logo') || img.src.includes('trident'))) {
-                img.src = "/assets/logo_hb.png";
-                img.dataset.patched = "true";
+                // 2. Fix Text & Color (Refined targeting)
+                if (document.location.hash.includes('login')) {
+                  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+                  let node;
+                  while (node = walker.nextNode()) {
+                    // HFish -> Honey Scan Active Defense
+                    if (node.nodeValue && node.nodeValue.includes("HFish")) {
+                      node.nodeValue = node.nodeValue.replace("HFish", "Honey Scan Active Defense");
+                      if (node.parentElement) {
+                        node.parentElement.style.color = "#4ade80"; // Green
+                        node.parentElement.style.fontWeight = "bold";
+                      }
+                    }
+                    // Honeypot Platform (Green)
+                    if (node.nodeValue && node.nodeValue.includes("Honeypot Platform")) {
+                      if (node.parentElement) {
+                        node.parentElement.style.color = "#4ade80"; // Green
+                      }
+                    }
+                  }
+                }
               }
-            }
+            });
           });
 
-          // D: Text Node Replacements (Footer etc)
-          const treeWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-          while (treeWalker.nextNode()) {
-            const node = treeWalker.currentNode;
-            if (node.nodeValue.includes("HFish")) {
-              if (node.parentElement && node.parentElement.tagName !== "SCRIPT" && node.parentElement.tagName !== "STYLE") {
-                node.nodeValue = node.nodeValue.replace("HFish", "Honey Scan Active Defense");
-              }
-            }
-            if (node.nodeValue.includes(OLD_TITLE_TEXT)) {
-              node.nodeValue = node.nodeValue.replace(OLD_TITLE_TEXT, BRAND_TITLE);
-            }
-          }
+          observer.observe(document.body, { childList: true, subtree: true });
         };
 
-        // Run aggressively to handle React re-renders
-        setInterval(replaceBranding, 200);
+        // Initialize (Wait for body)
+        setTimeout(patchBrandingSafe, 100);
       } catch (e) {
         console.error("Critical Branding Script Error:", e);
       }

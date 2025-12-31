@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.4] - 2025-12-31
+
+### Fixed
+- 🐛 **UI Hotfix**: Resolved a critical issue where the branding script interfered with the dashboard rendering (White Screen/No Code). Implemented safer DOM manipulation using `MutationObserver`.
+
 ## [3.5.3] - 2025-12-31
 
 ### Changed
