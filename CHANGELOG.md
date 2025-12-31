@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.13] - 2025-12-31
+
+### Changed
+- 🗑️ **UI**: **Replaced SVG Branding** with HTML. Browser verification showed "HFish" was an SVG (`#hfish-hfish-logo-en`), not text.
+- 🎨 **UI**: Injected "Honey Scan" (Green) and "Active Defense Platform" (Pill) as pure HTML elements.
+- 🐛 **Fix**: Resolved issue where text replacement scripts failed due to SVG usage.
+
 ## [3.6.12] - 2025-12-31
 
 ### Changed
