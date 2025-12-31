@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.12] - 2025-12-31
+
+### Changed
+- 🗑️ **UI**: Removed Detached Title (conflicting text).
+- 🔄 **Rebranding**: Replaced "HFish" (Red) with "**Honey Scan**" (Green) in-place.
+- 🔄 **Rebranding**: Replaced "Honeypot Platform" with "**Active Defense Platform**" (Grey Pill style retained).
+- 🐛 **Fix**: Restored visibility of login container (`.right-wrapper`) while keeping header hidden.
+
 ## [3.6.11] - 2025-12-31
 
 ### Changed
