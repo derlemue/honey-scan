@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.9] - 2025-12-31
+
+### Changed
+- 🐛 **Fix**: Nuclear Option for White Header Bar (Forced Dark Body Background).
+- 🎨 **UI**: Aggressive Transparency on all header children.
+
 ## [3.6.8] - 2025-12-31
 
 ### Changed
