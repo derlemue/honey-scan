@@ -143,20 +143,16 @@
                   .screen-header-left-title, .screen-title { 
                       visibility: hidden !important; 
                       position: relative !important;
-                      display: block !important;
-                      margin-bottom: 35px !important; /* Added space between title and inputs */
-                      min-height: 35px !important; /* Reserve space */
                   }
                   .screen-header-left-title::after, .screen-title::after {
                       visibility: visible !important;
                       content: "${BRAND_TITLE}" !important;
                       position: absolute !important;
                       left: 0 !important;
-                      top: 0 !important; 
+                      top: -25px !important; /* Increased spacing (moved up) */
                       color: #4ade80 !important; 
-                      font-size: 28px !important; /* Increased font size */
-                      line-height: 35px !important;
-                      white-space: nowrap !important;
+                      font-size: 28px !important; /* Date requested larger font */
+                      font-weight: bold !important;
                   }
                   /* Login Button Green - Target DIV and BUTTON */
                   div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
@@ -173,8 +169,9 @@
                   /* Footer IPv6 Button Green */
                   .index-cssmodule__ipv6-1nOCE {
                       background-color: #4ade80 !important;
-                      color: #0f172a !important;
-                      border-color: #4ade80 !important; /* Fix red border */
+                      color: #ffffff !important; /* White text */
+                      font-weight: bold !important; /* Bold text */
+                      border-color: #4ade80 !important; 
                       border: 1px solid #4ade80 !important;
                   }
 

@@ -1,9 +1,10 @@
-<div align="center">
-
 # 🍯 Honey-Scan
 ### Active Defense Ecosystem
 
-<img src="docs/img/logo.png" width="200">
+[🇬🇧 English](README.md) | [🇩🇪 Deutsch](README_DE.md) | [🇺🇦 Українська](README_UA.md)
+
+- **Dashboard**: [sec.lemue.org](https://sec.lemue.org/web/login)
+- **Feed**: [feed.sec.lemue.org](https://feed.sec.lemue.org/)
 
 
 ![Version](https://img.shields.io/badge/version-3.5.4-blue.svg)
@@ -123,8 +124,8 @@ docker compose up -d --build
 ```
 
 ### 2. Access Dashboards
-*   **lemueIO Active Intelligence Feed**: `http://23.88.40.46:8888/`
-*   **HFish Admin**: `https://23.88.40.46:4433` (Default: `admin` / `HFish2021`)
+*   **lemueIO Active Intelligence Feed**: `https://feed.sec.lemue.org/`
+*   **HFish Admin**: `https://sec.lemue.org` (Default: `admin` / `HFish2021`)
 
 ### 3. Deploy Client Shield (Fail2Ban Integration)
 Protect your *other* servers by automatically banning IPs detected by this honeypot.
@@ -133,7 +134,7 @@ Requires **Fail2Ban**. The script will offer to install it if missing.
 Run this on your production servers:
 ```bash
 # Download Script
-wget http://23.88.40.46:8888/scripts/client_banned_ips.sh
+wget https://feed.sec.lemue.org/scripts/client_banned_ips.sh
 
 # Make executable
 chmod +x client_banned_ips.sh
