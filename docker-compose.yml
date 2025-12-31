@@ -18,6 +18,14 @@ services:
       - ./web/assets/flags.svg:/opt/hfish/3.3.6/web/assets/flags.svg:ro
       - ./web/assets/logo_bear.png:/opt/hfish/current/web/assets/logo_bear.png:ro
       - ./web/assets/logo_bear.png:/opt/hfish/3.3.6/web/assets/logo_bear.png:ro
+      - ./web/assets/favicon.ico:/opt/hfish/current/web/assets/favicon.ico:ro
+      - ./web/assets/favicon.ico:/opt/hfish/3.3.6/web/assets/favicon.ico:ro
+      - ./web/assets/favicon-32x32.png:/opt/hfish/current/web/assets/favicon-32x32.png:ro
+      - ./web/assets/favicon-32x32.png:/opt/hfish/3.3.6/web/assets/favicon-32x32.png:ro
+      - ./web/assets/favicon-16x16.png:/opt/hfish/current/web/assets/favicon-16x16.png:ro
+      - ./web/assets/favicon-16x16.png:/opt/hfish/3.3.6/web/assets/favicon-16x16.png:ro
+      - ./web/assets/apple-touch-icon.png:/opt/hfish/current/web/assets/apple-touch-icon.png:ro
+      - ./web/assets/apple-touch-icon.png:/opt/hfish/3.3.6/web/assets/apple-touch-icon.png:ro
     deploy:
       resources:
         limits:
@@ -83,6 +91,7 @@ services:
       - ./feed:/usr/share/nginx/html/feed:ro
       - ./scans:/usr/share/nginx/html/scans:ro
       - ./feed/index.html:/usr/share/nginx/html/index.html:ro
+      - ./web/assets:/usr/share/nginx/html/assets:ro
 
 volumes:
   hfish_data:
