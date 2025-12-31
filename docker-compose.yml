@@ -3,69 +3,12 @@ services:
     image: threatbook/hfish-server:latest
     container_name: hfish
     restart: unless-stopped
+    network_mode: "host"
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
     environment:
       - TZ=Europe/Amsterdam
-    ports:
-      - mode: ingress
-        target: 4433
-        published: "4433"
-        protocol: tcp
-      - mode: ingress
-        target: 80
-        published: "80"
-        protocol: tcp
-      - mode: ingress
-        target: 443
-        published: "443"
-        protocol: tcp
-      - mode: ingress
-        target: 8080
-        published: "8080"
-        protocol: tcp
-
-      # Remote Zugriff & Shells
-      - "2223:22" # SSH Honeypot (Port 2223, since Host uses 22 or 2222)
-      - "23:23" # Telnet
-      - "3389:3389" # RDP (Remote Desktop)
-      - "5900:5900" # VNC
-      - "5985:5985" # WinRM
-
-      # Datenbanken
-      - "3306:3306" # MySQL
-      - "6379:6379" # Redis
-      - "5432:5432" # PostgreSQL
-      - "27017:27017" # MongoDB
-      - "1433:1433" # MS-SQL
-      - "1521:1521" # Oracle DB
-      - "9200:9200" # Elasticsearch
-      - "2181:2181" # ZooKeeper
-      - "5672:5672" # RabbitMQ
-      - "11211:11211" # Memcached
-
-      # File- & Netzwerk-Dienste
-      - "21:21" # FTP
-      - "445:445" # SMB (Windows File Sharing)
-      - "161:161/udp" # SNMP
-      - "53:53/tcp" # DNS
-      - "53:53/udp" # DNS
-      - "123:123/udp" # NTP
-
-      # Mail-Protokolle
-      - "25:25" # SMTP
-      - "110:110" # POP3
-      - "143:143" # IMAP
-
-      # DevOps & Cloud
-      - "2375:2375" # Docker API
-      - "6443:6443" # Kubernetes API
-      - "10250:10250" # Kubelet
-
-      # IoT & Spezial-Protokolle
-      - "5060:5060" # SIP (VoIP)
-      - "1883:1883" # MQTT (IoT)
-      - "102:102" # Siemens S7 (SPS/Industrie)
-      - "502:502" # Modbus (Industrie)
-
     volumes:
       - hfish_data:/usr/share/hfish
       - ./web/index.html:/opt/hfish/current/web/index.html:ro
@@ -84,13 +27,19 @@ services:
     image: mariadb:10.6
     container_name: hfish-db
     restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
     environment:
+      - TZ=Europe/Amsterdam
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
     networks:
       - default
 
@@ -98,7 +47,11 @@ services:
     build: ./sidecar
     container_name: hfish-sidecar
     restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
     environment:
+      - TZ=Europe/Amsterdam
       - DB_TYPE=${DB_TYPE:-mysql}
       - DB_HOST=${DB_HOST:-mariadb}
       - DB_PORT=${DB_PORT:-3306}
@@ -116,6 +69,11 @@ services:
     image: nginx:alpine
     container_name: hfish-feed
     restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+    environment:
+      - TZ=Europe/Amsterdam
     ports:
       - "8888:80"
     volumes:

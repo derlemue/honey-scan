@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.0] - 2025-12-31
+
+### Changed
+- 🌐 **Networking**: Switched `hfish` container to `network_mode: "host"` to enable real Source IP detection.
+- ⚙️ **DNS**: Enforced global DNS servers (`1.1.1.1`, `1.0.0.1`) for all containers to prevent resolution issues.
+- 🕒 **Timezone**: Standardized all containers to `Europe/Amsterdam`.
+
 ## [3.4.1] - 2025-12-30
 
 ### Fixed
