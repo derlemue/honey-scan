@@ -80,9 +80,17 @@
         const LOGO_PATH = '/assets/logo_bear.png';
 
         const patchBrandingAggressive = () => {
-            // 1. Title Replacement
+            // 1. Title Replacement (Detached)
             if (document.title !== "lemueIO SecMonitor") {
                 document.title = "lemueIO SecMonitor";
+            }
+
+            // Inject detached title if not present
+            if (!document.getElementById('lemue-detached-title')) {
+                const title = document.createElement('div');
+                title.id = 'lemue-detached-title';
+                title.innerText = BRAND_TITLE;
+                document.body.appendChild(title);
             }
 
             // 2. Logo Replacement (Left Side - SVG Wrapper)
@@ -107,24 +115,8 @@
                 });
             }
 
-            // 3. Text Logo Replacement (Right Side / Top)
-            const rightWrapper = document.querySelector('div[class*="right-wrapper"]');
-            if (rightWrapper) {
-                const rightSvgs = rightWrapper.querySelectorAll('svg');
-                rightSvgs.forEach(svg => {
-                    if (svg.innerHTML.includes('hfish') || svg.innerHTML.includes('logo')) {
-                        if (!svg.dataset.patched) {
-                            const titleDiv = document.createElement('div');
-                            titleDiv.innerText = BRAND_TITLE;
-                            titleDiv.style.color = "#4ade80"; // Cyber Green
-                            titleDiv.style.fontSize = "24px"; // Increased font size
-                            titleDiv.style.fontWeight = "bold";
-                            svg.replaceWith(titleDiv);
-                            titleDiv.dataset.patched = 'true';
-                        }
-                    }
-                });
-            }
+            // 3. Text Logo Replacement (Right Side / Top) - Hide originals
+            // (Handled by CSS display: none below)
 
             // 4. General Text Replacement (Fallback)
             const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -140,7 +132,7 @@
                 const style = document.createElement('style');
                 style.id = 'branding-style';
                 style.innerHTML = `
-                  /* NUCLEAR FIX v2: Force matching background color */
+                  /* NUCLEAR FIX v3: REMOVE HEADER BAR COMPLETELY */
                   html, body {
                       background-color: #0f172a !important; /* Cyber Dark */
                       margin: 0 !important;
@@ -148,50 +140,44 @@
                       overflow-x: hidden !important;
                   }
                   
-                  /* Header & Title Fixes */
-                  .screen-header-left-title, .screen-title { 
-                      visibility: hidden !important; 
-                      position: absolute !important; 
-                      left: 0 !important;
-                      right: 0 !important;
-                      top: 0 !important;
-                      width: 100% !important;
-                      text-align: center !important;
-                      z-index: 100 !important;
-                      pointer-events: none !important;
+                  /* DETACHED TITLE STYLING */
+                  #lemue-detached-title {
+                      position: absolute;
+                      top: 40px; /* Positioned where the header was */
+                      left: 0;
+                      right: 0;
+                      text-align: center;
+                      width: 100%;
+                      color: #4ade80;
+                      font-size: 24px;
+                      font-weight: bold;
+                      z-index: 1000;
+                      pointer-events: none;
                   }
 
-                  /* Force Header to match Background (hiding white bar) */
-                  div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"],
+                  /* HIDE ORIGINAL HEADER COMPLETELY */
+                  div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"], 
+                  .screen-header-left-title, .screen-title, .right-wrapper,
                   div[class*="top"], .el-card__header {
-                      background: #0f172a !important; /* Match Body BG */
-                      background-color: #0f172a !important;
-                      box-shadow: none !important;
+                      display: none !important;
+                      opacity: 0 !important;
+                      visibility: hidden !important;
+                      height: 0 !important;
+                      width: 0 !important;
+                      padding: 0 !important;
+                      margin: 0 !important;
                       border: none !important;
+                      overflow: hidden !important;
                   }
                   
-                  div[class*="header"] > div, header > div, .el-header > div {
-                      background: #0f172a !important;
-                      border: none !important;
+                  /* Ensure children of header are gone */
+                  div[class*="header"] * {
+                      display: none !important;
                   }
 
-                  .screen-header-left-title::after, .screen-title::after {
-                      visibility: visible !important;
-                      content: "${BRAND_TITLE}" !important;
-                      display: block !important; 
-                      position: relative !important; 
-                      text-align: center !important;
-                      color: #4ade80 !important; 
-                      font-size: 24px !important; 
-                      font-weight: bold !important;
-                      white-space: nowrap !important;
-                      margin-top: 15px !important; 
-                      pointer-events: auto !important;
-                  }
-
-                  /* Fix Title Spacing - Match Login Button Gap (~20px) */
+                  /* Fix Title Spacing - Push Inputs Down based on new detached title */
                   div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
-                      margin-top: 25px !important; 
+                      margin-top: 80px !important; /* Adjusted for detached title */
                   }
                   
                   /* Login Button Green */
@@ -307,7 +293,7 @@
                         title: 'Feed'
                     },
                     {
-                        href: '/feed/banned_ips.txt',
+                        href: 'https://feed.sec.lemue.org/feed/banned_ips.txt',
                         icon: '<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
                         title: 'Banned IPs'
                     },
