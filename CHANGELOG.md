@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.7] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Refined Header Styles (Aggressive Transparency, Smaller Title Font 26px).
+- 🎨 **UI**: Adjusted Spacing to align title with inputs.
+- 🔗 **Link**: Updated Feed Link to `https://feed.sec.lemue.org/`.
+
 ## [3.6.6] - 2025-12-31
 
 ### Changed
