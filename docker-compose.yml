@@ -16,8 +16,8 @@ services:
       - ./web/index.html:/opt/hfish/3.3.6/web/index.html:ro
       - ./web/assets/flags.svg:/opt/hfish/current/web/assets/flags.svg:ro
       - ./web/assets/flags.svg:/opt/hfish/3.3.6/web/assets/flags.svg:ro
-      - ./web/assets/logo_hb.png:/opt/hfish/current/web/assets/logo_hb.png:ro
-      - ./web/assets/logo_hb.png:/opt/hfish/3.3.6/web/assets/logo_hb.png:ro
+      - ./web/assets/logo_bear.png:/opt/hfish/current/web/assets/logo_bear.png:ro
+      - ./web/assets/logo_bear.png:/opt/hfish/3.3.6/web/assets/logo_bear.png:ro
     deploy:
       resources:
         limits:
