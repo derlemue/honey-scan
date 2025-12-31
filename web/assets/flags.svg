@@ -6,11 +6,17 @@
     <path fill="#CE1126" d="M341.3 0h170.7v512H341.3z"/>
   </symbol>
   
-  <!-- United States (US) -->
   <symbol id="flag-us" viewBox="0 0 512 512">
     <path fill="#bd3d44" d="M0 0h512v512H0z"/>
     <path stroke="#fff" stroke-width="37" d="M0 55h512M0 128h512M0 201h512M0 274h512M0 347h512M0 420h512"/>
     <path fill="#192f5d" d="M0 0h278v278H0z"/>
+  </symbol>
+
+  <!-- Belgium (BE) -->
+  <symbol id="flag-be" viewBox="0 0 512 512">
+      <path fill="#000" d="M0 0h170.7v512H0z"/>
+      <path fill="#fae042" d="M170.7 0h170.6v512H170.7z"/>
+      <path fill="#ed2939" d="M341.3 0h170.7v512H341.3z"/>
   </symbol>
 
   <!-- China (CN) -->
