@@ -120,50 +120,57 @@
 
         // Safely patch Branding using MutationObserver to avoid breaking Vue/React hydration
         const patchBrandingSafe = () => {
-          // Observer to catch dynamic renders
           const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-              if (mutation.type === 'childList') {
-                // 1. Fix Logo
-                const images = document.querySelectorAll('img');
-                images.forEach(img => {
-                  if (!img.dataset.patched && (img.src.includes('logo') || img.src.includes('svg') || img.src.includes('png'))) {
-                    // Heuristic: Login page image or Main Logo
-                    if (document.location.hash.includes('login') || document.location.pathname.includes('login') || document.body.innerText.includes("Verification code")) {
-                      // Only replace if it looks like the main logo (size check or position)
-                      if (img.parentElement.className.includes("login") || img.style.width || img.height > 50) {
-                        img.src = "/assets/logo_bear.png";
-                        img.style.maxWidth = "200px";
-                        img.style.objectFit = "contain";
-                        img.dataset.patched = "true";
-                      }
-                    }
-                  }
-                });
+            // 1. Force Logo Replacement (Handle SVG/Div background cases)
+            const logoContainers = document.querySelectorAll('.login-logo, .logo, [class*="logo"]');
+            logoContainers.forEach(container => {
+              // Check if it's the main login logo (heuristic size/position)
+              const rect = container.getBoundingClientRect();
+              if (!container.dataset.patched && (rect.width > 50 || container.querySelector('svg'))) {
+                // Clear existing content (like the trident SVG)
+                container.innerHTML = '';
+                const newLogo = document.createElement('img');
+                newLogo.src = '/assets/logo_bear.png';
+                newLogo.style.width = '100%';
+                newLogo.style.height = '100%';
+                newLogo.style.maxWidth = '200px';
+                newLogo.style.objectFit = 'contain';
+                container.appendChild(newLogo);
+                container.dataset.patched = 'true';
+              }
+            });
 
-                // 2. Fix Text & Color (Refined targeting)
-                if (document.location.hash.includes('login')) {
-                  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-                  let node;
-                  while (node = walker.nextNode()) {
-                    // HFish -> Honey Scan Active Defense
-                    if (node.nodeValue && node.nodeValue.includes("HFish")) {
-                      node.nodeValue = node.nodeValue.replace("HFish", "Honey Scan Active Defense");
-                      if (node.parentElement) {
-                        node.parentElement.style.color = "#4ade80"; // Green
-                        node.parentElement.style.fontWeight = "bold";
-                      }
-                    }
-                    // Honeypot Platform (Green)
-                    if (node.nodeValue && node.nodeValue.includes("Honeypot Platform")) {
-                      if (node.parentElement) {
-                        node.parentElement.style.color = "#4ade80"; // Green
-                      }
-                    }
+            // Fallback for simple IMG tags and fix text
+            if (document.location.hash.includes('login') || document.location.pathname.includes('login')) {
+              // Images
+              const images = document.querySelectorAll('img');
+              images.forEach(img => {
+                if (!img.dataset.patched && (img.src.includes('logo') || img.src.includes('svg'))) {
+                  img.src = "/assets/logo_bear.png";
+                  img.dataset.patched = "true";
+                }
+              });
+
+              // Text
+              const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+              let node;
+              while (node = walker.nextNode()) {
+                // HFish -> Honey Scan Active Defense
+                if (node.nodeValue && (node.nodeValue.includes("HFish") || node.nodeValue.includes("Honeypot Platform"))) {
+                  node.nodeValue = node.nodeValue.replace(/HFish/g, "Honey Scan Active Defense");
+                  if (node.parentElement) {
+                    // Apply Green Styling
+                    node.parentElement.style.color = "#4ade80";
+                    node.parentElement.style.fontWeight = "bold";
+                    node.parentElement.classList.remove('text-red-500', 'text-danger');
                   }
                 }
               }
-            });
+
+              if (document.title.includes('HFish')) {
+                document.title = "Honey Scan Active Defense";
+              }
+            }
           });
 
           observer.observe(document.body, { childList: true, subtree: true });
