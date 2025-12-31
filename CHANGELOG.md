@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.10] - 2025-12-31
+
+### Changed
+- 🐛 **Fix**: Masked Header with Dark Background (#0f172a) to eliminate white bar.
+- 🎨 **UI**: Reduced Spacing to 25px (matching button gap).
+- 🔗 **Link**: Verified Feed Link.
+
 ## [3.6.9] - 2025-12-31
 
 ### Changed

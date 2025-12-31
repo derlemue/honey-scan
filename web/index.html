@@ -140,7 +140,7 @@
                 const style = document.createElement('style');
                 style.id = 'branding-style';
                 style.innerHTML = `
-                  /* NUCLEAR FIX: Force Dark Background & Reset */
+                  /* NUCLEAR FIX v2: Force matching background color */
                   html, body {
                       background-color: #0f172a !important; /* Cyber Dark */
                       margin: 0 !important;
@@ -158,21 +158,20 @@
                       width: 100% !important;
                       text-align: center !important;
                       z-index: 100 !important;
-                      pointer-events: none !important; /* Let clicks pass through if needed */
+                      pointer-events: none !important;
                   }
 
-                  /* Aggressive Header Transparency & Removal of White Backgrounds */
+                  /* Force Header to match Background (hiding white bar) */
                   div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"],
                   div[class*="top"], .el-card__header {
-                      background: transparent !important;
-                      background-color: transparent !important;
+                      background: #0f172a !important; /* Match Body BG */
+                      background-color: #0f172a !important;
                       box-shadow: none !important;
                       border: none !important;
                   }
                   
-                  /* Ensure children of header don't have white background (except buttons) */
                   div[class*="header"] > div, header > div, .el-header > div {
-                      background: transparent !important;
+                      background: #0f172a !important;
                       border: none !important;
                   }
 
@@ -190,9 +189,9 @@
                       pointer-events: auto !important;
                   }
 
-                  /* Fix Title Spacing - Push Inputs Down */
+                  /* Fix Title Spacing - Match Login Button Gap (~20px) */
                   div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
-                      margin-top: 50px !important; 
+                      margin-top: 25px !important; 
                   }
                   
                   /* Login Button Green */
