@@ -170,7 +170,7 @@
                 const style = document.createElement('style');
                 style.id = 'branding-style';
                 style.innerHTML = `
-                  /* NUCLEAR FIX v5: SVG REPLACEMENT & CLEANUP */
+                  /* NUCLEAR FIX v6: LINK BAR FLUSH & LOGO PADDING */
                   html, body {
                       background-color: #0f172a !important; /* Cyber Dark */
                       margin: 0 !important;
@@ -227,13 +227,14 @@
                   }
 
                   /* Fix JPG Logo Transparency & Size */
+                  /* Added padding to mitigate visual clipping if container is tight */
                   img[src*="logo_bear.png"] {
                       mix-blend-mode: screen !important;
                       width: 80% !important; 
                       max-width: 350px !important;
                       display: block;
                       margin: 0 auto;
-                      padding: 10px !important; 
+                      padding: 15px !important; /* Added padding to help with "flat spots" */
                       box-sizing: border-box !important;
                       aspect-ratio: 1 / 1 !important; /* Force Square */
                       object-fit: contain !important; /* Prevent Clipping */
@@ -252,17 +253,17 @@
                       z-index: 9999;
                   }
 
-                  /* Top Right Link Bar */
+                  /* Top Right Link Bar - FLUSH TOP (0px) */
                   #lemue-link-bar {
                       position: fixed;
-                      top: 15px;
-                      right: 20px;
+                      top: 0;
+                      right: 0;
                       display: flex;
                       gap: 15px;
                       z-index: 10000;
-                      background: rgba(0, 0, 0, 0.2);
-                      padding: 8px 15px;
-                      border-radius: 20px;
+                      background: rgba(0, 0, 0, 0.4);
+                      padding: 8px 20px;
+                      border-bottom-left-radius: 15px;
                       backdrop-filter: blur(5px);
                   }
                   .lemue-link {

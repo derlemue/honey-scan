@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.6.14] - 2025-12-31
+
+### Changed
+- 🎨 **UI**: Reduced **Top Spacing to 0px**. Link Bar is now flush with the top-right corner.
+- 🎨 **Logo**: Added `15px` padding to the Bear Logo to prevent container clipping (Original image has inherent cutoff).
+- 🐛 **Docs**: Verified logo source file limitations.
+
 ## [3.6.13] - 2025-12-31
 
 ### Changed
