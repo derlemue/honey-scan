@@ -7,7 +7,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-3.7.2-blue.svg)
+![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -20,6 +20,8 @@
 [🇬🇧 English](README.md) | [🇩🇪 Deutsch](README_DE.md) | [🇺🇦 Українська](README_UA.md)
 
 </div>
+
+---
 
 > [!WARNING]
 > **⚠️ HAFTUNGSAUSSCHLUSS: HOCHRISIKO-TOOL ⚠️**
@@ -41,6 +43,8 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
 3.  **📢 Veröffentlichen**: Die Informationen in einem lokalen Feed bereitstellen.
 4.  **🛡️ Blockieren**: Den Angreifer auf deiner Produktionsinfrastruktur blockieren (über Client-Skripte).
 
+---
+
 ## 🚀 Hauptfunktionen
 
 *   **⚡ Echtzeit-Reaktion**: Python-Sidecar überwacht `hfish.db` und löst Sekunden nach einem Angriff Scans aus.
@@ -50,12 +54,14 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
 *   **🖼️ Visualisierungen**:
     *   **Live Threat Monitor** (Der "Feed"):
         ![Feed Dashboard](docs/img/feed_dashboard_v4.png)
-    *   **HFish Angriffs-Karte** (Intern):
+    *   **lemueIO SecMonitor** (Intern):
         ![Attack Map](docs/img/hfish_screen_v4.png)
-    *   **HFish Statistiken** (Intern):
+    *   **lemueIO Statistics** (Intern):
         ![Statistics](docs/img/hfish_dashboard_v4.png)
     *   **Login Interface**:
         ![Login](docs/img/login_v2.png)
+
+---
 
 ## 🏗️ Architektur
 

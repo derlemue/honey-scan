@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.8.0] - 2026-01-01
+
+### Added
+- 📸 **Visuals**: Updated all project screenshots (Feed, SecMonitor, Statistics, Login) with clean, high-quality captures (removed blue borders).
+- 📝 **Docs**: Added horizontal rules (`---`) to READMEs for better readability between sections.
+
+### Changed
+- 🚨 **Rebranding**: Renamed "HFish Attack Map" to "**lemueIO SecMonitor** (Internal)" in documentation.
+- 🚨 **Rebranding**: Renamed "HFish Statistics" to "**lemueIO Statistics** (Internal)" in documentation.
+- 🆙 **Minor Release**: Version bump to 3.8.0 reflecting documentation overhaul.
+
 ## [3.7.2] - 2026-01-01
 
 ### Fixed
