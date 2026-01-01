@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.8.2] - 2026-01-01
+
+### Changed
+- 🔧 **Infrastructure**: Moved MariaDB to Host Port **3307** to resolve conflict with Honeypot MySQL service on Port 3306.
+- 🔧 **Configuration**: Updated `hfish.toml` to connect to database via `127.0.0.1:3307`.
+
+### Fixed
+- 🌍 **Geolocation**: Enhanced Sidecar Monitor (`monitor.py`) with robust public IP fetching (Retries) and fixed Map Geolocation updates.
+- ☁️ **Diagnostics**: Added connectivity check for Cloud Intelligence (ThreatBook API) to logs.
+
 ## [3.8.1] - 2026-01-01
 
 ### Fixed

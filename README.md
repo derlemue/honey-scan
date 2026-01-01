@@ -7,7 +7,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)
+![Version](https://img.shields.io/badge/version-3.8.2-blue.svg)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -97,8 +97,8 @@ graph LR
 | Setting | Value |
 | :--- | :--- |
 | **Database Type** | **MySQL / MariaDB** |
-| **Address** | `mariadb` |
-| **Port** | `3306` |
+| **Address** | `127.0.0.1` |
+| **Port** | `3307` |
 | **Name** | `hfish` |
 | **Username** | `hfish` |
 | **Password** | *(The value you set in `.env`)* |
