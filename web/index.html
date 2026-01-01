@@ -86,12 +86,10 @@
             }
 
             // === UNIVERSAL TEXT REPLACEMENT (Runs everywhere) ===
-            // This fixes "XX Company Threat Monitor" on the dashboard
             const replaceTextContent = (selector, target, replacement) => {
                 try {
                     const elements = document.querySelectorAll(selector);
                     elements.forEach(el => {
-                        // Check exact match or includes depending on need
                         if (el.innerText.includes(target) && !el.dataset.branded) {
                             el.innerHTML = el.innerHTML.replace(target, replacement);
                             el.dataset.branded = 'true';
@@ -105,6 +103,7 @@
             replaceTextContent('*', 'HFish Attack Map', 'lemueIO SecMonitor');
             replaceTextContent('*', 'HFish Statistics', 'lemueIO SecStatistics');
             replaceTextContent('*', 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
+            replaceTextContent('*', 'HFish support', 'Honey Scan supports'); // New replacement
 
             // Route Detection: Only apply aggressive layout changes on Login Page
             const isLogin = location.href.includes('/login') || location.hash.includes('login');
@@ -123,8 +122,7 @@
                                 container.innerHTML = '';
                                 const newLogo = document.createElement('img');
                                 newLogo.src = LOGO_PATH;
-                                newLogo.style.maxWidth = '100%';
-                                newLogo.style.height = 'auto';
+                                newLogo.className = 'honey-scan-logo';
                                 container.appendChild(newLogo);
                                 container.dataset.patched = 'true';
                             }
@@ -140,32 +138,15 @@
                         if (svg.innerHTML.includes('hfish') || svg.getAttribute('class')?.includes('onefish-logo')) {
                             if (!svg.dataset.patched) {
                                 const container = document.createElement('div');
-                                container.style.textAlign = 'center';
-                                container.style.marginBottom = '20px';
-                                container.style.display = 'flex';
-                                container.style.flexDirection = 'column';
-                                container.style.alignItems = 'center';
-                                container.style.justifyContent = 'center';
-
+                                container.className = 'honey-scan-brand';
+                                
                                 const title = document.createElement('div');
                                 title.innerText = "Honey Scan";
-                                title.style.color = "#4ade80";
-                                title.style.fontSize = "36px";
-                                title.style.fontWeight = "900";
-                                title.style.fontFamily = "sans-serif";
-                                title.style.letterSpacing = "1px";
-                                title.style.marginBottom = "8px";
-                                title.style.lineHeight = "1.2";
+                                title.className = 'honey-scan-title';
 
                                 const pill = document.createElement('div');
                                 pill.innerText = "Active Defense Platform";
-                                pill.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                                pill.style.color = "rgba(255, 255, 255, 0.8)";
-                                pill.style.padding = "4px 12px";
-                                pill.style.borderRadius = "12px";
-                                pill.style.fontSize = "14px";
-                                pill.style.fontWeight = "500";
-                                pill.style.display = "inline-block";
+                                pill.className = 'honey-scan-pill';
 
                                 container.appendChild(title);
                                 container.appendChild(pill);
@@ -175,6 +156,16 @@
                             }
                         }
                     });
+                }
+                
+                // 2.5 Intercept Login Button
+                const loginBtn = document.querySelector('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"]');
+                if (loginBtn && !loginBtn.dataset.intercepted) {
+                     loginBtn.dataset.intercepted = 'true';
+                     // The requirement: "Wird bei leeren Feldern der Login Button gedrückt passiert das (Screenshot 1)"
+                     // implying we should handle empty fields strictly or prevent the red error via CSS.
+                     // Since we can't easily hook the React internal state, we rely on CSS to override the error color (red) 
+                     // and ensure it stays green even if disabled/loading/error.
                 }
 
                 // 3. Inject "Nuclear" CSS for Login Only
@@ -212,16 +203,30 @@
                           margin-top: 10px !important; 
                       }
                       
-                      /* Login Button Green */
+                      /* Login Button Green - FORCED overrides for all states (focus, hover, active, disabled) */
                       div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
                           background-color: #4ade80 !important;
                           border-color: #4ade80 !important;
                           color: #0f172a !important; 
                           font-weight: bold !important;
+                          transition: all 0.3s ease !important;
                       }
                       div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover {
                           background-color: #22c55e !important;
                           border-color: #22c55e !important;
+                          box-shadow: 0 0 15px rgba(74, 222, 128, 0.4) !important;
+                      }
+                      div[class*="index-cssmodule__btn"]:active, button[class*="index-cssmodule__btn"]:active {
+                          transform: scale(0.98);
+                      }
+                      /* Prevent Red Error State */
+                      .el-form-item__error {
+                          color: #f87171 !important; /* Lighter red for text, but button stays green */
+                      }
+                      
+                      /* Ensure input fields don't turn red/ugly borders */
+                      .el-input__inner:focus {
+                          border-color: #4ade80 !important;
                       }
                       
                       /* Footer IPv6 Button Green */
@@ -233,8 +238,8 @@
                           border: 1px solid #4ade80 !important;
                       }
 
-                      /* Logo Padding For Clip Fix */
-                      img[src*="logo_bear.png"] {
+                      /* Logo Styling */
+                      .honey-scan-logo {
                           mix-blend-mode: screen !important;
                           width: 80% !important; 
                           max-width: 350px !important;
@@ -245,6 +250,56 @@
                           aspect-ratio: 1 / 1 !important; 
                           object-fit: contain !important; 
                           height: auto !important;
+                      }
+                      
+                      /* Brand Text Styling */
+                      .honey-scan-brand {
+                          text-align: center;
+                          margin-bottom: 20px;
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          justify-content: center;
+                      }
+                      .honey-scan-title {
+                          color: #4ade80;
+                          font-size: 36px;
+                          font-weight: 900;
+                          font-family: sans-serif;
+                          letter-spacing: 1px;
+                          margin-bottom: 8px;
+                          line-height: 1.2;
+                      }
+                      .honey-scan-pill {
+                          background-color: rgba(255, 255, 255, 0.1);
+                          color: rgba(255, 255, 255, 0.8);
+                          padding: 4px 12px;
+                          border-radius: 12px;
+                          font-size: 14px;
+                          font-weight: 500;
+                          display: inline-block;
+                      }
+                      
+                      /* RESPONSIVE DESIGN */
+                      @media (max-width: 768px) {
+                          .honey-scan-logo {
+                              max-width: 150px !important;
+                              padding: 5px !important;
+                          }
+                          .honey-scan-title {
+                              font-size: 24px;
+                          }
+                          #lemue-link-bar {
+                              padding: 5px 10px;
+                          }
+                          #lemue-link-bar .lemue-link {
+                              width: 20px;
+                              height: 20px;
+                          }
+                          /* Stack layout if needed */
+                          div[class*="wrapper"] {
+                              flex-direction: column !important;
+                          }
                       }
                       
                       /* Custom Footer */
