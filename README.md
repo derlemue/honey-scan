@@ -53,7 +53,6 @@ When an attacker touches your honeypot, Honey-Scan automatically:
 *   **🖥️ Dashboard**: Simple web interface to browse scan reports and ban lists.
 *   **🖼️ Visuals**:
     *   **Live Threat Monitor** (The "Feed"):
-    *   **Live Threat Monitor** (The "Feed"):
         <br>
         <img src="docs/img/feed_dashboard_v4.png" width="80%">
         <p align="center"><em>Feed Dashboard</em></p>

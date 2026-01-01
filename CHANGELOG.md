@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.5] - 2026-01-01
+
+### Fixed
+- 🐛 **Docs**: Removed duplicate headings in the "Visuals" section of all README files.
+- 🎨 **Docs**: Enforced centered alignment for all image captions in documentation.
+
 ## [3.8.4] - 2026-01-01
 
 ### Security
