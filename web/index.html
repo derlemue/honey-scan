@@ -160,16 +160,25 @@
 
                 // === PRECISION VISUAL FIXES (Safe) ===
                 const applyPrecisionStyles = () => {
-                    // 1. Fix IPv6 Text (Find by content)
+                    // 1. Fix IPv6 Text -> "Green Filled Badge with Green Border, White Bold Text"
                     const allElements = document.querySelectorAll('div, span, p');
                     allElements.forEach(el => {
-                        if (el.innerText && el.innerText.includes('IPv6') && el.innerText.includes('Network')) {
-                            el.style.setProperty('color', '#4ade80', 'important');
-                            if (el.parentElement) el.parentElement.style.setProperty('color', '#4ade80', 'important');
+                        if (el.innerText && el.innerText.includes('IPv6')) {
+                            // Apply Badge Styling to the text element itself
+                            el.style.setProperty('background-color', '#4ade80', 'important'); // Green Fill
+                            el.style.setProperty('border', '1px solid #4ade80', 'important'); // Green Border
+                            el.style.setProperty('color', '#ffffff', 'important'); // White Text
+                            el.style.setProperty('font-weight', 'bold', 'important');
+                            el.style.setProperty('padding', '2px 8px', 'important');
+                            el.style.setProperty('border-radius', '4px', 'important');
+                            el.style.setProperty('display', 'inline-block', 'important'); // Ensure box model works
+
+                            // Ensure parent doesn't override color if it's tight wrapping
+                            if (el.parentElement) el.parentElement.style.setProperty('color', '#ffffff', 'important');
                         }
                     });
 
-                    // 2. Fix Login Button (Broad Selector)
+                    // 2. Fix Login Button -> Ensure Green
                     const btns = document.querySelectorAll('button, .el-button');
                     btns.forEach(btn => {
                         if (btn.innerText && (btn.innerText.includes('Log') || btn.innerText.includes('Sign'))) {
@@ -192,7 +201,7 @@
                     // and ensure it stays green even if disabled/loading/error.
                 }
 
-                // 3. Inject "Nuclear" CSS for Login Only
+                // 3. Inject CSS (Safe, Proven Styles + Refinements)
                 if (!document.getElementById('branding-style')) {
                     const style = document.createElement('style');
                     style.id = 'branding-style';
@@ -210,23 +219,38 @@
                       .screen-header-left-title, .screen-title,
                       div[class*="top"], .el-card__header {
                           display: none !important;
-                          opacity: 0 !important;
-                          visibility: hidden !important;
-                          height: 0 !important;
-                          width: 0 !important;
-                          padding: 0 !important;
-                          margin: 0 !important;
-                          border: none !important;
-                          overflow: hidden !important;
                       }
                       
                       div[class*="header"] * { display: none !important; }
 
-                      /* Fix Title Spacing */
+                      /* Fix Title Spacing - Symmetry */
                       div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
-                          margin-top: 10px !important; 
+                          margin-top: 20px !important; 
                       }
                       
+                      /* BRANDING STYLES (New) */
+                      .honey-scan-brand {
+                          margin-bottom: 40px !important; /* Symmetrical spacing to form/button */
+                          text-align: center;
+                      }
+                      .honey-scan-title {
+                          font-size: 26px !important;
+                          font-weight: 800 !important; /* Bold */
+                          color: #ffffff !important;
+                          margin-bottom: 8px !important;
+                          letter-spacing: 0.5px;
+                      }
+                      .honey-scan-pill {
+                          display: inline-block !important;
+                          font-size: 12px !important;
+                          background-color: rgba(74, 222, 128, 0.15) !important; /* Green Tint Background */
+                          color: #4ade80 !important; /* Green Text */
+                          padding: 4px 12px !important;
+                          border-radius: 99px !important; /* Rounded Badge */
+                          border: 1px solid rgba(74, 222, 128, 0.2) !important;
+                          font-weight: 600 !important;
+                      }
+
                       /* Login Button Green - AGGRESSIVE Override */
                       div[class*="index-cssmodule__btn"], 
                       button[class*="index-cssmodule__btn"], 
@@ -240,14 +264,14 @@
                           font-weight: bold !important;
                           transition: all 0.3s ease !important;
                           box-shadow: none !important;
+                          background-image: none !important; /* Kill Red Slide Gradients */
                       }
                       
-                      /* HOVER / FOCUS / ACTIVE - Ensure it NEVER turns red */
+                      /* HOVER / FOCUS / ACTIVE - KILL RED SLIDE */
                       div[class*="index-cssmodule__btn"]:hover, 
                       button[class*="index-cssmodule__btn"]:hover, 
                       .el-button:hover,
-                      .el-button:focus,
-                      .el-button:active, 
+                      .el-button:focus, 
                       .el-button--primary:hover,
                       .el-button--primary:focus {
                           background-color: #22c55e !important; /* Slightly darker green */
@@ -255,6 +279,8 @@
                           color: #0f172a !important;
                           box-shadow: 0 0 15px rgba(74, 222, 128, 0.6) !important;
                           outline: none !important;
+                          background-image: none !important; /* CRITICAL: Prevent Red Slide */
+                          animation: none !important; /* CRITICAL: Prevent Red Animation */
                       }
                       
                       /* Disable Red Error Helper Text if it clashes */
@@ -266,6 +292,13 @@
                       .el-input__inner, .el-input__inner:focus, .el-input__inner:hover {
                           border-color: #4ade80 !important;
                       }
+                      
+                      /* LOGO NO BACKGROUND */
+                      .honey-scan-logo {
+                          background: transparent !important;
+                          box-shadow: none !important;
+                          border: none !important;
+                      }
 
                       /* RESPONSIVE DESIGN */
                       @media (max-width: 768px) {
@@ -274,14 +307,13 @@
                               padding: 5px !important;
                           }
                           .honey-scan-title {
-                              font-size: 18px !important; /* Smaller font */
+                              font-size: 22px !important;
                           }
                           .honey-scan-pill {
-                              font-size: 12px !important;
-                              padding: 2px 8px !important;
+                              font-size: 11px !important;
                           }
                           .honey-scan-brand {
-                              margin-bottom: 5px;
+                              margin-bottom: 20px !important;
                           }
                           #lemue-link-bar {
                               padding: 5px 10px;
@@ -292,9 +324,9 @@
                           }
                           
                           div[class*="index-cssmodule__login-wrapper"], .login-container {
-                               width: 85% !important;
-                               margin: 0 auto !important;
-                               margin-top: 5px !important;
+                                width: 85% !important;
+                                margin: 0 auto !important;
+                                margin-top: 5px !important;
                           }
                           
                           div[class*="left-wrapper"] {
@@ -302,11 +334,13 @@
                               justify-content: center !important;
                               width: 100% !important;
                               margin-bottom: 5px !important;
+                              order: 1 !important;
                           }
                           
                           div[class*="right-wrapper"] {
                               width: 100% !important;
                               padding: 5px !important;
+                              order: 2 !important;
                           }
                       }                      
                       /* Custom Footer */
