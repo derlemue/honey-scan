@@ -3,7 +3,7 @@
 ## [3.8.8] - 2026-01-01
 
 ### Fixed
-- 🌍 **Geolocation**: Upgraded `monitor.py` to fetch detailed location ("City, Region, Country") instead of just "Country" for precise map placement.
+- 🌍 **Geolocation**: Simplified geolocation logic in `monitor.py` to use "Country" (e.g., "Germany") to prevent HFish map mismatches caused by specific city names.
 - 🕒 **Timezone**: Corrected frontend time patch from +2h to +1h to resolve the reported -1h mismatch.
 - 🚩 **UI**: Expanded country flag mapping to include 50+ additional countries.
 
