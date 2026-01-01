@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.8.6] - 2026-01-01
+
+### Fixed
+- 🌍 **Geolocation**: Simplified geolocation logic in `monitor.py` to use "Country" (e.g., "Germany") to prevent HFish map mismatches caused by specific city names.
+- 🕒 **Timezone**: Injected frontend patch to correct "Recent Attacks" time by +1 Hour (UTC -> CET).
+- 🚩 **UI**: Fixed missing country flags in dashboard lists via frontend mapping injection.
+- 🎨 **Docs**: Refined image caption alignment in READMEs.
+
 ## [3.8.5] - 2026-01-01
 
 ### Fixed
