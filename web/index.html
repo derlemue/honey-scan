@@ -90,7 +90,7 @@
                 try {
                     const elements = document.querySelectorAll(selector);
                     elements.forEach(el => {
-                        if (el.innerText.includes(target) && !el.dataset.branded) {
+                        if (el && el.innerText && el.innerText.includes(target) && !el.dataset.branded) {
                             el.innerHTML = el.innerHTML.replace(target, replacement);
                             el.dataset.branded = 'true';
                         }
