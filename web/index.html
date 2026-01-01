@@ -189,10 +189,12 @@
                       }
 
                       /* HIDE ORIGINAL HEADER ONLY - SAFELIST MODE */
-                      /* Only hide specific known headers, generic names like 'top' or 'header' might kill form parts */
+                      /* TEMPORARILY DISABLED TO RESTORE LOGIN FORM VISIBILITY */
+                      /* 
                       header, .el-header, nav, .screen-header-left-title, .screen-title {
                           display: none !important;
                       }
+                      */
                       
                       /* Login Button Green - SUPER AGGRESSIVE FIX */
                       div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
@@ -221,6 +223,7 @@
                           background-image: none !important;
                           animation: none !important;
                           color: #0f172a !important;
+                          transition: none !important; /* Kill transition on hover */
                       }
                       
                       /* Footer IPv6 Button Green */
