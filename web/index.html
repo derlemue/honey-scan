@@ -158,6 +158,30 @@
                     });
                 }
 
+                // === PRECISION VISUAL FIXES (Safe) ===
+                const applyPrecisionStyles = () => {
+                    // 1. Fix IPv6 Text (Find by content)
+                    const allElements = document.querySelectorAll('div, span, p');
+                    allElements.forEach(el => {
+                        if (el.innerText && el.innerText.includes('IPv6') && el.innerText.includes('Network')) {
+                            el.style.setProperty('color', '#4ade80', 'important');
+                            if (el.parentElement) el.parentElement.style.setProperty('color', '#4ade80', 'important');
+                        }
+                    });
+
+                    // 2. Fix Login Button (Broad Selector)
+                    const btns = document.querySelectorAll('button, .el-button');
+                    btns.forEach(btn => {
+                        if (btn.innerText && (btn.innerText.includes('Log') || btn.innerText.includes('Sign'))) {
+                            btn.style.setProperty('background-color', '#4ade80', 'important');
+                            btn.style.setProperty('border-color', '#4ade80', 'important');
+                            btn.style.setProperty('color', '#0f172a', 'important');
+                        }
+                    });
+                };
+
+                applyPrecisionStyles();
+
                 // 2.5 Intercept Login Button
                 const loginBtn = document.querySelector('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"]');
                 if (loginBtn && !loginBtn.dataset.intercepted) {
