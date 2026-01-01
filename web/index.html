@@ -331,9 +331,40 @@
                               max-width: 200px !important;
                               padding: 10px !important;
                           }
+                          /* Adjust Logo size */
+                          img[src*="logo_bear.png"] {
+                              max-width: 200px !important;
+                              padding: 10px !important;
+                          }
                           
-                          /* Removed intrusive stack/width overrides to let default layout flow */
-                      }
+                          /* Safe Column Layout */
+                          div[class*="login-wrapper"], .index-cssmodule__login-wrapper {
+                              flex-direction: column !important;
+                              height: auto !important; /* Prevent clipping */
+                              padding: 20px 0 !important;
+                          }
+                          
+                          /* Force Logo to Top */
+                          div[class*="left-wrapper"] {
+                              order: -1 !important;
+                              width: 100% !important;
+                              justify-content: center !important;
+                              margin-bottom: 20px !important;
+                          }
+                          
+                          /* Force Form to Bottom/Center */
+                          div[class*="right-wrapper"] {
+                              order: 2 !important;
+                              width: 100% !important;
+                              justify-content: flex-start !important; 
+                          }
+                          
+                          /* Ensure form box is visible */
+                          div[class*="index-cssmodule__form"], .el-form {
+                              width: 90% !important;
+                              max-width: 400px !important;
+                              margin: 0 auto !important;
+                          }
                       
                       /* ERROR MESSAGE STYLING (Green Theme) */
                       .el-message__content {
