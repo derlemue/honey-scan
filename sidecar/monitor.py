@@ -85,13 +85,9 @@ def get_geolocation():
         geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=10).json()
         
         if geo.get('status') == 'success':
-            # Construct detailed location string: "City, Region, Country"
-            parts = []
-            if geo.get('city'): parts.append(geo.get('city'))
-            if geo.get('regionName'): parts.append(geo.get('regionName'))
-            if geo.get('country'): parts.append(geo.get('country'))
-            
-            location_str = ", ".join(parts) if parts else "Unknown"
+            # HFish Map matching is often fuzzy. Using 'City' can fail if unknown.
+            # We try 'Country' to ensure at least the region is correct.
+            location_str = geo.get('country', 'Unknown')
             return ip, location_str
     except Exception as e:
         logger.error(f"Geolocation fetch failed: {e}")
