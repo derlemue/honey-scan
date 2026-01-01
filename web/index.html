@@ -103,14 +103,12 @@
             replaceTextContent('*', 'HFish Attack Map', 'lemueIO SecMonitor');
             replaceTextContent('*', 'HFish Statistics', 'lemueIO SecStatistics');
             replaceTextContent('*', 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
-            replaceTextContent('*', 'HFish support', 'Honey Scan supports'); // New replacement
+            replaceTextContent('*', 'HFish support', 'Honey Scan supports');
 
             // Route Detection: Only apply aggressive layout changes on Login Page
             const isLogin = location.href.includes('/login') || location.hash.includes('login');
 
             if (isLogin) {
-                // === LOGIN PAGE LOGIC ===
-
                 // 1. Logo Replacement (Left Side - SVG Wrapper)
                 const leftWrapper = document.querySelector('div[class*="left-wrapper"]');
                 if (leftWrapper) {
@@ -158,82 +156,7 @@
                     });
                 }
 
-                // === VISUAL ENFORCEMENT (The "Nuclear" Option) ===
-                // Force IPv6 / Network Support Text to Green
-                const supportText = Array.from(document.querySelectorAll('div, span, p')).find(el => el.innerText && el.innerText.includes('IPv6') && el.innerText.includes('Network'));
-                if (supportText) {
-                    supportText.style.setProperty('color', '#4ade80', 'important');
-                    if (supportText.parentElement) supportText.parentElement.style.setProperty('color', '#4ade80', 'important');
-                }
-
-                // Force Logo Transparency
-                const logos = document.querySelectorAll('.honey-scan-logo');
-                logos.forEach(logo => {
-                    logo.style.setProperty('background', 'transparent', 'important');
-                    logo.style.setProperty('border', 'none', 'important');
-                    logo.style.setProperty('box-shadow', 'none', 'important');
-                });
-
-                // Force Input Borders Green
-                const inputs = document.querySelectorAll('input');
-                inputs.forEach(input => {
-                    input.style.setProperty('border-color', '#4ade80', 'important');
-                });
-
-                // Force Login Button Green State
-                const buttons = document.querySelectorAll('button[class*="index-cssmodule__btn"], .el-button--primary');
-                buttons.forEach(btn => {
-                    // Constant Green State
-                    btn.style.setProperty('background-color', '#4ade80', 'important');
-                    btn.style.setProperty('border-color', '#4ade80', 'important');
-                    btn.style.setProperty('color', '#0f172a', 'important');
-
-                    // Attach Hover Listeners if not already attached (using dataset flag)
-                    if (!btn.dataset.hoverPatched) {
-                        btn.addEventListener('mouseenter', () => {
-                            btn.style.setProperty('background-color', '#22c55e', 'important');
-                            btn.style.setProperty('box-shadow', '0 0 20px rgba(34, 197, 94, 0.8)', 'important');
-                        });
-                        btn.addEventListener('mouseleave', () => {
-                            btn.style.setProperty('background-color', '#4ade80', 'important');
-                            btn.style.setProperty('box-shadow', 'none', 'important');
-                        });
-                        btn.dataset.hoverPatched = 'true';
-                    }
-                });
-                // We use a global click listener on capture phase to intercept the click BEFORE React sees it.
-                // If fields are empty, we stop it and just show a visual hint (or nothing), keeping it green.
-                // 2.5 Intercept Login Button (The "God Mode" Fix)
-                // We use a global click listener on capture phase to intercept the click BEFORE React sees it.
-                // If fields are empty, we stop it and just show a visual hint (or nothing), keeping it green.
-                document.addEventListener('click', (e) => {
-                    const target = e.target;
-                    // Check if clicked element looks like the login button
-                    const isBtn = target.matches('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"], .el-button--primary');
-                    const isBtnChild = target.closest('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"], .el-button--primary');
-
-                    if (isBtn || isBtnChild) {
-                        // Check inputs
-                        const inputs = document.querySelectorAll('input');
-                        let empty = false;
-                        inputs.forEach(i => {
-                            if (!i.value || i.value.trim() === '') empty = true;
-                        });
-
-                        if (empty) {
-                            console.log("Honey Scan: Intercepted empty login click. Preventing Red State.");
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-
-                            // Optional: Shake effect or visual feedback that stays green?
-                            // For now, just do nothing so it stays green.
-                            return false;
-                        }
-                    }
-                }, true); // Capture phase is key!
-
-                // 3. Inject "Nuclear" CSS for Login Only
+                // 3. Inject CSS (Safe, Proven Styles)
                 if (!document.getElementById('branding-style')) {
                     const style = document.createElement('style');
                     style.id = 'branding-style';
@@ -246,21 +169,12 @@
                           overflow-x: hidden !important;
                       }
 
-                      /* HIDE ORIGINAL HEADER ONLY */
+                      /* HIDE ORIGINAL HEADER */
                       div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"], 
                       .screen-header-left-title, .screen-title,
                       div[class*="top"], .el-card__header {
                           display: none !important;
-                          opacity: 0 !important;
-                          visibility: hidden !important;
-                          height: 0 !important;
-                          width: 0 !important;
-                          padding: 0 !important;
-                          margin: 0 !important;
-                          border: none !important;
-                          overflow: hidden !important;
                       }
-                      
                       div[class*="header"] * { display: none !important; }
 
                       /* Fix Title Spacing */
@@ -271,79 +185,50 @@
                       /* Login Button Green - AGGRESSIVE Override */
                       div[class*="index-cssmodule__btn"], 
                       button[class*="index-cssmodule__btn"], 
-                      .el-button, 
                       .el-button--primary,
-                      .el-button--default,
                       button {
                           background-color: #4ade80 !important;
                           border-color: #4ade80 !important;
                           color: #0f172a !important; 
                           font-weight: bold !important;
-                          transition: all 0.3s ease !important;
                           box-shadow: none !important;
                       }
                       
-                      /* HOVER / FOCUS / ACTIVE - Ensure it NEVER turns red */
+                      /* HOVER / FOCUS - Ensure Green */
                       div[class*="index-cssmodule__btn"]:hover, 
                       button[class*="index-cssmodule__btn"]:hover, 
-                      .el-button:hover,
-                      .el-button:focus,
-                      .el-button:active, 
                       .el-button--primary:hover,
                       .el-button--primary:focus {
-                          background-color: #22c55e !important; /* Slightly darker green */
-                          border-color: #22c55e !important;
-                          color: #0f172a !important;
-                          box-shadow: 0 0 15px rgba(74, 222, 128, 0.6) !important;
-                          outline: none !important;
-                      }
-                      
-                      /* Disable Red Error Helper Text if it clashes */
-                      .el-form-item__error {
-                          color: #f87171 !important;
-                      }
-                      
-                      /* Fix Input Borders on Error */
-                      .el-input__inner, .el-input__inner:focus, .el-input__inner:hover {
-                          border-color: #4ade80 !important;
-                      }
-
-                      /* IPv6 Badge & Bottom Text */
-                      span, p, div {
-                          color: #cbd5e1; /* Default light gray for text */
-                      }
-                      /* Specific target for "Honey Scan supports IPv6" if possible, or broad match */
-                      .login-box + div, .login-container + div {
-                          color: #4ade80 !important; /* Green for bottom text */
-                      }
-                      /* If it's a badge-like element */
-                      .el-tag, .tag {
-                           background-color: rgba(74, 222, 128, 0.1) !important;
-                           border-color: #4ade80 !important;
-                           color: #4ade80 !important;
-                      }
-                      
-                      /* FORCE LOGIN BUTTON HOVER - SUPER AGGRESSIVE */
-                      button:hover, button:focus, button:active,
-                      .el-button:hover, .el-button:focus, .el-button:active,
-                      div[class*="index-cssmodule__btn"]:hover {
                           background-color: #22c55e !important;
                           border-color: #22c55e !important;
                           color: #0f172a !important;
-                          box-shadow: 0 0 20px rgba(34, 197, 94, 0.8) !important;
+                          box-shadow: 0 0 15px rgba(74, 222, 128, 0.6) !important;
+                      }
+                      
+                      /* Fix Input Borders */
+                      .el-input__inner, .el-input__inner:focus {
+                          border-color: #4ade80 !important;
+                      }
+
+                      /* IPv6 Badge & Bottom Text - Force Green */
+                      .login-box + div, .login-container + div, 
+                      span[class*="ipv6"], div[class*="ipv6"] {
+                          color: #4ade80 !important; 
+                      }
+                      /* Targeted fix for the red text at bottom */
+                      div[style*="color: red"], span[style*="color: red"],
+                      div[style*="color: rgb(255, 0, 0)"] {
+                          color: #4ade80 !important;
                       }
 
                       /* LOGO NO BACKGROUND */
                       .honey-scan-logo {
                           background: transparent !important;
-                          box-shadow: none !important;
                           border: none !important;
                       }
 
-                      /* RESPONSIVE DESIGN - ROBUST IMPLEMENTATION */
+                      /* RESPONSIVE DESIGN - ROBUST STACK */
                       @media screen and (max-width: 768px) {
-                          /* 1. Force Main Container to Vertical Stack */
-                          /* We target likely container classes or general flex containers heavily */
                           div[class*="index-cssmodule__login-wrapper"], 
                           .login-container,
                           div[class*="login-box"] {
@@ -352,49 +237,23 @@
                                width: 90% !important;
                                margin: 10px auto !important;
                                height: auto !important;
-                               min-height: auto !important;
                           }
-
-                          /* 2. Left Wrapper (Logo Area) */
                           div[class*="left-wrapper"] {
                               width: 100% !important;
-                              height: auto !important;
-                              min-height: 150px !important; /* Ensure visibility */
                               display: flex !important;
-                              align-items: center !important;
                               justify-content: center !important;
                               margin-bottom: 20px !important;
-                              order: 1 !important; /* Force to top */
+                              order: 1 !important;
                           }
-
-                          /* 3. Right Wrapper (Form Area) */
                           div[class*="right-wrapper"] {
                               width: 100% !important;
-                              height: auto !important;
                               padding: 20px !important;
                               box-sizing: border-box !important;
-                              order: 2 !important; /* Force below logo */
+                              order: 2 !important;
                           }
-
-                          /* 4. Logo Sizing */
                           .honey-scan-logo {
                               width: 180px !important;
                               height: auto !important;
-                              max-width: 80% !important;
-                              margin: 0 auto !important;
-                          }
-
-                          /* 5. Typography Adjustments */
-                          .honey-scan-title {
-                              font-size: 24px !important;
-                          }
-                          .honey-scan-pill {
-                              font-size: 12px !important;
-                          }
-                          
-                          /* 6. Link Bar Sizing */
-                          #lemue-link-bar {
-                              padding: 5px 10px !important;
                           }
                       }                      
                       /* Custom Footer */
@@ -408,48 +267,11 @@
                           pointer-events: none;
                           z-index: 9999;
                       }
-
-                      /* Top Right Link Bar - FLUSH TOP (0px) */
-                      #lemue-link-bar {
-                          position: fixed;
-                          top: 0;
-                          right: 0;
-                          display: flex;
-                          gap: 15px;
-                          z-index: 10000;
-                          background: rgba(0, 0, 0, 0.4);
-                          padding: 8px 20px;
-                          border-bottom-left-radius: 15px;
-                          backdrop-filter: blur(5px);
-                      }
-                      .lemue-link {
-                          display: flex;
-                          align-items: center;
-                          justify-content: center;
-                          width: 24px;
-                          height: 24px;
-                          opacity: 0.7;
-                          transition: opacity 0.2s;
-                          color: #4ade80;
-                      }
-                      .lemue-link:hover {
-                          opacity: 1;
-                      }
-                      .lemue-link svg {
-                          width: 100%;
-                          height: 100%;
-                          fill: currentColor;
-                      }
-                      .lemue-link img {
-                          width: 100%;
-                          height: 100%;
-                          border-radius: 50%;
-                      }
                     `;
                     document.head.appendChild(style);
                 }
 
-                // 4. Inject Footer
+                // Inject Footer
                 if (!document.getElementById('lemue-footer')) {
                     const footer = document.createElement('div');
                     footer.id = 'lemue-footer';
@@ -457,65 +279,15 @@
                     document.body.appendChild(footer);
                 }
 
-                // 5. Inject Link Bar
-                if (!document.getElementById('lemue-link-bar')) {
-                    const linkBar = document.createElement('div');
-                    linkBar.id = 'lemue-link-bar';
-
-                    const links = [
-                        {
-                            href: 'https://github.com/derlemue/honey-scan',
-                            icon: '<svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>',
-                            title: 'GitHub'
-                        },
-                        {
-                            href: 'https://feed.sec.lemue.org/',
-                            icon: '<svg viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>',
-                            title: 'Feed'
-                        },
-                        {
-                            href: 'https://feed.sec.lemue.org/feed/banned_ips.txt',
-                            icon: '<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
-                            title: 'Banned IPs'
-                        },
-                        {
-                            href: 'https://lemue.org',
-                            icon: '<img src="https://lemue.org/favicon.ico" alt="lemue.org" onerror="this.style.display=\'none\'">',
-                            title: 'lemue.org'
-                        }
-                    ];
-
-                    links.forEach(link => {
-                        const a = document.createElement('a');
-                        a.href = link.href;
-                        a.className = 'lemue-link';
-                        a.target = '_blank';
-                        a.innerHTML = link.icon;
-                        a.title = link.title;
-                        linkBar.appendChild(a);
-                    });
-
-                    document.body.appendChild(linkBar);
-                }
-
             } else {
-                // === DASHBOARD / OTHER PAGES LOGIC ===
-                // CLEANUP "Nuclear" styles to restore original UI
-
-                // Remove CSS Overrides (Restores Header, Background, etc.)
+                // CLEANUP for Dashboard
                 const style = document.getElementById('branding-style');
                 if (style) style.remove();
-
-                // Remove Link Bar (Only for Login)
-                const linkBar = document.getElementById('lemue-link-bar');
-                if (linkBar) linkBar.remove();
-
-                // Remove Footer (Only for Login)
                 const footer = document.getElementById('lemue-footer');
                 if (footer) footer.remove();
             }
 
-            // Always Inject Favicons (Safe to check continuously)
+            // Always Inject Favicons
             const addFavicon = (rel, href, sizes) => {
                 if (!document.querySelector(`link[href="${href}"]`)) {
                     let link = document.createElement('link');
@@ -525,22 +297,17 @@
                     document.head.appendChild(link);
                 }
             };
-            // Only clean up defaults once really
             if (!window.faviconsPatched) {
                 document.querySelectorAll('link[rel="shortcut icon"]').forEach(e => e.remove());
                 window.faviconsPatched = true;
             }
-
             addFavicon('icon', '/assets/favicon.ico');
             addFavicon('icon', '/assets/favicon-32x32.png', '32x32');
             addFavicon('icon', '/assets/favicon-16x16.png', '16x16');
             addFavicon('apple-touch-icon', '/assets/apple-touch-icon.png');
         };
 
-        // Run aggressively
         patchBrandingAggressive();
         setInterval(patchBrandingAggressive, 200);
     </script>
 </body>
-
-</html>
