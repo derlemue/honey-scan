@@ -85,8 +85,13 @@ def get_geolocation():
         geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=10).json()
         
         if geo.get('status') == 'success':
-            # HFish Map matching is often fuzzy. Using 'City, Country' helps.
-            location_str = f"{geo.get('city', 'Unknown')}, {geo.get('country', 'Unknown')}"
+            # Construct detailed location string: "City, Region, Country"
+            parts = []
+            if geo.get('city'): parts.append(geo.get('city'))
+            if geo.get('regionName'): parts.append(geo.get('regionName'))
+            if geo.get('country'): parts.append(geo.get('country'))
+            
+            location_str = ", ".join(parts) if parts else "Unknown"
             return ip, location_str
     except Exception as e:
         logger.error(f"Geolocation fetch failed: {e}")
@@ -130,7 +135,14 @@ def update_node_location():
             if affected > 0:
                 logger.info(f"Updated {affected} node(s) location to: {location}")
             else:
-                logger.warning("No nodes found in DB to update.")
+                # If no rows affected, maybe the table is empty or location is same.
+                # Try to see if there are any nodes
+                cursor.execute("SELECT count(*) as count FROM nodes")
+                res = cursor.fetchone()
+                if res and res['count'] > 0:
+                     logger.info("Node location presumably already up to date.")
+                else:
+                     logger.warning("No nodes found in DB to update.")
         else:
              logger.info("Skipping DB update (SQLite / Read-Only mode)")
         conn.close()
