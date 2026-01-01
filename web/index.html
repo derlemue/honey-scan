@@ -415,11 +415,9 @@
                         let date = new Date(dateStr);
 
                         if (!isNaN(date.getTime())) {
-                            // Add 2 Hours (2 * 3600 * 1000 ms) to correct -1h mismatch + base offset
-                            // Original observation: Displayed 19:xx, Real 20:xx. Difference +1h.
-                            // But previous patch (+1h) was active and yielded 19:xx.
-                            // Therefore base was 18:xx. Target is 20:xx. Total offset needed: +2h.
-                            date.setTime(date.getTime() + 7200000);
+                            // Add 3 Hours (3 * 3600 * 1000 ms) to correct -1h mismatch + base offset
+                            // Original observation: Displayed 18:xx, Real 21:xx (approx).
+                            date.setTime(date.getTime() + 10800000);
 
                             // Format back to YYYY/MM/DD HH:mm:ss
                             const pad = (n) => n.toString().padStart(2, '0');
@@ -454,7 +452,12 @@
                         'Nigeria': 'ng', 'Sweden': 'se', 'Poland': 'pl', 'Iran': 'ir', 'Turkey': 'tr',
                         'Romania': 'ro', 'Ukraine': 'ua', 'Mexico': 'mx', 'Argentina': 'ar', 'Ireland': 'ie',
                         'Austria': 'at', 'Switzerland': 'ch', 'Belgium': 'be', 'Denmark': 'dk', 'Norway': 'no',
-                        'Finland': 'fi', 'Portugal': 'pt', 'Greece': 'gr', 'Czech Republic': 'cz', 'Hungary': 'hu'
+                        'Finland': 'fi', 'Portugal': 'pt', 'Greece': 'gr', 'Czech Republic': 'cz', 'Hungary': 'hu',
+                        'Bulgaria': 'bg', 'Croatia': 'hr', 'Lithuania': 'lt', 'Latvia': 'lv', 'Estonia': 'ee',
+                        'Slovakia': 'sk', 'Slovenia': 'si', 'Cyprus': 'cy', 'Luxembourg': 'lu', 'Malta': 'mt',
+                        'Iceland': 'is', 'Chile': 'cl', 'Colombia': 'co', 'South Africa': 'za', 'Egypt': 'eg',
+                        'Saudi Arabia': 'sa', 'United Arab Emirates': 'ae', 'Israel': 'il', 'Thailand': 'th',
+                        'Indonesia': 'id', 'Malaysia': 'my', 'Philippines': 'ph', 'Hong Kong': 'hk'
                     };
 
                     const code = countryMap[country];
