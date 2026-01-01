@@ -52,8 +52,7 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
 *   **🚫 Netzwerk-Schutzschild**: Stellt eine dynamische `banned_ips.txt`-Liste bereit, die andere Server nutzen können, um Bedrohungen präventiv zu blockieren.
 *   **🖥️ Dashboard**: Einfache Weboberfläche zum Durchsuchen von Scan-Berichten und Bannlisten.
 *   **🖼️ Visualisierungen**:
-    *   **Live Threat Monitor** (Der "Feed"):
-    *   **Live Threat Monitor** (Der "Feed"):
+    *   **Live Threat Monitor** (The "Feed"):
         <br>
         <img src="docs/img/feed_dashboard_v4.png" width="80%">
         <p align="center"><em>Feed Dashboard</em></p>
