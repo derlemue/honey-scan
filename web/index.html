@@ -85,29 +85,40 @@
                 document.title = "lemueIO SecMonitor";
             }
 
-            // === UNIVERSAL TEXT REPLACEMENT (Runs everywhere) ===
+            // === UNIVERSAL TEXT REPLACEMENT (Safe Mode) ===
             const replaceTextContent = (selector, target, replacement) => {
-                try {
-                    const elements = document.querySelectorAll(selector);
-                    elements.forEach(el => {
-                        if (el.innerText.includes(target) && !el.dataset.branded) {
-                            // Use simple replace for text nodes to preserve HTML structure if needed
-                            // But innerHTML is powerful.
-                            el.innerHTML = el.innerHTML.replace(new RegExp(target, 'g'), replacement);
-                            el.dataset.branded = 'true';
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    // Skip if already processed
+                    if (el.dataset.branded) return;
+
+                    // Only process leaf nodes or traverse efficiently
+                    // Recursive function to find text nodes
+                    const walk = (node) => {
+                        if (node.nodeType === 3) { // Text Node
+                            const text = node.nodeValue;
+                            if (text.includes(target)) {
+                                node.nodeValue = text.replace(new RegExp(target, 'g'), replacement);
+                                // Mark the parent element as branded to avoid re-scanning (optional, but good for perf)
+                                if (node.parentElement) node.parentElement.dataset.branded = 'true';
+                            }
+                        } else if (node.nodeType === 1 && node.childNodes && !['SCRIPT', 'STYLE', 'INPUT', 'TEXTAREA'].includes(node.tagName)) {
+                            // Traverse Element Children (Skip inputs/scripts)
+                            node.childNodes.forEach(walk);
                         }
-                    });
-                } catch (e) { console.error('Branding patch error:', e); }
+                    };
+
+                    walk(el);
+                });
             };
 
-            // Specific HFish Dashboard Elements
-            replaceTextContent('div, span, h1, h2, h3, h4, p', 'XX Company Threat Monitor', 'lemueIO SecMonitor');
-            replaceTextContent('*', 'HFish Attack Map', 'lemueIO SecMonitor');
-            replaceTextContent('*', 'HFish Statistics', 'lemueIO SecStatistics');
-            replaceTextContent('*', 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
-            // Request: "HFish support ... -> Honey Scan supports"
-            replaceTextContent('*', 'HFish support', 'Honey Scan supports');
-
+            // Specific HFish Dashboard Elements - More Targeted Selectors if possible, but safe walker handles general ones better.
+            // We can target body to catch everything safely now.
+            replaceTextContent('body', 'XX Company Threat Monitor', 'lemueIO SecMonitor');
+            replaceTextContent('body', 'HFish Attack Map', 'lemueIO SecMonitor');
+            replaceTextContent('body', 'HFish Statistics', 'lemueIO SecStatistics');
+            replaceTextContent('body', 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
+            replaceTextContent('body', 'HFish support', 'Honey Scan supports');
             // Route Detection: Only apply aggressive layout changes on Login Page
             const isLogin = location.href.includes('/login') || location.hash.includes('login');
 
