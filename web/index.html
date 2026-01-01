@@ -203,94 +203,61 @@
                           margin-top: 10px !important; 
                       }
                       
-                      /* Login Button Green - FORCED overrides for all states (focus, hover, active, disabled) */
-                      div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
+                      /* Login Button Green - AGGRESSIVE Override */
+                      div[class*="index-cssmodule__btn"], 
+                      button[class*="index-cssmodule__btn"], 
+                      .el-button, 
+                      .el-button--primary,
+                      .el-button--default,
+                      button {
                           background-color: #4ade80 !important;
                           border-color: #4ade80 !important;
                           color: #0f172a !important; 
                           font-weight: bold !important;
                           transition: all 0.3s ease !important;
-                      }
-                      div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover {
-                          background-color: #22c55e !important;
-                          border-color: #22c55e !important;
-                          box-shadow: 0 0 15px rgba(74, 222, 128, 0.4) !important;
-                      }
-                      div[class*="index-cssmodule__btn"]:active, button[class*="index-cssmodule__btn"]:active {
-                          transform: scale(0.98);
-                      }
-                      /* Prevent Red Error State */
-                      .el-form-item__error {
-                          color: #f87171 !important; /* Lighter red for text, but button stays green */
+                          box-shadow: none !important;
                       }
                       
-                      /* Ensure input fields don't turn red/ugly borders */
-                      .el-input__inner:focus {
+                      /* HOVER / FOCUS / ACTIVE - Ensure it NEVER turns red */
+                      div[class*="index-cssmodule__btn"]:hover, 
+                      button[class*="index-cssmodule__btn"]:hover, 
+                      .el-button:hover,
+                      .el-button:focus,
+                      .el-button:active, 
+                      .el-button--primary:hover,
+                      .el-button--primary:focus {
+                          background-color: #22c55e !important; /* Slightly darker green */
+                          border-color: #22c55e !important;
+                          color: #0f172a !important;
+                          box-shadow: 0 0 15px rgba(74, 222, 128, 0.6) !important;
+                          outline: none !important;
+                      }
+                      
+                      /* Disable Red Error Helper Text if it clashes */
+                      .el-form-item__error {
+                          color: #f87171 !important;
+                      }
+                      
+                      /* Fix Input Borders on Error */
+                      .el-input__inner, .el-input__inner:focus, .el-input__inner:hover {
                           border-color: #4ade80 !important;
                       }
-                      
-                      /* Footer IPv6 Button Green */
-                      .index-cssmodule__ipv6-1nOCE {
-                          background-color: #4ade80 !important;
-                          color: #ffffff !important; 
-                          font-weight: bold !important; 
-                          border-color: #4ade80 !important; 
-                          border: 1px solid #4ade80 !important;
-                      }
 
-                      /* Logo Styling */
-                      .honey-scan-logo {
-                          mix-blend-mode: screen !important;
-                          width: 80% !important; 
-                          max-width: 350px !important;
-                          display: block;
-                          margin: 0 auto;
-                          padding: 15px !important; 
-                          box-sizing: border-box !important;
-                          aspect-ratio: 1 / 1 !important; 
-                          object-fit: contain !important; 
-                          height: auto !important;
-                      }
-                      
-                      /* Brand Text Styling */
-                      .honey-scan-brand {
-                          text-align: center;
-                          margin-bottom: 20px;
-                          display: flex;
-                          flex-direction: column;
-                          align-items: center;
-                          justify-content: center;
-                      }
-                      .honey-scan-title {
-                          color: #4ade80;
-                          font-size: 36px;
-                          font-weight: 900;
-                          font-family: sans-serif;
-                          letter-spacing: 1px;
-                          margin-bottom: 8px;
-                          line-height: 1.2;
-                      }
-                      .honey-scan-pill {
-                          background-color: rgba(255, 255, 255, 0.1);
-                          color: rgba(255, 255, 255, 0.8);
-                          padding: 4px 12px;
-                          border-radius: 12px;
-                          font-size: 14px;
-                          font-weight: 500;
-                          display: inline-block;
-                      }
-                      
                       /* RESPONSIVE DESIGN */
                       @media (max-width: 768px) {
                           .honey-scan-logo {
-                              max-width: 120px !important; /* Smaller on mobile */
+                              max-width: 180px !important; /* Increased from 120px (+50% to be safe) */
                               padding: 5px !important;
                           }
                           .honey-scan-title {
-                              font-size: 20px; /* Smaller font */
+                              font-size: 18px !important; /* Smaller font */
+                          }
+                          .honey-scan-pill {
+                              font-size: 12px !important;
+                              padding: 2px 8px !important;
                           }
                           .honey-scan-brand {
-                              margin-bottom: 10px;
+                              margin-bottom: 5px;
                           }
                           #lemue-link-bar {
                               padding: 5px 10px;
@@ -300,28 +267,22 @@
                               height: 20px;
                           }
                           
-                          /* Fix Login Container Width on Mobile */
                           div[class*="index-cssmodule__login-wrapper"], .login-container {
-                               width: 90% !important;
+                               width: 85% !important;
                                margin: 0 auto !important;
-                               margin-top: 10px !important;
+                               margin-top: 5px !important;
                           }
                           
-                          /* DO NOT force global flex-col as it breaks HFish internal layout */
-                          /* Instead target specific known containers if needed, or leave natural flow */
-                          
-                          /* Fix Left Wrapper (Logo) visibility/position on Mobile */
                           div[class*="left-wrapper"] {
                               display: flex !important;
                               justify-content: center !important;
                               width: 100% !important;
-                              margin-bottom: 10px !important;
+                              margin-bottom: 5px !important;
                           }
                           
-                          /* Fix Right Wrapper (Form) position */
                           div[class*="right-wrapper"] {
                               width: 100% !important;
-                              padding: 10px !important;
+                              padding: 5px !important;
                           }
                       }                      
                       /* Custom Footer */
