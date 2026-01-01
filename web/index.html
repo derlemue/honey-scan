@@ -399,13 +399,13 @@
         // === DATA PATCHING (Timezone & Flags) ===
         const patchDataIssues = () => {
             try {
-                // 1. TIMEZONE FIX (+1 Hour)
+                // 1. TIMEZONE FIX (+2 Hours for CET Correction from UTC Base)
                 // Select generic time elements (HFish uses p tags with specific class or just structure)
                 // We use a safe heuristic: text matching date format "YYYY/MM/DD HH:mm:ss"
                 const timeElements = document.querySelectorAll('p[class*="time"], span[class*="time"]');
                 timeElements.forEach(el => {
                     if (el.dataset.timePatched) return;
-                    
+
                     const text = el.innerText.trim();
                     // Regex for YYYY/MM/DD HH:mm:ss
                     if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) {
@@ -413,15 +413,18 @@
                         // Note: JS Date parsing with slashes might be browser dependent, replacing / with - helps
                         const dateStr = text.replace(/\//g, '-');
                         let date = new Date(dateStr);
-                        
+
                         if (!isNaN(date.getTime())) {
-                            // Add 1 Hour (3600 * 1000 ms)
-                            date.setTime(date.getTime() + 3600000);
-                            
+                            // Add 2 Hours (2 * 3600 * 1000 ms) to correct -1h mismatch + base offset
+                            // Original observation: Displayed 19:xx, Real 20:xx. Difference +1h.
+                            // But previous patch (+1h) was active and yielded 19:xx.
+                            // Therefore base was 18:xx. Target is 20:xx. Total offset needed: +2h.
+                            date.setTime(date.getTime() + 7200000);
+
                             // Format back to YYYY/MM/DD HH:mm:ss
                             const pad = (n) => n.toString().padStart(2, '0');
-                            const newText = `${date.getFullYear()}/${pad(date.getMonth()+1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-                            
+                            const newText = `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+
                             el.innerText = newText;
                             el.dataset.timePatched = 'true';
                         }
@@ -429,41 +432,39 @@
                 });
 
                 // 2. FLAG FIX (Map Name -> SVG Class)
-                // Target generic rows in recent attacks
-                const rows = document.querySelectorAll('div[class*="item"]'); // Generic item class in lists
-                rows.forEach(row => {
-                    const countrySpan = row.querySelector('span[title]');
-                    const flagSvg = row.querySelector('svg.flag-icon');
-                    const useHref = flagSvg?.querySelector('use');
+                // Target generic rows in recent attacks by finding the flag icon first
+                const flagSvgs = document.querySelectorAll('svg.flag-icon');
+                flagSvgs.forEach(svg => {
+                    // Check if it's the broken default one
+                    const useHref = svg.querySelector('use');
+                    if (!useHref || !useHref.getAttribute('xlink:href').includes('flagdefault')) return;
 
-                    if (countrySpan && flagSvg && useHref) {
-                        const country = countrySpan.innerText.trim();
-                        // Check if currently showing default
-                        if (!useHref.getAttribute('xlink:href').includes('flagdefault')) return;
+                    // The country name is usually in the NEXT SIBLING span
+                    const countrySpan = svg.nextElementSibling;
+                    if (!countrySpan || countrySpan.tagName !== 'SPAN') return;
 
-                        // Map Country Name to ISO Code (Partial List)
-                        const countryMap = {
-                            'China': 'cn', 'United States': 'us', 'Germany': 'de', 'France': 'fr',
-                            'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'Brazil': 'br',
-                            'India': 'in', 'Canada': 'ca', 'Korea': 'kr', 'Japan': 'jp', 'Vietnam': 'vn',
-                            'Italy': 'it', 'Spain': 'es', 'Australia': 'au', 'Taiwan': 'tw', 'Singapore': 'sg',
-                            'Nigeria': 'ng', 'Sweden': 'se', 'Poland': 'pl', 'Iran': 'ir', 'Turkey': 'tr',
-                            'Romania': 'ro', 'Ukraine': 'ua', 'Mexico': 'mx', 'Argentina': 'ar', 'Ireland': 'ie'
-                        };
+                    const country = countrySpan.innerText.trim();
 
-                        const code = countryMap[country];
-                        if (code) {
-                            // Update SVG Class and Use Href
-                            // HFish uses #hfish-flag-code or #icon-code logic?
-                            // Based on assets, likely #hfish-flag-{code} or similar.
-                            // The default was #hfish-flagdefault.
-                            // Let's try matching the map pattern: usually class "flag-icon-{code}" + href "#hfish-flag-{code}"
-                            
-                            // Update Use Href
-                            useHref.setAttribute('xlink:href', `#hfish-flag-${code}`);
-                            // Optional: Update class if needed
-                            flagSvg.classList.add(`flag-icon-${code}`);
-                        }
+                    // Map Country Name to ISO Code (Partial List)
+                    const countryMap = {
+                        'China': 'cn', 'United States': 'us', 'Germany': 'de', 'France': 'fr',
+                        'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'Brazil': 'br',
+                        'India': 'in', 'Canada': 'ca', 'Korea': 'kr', 'Japan': 'jp', 'Vietnam': 'vn',
+                        'Italy': 'it', 'Spain': 'es', 'Australia': 'au', 'Taiwan': 'tw', 'Singapore': 'sg',
+                        'Nigeria': 'ng', 'Sweden': 'se', 'Poland': 'pl', 'Iran': 'ir', 'Turkey': 'tr',
+                        'Romania': 'ro', 'Ukraine': 'ua', 'Mexico': 'mx', 'Argentina': 'ar', 'Ireland': 'ie',
+                        'Austria': 'at', 'Switzerland': 'ch', 'Belgium': 'be', 'Denmark': 'dk', 'Norway': 'no',
+                        'Finland': 'fi', 'Portugal': 'pt', 'Greece': 'gr', 'Czech Republic': 'cz', 'Hungary': 'hu'
+                    };
+
+                    const code = countryMap[country];
+                    if (code) {
+                        // Update Use Href
+                        useHref.setAttribute('xlink:href', `#hfish-flag-${code}`);
+
+                        // Also add the specific class if it helps styling
+                        svg.classList.remove('undefined');
+                        svg.classList.add(`flag-icon-${code}`);
                     }
                 });
 

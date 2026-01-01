@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.8.7] - 2026-01-01
+
+### Fixed
+- 🌍 **Geolocation**: Manually updated DB node record to "Germany" to resolve map displacement.
+- 🕒 **Timezone**: Adjusted frontend time patch offset to +2 Hours (CET) to fix persistent -1h mismatch.
+- 🚩 **UI**: Fixed flag detection logic to correctly identify country names from sibling elements.
+- 🎨 **Docs**: Implemented strict `div align="center"` for all README images and captions.
+
 ## [3.8.6] - 2026-01-01
 
 ### Fixed

@@ -54,20 +54,28 @@ When an attacker touches your honeypot, Honey-Scan automatically:
 *   **🖼️ Visuals**:
     *   **Live Threat Monitor** (The "Feed"):
         <br>
+        <div align="center">
         <img src="docs/img/feed_dashboard_v4.png" width="80%">
-        <p align="center"><em>Feed Dashboard</em></p>
+        <p><em>Feed Dashboard</em></p>
+        </div>
     *   **lemueIO SecMonitor** (Internal):
         <br>
+        <div align="center">
         <img src="docs/img/hfish_screen_v4.png" width="80%">
-        <p align="center"><em>Attack Map Dashboard</em></p>
+        <p><em>Attack Map Dashboard</em></p>
+        </div>
     *   **lemueIO Statistics** (Internal):
         <br>
+        <div align="center">
         <img src="docs/img/hfish_dashboard_v4.png" width="80%">
-        <p align="center"><em>Statistics Dashboard</em></p>
+        <p><em>Statistics Dashboard</em></p>
+        </div>
     *   **Login Interface**:
         <br>
+        <div align="center">
         <img src="docs/img/login_v2.png" width="80%">
-        <p align="center"><em>Login Interface</em></p>
+        <p><em>Login Interface</em></p>
+        </div>
 
 ---
 
