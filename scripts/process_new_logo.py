@@ -32,44 +32,22 @@ def main():
     # Convert to RGB (in case of CMYK etc, though it is JPEG)
     img = img.convert("RGB")
     
-    # Convert to RGBA for transparency
-    img = img.convert("RGBA")
-    
     # Create circular mask
-    size = img.size
-    # Assume square image or crop to square
-    min_dim = min(size)
-    
-    # Create a new square image with transparent background
-    square_img = Image.new("RGBA", (min_dim, min_dim), (0, 0, 0, 0))
-    
-    # Center crop the original if not square (just in case)
-    left = (size[0] - min_dim) // 2
-    top = (size[1] - min_dim) // 2
-    right = (size[0] + min_dim) // 2
-    bottom = (size[1] + min_dim) // 2
-    
-    cropped_content = img.crop((left, top, right, bottom))
-    
-    # Create mask
-    mask = Image.new("L", (min_dim, min_dim), 0)
+    # Assuming the important content is centered and circular within the square image
+    # We will create an alpha channel (mask) that is a white circle on black
+    mask = Image.new("L", img.size, 0)
     from PIL import ImageDraw
     draw = ImageDraw.Draw(mask)
-    draw.ellipse((0, 0, min_dim, min_dim), fill=255)
+    draw.ellipse((0, 0) + img.size, fill=255)
     
-    # Apply mask
-    square_img.paste(cropped_content, (0, 0), mask)
-    img = square_img
-    
-    # Trim excess transparent space if any (optional, but requested "symmetrical spacing")
-    # Actually, a perfect circle in a square box IS symmetrical.
-    # The user complained about "black edge". The mask fixes that.
-    # "Abstand oben und unten so an das dieser symetrisch ist" -> The square crop handles this if the logo is centered.
+    # Add alpha channel to image
+    img.putalpha(mask)
     
     for relative_path, size in DESTINATIONS:
         full_path = os.path.join(REPO_ROOT, relative_path)
         print(f"Generating {full_path} ({size})...")
         
+        # Resize with LANCZOS (high quality)
         resized = img.resize(size, Image.LANCZOS)
         
         # Ensure dir exists
