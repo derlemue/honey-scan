@@ -7,13 +7,22 @@ ASSETS_DIR = "/home/elliot/git_repos/honey-scan/web/assets"
 DOCS_IMG_DIR = "/home/elliot/git_repos/honey-scan/docs/img"
 
 def make_circle(img):
+    # Ensure source is RGBA
+    img = img.convert("RGBA")
+    
+    # Create the mask
     mask = Image.new('L', img.size, 0)
     draw = ImageDraw.Draw(mask)
     draw.ellipse((0, 0) + img.size, fill=255)
     
-    output = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
-    output.putalpha(mask)
-    return output
+    
+    # Actually, simpler:
+    # Create a new blank RGBA image
+    final = Image.new("RGBA", output.size, (0, 0, 0, 0))
+    # Paste the output image using the circular mask
+    final.paste(output, (0, 0), mask)
+    
+    return final
 
 def main():
     if not os.path.exists(SOURCE_LOGO):
@@ -21,7 +30,7 @@ def main():
         return
 
     print(f"Processing {SOURCE_LOGO}...")
-    img = Image.open(SOURCE_LOGO).convert("RGBA")
+    img = Image.open(SOURCE_LOGO)
     
     # Create circular version
     circle_img = make_circle(img)
@@ -44,7 +53,6 @@ def main():
     if not os.path.exists(DOCS_IMG_DIR):
         os.makedirs(DOCS_IMG_DIR)
     
-    # Keep original resolution for the main logo but circular
     circle_img.save(os.path.join(DOCS_IMG_DIR, "logo.png"))
 
     print("Assets generated successfully.")
