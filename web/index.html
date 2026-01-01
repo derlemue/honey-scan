@@ -91,9 +91,13 @@
                 try {
                     const elements = document.querySelectorAll(selector);
                     elements.forEach(el => {
-                        // Check exact match or includes depending on need
-                        if (el.innerText.includes(target) && !el.dataset.branded) {
-                            el.innerHTML = el.innerHTML.replace(target, replacement);
+                        // Safety: Check if innerText exists
+                        if (!el.innerText) return;
+
+                        // CRITICAL: Only replace text in LEAF nodes (no children) to avoid destroyed React/Vue bindings
+                        // replacing innerHTML on a container (like #app or a parent div) kills the application.
+                        if (el.children.length === 0 && el.innerText.includes(target) && !el.dataset.branded) {
+                            el.innerText = el.innerText.replace(target, replacement);
                             el.dataset.branded = 'true';
                         }
                     });
@@ -101,10 +105,12 @@
             };
 
             // Specific HFish Dashboard Elements
-            replaceTextContent('div, span, h1, h2, h3, h4, p', 'XX Company Threat Monitor', 'lemueIO SecMonitor');
-            replaceTextContent('*', 'HFish Attack Map', 'lemueIO SecMonitor');
-            replaceTextContent('*', 'HFish Statistics', 'lemueIO SecStatistics');
-            replaceTextContent('*', 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
+            // Use specific tags instead of '*' to improve performance and safety
+            const textTags = 'div, span, h1, h2, h3, h4, h5, p, li, a, td, th';
+            replaceTextContent(textTags, 'XX Company Threat Monitor', 'lemueIO SecMonitor');
+            replaceTextContent(textTags, 'HFish Attack Map', 'lemueIO SecMonitor');
+            replaceTextContent(textTags, 'HFish Statistics', 'lemueIO Statistics');
+            replaceTextContent(textTags, 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
 
             // Route Detection: Only apply aggressive layout changes on Login Page
             const isLogin = location.href.includes('/login') || location.hash.includes('login');
