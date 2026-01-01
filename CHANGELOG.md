@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.3] - 2026-01-01
+
+### Added
+- 📜 **Protocol**: Added `REGO.md` - The "Project Antigravity" System Operating Rules.
+- ⚙️ **Workflow**: Formalized automated DevOps workflow for versioning, documentation, and security.
+
 ## [3.8.2] - 2026-01-01
 
 ### Changed
