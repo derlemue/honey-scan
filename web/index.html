@@ -138,35 +138,63 @@
             };
         })();
 
-        // === XHR INTERCEPTOR ===
+        // === XHR INTERCEPTOR (Timing-Resistant) ===
         (function () {
             const XHR = XMLHttpRequest.prototype;
-            const open = XHR.open;
-            const send = XHR.send;
+            const originalOpen = XHR.open;
+            const originalSend = XHR.send;
+            const originalAddEventListener = XHR.addEventListener;
 
+            // 1. Hook Open to capture URL
             XHR.open = function (method, url) {
                 this._url = url;
-                return open.apply(this, arguments);
+                return originalOpen.apply(this, arguments);
             };
 
-            XHR.send = function (postData) {
-                this.addEventListener('readystatechange', function () {
-                    if (this.readyState === 4 && this.status === 200 && this._url) {
-                        try {
-                            if (this.responseText && typeof this.responseText === 'string' && this.responseText.includes('23.88.40.46')) {
-                                console.log("[HoneyScan] XHR HIT: " + this._url);
-                                let data = JSON.parse(this.responseText);
-                                if (aggressivePatch(data)) {
-                                    console.log("[HoneyScan] XHR PATCHED!");
-                                    const newText = JSON.stringify(data);
-                                    Object.defineProperty(this, 'responseText', { value: newText, writable: true });
-                                    Object.defineProperty(this, 'response', { value: newText, writable: true });
-                                }
-                            }
-                        } catch (e) { console.error("HoneyScan XHR Error", e); }
+            // Shared Patch Function
+            const tryPatch = (xhr) => {
+                if (xhr._patched) return;
+                try {
+                    if (xhr.responseText && typeof xhr.responseText === 'string' && xhr.responseText.includes('23.88.40.46')) {
+                        console.log("[HoneyScan] XHR HIT (Pre-Process): " + xhr._url);
+                        let data = JSON.parse(xhr.responseText);
+                        if (aggressivePatch(data)) {
+                            console.log("[HoneyScan] XHR PATCHED (Pre-Process)!");
+                            const newText = JSON.stringify(data);
+                            Object.defineProperty(xhr, 'responseText', { value: newText, writable: true });
+                            Object.defineProperty(xhr, 'response', { value: newText, writable: true });
+                            xhr._patched = true;
+                        }
                     }
-                });
-                return send.apply(this, arguments);
+                } catch (e) { }
+            };
+
+            // 2. Hook addEventListener to wrap callbacks
+            XHR.addEventListener = function (type, listener, options) {
+                if (type === 'readystatechange' || type === 'load') {
+                    const wrappedListener = function (event) {
+                        if (this.readyState === 4) {
+                            tryPatch(this);
+                        }
+                        return listener.apply(this, arguments);
+                    };
+                    return originalAddEventListener.call(this, type, wrappedListener, options);
+                }
+                return originalAddEventListener.apply(this, arguments);
+            };
+
+            // 3. Hook send to catch onreadystatechange assignments
+            XHR.send = function (postData) {
+                const xhr = this;
+                // Wrap existing onreadystatechange if present
+                if (xhr.onreadystatechange) {
+                    const originalHandler = xhr.onreadystatechange;
+                    xhr.onreadystatechange = function (e) {
+                        if (xhr.readyState === 4) tryPatch(xhr);
+                        return originalHandler.apply(this, arguments);
+                    };
+                }
+                return originalSend.apply(this, arguments);
             };
         })();
     </script>
