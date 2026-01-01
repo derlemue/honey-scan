@@ -9,7 +9,7 @@
 
 </p>
 
-![Version](https://img.shields.io/badge/version-3.6.32-blue.svg)
+![Version](https://img.shields.io/badge/version-3.6.33-blue.svg)
 
 
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
