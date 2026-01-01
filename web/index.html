@@ -158,15 +158,35 @@
                     });
                 }
 
-                // 2.5 Intercept Login Button
-                const loginBtn = document.querySelector('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"]');
-                if (loginBtn && !loginBtn.dataset.intercepted) {
-                    loginBtn.dataset.intercepted = 'true';
-                    // The requirement: "Wird bei leeren Feldern der Login Button gedrückt passiert das (Screenshot 1)"
-                    // implying we should handle empty fields strictly or prevent the red error via CSS.
-                    // Since we can't easily hook the React internal state, we rely on CSS to override the error color (red) 
-                    // and ensure it stays green even if disabled/loading/error.
-                }
+                // 2.5 Intercept Login Button (The "God Mode" Fix)
+                // We use a global click listener on capture phase to intercept the click BEFORE React sees it.
+                // If fields are empty, we stop it and just show a visual hint (or nothing), keeping it green.
+                document.addEventListener('click', (e) => {
+                    const target = e.target;
+                    // Check if clicked element looks like the login button
+                    const isBtn = target.matches('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"], .el-button--primary');
+                    const isBtnChild = target.closest('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"], .el-button--primary');
+
+                    if (isBtn || isBtnChild) {
+                        // Check inputs
+                        const inputs = document.querySelectorAll('input');
+                        let empty = false;
+                        inputs.forEach(i => {
+                            if (!i.value || i.value.trim() === '') empty = true;
+                        });
+
+                        if (empty) {
+                            console.log("Honey Scan: Intercepted empty login click. Preventing Red State.");
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+
+                            // Optional: Shake effect or visual feedback that stays green?
+                            // For now, just do nothing so it stays green.
+                            return false;
+                        }
+                    }
+                }, true); // Capture phase is key!
 
                 // 3. Inject "Nuclear" CSS for Login Only
                 if (!document.getElementById('branding-style')) {
