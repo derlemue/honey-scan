@@ -396,6 +396,81 @@
         patchBrandingAggressive();
         setInterval(patchBrandingAggressive, 200);
 
+        // === API INTERCEPTOR (Active Defense for UI) ===
+        // Force Geolocation for our Node IP (23.88.40.46) to Germany
+        (function () {
+            const XHR = XMLHttpRequest.prototype;
+            const open = XHR.open;
+            const send = XHR.send;
+
+            XHR.open = function (method, url) {
+                this._url = url;
+                return open.apply(this, arguments);
+            };
+
+            XHR.send = function (postData) {
+                this.addEventListener('readystatechange', function () {
+                    // Only intercept completed successful requests to dashboard APIs
+                    if (this.readyState === 4 && this.status === 200 && this._url) {
+                        try {
+                            const url = this._url;
+                            // Target Dashboard Nodes or Attack Source APIs
+                            if (url.includes('api/v1/dashboard') || url.includes('api/v1/attack') || url.includes('node')) {
+                                let text = this.responseText;
+
+                                // Only process if it contains our Node IP
+                                if (text && text.includes('23.88.40.46')) {
+                                    let data = JSON.parse(text);
+                                    let patched = false;
+
+                                    // Recursive finder to locate the node object and patch it
+                                    const patchNode = (obj) => {
+                                        if (!obj || typeof obj !== 'object') return;
+
+                                        // Check if this object represents our node
+                                        if (obj.ip === '23.88.40.46' || obj.intranet_ip === '23.88.40.46') {
+                                            // Patch Location Fields
+                                            if (obj.country !== undefined) obj.country = 'Germany';
+                                            if (obj.city !== undefined) obj.city = 'Falkenstein';
+                                            if (obj.province !== undefined) obj.province = 'Saxony';
+
+                                            // Patch Coordinates (Falkenstein) to move the map marker
+                                            // HFish uses mixed conventions, we patch all common ones
+                                            if (obj.lat !== undefined) obj.lat = 50.4777;
+                                            if (obj.lng !== undefined) obj.lng = 12.3649;
+                                            if (obj.latitude !== undefined) obj.latitude = 50.4777;
+                                            if (obj.longitude !== undefined) obj.longitude = 12.3649;
+
+                                            patched = true;
+                                        }
+
+                                        // Traverse Arrays and Objects
+                                        for (let key in obj) {
+                                            if (typeof obj[key] === 'object') {
+                                                patchNode(obj[key]);
+                                            }
+                                        }
+                                    };
+
+                                    patchNode(data);
+
+                                    if (patched) {
+                                        // Override the response property to return patched JSON
+                                        const newText = JSON.stringify(data);
+                                        Object.defineProperty(this, 'responseText', { value: newText, writable: true });
+                                        Object.defineProperty(this, 'response', { value: newText, writable: true });
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error("HoneyScan Interceptor Error:", e);
+                        }
+                    }
+                });
+                return send.apply(this, arguments);
+            };
+        })();
+
         // === DATA PATCHING (Timezone & Flags) ===
         const patchDataIssues = () => {
             try {
