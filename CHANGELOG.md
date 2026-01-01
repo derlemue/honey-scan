@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.8] - 2026-01-01
+
+### Fixed
+- 🌍 **Geolocation**: Enhanced logic to return "City, Country" instead of just "Country", improving map pin accuracy.
+- 🕒 **Timezone**: Increased frontend time offset to **+3 Hours** to correct persistent -1 hour display error.
+- 🚩 **UI**: Expanded country flag mappings.
+
 ## [3.8.7] - 2026-01-01
 
 ### Fixed
