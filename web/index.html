@@ -139,7 +139,7 @@
                             if (!svg.dataset.patched) {
                                 const container = document.createElement('div');
                                 container.className = 'honey-scan-brand';
-                                
+
                                 const title = document.createElement('div');
                                 title.innerText = "Honey Scan";
                                 title.className = 'honey-scan-title';
@@ -157,15 +157,15 @@
                         }
                     });
                 }
-                
+
                 // 2.5 Intercept Login Button
                 const loginBtn = document.querySelector('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"]');
                 if (loginBtn && !loginBtn.dataset.intercepted) {
-                     loginBtn.dataset.intercepted = 'true';
-                     // The requirement: "Wird bei leeren Feldern der Login Button gedrückt passiert das (Screenshot 1)"
-                     // implying we should handle empty fields strictly or prevent the red error via CSS.
-                     // Since we can't easily hook the React internal state, we rely on CSS to override the error color (red) 
-                     // and ensure it stays green even if disabled/loading/error.
+                    loginBtn.dataset.intercepted = 'true';
+                    // The requirement: "Wird bei leeren Feldern der Login Button gedrückt passiert das (Screenshot 1)"
+                    // implying we should handle empty fields strictly or prevent the red error via CSS.
+                    // Since we can't easily hook the React internal state, we rely on CSS to override the error color (red) 
+                    // and ensure it stays green even if disabled/loading/error.
                 }
 
                 // 3. Inject "Nuclear" CSS for Login Only
@@ -283,11 +283,14 @@
                       /* RESPONSIVE DESIGN */
                       @media (max-width: 768px) {
                           .honey-scan-logo {
-                              max-width: 150px !important;
+                              max-width: 120px !important; /* Smaller on mobile */
                               padding: 5px !important;
                           }
                           .honey-scan-title {
-                              font-size: 24px;
+                              font-size: 20px; /* Smaller font */
+                          }
+                          .honey-scan-brand {
+                              margin-bottom: 10px;
                           }
                           #lemue-link-bar {
                               padding: 5px 10px;
@@ -296,12 +299,31 @@
                               width: 20px;
                               height: 20px;
                           }
-                          /* Stack layout if needed */
-                          div[class*="wrapper"] {
-                              flex-direction: column !important;
+                          
+                          /* Fix Login Container Width on Mobile */
+                          div[class*="index-cssmodule__login-wrapper"], .login-container {
+                               width: 90% !important;
+                               margin: 0 auto !important;
+                               margin-top: 10px !important;
                           }
-                      }
-                      
+                          
+                          /* DO NOT force global flex-col as it breaks HFish internal layout */
+                          /* Instead target specific known containers if needed, or leave natural flow */
+                          
+                          /* Fix Left Wrapper (Logo) visibility/position on Mobile */
+                          div[class*="left-wrapper"] {
+                              display: flex !important;
+                              justify-content: center !important;
+                              width: 100% !important;
+                              margin-bottom: 10px !important;
+                          }
+                          
+                          /* Fix Right Wrapper (Form) position */
+                          div[class*="right-wrapper"] {
+                              width: 100% !important;
+                              padding: 10px !important;
+                          }
+                      }                      
                       /* Custom Footer */
                       #lemue-footer {
                           position: fixed;
