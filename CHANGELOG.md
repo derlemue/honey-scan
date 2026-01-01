@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.4] - 2026-01-01
+
+### Security
+- 🔒 **Credentials**: Remedied security violation by removing `config/hfish.toml` from git tracking (contained DB password).
+- 🔒 **Configuration**: Added `config/hfish.toml.example` with sanitized credentials.
+- ⚙️ **Git**: Updated `.gitignore` to exclude sensitive configuration files.
+
 ## [3.8.3] - 2026-01-01
 
 ### Added
