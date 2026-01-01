@@ -67,12 +67,21 @@ def get_db_connection():
 def get_geolocation():
     """Fetch public IP and geolocation."""
     try:
-        # Get Public IP
-        ip = requests.get("https://api.ipify.org?format=json", timeout=10).json().get('ip')
-        if not ip: return None, None
+        # Get Public IP with retry
+        ip = None
+        for url in ["https://api.ipify.org?format=json", "https://api.myip.com"]:
+            try:
+                ip_resp = requests.get(url, timeout=5).json()
+                ip = ip_resp.get('ip')
+                if ip: break
+            except:
+                continue
+
+        if not ip: 
+            logger.error("Could not determine public IP after retries.")
+            return None, None
         
         # Get Geo Info (free endpoint)
-        # Note: In production, consider a paid API or internal DB if rate limits apply
         geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=10).json()
         
         if geo.get('status') == 'success':
@@ -82,8 +91,23 @@ def get_geolocation():
         logger.error(f"Geolocation fetch failed: {e}")
     return None, None
 
+def check_cloud_connectivity():
+    """Check connectivity to ThreatBook/HFish Cloud."""
+    try:
+        # ThreatBook API endpoint often used by HFish
+        resp = requests.get("https://api.threatbook.cn/v3/scene/ip_reputation", timeout=5)
+        if resp.status_code == 404 or resp.status_code == 200: 
+            # 404 is expected if no auth, but proves connectivity.
+            logger.info("Cloud Intelligence Connectivity: OK (ThreatBook API reachable)")
+        else:
+            logger.warning(f"Cloud Intelligence Connectivity: Unexpected status {resp.status_code}")
+    except Exception as e:
+        logger.error(f"Cloud Intelligence Connectivity: FAILED - {e}")
+
 def update_node_location():
     """Update valid node location in database."""
+    check_cloud_connectivity() # Run diagnostics
+
     ip, location = get_geolocation()
     if not ip or not location:
         logger.warning("Could not determine dynamic location.")
@@ -96,19 +120,18 @@ def update_node_location():
 
     try:
         cursor = conn.cursor()
-        # Find the active node (usually the one with most recent update_time or just the first/only one)
-        # HFish creates one 'master' node usually
+        # Find ALL active nodes (HFish often has just one, but we should be robust)
         if DB_TYPE == "mysql":
-            cursor.execute("SELECT id, node_id FROM nodes ORDER BY update_time DESC LIMIT 1")
-            row = cursor.fetchone()
-            if row:
-                node_id = row['id']
-                # Update location and optionally node_addr if needed, but HFish might overwrite addr
-                # We strictly want to set the user-facing location string
-                cursor.execute("UPDATE nodes SET location = %s WHERE id = %s", (location, node_id))
-                logger.info(f"Updated Node {node_id} location to: {location}")
+            # Update ALL nodes to the current location to ensure the map is correct
+            # In a single-node deployment (typical for this setup), this is safe.
+            cursor.execute("UPDATE nodes SET location = %s", (location,))
+            affected = cursor.rowcount
+            if affected > 0:
+                logger.info(f"Updated {affected} node(s) location to: {location}")
             else:
-                logger.warning("No active nodes found in DB to update.")
+                logger.warning("No nodes found in DB to update.")
+        else:
+             logger.info("Skipping DB update (SQLite / Read-Only mode)")
         conn.close()
     except Exception as e:
         logger.error(f"Database update failed: {e}")

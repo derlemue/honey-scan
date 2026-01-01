@@ -24,6 +24,6 @@
     max_size = 1
     debug = false
     [[database.mysql]]
-        link = "hfish:HoneyScan_DB_Pass_2025!@tcp(127.0.0.1:3306)/hfish?charset=utf8mb4&parseTime=true&loc=Local"
+        link = "hfish:HoneyScan_DB_Pass_2025!@tcp(127.0.0.1:3307)/hfish?charset=utf8mb4&parseTime=true&loc=Local"
     [[database.sqlite]]
         link = "hfish.db?cache=shared&mode=rwc"
