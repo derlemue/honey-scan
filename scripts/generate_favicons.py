@@ -16,6 +16,9 @@ def make_circle(img):
     draw.ellipse((0, 0) + img.size, fill=255)
     
     
+    # Fit image to mask size
+    output = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
+
     # Actually, simpler:
     # Create a new blank RGBA image
     final = Image.new("RGBA", output.size, (0, 0, 0, 0))
