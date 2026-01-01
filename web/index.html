@@ -85,40 +85,27 @@
                 document.title = "lemueIO SecMonitor";
             }
 
-            // === UNIVERSAL TEXT REPLACEMENT (Safe Mode) ===
+            // === UNIVERSAL TEXT REPLACEMENT (Runs everywhere) ===
+            // This fixes "XX Company Threat Monitor" on the dashboard
             const replaceTextContent = (selector, target, replacement) => {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach(el => {
-                    // Skip if already processed
-                    if (el.dataset.branded) return;
-
-                    // Only process leaf nodes or traverse efficiently
-                    // Recursive function to find text nodes
-                    const walk = (node) => {
-                        if (node.nodeType === 3) { // Text Node
-                            const text = node.nodeValue;
-                            if (text.includes(target)) {
-                                node.nodeValue = text.replace(new RegExp(target, 'g'), replacement);
-                                // Mark the parent element as branded to avoid re-scanning (optional, but good for perf)
-                                if (node.parentElement) node.parentElement.dataset.branded = 'true';
-                            }
-                        } else if (node.nodeType === 1 && node.childNodes && !['SCRIPT', 'STYLE', 'INPUT', 'TEXTAREA'].includes(node.tagName)) {
-                            // Traverse Element Children (Skip inputs/scripts)
-                            node.childNodes.forEach(walk);
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        // Check exact match or includes depending on need
+                        if (el.innerText.includes(target) && !el.dataset.branded) {
+                            el.innerHTML = el.innerHTML.replace(target, replacement);
+                            el.dataset.branded = 'true';
                         }
-                    };
-
-                    walk(el);
-                });
+                    });
+                } catch (e) { console.error('Branding patch error:', e); }
             };
 
-            // Specific HFish Dashboard Elements - More Targeted Selectors if possible, but safe walker handles general ones better.
-            // We can target body to catch everything safely now.
-            replaceTextContent('body', 'XX Company Threat Monitor', 'lemueIO SecMonitor');
-            replaceTextContent('body', 'HFish Attack Map', 'lemueIO SecMonitor');
-            replaceTextContent('body', 'HFish Statistics', 'lemueIO SecStatistics');
-            replaceTextContent('body', 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
-            replaceTextContent('body', 'HFish support', 'Honey Scan supports');
+            // Specific HFish Dashboard Elements
+            replaceTextContent('div, span, h1, h2, h3, h4, p', 'XX Company Threat Monitor', 'lemueIO SecMonitor');
+            replaceTextContent('*', 'HFish Attack Map', 'lemueIO SecMonitor');
+            replaceTextContent('*', 'HFish Statistics', 'lemueIO SecStatistics');
+            replaceTextContent('*', 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
+
             // Route Detection: Only apply aggressive layout changes on Login Page
             const isLogin = location.href.includes('/login') || location.hash.includes('login');
 
@@ -138,7 +125,6 @@
                                 newLogo.src = LOGO_PATH;
                                 newLogo.style.maxWidth = '100%';
                                 newLogo.style.height = 'auto';
-                                // Responsive Logo logic handled in CSS
                                 container.appendChild(newLogo);
                                 container.dataset.patched = 'true';
                             }
@@ -154,7 +140,6 @@
                         if (svg.innerHTML.includes('hfish') || svg.getAttribute('class')?.includes('onefish-logo')) {
                             if (!svg.dataset.patched) {
                                 const container = document.createElement('div');
-                                container.className = "brand-title-container"; // For CSS targeting
                                 container.style.textAlign = 'center';
                                 container.style.marginBottom = '20px';
                                 container.style.display = 'flex';
@@ -164,7 +149,13 @@
 
                                 const title = document.createElement('div');
                                 title.innerText = "Honey Scan";
-                                title.className = "brand-title-text"; // Helper class
+                                title.style.color = "#4ade80";
+                                title.style.fontSize = "36px";
+                                title.style.fontWeight = "900";
+                                title.style.fontFamily = "sans-serif";
+                                title.style.letterSpacing = "1px";
+                                title.style.marginBottom = "8px";
+                                title.style.lineHeight = "1.2";
 
                                 const pill = document.createElement('div');
                                 pill.innerText = "Active Defense Platform";
@@ -199,42 +190,38 @@
                           overflow-x: hidden !important;
                       }
 
-                      /* HIDE ORIGINAL HEADER ONLY - SAFELIST MODE */
-                      /* TEMPORARILY DISABLED TO RESTORE LOGIN FORM VISIBILITY */
-                      /* 
-                      header, .el-header, nav, .screen-header-left-title, .screen-title {
+                      /* HIDE ORIGINAL HEADER ONLY */
+                      div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"], 
+                      .screen-header-left-title, .screen-title,
+                      div[class*="top"], .el-card__header {
                           display: none !important;
+                          opacity: 0 !important;
+                          visibility: hidden !important;
+                          height: 0 !important;
+                          width: 0 !important;
+                          padding: 0 !important;
+                          margin: 0 !important;
+                          border: none !important;
+                          overflow: hidden !important;
                       }
-                      */
                       
-                      /* Login Button Green - SUPER AGGRESSIVE FIX */
+                      div[class*="header"] * { display: none !important; }
+
+                      /* Fix Title Spacing */
+                      div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
+                          margin-top: 10px !important; 
+                      }
+                      
+                      /* Login Button Green */
                       div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
                           background-color: #4ade80 !important;
                           border-color: #4ade80 !important;
                           color: #0f172a !important; 
                           font-weight: bold !important;
-                          background-image: none !important; 
-                          animation: none !important;        
-                          transition: background-color 0.2s !important;
-                          box-shadow: none !important;
                       }
-                      
-                      /* Kill pseudo-elements that might cause the slide effect */
-                      div[class*="index-cssmodule__btn"]::before, button[class*="index-cssmodule__btn"]::before, .el-button--primary::before,
-                      div[class*="index-cssmodule__btn"]::after, button[class*="index-cssmodule__btn"]::after, .el-button--primary::after {
-                          display: none !important;
-                          content: none !important;
-                          animation: none !important;
-                          transition: none !important;
-                      }
-
-                      div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover, .el-button--primary:focus {
+                      div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover {
                           background-color: #22c55e !important;
                           border-color: #22c55e !important;
-                          background-image: none !important;
-                          animation: none !important;
-                          color: #0f172a !important;
-                          transition: none !important; /* Kill transition on hover */
                       }
                       
                       /* Footer IPv6 Button Green */
@@ -248,7 +235,7 @@
 
                       /* Logo Padding For Clip Fix */
                       img[src*="logo_bear.png"] {
-                          mix-blend-mode: screen !important; /* Keeps it blending nicely if dark bg exists */
+                          mix-blend-mode: screen !important;
                           width: 80% !important; 
                           max-width: 350px !important;
                           display: block;
@@ -258,17 +245,6 @@
                           aspect-ratio: 1 / 1 !important; 
                           object-fit: contain !important; 
                           height: auto !important;
-                      }
-
-                      /* Branding Title Styles (Injected via JS) */
-                      .brand-title-text {
-                          color: #4ade80;
-                          font-size: 36px;
-                          font-weight: 900;
-                          font-family: sans-serif;
-                          letter-spacing: 1px;
-                          margin-bottom: 8px;
-                          line-height: 1.2;
                       }
                       
                       /* Custom Footer */
@@ -319,68 +295,6 @@
                           height: 100%;
                           border-radius: 50%;
                       }
-
-                      /* --- RESPONSIVE DESIGN --- */
-                      @media (max-width: 768px) {
-                          .brand-title-text {
-                              font-size: 28px !important;
-                          }
-                          
-                          /* Adjust Logo size */
-                          img[src*="logo_bear.png"] {
-                              max-width: 200px !important;
-                              padding: 10px !important;
-                          }
-                          /* Adjust Logo size */
-                          img[src*="logo_bear.png"] {
-                              max-width: 200px !important;
-                              padding: 10px !important;
-                          }
-                          
-                          /* Safe Column Layout */
-                          div[class*="login-wrapper"], .index-cssmodule__login-wrapper {
-                              flex-direction: column !important;
-                              height: auto !important; /* Prevent clipping */
-                              padding: 20px 0 !important;
-                          }
-                          
-                          /* Force Logo to Top */
-                          div[class*="left-wrapper"] {
-                              order: -1 !important;
-                              width: 100% !important;
-                              justify-content: center !important;
-                              margin-bottom: 20px !important;
-                              /* Critical: Prevent it from taking full screen height */
-                              height: auto !important;
-                              flex: 0 0 auto !important;
-                          }
-                          
-                          /* Force Form to Bottom/Center */
-                          div[class*="right-wrapper"] {
-                              order: 2 !important;
-                              width: 100% !important;
-                              justify-content: flex-start !important; 
-                          }
-                          
-                          /* Ensure form box is visible */
-                          div[class*="index-cssmodule__form"], .el-form {
-                              width: 90% !important;
-                              max-width: 400px !important;
-                              margin: 0 auto !important;
-                          }
-                      
-                      /* ERROR MESSAGE STYLING (Green Theme) */
-                      .el-message__content {
-                          font-weight: bold;
-                      }
-                      .el-message--error {
-                          background-color: #0f172a !important;
-                          border: 1px solid #ef4444 !important; /* Keep red border for danger */
-                          color: #ef4444 !important;
-                      }
-                      /* Or user wanted Green? "passe farblich entsprechend in einem grünton an" referred to the button.
-                         Usually errors should stay red, but I'll make it consistent with Dark Mode. */
-
                     `;
                     document.head.appendChild(style);
                 }
@@ -389,12 +303,11 @@
                 if (!document.getElementById('lemue-footer')) {
                     const footer = document.createElement('div');
                     footer.id = 'lemue-footer';
-                    // Updated Text
-                    footer.innerHTML = 'Honey Scan supports by lemue.org ♥️';
+                    footer.innerHTML = 'for you by lemue.org ♥️';
                     document.body.appendChild(footer);
                 }
 
-                // 5. Inject Link Bar (Code remains same, assumed correct)
+                // 5. Inject Link Bar
                 if (!document.getElementById('lemue-link-bar')) {
                     const linkBar = document.createElement('div');
                     linkBar.id = 'lemue-link-bar';
@@ -433,47 +346,6 @@
                     });
 
                     document.body.appendChild(linkBar);
-                }
-
-                // 6. Empty Field Check (Validation Fix)
-                const loginBtns = document.querySelectorAll('button[class*="btn"]');
-                loginBtns.forEach(btn => {
-                    if (!btn.dataset.checked) {
-                        btn.addEventListener('click', (e) => {
-                            const inputs = document.querySelectorAll('input');
-                            let empty = false;
-                            inputs.forEach(i => { if (i.type !== 'hidden' && !i.value) empty = true; });
-
-                            if (empty) {
-                                // Start Shake Animation on Button
-                                btn.style.animation = "shake 0.5s";
-                                setTimeout(() => btn.style.animation = "none", 500);
-                            }
-                        });
-                        btn.dataset.checked = "true";
-                    }
-                });
-
-                // Add shake keyframes if not exists
-                if (!document.getElementById('shake-style')) {
-                    const s = document.createElement('style');
-                    s.id = 'shake-style';
-                    s.innerHTML = `
-                    @keyframes shake {
-                      0% { transform: translate(1px, 1px) rotate(0deg); }
-                      10% { transform: translate(-1px, -2px) rotate(-1deg); }
-                      20% { transform: translate(-3px, 0px) rotate(1deg); }
-                      30% { transform: translate(3px, 2px) rotate(0deg); }
-                      40% { transform: translate(1px, -1px) rotate(1deg); }
-                      50% { transform: translate(-1px, 2px) rotate(-1deg); }
-                      60% { transform: translate(-3px, 1px) rotate(0deg); }
-                      70% { transform: translate(3px, 1px) rotate(-1deg); }
-                      80% { transform: translate(-1px, -1px) rotate(1deg); }
-                      90% { transform: translate(1px, 2px) rotate(0deg); }
-                      100% { transform: translate(1px, -2px) rotate(-1deg); }
-                    }
-                    `;
-                    document.head.appendChild(s);
                 }
 
             } else {
