@@ -1,6 +1,16 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [3.7.0] - 2026-01-01
+
+### Changed
+- 🎨 **Branding**: Updated Bear Logo with a new high-quality, sharp version.
+- ✨ **Assets**: Regenerated all favicons and documentation images with the new logo.
+- 🦸 **Credits**: Huge thanks to **Parameterized7** (he/him) for providing the refined logo assets!
+
+## [3.7.1] - 2026-01-01
+
+### Fixed
+- 🐛 **Assets**: Fixed logo transparency issues (removed black artifacts) and ensured symmetrical spacing.
 
 ## [3.6.17] - 2026-01-01
 
