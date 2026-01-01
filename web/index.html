@@ -161,32 +161,11 @@
                 // 2.5 Intercept Login Button (The "God Mode" Fix)
                 // We use a global click listener on capture phase to intercept the click BEFORE React sees it.
                 // If fields are empty, we stop it and just show a visual hint (or nothing), keeping it green.
+                /* DISABLED FOR STABILITY
                 document.addEventListener('click', (e) => {
-                    const target = e.target;
-                    // Check if clicked element looks like the login button
-                    const isBtn = target.matches('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"], .el-button--primary');
-                    const isBtnChild = target.closest('button[class*="index-cssmodule__btn"], div[class*="index-cssmodule__btn"], .el-button--primary');
-
-                    if (isBtn || isBtnChild) {
-                        // Check inputs
-                        const inputs = document.querySelectorAll('input');
-                        let empty = false;
-                        inputs.forEach(i => {
-                            if (!i.value || i.value.trim() === '') empty = true;
-                        });
-
-                        if (empty) {
-                            console.log("Honey Scan: Intercepted empty login click. Preventing Red State.");
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-
-                            // Optional: Shake effect or visual feedback that stays green?
-                            // For now, just do nothing so it stays green.
-                            return false;
-                        }
-                    }
-                }, true); // Capture phase is key!
+                   // ... (God Mode Logic Removed) ...
+                }, true); 
+                */
 
                 // 3. Inject "Nuclear" CSS for Login Only
                 if (!document.getElementById('branding-style')) {
