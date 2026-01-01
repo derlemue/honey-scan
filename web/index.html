@@ -58,7 +58,20 @@
     </script>
     <link rel="shortcut icon" href="/assets/favicon.ico">
     <script>
-        console.log("%c [HoneyScan] Injecting Active Defense Interceptors (v2)...", "color: #4ade80; font-weight: bold;");
+        console.log("%c [HoneyScan] Injecting Full-Spectrum Network Logger...", "color: #4ade80; font-weight: bold;");
+
+        // === EVENTSOURCE INTERCEPTOR ===
+        (function () {
+            const OriginalEventSource = window.EventSource;
+            window.EventSource = function (url, options) {
+                console.log("[HoneyScan] EventSource: " + url);
+                return new OriginalEventSource(url, options);
+            };
+            window.EventSource.prototype = OriginalEventSource.prototype;
+            window.EventSource.CONNECTING = OriginalEventSource.CONNECTING;
+            window.EventSource.OPEN = OriginalEventSource.OPEN;
+            window.EventSource.CLOSED = OriginalEventSource.CLOSED;
+        })();
 
         // === WEBSOCKET INTERCEPTOR ===
         (function () {
@@ -67,71 +80,11 @@
                 console.log("[HoneyScan] WebSocket Connect: " + url);
                 const ws = new OriginalWebSocket(url, protocols);
 
-                // Intercept incoming messages
-                const originalAddEventListener = ws.addEventListener;
-                ws.addEventListener = function (type, listener, options) {
-                    if (type === 'message') {
-                        const wrappedListener = function (event) {
-                            if (typeof event.data === 'string' && event.data.includes('23.88.40.46')) {
-                                console.log("[HoneyScan] WS HIT! Found Node IP in message.");
-                                // Attempt to patch if it's JSON
-                                try {
-                                    let data = JSON.parse(event.data);
-                                    // Recursive Patch
-                                    let patched = false;
-                                    const patchNode = (obj) => {
-                                        if (!obj || typeof obj !== 'object') return;
-                                        if (obj.ip === '23.88.40.46' || obj.intranet_ip === '23.88.40.46') {
-                                            obj.country = 'Germany';
-                                            obj.city = 'Falkenstein';
-                                            obj.province = 'Saxony';
-                                            obj.lat = 50.4777;
-                                            obj.lng = 12.3649;
-                                            obj.latitude = 50.4777;
-                                            obj.longitude = 12.3649;
-                                            patched = true;
-                                        }
-                                        for (let key in obj) {
-                                            if (typeof obj[key] === 'object') patchNode(obj[key]);
-                                        }
-                                    };
-                                    patchNode(data);
-
-                                    if (patched) {
-                                        console.log("[HoneyScan] WS Patched!");
-                                        // Create new event with patched data
-                                        const newEvent = new MessageEvent('message', {
-                                            data: JSON.stringify(data),
-                                            origin: event.origin,
-                                            lastEventId: event.lastEventId,
-                                            source: event.source,
-                                            ports: event.ports
-                                        });
-                                        listener.call(this, newEvent);
-                                        return; // Stop original listener from seeing bad data? 
-                                        // Actually, we are wrapping the listener passed by the app.
-                                        // So calling listener(newEvent) is correct.
-                                    }
-                                } catch (e) { console.error("WS Patch Error", e); }
-                            }
-                            listener.call(this, event);
-                        };
-                        return originalAddEventListener.call(this, type, wrappedListener, options);
+                ws.addEventListener('message', function (event) {
+                    if (typeof event.data === 'string' && event.data.includes('23.88.40.46')) {
+                        console.log("[HoneyScan] WS HIT! Found Node IP in message from: " + url);
                     }
-                    return originalAddEventListener.call(this, type, listener, options);
-                };
-
-                // Also hook 'onmessage' property
-                Object.defineProperty(ws, 'onmessage', {
-                    set: function (handler) {
-                        this._onmessage = handler;
-                        this.addEventListener('message', handler);
-                        // Note: varying implementations of onmessage vs addEventListener might conflict, 
-                        // but this is a best-effort patch.
-                    },
-                    get: function () { return this._onmessage; }
                 });
-
                 return ws;
             };
             window.WebSocket.prototype = OriginalWebSocket.prototype;
@@ -147,51 +100,51 @@
             window.fetch = async function (...args) {
                 // Log URL
                 let url = args[0];
-                if (typeof url !== 'string' && url.url) url = url.url; // Request object
+                if (typeof url !== 'string' && url.url) url = url.url;
 
-                if (url && (url.includes('api') || url.includes('node'))) {
-                    console.log("[HoneyScan] Fetch: " + url);
-                }
+                console.log("[HoneyScan] Fetch: " + url);
 
                 const response = await originalFetch(...args);
                 try {
-                    const respUrl = response.url;
-                    if (respUrl.includes('api/v1/dashboard') || respUrl.includes('api/v1/attack') || respUrl.includes('node')) {
-                        const clone = response.clone();
-                        const text = await clone.text();
-                        if (text && text.includes('23.88.40.46')) {
-                            console.log("[HoneyScan] Fetch HIT! Found Node IP in: " + respUrl);
-                            let data = JSON.parse(text);
-                            let patched = false;
-                            const patchNode = (obj) => {
-                                if (!obj || typeof obj !== 'object') return;
-                                if (obj.ip === '23.88.40.46' || obj.intranet_ip === '23.88.40.46') {
-                                    obj.country = 'Germany';
-                                    obj.city = 'Falkenstein';
-                                    obj.province = 'Saxony';
-                                    obj.lat = 50.4777;
-                                    obj.lng = 12.3649;
-                                    obj.latitude = 50.4777;
-                                    obj.longitude = 12.3649;
-                                    patched = true;
-                                }
-                                for (let key in obj) {
-                                    if (typeof obj[key] === 'object') patchNode(obj[key]);
-                                }
-                            };
-                            patchNode(data);
-                            if (patched) {
-                                console.log("[HoneyScan] Fetch Patched!");
-                                const newText = JSON.stringify(data);
-                                return new Response(newText, {
-                                    status: response.status,
-                                    statusText: response.statusText,
-                                    headers: response.headers
-                                });
+                    // Deep inspection of ALL JSON responses
+                    const clone = response.clone();
+                    const text = await clone.text();
+
+                    if (text && text.includes('23.88.40.46')) {
+                        const respUrl = response.url;
+                        console.log("[HoneyScan] Fetch HIT! Found Node IP in: " + respUrl);
+
+                        // Patch Logic
+                        let data = JSON.parse(text);
+                        let patched = false;
+                        const patchNode = (obj) => {
+                            if (!obj || typeof obj !== 'object') return;
+                            if (obj.ip === '23.88.40.46' || obj.intranet_ip === '23.88.40.46') {
+                                obj.country = 'Germany';
+                                obj.city = 'Falkenstein';
+                                obj.province = 'Saxony';
+                                obj.lat = 50.4777;
+                                obj.lng = 12.3649;
+                                obj.latitude = 50.4777;
+                                obj.longitude = 12.3649;
+                                patched = true;
                             }
+                            for (let key in obj) {
+                                if (typeof obj[key] === 'object') patchNode(obj[key]);
+                            }
+                        };
+                        patchNode(data);
+                        if (patched) {
+                            console.log("[HoneyScan] Fetch Patched!");
+                            const newText = JSON.stringify(data);
+                            return new Response(newText, {
+                                status: response.status,
+                                statusText: response.statusText,
+                                headers: response.headers
+                            });
                         }
                     }
-                } catch (e) { console.error("HoneyScan Fetch Interceptor Error:", e); }
+                } catch (e) { /* Ignore non-JSON or read errors */ }
                 return response;
             };
         })();
@@ -203,9 +156,7 @@
             const send = XHR.send;
             XHR.open = function (method, url) {
                 this._url = url;
-                if (url.includes('api') || url.includes('node')) {
-                    console.log("[HoneyScan] XHR Open: " + url);
-                }
+                console.log("[HoneyScan] XHR Open: " + url);
                 return open.apply(this, arguments);
             };
             XHR.send = function (postData) {
@@ -213,38 +164,36 @@
                     if (this.readyState === 4 && this.status === 200 && this._url) {
                         try {
                             const url = this._url;
-                            if (url.includes('api/v1/dashboard') || url.includes('api/v1/attack') || url.includes('node')) {
-                                let text = this.responseText;
-                                if (text && text.includes('23.88.40.46')) {
-                                    console.log("[HoneyScan] XHR HIT! Found Node IP in: " + url);
-                                    let data = JSON.parse(text);
-                                    let patched = false;
-                                    const patchNode = (obj) => {
-                                        if (!obj || typeof obj !== 'object') return;
-                                        if (obj.ip === '23.88.40.46' || obj.intranet_ip === '23.88.40.46') {
-                                            obj.country = 'Germany';
-                                            obj.city = 'Falkenstein';
-                                            obj.province = 'Saxony';
-                                            obj.lat = 50.4777;
-                                            obj.lng = 12.3649;
-                                            obj.latitude = 50.4777;
-                                            obj.longitude = 12.3649;
-                                            patched = true;
-                                        }
-                                        for (let key in obj) {
-                                            if (typeof obj[key] === 'object') patchNode(obj[key]);
-                                        }
-                                    };
-                                    patchNode(data);
-                                    if (patched) {
-                                        console.log("[HoneyScan] XHR Patched!");
-                                        const newText = JSON.stringify(data);
-                                        Object.defineProperty(this, 'responseText', { value: newText, writable: true });
-                                        Object.defineProperty(this, 'response', { value: newText, writable: true });
+                            let text = this.responseText;
+                            if (text && text.includes('23.88.40.46')) {
+                                console.log("[HoneyScan] XHR HIT! Found Node IP in: " + url);
+                                let data = JSON.parse(text);
+                                let patched = false;
+                                const patchNode = (obj) => {
+                                    if (!obj || typeof obj !== 'object') return;
+                                    if (obj.ip === '23.88.40.46' || obj.intranet_ip === '23.88.40.46') {
+                                        obj.country = 'Germany';
+                                        obj.city = 'Falkenstein';
+                                        obj.province = 'Saxony';
+                                        obj.lat = 50.4777;
+                                        obj.lng = 12.3649;
+                                        obj.latitude = 50.4777;
+                                        obj.longitude = 12.3649;
+                                        patched = true;
                                     }
+                                    for (let key in obj) {
+                                        if (typeof obj[key] === 'object') patchNode(obj[key]);
+                                    }
+                                };
+                                patchNode(data);
+                                if (patched) {
+                                    console.log("[HoneyScan] XHR Patched!");
+                                    const newText = JSON.stringify(data);
+                                    Object.defineProperty(this, 'responseText', { value: newText, writable: true });
+                                    Object.defineProperty(this, 'response', { value: newText, writable: true });
                                 }
                             }
-                        } catch (e) { console.error("HoneyScan XHR Interceptor Error:", e); }
+                        } catch (e) { /* Ignore */ }
                     }
                 });
                 return send.apply(this, arguments);
