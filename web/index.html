@@ -395,6 +395,82 @@
         // Run aggressively
         patchBrandingAggressive();
         setInterval(patchBrandingAggressive, 200);
+
+        // === DATA PATCHING (Timezone & Flags) ===
+        const patchDataIssues = () => {
+            try {
+                // 1. TIMEZONE FIX (+1 Hour)
+                // Select generic time elements (HFish uses p tags with specific class or just structure)
+                // We use a safe heuristic: text matching date format "YYYY/MM/DD HH:mm:ss"
+                const timeElements = document.querySelectorAll('p[class*="time"], span[class*="time"]');
+                timeElements.forEach(el => {
+                    if (el.dataset.timePatched) return;
+                    
+                    const text = el.innerText.trim();
+                    // Regex for YYYY/MM/DD HH:mm:ss
+                    if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) {
+                        // Parse date (Assume UTC or Server Time)
+                        // Note: JS Date parsing with slashes might be browser dependent, replacing / with - helps
+                        const dateStr = text.replace(/\//g, '-');
+                        let date = new Date(dateStr);
+                        
+                        if (!isNaN(date.getTime())) {
+                            // Add 1 Hour (3600 * 1000 ms)
+                            date.setTime(date.getTime() + 3600000);
+                            
+                            // Format back to YYYY/MM/DD HH:mm:ss
+                            const pad = (n) => n.toString().padStart(2, '0');
+                            const newText = `${date.getFullYear()}/${pad(date.getMonth()+1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+                            
+                            el.innerText = newText;
+                            el.dataset.timePatched = 'true';
+                        }
+                    }
+                });
+
+                // 2. FLAG FIX (Map Name -> SVG Class)
+                // Target generic rows in recent attacks
+                const rows = document.querySelectorAll('div[class*="item"]'); // Generic item class in lists
+                rows.forEach(row => {
+                    const countrySpan = row.querySelector('span[title]');
+                    const flagSvg = row.querySelector('svg.flag-icon');
+                    const useHref = flagSvg?.querySelector('use');
+
+                    if (countrySpan && flagSvg && useHref) {
+                        const country = countrySpan.innerText.trim();
+                        // Check if currently showing default
+                        if (!useHref.getAttribute('xlink:href').includes('flagdefault')) return;
+
+                        // Map Country Name to ISO Code (Partial List)
+                        const countryMap = {
+                            'China': 'cn', 'United States': 'us', 'Germany': 'de', 'France': 'fr',
+                            'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'Brazil': 'br',
+                            'India': 'in', 'Canada': 'ca', 'Korea': 'kr', 'Japan': 'jp', 'Vietnam': 'vn',
+                            'Italy': 'it', 'Spain': 'es', 'Australia': 'au', 'Taiwan': 'tw', 'Singapore': 'sg',
+                            'Nigeria': 'ng', 'Sweden': 'se', 'Poland': 'pl', 'Iran': 'ir', 'Turkey': 'tr',
+                            'Romania': 'ro', 'Ukraine': 'ua', 'Mexico': 'mx', 'Argentina': 'ar', 'Ireland': 'ie'
+                        };
+
+                        const code = countryMap[country];
+                        if (code) {
+                            // Update SVG Class and Use Href
+                            // HFish uses #hfish-flag-code or #icon-code logic?
+                            // Based on assets, likely #hfish-flag-{code} or similar.
+                            // The default was #hfish-flagdefault.
+                            // Let's try matching the map pattern: usually class "flag-icon-{code}" + href "#hfish-flag-{code}"
+                            
+                            // Update Use Href
+                            useHref.setAttribute('xlink:href', `#hfish-flag-${code}`);
+                            // Optional: Update class if needed
+                            flagSvg.classList.add(`flag-icon-${code}`);
+                        }
+                    }
+                });
+
+            } catch (e) { console.error('Data patch error:', e); }
+        };
+
+        setInterval(patchDataIssues, 1000); // Run every second to catch new rows
     </script>
 </body>
 
