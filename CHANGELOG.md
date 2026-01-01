@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.8.1] - 2026-01-01
+
+### Fixed
+- 🚑 **Critical**: Fixed blank screen issue on Dashboard/Monitor. Refined `patchBrandingAggressive` script to use safe `innerText` replacement on leaf nodes only, preventing destruction of DOM elements and Event Listeners (React/Vue bindings).
+
 ## [3.8.0] - 2026-01-01
 
 ### Added
