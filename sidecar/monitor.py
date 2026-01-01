@@ -6,14 +6,11 @@ import os
 import signal
 import sys
 import logging
+import requests
 from concurrent.futures import ThreadPoolExecutor
 
 # Configuration
-# Configuration
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
-if not DB_TYPE: # Handle empty string
-    DB_TYPE = "mysql"
-    
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
 DB_USER = os.getenv("DB_USER", "hfish")
@@ -58,14 +55,64 @@ def get_db_connection():
                 password=DB_PASSWORD,
                 database=DB_NAME,
                 cursorclass=pymysql.cursors.DictCursor,
-                connect_timeout=5
+                connect_timeout=5,
+                autocommit=True
             )
         else:
-            # Connect in read-only mode to minimize locking
             return sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
         return None
+
+def get_geolocation():
+    """Fetch public IP and geolocation."""
+    try:
+        # Get Public IP
+        ip = requests.get("https://api.ipify.org?format=json", timeout=10).json().get('ip')
+        if not ip: return None, None
+        
+        # Get Geo Info (free endpoint)
+        # Note: In production, consider a paid API or internal DB if rate limits apply
+        geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=10).json()
+        
+        if geo.get('status') == 'success':
+            location_str = f"{geo.get('city', 'Unknown')}, {geo.get('country', 'Unknown')}"
+            return ip, location_str
+    except Exception as e:
+        logger.error(f"Geolocation fetch failed: {e}")
+    return None, None
+
+def update_node_location():
+    """Update valid node location in database."""
+    ip, location = get_geolocation()
+    if not ip or not location:
+        logger.warning("Could not determine dynamic location.")
+        return
+
+    logger.info(f"Detected Public IP: {ip}, Location: {location}")
+    
+    conn = get_db_connection()
+    if not conn: return
+
+    try:
+        cursor = conn.cursor()
+        # Find the active node (usually the one with most recent update_time or just the first/only one)
+        # HFish creates one 'master' node usually
+        if DB_TYPE == "mysql":
+            cursor.execute("SELECT id, node_id FROM nodes ORDER BY update_time DESC LIMIT 1")
+            row = cursor.fetchone()
+            if row:
+                node_id = row['id']
+                # Update location and optionally node_addr if needed, but HFish might overwrite addr
+                # We strictly want to set the user-facing location string
+                cursor.execute("UPDATE nodes SET location = %s WHERE id = %s", (location, node_id))
+                logger.info(f"Updated Node {node_id} location to: {location}")
+            else:
+                logger.warning("No active nodes found in DB to update.")
+        conn.close()
+    except Exception as e:
+        logger.error(f"Database update failed: {e}")
+        if conn: conn.close()
 
 def get_new_attackers():
     """Fetch unique source IPs from infos table that haven't been scanned."""
@@ -76,14 +123,11 @@ def get_new_attackers():
     ips = []
     try:
         cursor = conn.cursor()
-        # Query compatibility: Assume 'infos' table and 'source_ip', 'create_time' exist in both
         query = "SELECT DISTINCT source_ip FROM infos ORDER BY create_time DESC LIMIT 100"
-        
         cursor.execute(query)
         rows = cursor.fetchall()
         
         for row in rows:
-            # DictCursor returns dict, sqlite3 returns tuple
             if isinstance(row, dict):
                 ips.append(row['source_ip'])
             else:
@@ -197,7 +241,10 @@ def main():
     init_env()
     logger.info(f"Monitor started (DB_TYPE={DB_TYPE}).")
     logger.info("Waiting 30s for DB to be ready...")
-    time.sleep(30) # Delay start to allow MariaDB to initialize
+    time.sleep(30) 
+    
+    # Run dynamic geolocation UPDATE
+    update_node_location()
 
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
@@ -211,16 +258,9 @@ def main():
                     if len(ip) < 7: continue
                     futures.append(executor.submit(scan_ip, ip))
                 
-                # Wait for scans to complete to update index correctly? 
-                # No, fire and forget roughly, but update lists
-                
-                # Check results periodically or just proceed
-                # For simplicity, we just check completion in next loops or assume done
-                
                 if attackers:
                     update_banned_list(attackers)
                 
-                # Update index regardless to show new files
                 update_index()
                     
             except Exception as e:
