@@ -3,9 +3,9 @@
 ## [3.8.8] - 2026-01-01
 
 ### Fixed
-- 🌍 **Geolocation**: Enhanced logic to return "City, Country" instead of just "Country", improving map pin accuracy.
-- 🕒 **Timezone**: Increased frontend time offset to **+3 Hours** to correct persistent -1 hour display error.
-- 🚩 **UI**: Expanded country flag mappings.
+- 🌍 **Geolocation**: Upgraded `monitor.py` to fetch detailed location ("City, Region, Country") instead of just "Country" for precise map placement.
+- 🕒 **Timezone**: Corrected frontend time patch from +2h to +1h to resolve the reported -1h mismatch.
+- 🚩 **UI**: Expanded country flag mapping to include 50+ additional countries.
 
 ## [3.8.7] - 2026-01-01
 

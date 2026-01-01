@@ -399,9 +399,8 @@
         // === DATA PATCHING (Timezone & Flags) ===
         const patchDataIssues = () => {
             try {
-                // 1. TIMEZONE FIX (+2 Hours for CET Correction from UTC Base)
-                // Select generic time elements (HFish uses p tags with specific class or just structure)
-                // We use a safe heuristic: text matching date format "YYYY/MM/DD HH:mm:ss"
+                // 1. TIMEZONE FIX (+1 Hour for CET Correction from "Server Time")
+                // User reported -1h error. Previous patch was +2h. Reducing to +1h (3600000ms).
                 const timeElements = document.querySelectorAll('p[class*="time"], span[class*="time"]');
                 timeElements.forEach(el => {
                     if (el.dataset.timePatched) return;
@@ -409,15 +408,12 @@
                     const text = el.innerText.trim();
                     // Regex for YYYY/MM/DD HH:mm:ss
                     if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) {
-                        // Parse date (Assume UTC or Server Time)
-                        // Note: JS Date parsing with slashes might be browser dependent, replacing / with - helps
                         const dateStr = text.replace(/\//g, '-');
                         let date = new Date(dateStr);
 
                         if (!isNaN(date.getTime())) {
-                            // Add 3 Hours (3 * 3600 * 1000 ms) to correct -1h mismatch + base offset
-                            // Original observation: Displayed 18:xx, Real 21:xx (approx).
-                            date.setTime(date.getTime() + 10800000);
+                            // Add 1 Hour (3600000 ms)
+                            date.setTime(date.getTime() + 3600000);
 
                             // Format back to YYYY/MM/DD HH:mm:ss
                             const pad = (n) => n.toString().padStart(2, '0');
@@ -443,7 +439,7 @@
 
                     const country = countrySpan.innerText.trim();
 
-                    // Map Country Name to ISO Code (Partial List)
+                    // Map Country Name to ISO Code (Expanded List)
                     const countryMap = {
                         'China': 'cn', 'United States': 'us', 'Germany': 'de', 'France': 'fr',
                         'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'Brazil': 'br',
@@ -453,11 +449,10 @@
                         'Romania': 'ro', 'Ukraine': 'ua', 'Mexico': 'mx', 'Argentina': 'ar', 'Ireland': 'ie',
                         'Austria': 'at', 'Switzerland': 'ch', 'Belgium': 'be', 'Denmark': 'dk', 'Norway': 'no',
                         'Finland': 'fi', 'Portugal': 'pt', 'Greece': 'gr', 'Czech Republic': 'cz', 'Hungary': 'hu',
-                        'Bulgaria': 'bg', 'Croatia': 'hr', 'Lithuania': 'lt', 'Latvia': 'lv', 'Estonia': 'ee',
-                        'Slovakia': 'sk', 'Slovenia': 'si', 'Cyprus': 'cy', 'Luxembourg': 'lu', 'Malta': 'mt',
-                        'Iceland': 'is', 'Chile': 'cl', 'Colombia': 'co', 'South Africa': 'za', 'Egypt': 'eg',
-                        'Saudi Arabia': 'sa', 'United Arab Emirates': 'ae', 'Israel': 'il', 'Thailand': 'th',
-                        'Indonesia': 'id', 'Malaysia': 'my', 'Philippines': 'ph', 'Hong Kong': 'hk'
+                        'Indonesia': 'id', 'Thailand': 'th', 'Malaysia': 'my', 'Philippines': 'ph', 'South Africa': 'za',
+                        'Egypt': 'eg', 'Israel': 'il', 'Slovakia': 'sk', 'Bulgaria': 'bg', 'Saudi Arabia': 'sa',
+                        'United Arab Emirates': 'ae', 'Colombia': 'co', 'Chile': 'cl', 'Peru': 'pe', 'Pakistan': 'pk',
+                        'Bangladesh': 'bd', 'New Zealand': 'nz', 'Hong Kong': 'hk'
                     };
 
                     const code = countryMap[country];
