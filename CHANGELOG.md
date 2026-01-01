@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.7.2] - 2026-01-01
+
+### Fixed
+- 🎨 **UI**: Removed legacy `mix-blend-mode` from Logo CSS which caused rendering issues with transparency.
+- 📝 **Docs**: Fine-tuned README spacing (removed excess top break) for perfect symmetry.
+
 ## [3.7.1] - 2026-01-01
 
 ### Fixed
