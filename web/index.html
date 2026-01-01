@@ -188,44 +188,39 @@
                           overflow-x: hidden !important;
                       }
 
-                      /* HIDE ORIGINAL HEADER ONLY */
-                      div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"], 
-                      .screen-header-left-title, .screen-title,
-                      div[class*="top"], .el-card__header {
-                          display: node !important; /* Typo fix implied: none */
+                      /* HIDE ORIGINAL HEADER ONLY - SAFELIST MODE */
+                      /* Only hide specific known headers, generic names like 'top' or 'header' might kill form parts */
+                      header, .el-header, nav, .screen-header-left-title, .screen-title {
                           display: none !important;
-                          opacity: 0 !important;
-                          visibility: hidden !important;
-                          height: 0 !important;
-                          width: 0 !important;
-                          padding: 0 !important;
-                          margin: 0 !important;
-                          border: none !important;
-                          overflow: hidden !important;
                       }
                       
-                      div[class*="header"] * { display: none !important; }
-
-                      /* Fix Title Spacing */
-                      div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
-                          margin-top: 10px !important; 
-                      }
-                      
-                      /* Login Button Green - AGGRESSIVE FIX */
+                      /* Login Button Green - SUPER AGGRESSIVE FIX */
                       div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
                           background-color: #4ade80 !important;
                           border-color: #4ade80 !important;
                           color: #0f172a !important; 
                           font-weight: bold !important;
-                          background-image: none !important; /* Kill sliding gradients */
-                          animation: none !important;        /* Kill animations */
-                          transition: background-color 0.2s !important; /* Simple transition */
+                          background-image: none !important; 
+                          animation: none !important;        
+                          transition: background-color 0.2s !important;
+                          box-shadow: none !important;
                       }
+                      
+                      /* Kill pseudo-elements that might cause the slide effect */
+                      div[class*="index-cssmodule__btn"]::before, button[class*="index-cssmodule__btn"]::before, .el-button--primary::before,
+                      div[class*="index-cssmodule__btn"]::after, button[class*="index-cssmodule__btn"]::after, .el-button--primary::after {
+                          display: none !important;
+                          content: none !important;
+                          animation: none !important;
+                          transition: none !important;
+                      }
+
                       div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover, .el-button--primary:focus {
                           background-color: #22c55e !important;
                           border-color: #22c55e !important;
                           background-image: none !important;
                           animation: none !important;
+                          color: #0f172a !important;
                       }
                       
                       /* Footer IPv6 Button Green */
