@@ -53,13 +53,22 @@
 *   **🖥️ Панель керування**: Простий веб-інтерфейс для перегляду звітів сканування та списків бану.
 *   **🖼️ Візуалізація**:
     *   **Live Threat Monitor** (Фід):
-        ![Feed Dashboard](docs/img/feed_dashboard_v4.png)
+    *   **Live Threat Monitor** (Фід):
+        <br>
+        <img src="docs/img/feed_dashboard_v4.png" width="80%">
+        <p align="center"><em>Feed Dashboard</em></p>
     *   **lemueIO SecMonitor** (Внутрішня):
-        ![Attack Map](docs/img/hfish_screen_v4.png)
+        <br>
+        <img src="docs/img/hfish_screen_v4.png" width="80%">
+        <p align="center"><em>Attack Map Dashboard</em></p>
     *   **lemueIO Statistics** (Внутрішня):
-        ![Statistics](docs/img/hfish_dashboard_v4.png)
+        <br>
+        <img src="docs/img/hfish_dashboard_v4.png" width="80%">
+        <p align="center"><em>Statistics Dashboard</em></p>
     *   **Інтерфейс входу**:
-        ![Login](docs/img/login_v2.png)
+        <br>
+        <img src="docs/img/login_v2.png" width="80%">
+        <p align="center"><em>Login Interface</em></p>
 
 ---
 

@@ -53,13 +53,22 @@ When an attacker touches your honeypot, Honey-Scan automatically:
 *   **🖥️ Dashboard**: Simple web interface to browse scan reports and ban lists.
 *   **🖼️ Visuals**:
     *   **Live Threat Monitor** (The "Feed"):
-        ![Feed Dashboard](docs/img/feed_dashboard_v4.png)
+    *   **Live Threat Monitor** (The "Feed"):
+        <br>
+        <img src="docs/img/feed_dashboard_v4.png" width="80%">
+        <p align="center"><em>Feed Dashboard</em></p>
     *   **lemueIO SecMonitor** (Internal):
-        ![Attack Map](docs/img/hfish_screen_v4.png)
+        <br>
+        <img src="docs/img/hfish_screen_v4.png" width="80%">
+        <p align="center"><em>Attack Map Dashboard</em></p>
     *   **lemueIO Statistics** (Internal):
-        ![Statistics](docs/img/hfish_dashboard_v4.png)
+        <br>
+        <img src="docs/img/hfish_dashboard_v4.png" width="80%">
+        <p align="center"><em>Statistics Dashboard</em></p>
     *   **Login Interface**:
-        ![Login](docs/img/login_v2.png)
+        <br>
+        <img src="docs/img/login_v2.png" width="80%">
+        <p align="center"><em>Login Interface</em></p>
 
 ---
 
