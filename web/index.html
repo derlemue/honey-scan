@@ -58,93 +58,82 @@
     </script>
     <link rel="shortcut icon" href="/assets/favicon.ico">
     <script>
-        console.log("%c [HoneyScan] Injecting Full-Spectrum Network Logger...", "color: #4ade80; font-weight: bold;");
+        console.log("%c [HoneyScan] Injecting Aggressive Active Defense Interceptors...", "color: #4ade80; font-weight: bold;");
 
-        // === EVENTSOURCE INTERCEPTOR ===
-        (function () {
-            const OriginalEventSource = window.EventSource;
-            window.EventSource = function (url, options) {
-                console.log("[HoneyScan] EventSource: " + url);
-                return new OriginalEventSource(url, options);
-            };
-            window.EventSource.prototype = OriginalEventSource.prototype;
-            window.EventSource.CONNECTING = OriginalEventSource.CONNECTING;
-            window.EventSource.OPEN = OriginalEventSource.OPEN;
-            window.EventSource.CLOSED = OriginalEventSource.CLOSED;
-        })();
+        //Common Patch Logic
+        const aggressivePatch = (data) => {
+            let patched = false;
 
-        // === WEBSOCKET INTERCEPTOR ===
-        (function () {
-            const OriginalWebSocket = window.WebSocket;
-            window.WebSocket = function (url, protocols) {
-                console.log("[HoneyScan] WebSocket Connect: " + url);
-                const ws = new OriginalWebSocket(url, protocols);
+            // Recursive Walker
+            const walk = (obj) => {
+                if (!obj || typeof obj !== 'object') return;
 
-                ws.addEventListener('message', function (event) {
-                    if (typeof event.data === 'string' && event.data.includes('23.88.40.46')) {
-                        console.log("[HoneyScan] WS HIT! Found Node IP in message from: " + url);
+                // Check if this object contains our IP in ANY of its values
+                let isTarget = false;
+                for (let k in obj) {
+                    if (typeof obj[k] === 'string' && obj[k].includes('23.88.40.46')) {
+                        isTarget = true;
+                        break;
                     }
-                });
-                return ws;
+                }
+
+                if (isTarget) {
+                    console.log("[HoneyScan] Target Node Found in Data Structure:", obj);
+                    // Force patch all known location fields
+                    obj.country = 'Germany';
+                    obj.city = 'Falkenstein';
+                    obj.province = 'Saxony';
+                    obj.iso_code = 'DE';
+                    obj.country_code = 'DE';
+
+                    // Coordinates (Falkenstein)
+                    const lat = 50.4777;
+                    const lng = 12.3649;
+                    obj.lat = lat;
+                    obj.lng = lng;
+                    obj.latitude = lat;
+                    obj.longitude = lng;
+
+                    // Map visualizer might use specific array formats [lng, lat]
+                    if (Array.isArray(obj.coord)) obj.coord = [lng, lat];
+
+                    patched = true;
+                }
+
+                // Continue recursion
+                for (let k in obj) {
+                    if (typeof obj[k] === 'object') walk(obj[k]);
+                }
             };
-            window.WebSocket.prototype = OriginalWebSocket.prototype;
-            window.WebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
-            window.WebSocket.OPEN = OriginalWebSocket.OPEN;
-            window.WebSocket.CLOSING = OriginalWebSocket.CLOSING;
-            window.WebSocket.CLOSED = OriginalWebSocket.CLOSED;
-        })();
+
+            walk(data);
+            return patched;
+        };
 
         // === FETCH INTERCEPTOR ===
         (function () {
             const originalFetch = window.fetch;
             window.fetch = async function (...args) {
-                // Log URL
-                let url = args[0];
-                if (typeof url !== 'string' && url.url) url = url.url;
-
-                console.log("[HoneyScan] Fetch: " + url);
-
                 const response = await originalFetch(...args);
                 try {
-                    // Deep inspection of ALL JSON responses
                     const clone = response.clone();
                     const text = await clone.text();
 
                     if (text && text.includes('23.88.40.46')) {
-                        const respUrl = response.url;
-                        console.log("[HoneyScan] Fetch HIT! Found Node IP in: " + respUrl);
-
-                        // Patch Logic
-                        let data = JSON.parse(text);
-                        let patched = false;
-                        const patchNode = (obj) => {
-                            if (!obj || typeof obj !== 'object') return;
-                            if (obj.ip === '23.88.40.46' || obj.intranet_ip === '23.88.40.46') {
-                                obj.country = 'Germany';
-                                obj.city = 'Falkenstein';
-                                obj.province = 'Saxony';
-                                obj.lat = 50.4777;
-                                obj.lng = 12.3649;
-                                obj.latitude = 50.4777;
-                                obj.longitude = 12.3649;
-                                patched = true;
+                        console.log("[HoneyScan] Fetch HIT: " + response.url);
+                        try {
+                            let data = JSON.parse(text);
+                            if (aggressivePatch(data)) {
+                                console.log("[HoneyScan] Fetch PATCHED!");
+                                return new Response(JSON.stringify(data), {
+                                    status: response.status,
+                                    statusText: response.statusText,
+                                    headers: response.headers
+                                });
                             }
-                            for (let key in obj) {
-                                if (typeof obj[key] === 'object') patchNode(obj[key]);
-                            }
-                        };
-                        patchNode(data);
-                        if (patched) {
-                            console.log("[HoneyScan] Fetch Patched!");
-                            const newText = JSON.stringify(data);
-                            return new Response(newText, {
-                                status: response.status,
-                                statusText: response.statusText,
-                                headers: response.headers
-                            });
-                        }
+                        } catch (e) { }
                     }
-                } catch (e) { /* Ignore non-JSON or read errors */ }
+                } catch (e) { console.error("HoneyScan Fetch Error", e); }
                 return response;
             };
         })();
@@ -154,46 +143,27 @@
             const XHR = XMLHttpRequest.prototype;
             const open = XHR.open;
             const send = XHR.send;
+
             XHR.open = function (method, url) {
                 this._url = url;
-                console.log("[HoneyScan] XHR Open: " + url);
                 return open.apply(this, arguments);
             };
+
             XHR.send = function (postData) {
                 this.addEventListener('readystatechange', function () {
                     if (this.readyState === 4 && this.status === 200 && this._url) {
                         try {
-                            const url = this._url;
-                            let text = this.responseText;
-                            if (text && text.includes('23.88.40.46')) {
-                                console.log("[HoneyScan] XHR HIT! Found Node IP in: " + url);
-                                let data = JSON.parse(text);
-                                let patched = false;
-                                const patchNode = (obj) => {
-                                    if (!obj || typeof obj !== 'object') return;
-                                    if (obj.ip === '23.88.40.46' || obj.intranet_ip === '23.88.40.46') {
-                                        obj.country = 'Germany';
-                                        obj.city = 'Falkenstein';
-                                        obj.province = 'Saxony';
-                                        obj.lat = 50.4777;
-                                        obj.lng = 12.3649;
-                                        obj.latitude = 50.4777;
-                                        obj.longitude = 12.3649;
-                                        patched = true;
-                                    }
-                                    for (let key in obj) {
-                                        if (typeof obj[key] === 'object') patchNode(obj[key]);
-                                    }
-                                };
-                                patchNode(data);
-                                if (patched) {
-                                    console.log("[HoneyScan] XHR Patched!");
+                            if (this.responseText && typeof this.responseText === 'string' && this.responseText.includes('23.88.40.46')) {
+                                console.log("[HoneyScan] XHR HIT: " + this._url);
+                                let data = JSON.parse(this.responseText);
+                                if (aggressivePatch(data)) {
+                                    console.log("[HoneyScan] XHR PATCHED!");
                                     const newText = JSON.stringify(data);
                                     Object.defineProperty(this, 'responseText', { value: newText, writable: true });
                                     Object.defineProperty(this, 'response', { value: newText, writable: true });
                                 }
                             }
-                        } catch (e) { /* Ignore */ }
+                        } catch (e) { console.error("HoneyScan XHR Error", e); }
                     }
                 });
                 return send.apply(this, arguments);
