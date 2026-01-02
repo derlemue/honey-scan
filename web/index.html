@@ -61,64 +61,54 @@
         console.log("%c [HoneyScan] Injecting Aggressive Active Defense Interceptors...", "color: #4ade80; font-weight: bold;");
 
         //Common Patch Logic
-        const aggressivePatch = (data) => {
+        // === AGGRESSIVE PATCH FOR LOCATION & CLOUD DATA ===
+        const aggressivePatch = (obj) => {
+            if (!obj || typeof obj !== 'object') return false;
             let patched = false;
 
-            // Recursive Walker
-            const walk = (obj) => {
-                if (!obj || typeof obj !== 'object') return;
-
-                // Check if this object looks like a Node Location record
-                // We typically look for 'country', 'city', or 'province' fields
-                let isTarget = false;
-
-                // Heuristic: If it has location keywords, it's likely a node or attack record we want to standardize
-                const keys = Object.keys(obj);
-
-                // Target NODE objects specifically
-                // Nodes typically have 'intranet_ip', 'customer_id', or 'version'
-                if (keys.includes('intranet_ip') || keys.includes('version')) {
-                    if (keys.includes('country')) isTarget = true;
-                }
-
-                // Also catch loose location objects that might be the map center if they match 'Germany' but lack City
-                if (obj.country === 'Deutschland' || obj.country === 'Germany') {
-                    if (!obj.city || obj.city === '' || obj.city === 'Unknown') {
-                        // Only patch if it looks like it lacks specific city data
-                        isTarget = true;
-                    }
-                }
-
-                if (isTarget) {
-                    console.log("[HoneyScan] Target Node Found in Data Structure:", obj);
-                    // Force patch all known location fields
+            // 1. HARDCODED NODE FIX: Force Falkenstein for this specific IP
+            const str = JSON.stringify(obj);
+            if (str.includes('23.88.40.46')) {
+                if (obj.intranet_ip === '23.88.40.46' || obj.ip === '23.88.40.46') {
                     obj.country = 'Germany';
                     obj.city = 'Falkenstein';
                     obj.province = 'Saxony';
-                    obj.iso_code = 'DE';
-                    obj.country_code = 'DE';
-
-                    // Coordinates (Falkenstein)
-                    const lat = 50.4777;
-                    const lng = 12.3649;
-                    obj.lat = lat;
-                    obj.lng = lng;
-                    obj.latitude = lat;
-                    obj.longitude = lng;
-
-                    // Map visualizer might use specific array formats [lng, lat]
-                    if (Array.isArray(obj.coord)) obj.coord = [lng, lat];
-
+                    obj.lat = 50.4777;
+                    obj.lng = 12.3649;
+                    obj.latitude = 50.4777;
+                    obj.longitude = 12.3649;
                     patched = true;
                 }
+            }
 
-                // Continue recursion
-                for (let k in obj) {
-                    if (typeof obj[k] === 'object') walk(obj[k]);
+            // 2. Generic Heuristics (Fallback)
+            if (!patched) {
+                // Target NODE objects specifically
+                const keys = Object.keys(obj);
+                if ((keys.includes('intranet_ip') || keys.includes('version')) && keys.includes('country')) {
+                    // It's a node
+                    patched = true; // Mark as candidate to force German location if ambiguous
                 }
-            };
 
-            walk(data);
+                if (obj.country === 'Deutschland' || obj.country === 'Germany') {
+                    if (!obj.city || obj.city === '' || obj.city === 'Unknown') {
+                        obj.city = 'Falkenstein';
+                        obj.lat = 50.4777;
+                        obj.lng = 12.3649;
+                        obj.latitude = 50.4777;
+                        obj.longitude = 12.3649;
+                        patched = true;
+                    }
+                }
+            }
+
+            // Recursively walk
+            Object.keys(obj).forEach(key => {
+                if (typeof obj[key] === 'object') {
+                    if (aggressivePatch(obj[key])) patched = true;
+                }
+            });
+
             return patched;
         };
 
@@ -626,25 +616,47 @@
             } catch (e) { console.error('Data patch error:', e); }
         };
 
+        // === AGGRESSIVE PATCH FOR LOCATION & CLOUD DATA ===
+        // Duplicate aggressivePatch removed.
+
+
         // === HIDE EMPTY SECTIONS (Cloud Intel) ===
         const hideEmptyCloudSection = () => {
-            // Find "Cloud Intelligence", "Live Threat Monitor", or "Threat Intelligence" container
-            const headers = document.querySelectorAll('.el-card__header, .header-title, .title, span');
+            // Broad search for any element with "Cloud Intelligence" text
+            // We use a tree walker or just specific selectors to find the header
+            const headers = document.querySelectorAll('div, span, p, h3, h4');
             headers.forEach(h => {
-                const text = h.innerText || '';
-                if (text.includes('Cloud Intelligence') || text.includes('Live Threat Monitor') || text.includes('Threat Intelligence')) {
-                    const card = h.closest('.el-card');
-                    if (card) {
-                        if (card.style.display !== 'none') card.style.display = 'none';
+                // Check immediate text content to avoid hiding body by accident
+                if (h.children.length === 0 && h.innerText) {
+                    const text = h.innerText;
+                    if (text.includes('Cloud Intelligence') || text.includes('Threat Intelligence') || text.includes('Live Threat Monitor')) {
+                        // Walk up to find the Container Card
+                        const card = h.closest('.el-card') || h.closest('.box-card');
+                        if (card) {
+                            card.style.display = 'none';
+                        }
                     }
                 }
             });
         };
 
         setInterval(() => {
-            patchDataIssues();
+            // We intercept the data via the global Vue/XHR hooks usually, 
+            // but since we can't easily hook Vue internals without a race condition,
+            // we rely on the XHR proxy we set up (if we did) OR we rely on UI patching.
+            // But wait, the previous `patchDataIssues` relied on `aggressivePatch`.
+            // Let's ensure the XHR proxy is actually active or we are monkey-patching JSON.parse.
+
             hideEmptyCloudSection();
-        }, 200); // Run frequently
+        }, 100);
+
+        // MONKEY PATCH JSON.parse to intercept data at the source
+        const originalParse = JSON.parse;
+        JSON.parse = function (text, reviver) {
+            const data = originalParse(text, reviver);
+            if (data) aggressivePatch(data);
+            return data;
+        };
     </script>
 </body>
 
