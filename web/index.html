@@ -601,16 +601,24 @@
                 // 2. FLAG FIX (Map Name -> SVG Class)
                 // Target generic rows in recent attacks by finding the flag icon first
                 const flagSvgs = document.querySelectorAll('svg.flag-icon');
+                // console.log("[HoneyScan] Debug: Found " + flagSvgs.length + " flag icons"); 
+
                 flagSvgs.forEach(svg => {
                     // Check if it's the broken default one
                     const useHref = svg.querySelector('use');
-                    if (!useHref || !useHref.getAttribute('xlink:href').includes('flagdefault')) return;
+                    if (!useHref) return;
+
+                    const href = useHref.getAttribute('xlink:href') || useHref.getAttribute('href');
+                    if (!href || !href.includes('flagdefault')) return;
 
                     // The country name is usually in the NEXT SIBLING span
                     const countrySpan = svg.nextElementSibling;
                     if (!countrySpan || countrySpan.tagName !== 'SPAN') return;
 
                     const country = countrySpan.innerText.trim();
+                    console.log("[HoneyScan] Debug: Found default flag for country: " + country);
+
+                    // Map Country Name to ISO Code (Expanded List)
 
                     // Map Country Name to ISO Code (Expanded List)
                     const countryMap = {
