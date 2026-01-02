@@ -712,6 +712,33 @@
                     }
                 });
 
+                // 3. Fix Chinese Full-Width Colons and formatting
+                const fixTextContent = () => {
+                    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+                    let node;
+                    while (node = walker.nextNode()) {
+                        // Full-width colon fix
+                        if (node.nodeValue.includes('：')) {
+                            node.nodeValue = node.nodeValue.replace(/：/g, ': ');
+                        }
+                        // "w" (Wan) suffix fix heuristic
+                        // Often seen as "1.5w" or in stats.
+                        // We check if it is a short string ending in w and looks numeric
+                        const val = node.nodeValue.trim();
+                        if (/^\d+(\.\d+)?w$/.test(val)) {
+                            // Replace 'w' with 'k' or convert?
+                            // 1w = 10,000. 1k = 1,000.
+                            // Let's just strip 'w' and denote it properly if we can, or just make it '0k'
+                            // For simplicity: 1.5w -> 15k
+                            const num = parseFloat(val.replace('w', ''));
+                            node.nodeValue = (num * 10).toFixed(1).replace('.0', '') + 'k';
+                        }
+                    }
+                };
+
+                // Run periodically
+                setInterval(fixTextContent, 1000);
+
             } catch (e) { console.error('Data patch error:', e); }
         };
 
