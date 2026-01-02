@@ -1,0 +1,4 @@
+{
+    "antigravity.agent.reviewPolicy": "always_proceed",
+    "antigravity.agent.customInstructions": "Nutze die Regeln aus der Datei .cursorrules in diesem Ordner."
+}

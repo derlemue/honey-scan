@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.9] - 2026-01-02
+
+### Fixed
+- 🌍 **Geolocation**: Enforced "Active Defense" location (Falkenstein, DE) via generic frontend patch (independent of Node IP).
+- 🌍 **Geolocation**: Updated `sidecar` to fetch precise City-level location and refresh it every 10 minutes.
+- 🎨 **UI**: Hidden broken "Cloud Intelligence" section from Dashboard.
+
 ## [3.8.8] - 2026-01-01
 
 ### Fixed

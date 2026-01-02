@@ -85,9 +85,13 @@ def get_geolocation():
         geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=10).json()
         
         if geo.get('status') == 'success':
-            # HFish Map matching is often fuzzy. Using 'City' can fail if unknown.
-            # We try 'Country' to ensure at least the region is correct.
-            location_str = geo.get('country', 'Unknown')
+            # Try to get City + Country if available (e.g. "Falkenstein, Germany")
+            city = geo.get('city')
+            country = geo.get('country')
+            if city and country:
+                location_str = f"{city}, {country}"
+            else:
+                location_str = country or 'Unknown'
             return ip, location_str
     except Exception as e:
         logger.error(f"Geolocation fetch failed: {e}")
@@ -294,6 +298,11 @@ def main():
                     update_banned_list(attackers)
                 
                 update_index()
+                
+                # Periodic Location Update (Every ~10 mins -> 60 loops * 10s)
+                # We use a simple timestamp check or counter
+                if int(time.time()) % 600 < 15: # Run roughly every 10 mins
+                     update_node_location()
                     
             except Exception as e:
                 logger.error(f"Loop error: {e}")

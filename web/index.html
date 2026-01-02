@@ -68,14 +68,18 @@
             const walk = (obj) => {
                 if (!obj || typeof obj !== 'object') return;
 
-                // Check if this object contains our IP in ANY of its values
+                // Check if this object looks like a Node Location record
+                // We typically look for 'country', 'city', or 'province' fields
                 let isTarget = false;
-                for (let k in obj) {
-                    if (typeof obj[k] === 'string' && obj[k].includes('23.88.40.46')) {
-                        isTarget = true;
-                        break;
-                    }
+
+                // Heuristic: If it has location keywords, it's likely a node or attack record we want to standardize
+                const keys = Object.keys(obj);
+                if (keys.includes('country') && keys.includes('city')) {
+                    isTarget = true;
                 }
+
+                // Fallback: Check if it's the "Local" node by checking for specific structure if needed
+                // But for now, generic location patching is safer for "Active Defense" consistency
 
                 if (isTarget) {
                     console.log("[HoneyScan] Target Node Found in Data Structure:", obj);
@@ -119,8 +123,9 @@
                     const clone = response.clone();
                     const text = await clone.text();
 
-                    if (text && text.includes('23.88.40.46')) {
-                        console.log("[HoneyScan] Fetch HIT: " + response.url);
+                    // Generic check for JSON-like content that might contain location data
+                    if (text && (text.includes('"country"') || text.includes('"city"') || text.includes('"intranet_ip"'))) {
+                        // console.log("[HoneyScan] Fetch Potential Hit: " + response.url);
                         try {
                             let data = JSON.parse(text);
                             if (aggressivePatch(data)) {
@@ -155,8 +160,11 @@
             const tryPatch = (xhr) => {
                 if (xhr._patched) return;
                 try {
-                    if (xhr.responseText && typeof xhr.responseText === 'string' && xhr.responseText.includes('23.88.40.46')) {
-                        console.log("[HoneyScan] XHR HIT (Pre-Process): " + xhr._url);
+                    // Generic check
+                    if (xhr.responseText && typeof xhr.responseText === 'string' &&
+                        (xhr.responseText.includes('"country"') || xhr.responseText.includes('"city"') || xhr.responseText.includes('"intranet_ip"'))) {
+
+                        // console.log("[HoneyScan] XHR HIT (Pre-Process): " + xhr._url);
                         let data = JSON.parse(xhr.responseText);
                         if (aggressivePatch(data)) {
                             console.log("[HoneyScan] XHR PATCHED (Pre-Process)!");
@@ -610,7 +618,29 @@
             } catch (e) { console.error('Data patch error:', e); }
         };
 
-        setInterval(patchDataIssues, 1000); // Run every second to catch new rows
+        // === HIDE EMPTY SECTIONS (Cloud Intel) ===
+        const hideEmptyCloudSection = () => {
+            // Find "Cloud Intelligence" or "Live Threat Monitor" (if rebranded there) container
+            // We look for the header text and then hide the parent card
+            const headers = document.querySelectorAll('.el-card__header, .header-title');
+            headers.forEach(h => {
+                if (h.innerText.includes('Cloud Intelligence') || h.innerText.includes('Live Threat Monitor')) {
+                    // Check if it has data or is the "empty" one
+                    // HFish empty state usually has "Trying to identify..." or "No data"
+                    const card = h.closest('.el-card');
+                    if (card) {
+                        // We just hide it regardless for now as we know it's broken/unconfigured
+                        // check if already hidden to avoid style thrashing
+                        if (card.style.display !== 'none') card.style.display = 'none';
+                    }
+                }
+            });
+        };
+
+        setInterval(() => {
+            patchDataIssues();
+            hideEmptyCloudSection();
+        }, 1000); // Run every second
     </script>
 </body>
 
