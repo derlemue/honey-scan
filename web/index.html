@@ -714,30 +714,48 @@
 
                 // 3. Fix Chinese Full-Width Colons and formatting
                 const fixTextContent = () => {
-                    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-                    let node;
-                    while (node = walker.nextNode()) {
-                        // Full-width colon fix
-                        if (node.nodeValue.includes('：')) {
-                            node.nodeValue = node.nodeValue.replace(/：/g, ': ');
+                    // We only want to touch leaf nodes or text nodes to avoid breaking VDOM
+                    // Using a recursive walk or specific selectors is safer
+                    const elements = document.querySelectorAll('span, div, p, li, td, th, a, b, strong');
+                    elements.forEach(el => {
+                        // Only process if single child (text) to avoid destroying structure
+                        if (el.childNodes.length === 1 && el.childNodes[0].nodeType === 3) {
+                            let val = el.innerText;
+                            let changed = false;
+
+                            // A) Full-Width Colon Fix
+                            if (val.includes('：')) {
+                                val = val.replace(/：/g, ': ');
+                                changed = true;
+                            }
+
+                            // B) "w" Suffix Fix (e.g., 1.5w -> 15k, 58w -> 580k)
+                            // Regex for number ending in w. 
+                            // We are careful not to replace random text ending in w.
+                            // Strict regex: Start of string, number, optional dot, number, w, End of string
+                            if (/^\d+(\.\d+)?w$/.test(val.trim())) {
+                                const numStr = val.trim().replace('w', '');
+                                const num = parseFloat(numStr);
+                                if (!isNaN(num)) {
+                                    // 1w = 10,000
+                                    // We want to display k? 1w = 10k.
+                                    // 1.5w = 15,000 = 15k.
+                                    // 58w = 580,000 = 580k.
+                                    // So multiply by 10 and add 'k'
+                                    val = (num * 10).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace('.0', '') + 'k';
+                                    changed = true;
+                                }
+                            }
+
+                            if (changed) {
+                                el.innerText = val;
+                            }
                         }
-                        // "w" (Wan) suffix fix heuristic
-                        // Often seen as "1.5w" or in stats.
-                        // We check if it is a short string ending in w and looks numeric
-                        const val = node.nodeValue.trim();
-                        if (/^\d+(\.\d+)?w$/.test(val)) {
-                            // Replace 'w' with 'k' or convert?
-                            // 1w = 10,000. 1k = 1,000.
-                            // Let's just strip 'w' and denote it properly if we can, or just make it '0k'
-                            // For simplicity: 1.5w -> 15k
-                            const num = parseFloat(val.replace('w', ''));
-                            node.nodeValue = (num * 10).toFixed(1).replace('.0', '') + 'k';
-                        }
-                    }
+                    });
                 };
 
                 // Run periodically
-                setInterval(fixTextContent, 1000);
+                setInterval(fixTextContent, 500);
 
             } catch (e) { console.error('Data patch error:', e); }
         };
