@@ -46,6 +46,28 @@ def init_env():
         os.makedirs(FEED_DIR)
     update_index()
 
+def fix_missing_severity():
+    """Populate empty severity columns in ipaddress table."""
+    conn = get_db_connection()
+    if not conn:
+        return
+
+    try:
+        cursor = conn.cursor()
+        if DB_TYPE == "mysql":
+            # Update severity to 'Low' where it is empty or NULL or 'Unknown'
+            # Also ensure threat_level is consistent if needed, but primary fix is severity column.
+            query = "UPDATE ipaddress SET severity = 'Low' WHERE severity IS NULL OR severity = ''"
+            cursor.execute(query)
+            affected = cursor.rowcount
+            if affected > 0:
+                logger.info(f"Fixed missing severity for {affected} IPs.")
+            conn.commit()
+    except Exception as e:
+        logger.error(f"Error fixing severity: {e}")
+    finally:
+        if conn: conn.close()
+
 def get_db_connection():
     """Establishes connection to SQLite or MariaDB based on DB_TYPE."""
     try:
@@ -355,6 +377,7 @@ def main():
                 if attackers:
                     update_banned_list(attackers)
                 
+                fix_missing_severity()
                 update_index()
                 
                 # Periodic Location Update (Every ~10 mins -> 60 loops * 10s)
