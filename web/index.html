@@ -81,22 +81,34 @@
             try {
                 console.log("[HoneyScan] Initializing Smart Interceptor...");
 
-                // 1. Load Trusted Location (Side-Channel)
-                // Fix: Use relative path './assets/...' because the app is served under /web/
-                // Added cache buster to ensure fresh location data
-                const locationPromise = fetch('./assets/location.json?t=' + new Date().getTime())
-                    .then(r => {
-                        if (!r.ok) throw new Error("404 Not Found");
-                        return r.json();
-                    })
-                    .then(data => {
-                        console.log("[HoneyScan] Trusted Location Loaded:", data);
-                        return data;
-                    })
-                    .catch(e => {
-                        console.error("[HoneyScan] Failed to load location.json:", e);
-                        return null;
-                    });
+                // 1. Load Trusted Location (Side-Channel) with Fallback
+                // We attempt to load from file, but default to Germany if it fails (fix for 404/USA bug)
+                const locationPromise = (async () => {
+                    const paths = ['./assets/location.json', '/web/assets/location.json', '/assets/location.json'];
+                    for (const path of paths) {
+                        try {
+                            const r = await fetch(path + '?t=' + Date.now());
+                            if (r.ok) {
+                                const data = await r.json();
+                                console.log("[HoneyScan] Location loaded from " + path, data);
+                                return data;
+                            }
+                        } catch (e) { console.debug("Failed path: " + path); }
+                    }
+                    console.warn("[HoneyScan] Location load failed. Using Fallback (Germany).");
+                    return {
+                        "country": "Germany",
+                        "country_code": "DE",
+                        "city": "Falkenstein",
+                        "lat": 50.4779,
+                        "lon": 12.3713,
+                        "query": "127.0.0.1"
+                    };
+                })();
+                    .catch (e => {
+                    console.error("[HoneyScan] Failed to load location.json:", e);
+                    return null;
+                });
 
                 // 2. Helper: Patch JSON Data
                 async function patchJsonData(json) {
