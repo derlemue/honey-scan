@@ -57,153 +57,6 @@
         }
     </script>
     <link rel="shortcut icon" href="/assets/favicon.ico">
-    <script>
-        console.log("%c [HoneyScan] Injecting Aggressive Active Defense Interceptors...", "color: #4ade80; font-weight: bold;");
-
-        //Common Patch Logic
-        // === AGGRESSIVE PATCH FOR LOCATION & CLOUD DATA ===
-        const aggressivePatch = (obj) => {
-            if (!obj || typeof obj !== 'object') return false;
-            let patched = false;
-
-            // 1. HARDCODED NODE FIX: Force Falkenstein for this specific IP
-            const str = JSON.stringify(obj);
-            if (str.includes('23.88.40.46')) {
-                if (obj.intranet_ip === '23.88.40.46' || obj.ip === '23.88.40.46') {
-                    obj.country = 'Germany';
-                    obj.city = 'Falkenstein';
-                    obj.province = 'Saxony';
-                    obj.lat = 50.4777;
-                    obj.lng = 12.3649;
-                    obj.latitude = 50.4777;
-                    obj.longitude = 12.3649;
-                    patched = true;
-                }
-            }
-
-            // 2. Generic Heuristics (Fallback)
-            if (!patched) {
-                // Target NODE objects specifically
-                const keys = Object.keys(obj);
-                if ((keys.includes('intranet_ip') || keys.includes('version')) && keys.includes('country')) {
-                    // It's a node
-                    patched = true; // Mark as candidate to force German location if ambiguous
-                }
-
-                if (obj.country === 'Deutschland' || obj.country === 'Germany') {
-                    if (!obj.city || obj.city === '' || obj.city === 'Unknown') {
-                        obj.city = 'Falkenstein';
-                        obj.lat = 50.4777;
-                        obj.lng = 12.3649;
-                        obj.latitude = 50.4777;
-                        obj.longitude = 12.3649;
-                        patched = true;
-                    }
-                }
-            }
-
-            // Recursively walk
-            Object.keys(obj).forEach(key => {
-                if (typeof obj[key] === 'object') {
-                    if (aggressivePatch(obj[key])) patched = true;
-                }
-            });
-
-            return patched;
-        };
-
-        // === FETCH INTERCEPTOR ===
-        (function () {
-            const originalFetch = window.fetch;
-            window.fetch = async function (...args) {
-                const response = await originalFetch(...args);
-                try {
-                    const clone = response.clone();
-                    const text = await clone.text();
-
-                    // Generic check for JSON-like content that might contain location data
-                    if (text && (text.includes('"country"') || text.includes('"city"') || text.includes('"intranet_ip"'))) {
-                        // console.log("[HoneyScan] Fetch Potential Hit: " + response.url);
-                        try {
-                            let data = JSON.parse(text);
-                            if (aggressivePatch(data)) {
-                                console.log("[HoneyScan] Fetch PATCHED!");
-                                return new Response(JSON.stringify(data), {
-                                    status: response.status,
-                                    statusText: response.statusText,
-                                    headers: response.headers
-                                });
-                            }
-                        } catch (e) { }
-                    }
-                } catch (e) { console.error("HoneyScan Fetch Error", e); }
-                return response;
-            };
-        })();
-
-        // === XHR INTERCEPTOR (Timing-Resistant) ===
-        (function () {
-            const XHR = XMLHttpRequest.prototype;
-            const originalOpen = XHR.open;
-            const originalSend = XHR.send;
-            const originalAddEventListener = XHR.addEventListener;
-
-            // 1. Hook Open to capture URL
-            XHR.open = function (method, url) {
-                this._url = url;
-                return originalOpen.apply(this, arguments);
-            };
-
-            // Shared Patch Function
-            const tryPatch = (xhr) => {
-                if (xhr._patched) return;
-                try {
-                    // Generic check
-                    if (xhr.responseText && typeof xhr.responseText === 'string' &&
-                        (xhr.responseText.includes('"country"') || xhr.responseText.includes('"city"') || xhr.responseText.includes('"intranet_ip"'))) {
-
-                        // console.log("[HoneyScan] XHR HIT (Pre-Process): " + xhr._url);
-                        let data = JSON.parse(xhr.responseText);
-                        if (aggressivePatch(data)) {
-                            console.log("[HoneyScan] XHR PATCHED (Pre-Process)!");
-                            const newText = JSON.stringify(data);
-                            Object.defineProperty(xhr, 'responseText', { value: newText, writable: true });
-                            Object.defineProperty(xhr, 'response', { value: newText, writable: true });
-                            xhr._patched = true;
-                        }
-                    }
-                } catch (e) { }
-            };
-
-            // 2. Hook addEventListener to wrap callbacks
-            XHR.addEventListener = function (type, listener, options) {
-                if (type === 'readystatechange' || type === 'load') {
-                    const wrappedListener = function (event) {
-                        if (this.readyState === 4) {
-                            tryPatch(this);
-                        }
-                        return listener.apply(this, arguments);
-                    };
-                    return originalAddEventListener.call(this, type, wrappedListener, options);
-                }
-                return originalAddEventListener.apply(this, arguments);
-            };
-
-            // 3. Hook send to catch onreadystatechange assignments
-            XHR.send = function (postData) {
-                const xhr = this;
-                // Wrap existing onreadystatechange if present
-                if (xhr.onreadystatechange) {
-                    const originalHandler = xhr.onreadystatechange;
-                    xhr.onreadystatechange = function (e) {
-                        if (xhr.readyState === 4) tryPatch(xhr);
-                        return originalHandler.apply(this, arguments);
-                    };
-                }
-                return originalSend.apply(this, arguments);
-            };
-        })();
-    </script>
 </head>
 
 <body>
@@ -221,6 +74,152 @@
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
     <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
     <script type="text/javascript" src="/assets/app.6539b5af.js"></script>
+    <script>
+        // === HoneyScan Smart Network Interceptor ===
+        // Dynamically patches API responses to fix geolocation bugs without touching the bundle.
+        (function () {
+            try {
+                console.log("[HoneyScan] Initializing Smart Interceptor...");
+
+                // 1. Load Trusted Location (Side-Channel)
+                // We use a promise so we can await it in the interceptors
+                const locationPromise = fetch('/assets/location.json')
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log("[HoneyScan] Trusted Location Loaded:", data);
+                        return data;
+                    })
+                    .catch(e => {
+                        console.error("[HoneyScan] Failed to load location.json:", e);
+                        return null;
+                    });
+
+                // 2. Helper: Patch JSON Data
+                async function patchJsonData(json) {
+                    const loc = await locationPromise;
+                    if (!loc) return json;
+
+                    let patched = false;
+
+                    // Helper to update a single node object
+                    const patchNode = (node) => {
+                        // Check if this looks like a node (has IP or ID)
+                        if (node.intranet_ip || node.id) {
+                            // Ensure geo_data exists
+                            if (!node.geo_data) node.geo_data = {};
+
+                            // Force Update
+                            node.geo_data.Country = loc.country;
+                            node.geo_data.City = loc.city;
+                            // Inject coordinates if the map uses them directly
+                            node.geo_data.lat = loc.lat;
+                            node.geo_data.lng = loc.lng;
+
+                            // Some maps use 'value' array for coords: [lng, lat]
+                            if (node.value && Array.isArray(node.value)) {
+                                node.value = [loc.lng, loc.lat, ...node.value.slice(2)];
+                            }
+
+                            return true;
+                        }
+                        return false;
+                    };
+
+                    // Case A: Root Object is a Node or has geo_data
+                    if (patchNode(json)) patched = true;
+
+                    // Case B: Array of Nodes (e.g. /api/web/node/list)
+                    if (Array.isArray(json)) {
+                        json.forEach(item => {
+                            if (patchNode(item)) patched = true;
+                        });
+                    }
+
+                    // Case C: Nested Data (Common in paginated responses: { data: { list: [...] } })
+                    if (json.data) {
+                        if (Array.isArray(json.data)) {
+                            json.data.forEach(item => { if (patchNode(item)) patched = true; });
+                        } else if (json.data.list && Array.isArray(json.data.list)) {
+                            json.data.list.forEach(item => { if (patchNode(item)) patched = true; });
+                        }
+                    }
+
+                    if (patched) console.log("[HoneyScan] Hot-Patched API Response with Geolocation!");
+                    return json;
+                }
+
+                // 3. Intercept Fetch
+                const originalFetch = window.fetch;
+                window.fetch = async function (...args) {
+                    const url = args[0];
+                    const response = await originalFetch(...args);
+
+                    // Skip own requests
+                    if (typeof url === 'string' && url.includes('location.json')) return response;
+
+                    // Only process JSON
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        try {
+                            const clone = response.clone();
+                            const data = await clone.json();
+
+                            // Heuristic: Does it look like node data?
+                            const str = JSON.stringify(data);
+                            if (str.includes('intranet_ip') || str.includes('geo_data')) {
+                                const patchedData = await patchJsonData(data);
+                                return new Response(JSON.stringify(patchedData), {
+                                    status: response.status,
+                                    statusText: response.statusText,
+                                    headers: response.headers
+                                });
+                            }
+                        } catch (e) {
+                            // ignore parse errors, return original
+                        }
+                    }
+                    return response;
+                };
+
+                // 4. Intercept XMLHttpRequest (for Axios/Legacy)
+                const XHR = XMLHttpRequest.prototype;
+                const open = XHR.open;
+                const send = XHR.send;
+
+                XHR.open = function (method, url) {
+                    this._url = url;
+                    return open.apply(this, arguments);
+                };
+
+                XHR.send = function () {
+                    this.addEventListener('load', async function () {
+                        if (this._url && this._url.includes('location.json')) return;
+
+                        if (this.responseText && (this.responseText.includes('intranet_ip') || this.responseText.includes('geo_data'))) {
+                            try {
+                                const json = JSON.parse(this.responseText);
+                                const patched = await patchJsonData(json);
+
+                                // Override responseText property
+                                Object.defineProperty(this, 'responseText', {
+                                    get: () => JSON.stringify(patched),
+                                    configurable: true
+                                });
+                                Object.defineProperty(this, 'response', {
+                                    get: () => JSON.stringify(patched),
+                                    configurable: true
+                                });
+                            } catch (e) { }
+                        }
+                    });
+                    return send.apply(this, arguments);
+                };
+
+            } catch (e) {
+                console.error("[HoneyScan] Interceptor Init Failed", e);
+            }
+        })();
+    </script>
     <script>
         // Branding Configuration
         const BRAND_TITLE = "Honey Scan Active Defense";
@@ -616,10 +615,6 @@
             } catch (e) { console.error('Data patch error:', e); }
         };
 
-        // === AGGRESSIVE PATCH FOR LOCATION & CLOUD DATA ===
-        // Duplicate aggressivePatch removed.
-
-
         // === HIDE EMPTY SECTIONS (Cloud Intel) ===
         const hideEmptyCloudSection = () => {
             // Broad search for any element with "Cloud Intelligence" text
@@ -641,22 +636,10 @@
         };
 
         setInterval(() => {
-            // We intercept the data via the global Vue/XHR hooks usually, 
-            // but since we can't easily hook Vue internals without a race condition,
-            // we rely on the XHR proxy we set up (if we did) OR we rely on UI patching.
-            // But wait, the previous `patchDataIssues` relied on `aggressivePatch`.
-            // Let's ensure the XHR proxy is actually active or we are monkey-patching JSON.parse.
-
+            patchDataIssues();
             hideEmptyCloudSection();
         }, 100);
 
-        // MONKEY PATCH JSON.parse to intercept data at the source
-        const originalParse = JSON.parse;
-        JSON.parse = function (text, reviver) {
-            const data = originalParse(text, reviver);
-            if (data) aggressivePatch(data);
-            return data;
-        };
     </script>
 </body>
 
