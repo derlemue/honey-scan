@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.11] - 2026-01-02
+
+### Fixed
+- 🐛 **Critical**: Fixed syntax error in `index.html` (duplicate function declaration) that prevented UI patches from running.
+- 🐛 **Geolocation**: Added **Hardcoded IP Force** for node `23.88.40.46` to guarantee "Falkenstein" location.
+- 🐛 **UI**: Expanded "Cloud Intelligence" hiding selector to ensure it is removed.
+
 ## [3.8.10] - 2026-01-02
 
 ### Fixed
