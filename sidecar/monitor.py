@@ -7,9 +7,11 @@ import signal
 import sys
 import logging
 import requests
+import json
 from concurrent.futures import ThreadPoolExecutor
 
 # Configuration
+# Version: 1.3 (Force Rebuild)
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
@@ -64,8 +66,37 @@ def get_db_connection():
         logger.error(f"Database connection failed: {e}")
         return None
 
+def ensure_db_schema():
+    """Ensure nodes table has lat/lng/city/country columns."""
+    if DB_TYPE.lower() not in ("mysql", "mariadb"):
+        return
+
+    conn = get_db_connection()
+    if not conn: return
+
+    try:
+        cursor = conn.cursor()
+        # Check existing columns
+        cursor.execute("DESCRIBE nodes")
+        columns = [row['Field'] for row in cursor.fetchall()]
+
+        alter_cmds = []
+        if 'lat' not in columns: alter_cmds.append("ADD COLUMN lat FLOAT DEFAULT 0.0")
+        if 'lng' not in columns: alter_cmds.append("ADD COLUMN lng FLOAT DEFAULT 0.0")
+        if 'city' not in columns: alter_cmds.append("ADD COLUMN city VARCHAR(64) DEFAULT ''")
+        if 'country' not in columns: alter_cmds.append("ADD COLUMN country VARCHAR(64) DEFAULT ''")
+
+        for cmd in alter_cmds:
+            logger.info(f"Migrating DB: {cmd}")
+            cursor.execute(f"ALTER TABLE nodes {cmd}")
+        
+        conn.close()
+    except Exception as e:
+        logger.error(f"Schema migration failed: {e}")
+        if conn: conn.close()
+
 def get_geolocation():
-    """Fetch public IP and geolocation."""
+    """Fetch public IP and detailed geolocation."""
     try:
         # Get Public IP with retry
         ip = None
@@ -79,23 +110,27 @@ def get_geolocation():
 
         if not ip: 
             logger.error("Could not determine public IP after retries.")
-            return None, None
+            return None
         
         # Get Geo Info (free endpoint)
+        # ip-api.com returns: lat, lon, city, country
         geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=10).json()
         
         if geo.get('status') == 'success':
-            # Try to get City + Country if available (e.g. "Falkenstein, Germany")
-            city = geo.get('city')
-            country = geo.get('country')
-            if city and country:
-                location_str = f"{city}, {country}"
-            else:
-                location_str = country or 'Unknown'
-            return ip, location_str
+            return {
+                'ip': ip,
+                'lat': geo.get('lat', 0.0),
+                'lng': geo.get('lon', 0.0), # API uses 'lon'
+                'city': geo.get('city', 'Unknown'),
+                'country': geo.get('country', 'Unknown'),
+                'location_str': f"{geo.get('city')}, {geo.get('country')}"
+            }
+        else:
+            logger.warning(f"Geo API failed for {ip}: {geo.get('message')}")
+            
     except Exception as e:
         logger.error(f"Geolocation fetch failed: {e}")
-    return None, None
+    return None
 
 def check_cloud_connectivity():
     """Check connectivity to ThreatBook/HFish Cloud."""
@@ -111,16 +146,32 @@ def check_cloud_connectivity():
         logger.error(f"Cloud Intelligence Connectivity: FAILED - {e}")
 
 def update_node_location():
-    """Update valid node location in database."""
+    """Update valid node location in database and side-channel JSON."""
     check_cloud_connectivity() # Run diagnostics
 
-    ip, location = get_geolocation()
-    if not ip or not location:
+    data = get_geolocation()
+    if not data:
         logger.warning("Could not determine dynamic location.")
         return
 
-    logger.info(f"Detected Public IP: {ip}, Location: {location}")
+    logger.info(f"Detected Public IP: {data['ip']}, Location: {data['location_str']} ({data['lat']}, {data['lng']})")
     
+    # === SIDE CHANNEL WRITE ===
+    # Write this data to a JSON file that the frontend can fetch
+    try:
+        json_path = "/app/assets/location.json"
+        
+        # Ensure the directory exists (it should via volume mount, but being safe)
+        if not os.path.exists(os.path.dirname(json_path)):
+            os.makedirs(os.path.dirname(json_path), exist_ok=True)
+            
+        with open(json_path, 'w') as f:
+            json.dump(data, f)
+        logger.info(f"Updated side-channel location file: {json_path}")
+    except Exception as e:
+        logger.error(f"Failed to write side-channel location file: {e}")
+    
+    # === DB UPDATE ===
     conn = get_db_connection()
     if not conn: return
 
@@ -129,14 +180,18 @@ def update_node_location():
         # Find ALL active nodes (HFish often has just one, but we should be robust)
         if DB_TYPE == "mysql":
             # Update ALL nodes to the current location to ensure the map is correct
-            # In a single-node deployment (typical for this setup), this is safe.
-            cursor.execute("UPDATE nodes SET location = %s", (location,))
+            # We update both the legacy 'location' string and the new specific columns
+            query = """
+                UPDATE nodes 
+                SET location = %s, lat = %s, lng = %s, city = %s, country = %s
+            """
+            cursor.execute(query, (data['location_str'], data['lat'], data['lng'], data['city'], data['country']))
+            
             affected = cursor.rowcount
             if affected > 0:
-                logger.info(f"Updated {affected} node(s) location to: {location}")
+                logger.info(f"Updated {affected} node(s) location.")
             else:
                 # If no rows affected, maybe the table is empty or location is same.
-                # Try to see if there are any nodes
                 cursor.execute("SELECT count(*) as count FROM nodes")
                 res = cursor.fetchone()
                 if res and res['count'] > 0:
@@ -278,6 +333,9 @@ def main():
     logger.info(f"Monitor started (DB_TYPE={DB_TYPE}).")
     logger.info("Waiting 30s for DB to be ready...")
     time.sleep(30) 
+    
+    # Run Schema Migration
+    ensure_db_schema()
     
     # Run dynamic geolocation UPDATE
     update_node_location()
