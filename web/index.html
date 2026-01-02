@@ -435,6 +435,8 @@
                       }
                       .lemue-link:hover {
                           opacity: 1;
+                          transform: scale(1.1);
+                          opacity: 1;
                       }
                       .lemue-link svg {
                           width: 100%;
@@ -501,17 +503,71 @@
 
             } else {
                 // === DASHBOARD / OTHER PAGES LOGIC ===
-                // CLEANUP "Nuclear" styles to restore original UI
 
-                // Remove CSS Overrides (Restores Header, Background, etc.)
+                // GLASSMORPHISM DASHBOARD PATCH
+                if (!document.getElementById('dashboard-glass-style')) {
+                    const glassStyle = document.createElement('style');
+                    glassStyle.id = 'dashboard-glass-style';
+                    glassStyle.innerHTML = `
+                        /* Global Dark Background for Dashboard */
+                        body, #app {
+                            background-color: #0f172a !important; /* Cyber Dark */
+                            color: #e2e8f0 !important;
+                        }
+
+                        /* Transparent Cards (Glassmorphism) */
+                        .el-card, .box-card, div[class*="card"] {
+                            background-color: rgba(30, 41, 59, 0.7) !important; /* Semi-transparent Slate */
+                            backdrop-filter: blur(8px) !important;
+                            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                            color: #fff !important;
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+                        }
+
+                        /* Tables Transparent */
+                        .el-table, .el-table__expanded-cell {
+                            background-color: transparent !important;
+                            color: #fff !important;
+                        }
+                        .el-table th, .el-table tr {
+                            background-color: transparent !important; 
+                            color: #cbd5e1 !important;
+                        }
+                        .el-table--enable-row-hover .el-table__body tr:hover > td {
+                            background-color: rgba(255,255,255,0.1) !important;
+                        }
+
+                        /* Text Contrast Fix updates */
+                        .el-card__header {
+                            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        }
+                        
+                        /* Scrollbars */
+                        ::-webkit-scrollbar {
+                            width: 8px;
+                            height: 8px;
+                        }
+                        ::-webkit-scrollbar-track {
+                            background: rgba(0,0,0,0.2); 
+                        }
+                        ::-webkit-scrollbar-thumb {
+                            background: #475569; 
+                            border-radius: 4px;
+                        }
+                        ::-webkit-scrollbar-thumb:hover {
+                            background: #64748b; 
+                        }
+                     `;
+                    document.head.appendChild(glassStyle);
+                }
+
+                // Restore UI parts if needed
                 const style = document.getElementById('branding-style');
                 if (style) style.remove();
 
-                // Remove Link Bar (Only for Login)
                 const linkBar = document.getElementById('lemue-link-bar');
                 if (linkBar) linkBar.remove();
 
-                // Remove Footer (Only for Login)
                 const footer = document.getElementById('lemue-footer');
                 if (footer) footer.remove();
             }
