@@ -105,10 +105,6 @@
                         "query": "127.0.0.1"
                     };
                 })();
-                    .catch (e => {
-                    console.error("[HoneyScan] Failed to load location.json:", e);
-                    return null;
-                });
 
                 // 2. Helper: Patch JSON Data
                 async function patchJsonData(json) {
@@ -741,17 +737,17 @@
                         }
 
                         // B) "w" Suffix Fix (e.g., 1.5w -> 15k)
-                        // Heuristic: Space or start of line, number, w, Space or end of line
-                        // We replace strict matches to avoid false positives
-                        const wMatch = val.match(/(\d+(\.\d+)?)w/);
-                        if (wMatch) {
-                            // Check context: usually isolated or followed by space
-                            // If it matches exactly "1.5w" or " 1.5w "
-                            // We construct a new string
-                            val = val.replace(/(\d+(\.\d+)?)w/g, (match, numStr) => {
+                        // Broader regex to catch "1.5w" in any context. 
+                        // We check that the 'w' follows a digit.
+                        if (val.match(/\dw/i)) { // Optimization check
+                            val = val.replace(/(\d+(\.\d+)?)w/gi, (match, numStr) => {
                                 const num = parseFloat(numStr);
-                                // 1w = 10k
-                                return (num * 10).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace('.0', '') + 'k';
+                                // 1w = 10,000. Display as 10k.
+                                // 1.5w = 15,000. Display 15k.
+                                if (!isNaN(num)) {
+                                    return (num * 10).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace('.0', '') + 'k';
+                                }
+                                return match;
                             });
                         }
 
