@@ -74,12 +74,20 @@
 
                 // Heuristic: If it has location keywords, it's likely a node or attack record we want to standardize
                 const keys = Object.keys(obj);
-                if (keys.includes('country') && keys.includes('city')) {
-                    isTarget = true;
+
+                // Target NODE objects specifically
+                // Nodes typically have 'intranet_ip', 'customer_id', or 'version'
+                if (keys.includes('intranet_ip') || keys.includes('version')) {
+                    if (keys.includes('country')) isTarget = true;
                 }
 
-                // Fallback: Check if it's the "Local" node by checking for specific structure if needed
-                // But for now, generic location patching is safer for "Active Defense" consistency
+                // Also catch loose location objects that might be the map center if they match 'Germany' but lack City
+                if (obj.country === 'Deutschland' || obj.country === 'Germany') {
+                    if (!obj.city || obj.city === '' || obj.city === 'Unknown') {
+                        // Only patch if it looks like it lacks specific city data
+                        isTarget = true;
+                    }
+                }
 
                 if (isTarget) {
                     console.log("[HoneyScan] Target Node Found in Data Structure:", obj);
@@ -620,17 +628,13 @@
 
         // === HIDE EMPTY SECTIONS (Cloud Intel) ===
         const hideEmptyCloudSection = () => {
-            // Find "Cloud Intelligence" or "Live Threat Monitor" (if rebranded there) container
-            // We look for the header text and then hide the parent card
-            const headers = document.querySelectorAll('.el-card__header, .header-title');
+            // Find "Cloud Intelligence", "Live Threat Monitor", or "Threat Intelligence" container
+            const headers = document.querySelectorAll('.el-card__header, .header-title, .title, span');
             headers.forEach(h => {
-                if (h.innerText.includes('Cloud Intelligence') || h.innerText.includes('Live Threat Monitor')) {
-                    // Check if it has data or is the "empty" one
-                    // HFish empty state usually has "Trying to identify..." or "No data"
+                const text = h.innerText || '';
+                if (text.includes('Cloud Intelligence') || text.includes('Live Threat Monitor') || text.includes('Threat Intelligence')) {
                     const card = h.closest('.el-card');
                     if (card) {
-                        // We just hide it regardless for now as we know it's broken/unconfigured
-                        // check if already hidden to avoid style thrashing
                         if (card.style.display !== 'none') card.style.display = 'none';
                     }
                 }
@@ -640,7 +644,7 @@
         setInterval(() => {
             patchDataIssues();
             hideEmptyCloudSection();
-        }, 1000); // Run every second
+        }, 200); // Run frequently
     </script>
 </body>
 

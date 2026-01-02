@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.10] - 2026-01-02
+
+### Fixed
+- 🐛 **UI**: Hardened "Cloud Intelligence" hiding script (expanded selector).
+- 🐛 **Geolocation**: Refined Node detection logic in frontend patch to specifically target "Germany" nodes and force "Falkenstein".
+
 ## [3.8.9] - 2026-01-02
 
 ### Fixed
