@@ -68,95 +68,78 @@ def fix_missing_severity():
     finally:
         if conn: conn.close()
 
-def scrub_database():
-    """Remove Chinese strings from database."""
+def restore_chinese_names():
+    """Restore Chinese strings in DB to ensure flags work, relying on frontend translation."""
     conn = get_db_connection()
     if not conn: return
 
     try:
         cursor = conn.cursor()
         if DB_TYPE == "mysql":
-            # 1. Scrub Country Names in ipaddress
+            # 1. Restore Country Names (English -> Chinese)
+            # We map English back to Chinese because HFish flags depend on Chinese keys OR codes derived from them?
+            # Actually, standard HFish puts Chinese in DB. 
+            # We need to revert our previous "United States" -> "美国" changes.
             translations = {
-                "美国": "United States",
-                "荷兰": "Netherlands",
-                "本机地址": "Localhost",
-                "中国": "China",
-                "俄罗斯": "Russia",
-                "德国": "Germany",
-                "英国": "United Kingdom",
-                "法国": "France",
-                "局域网": "LAN",
-                "未知": "Unknown",
-                "伊朗": "Iran",
-                "加拿大": "Canada",
-                "德国": "Germany",
-                "捷克": "Czechia",
-                "欧洲地区": "Europe",
-                "比利时": "Belgium",
-                "西班牙": "Spain",
-                "日本": "Japan",
-                "韩国": "South Korea",
-                "巴西": "Brazil",
-                "印度": "India",
-                "意大利": "Italy",
-                "澳大利亚": "Australia",
-                "波兰": "Poland",
-                "芬兰": "Finland",
-                "瑞典": "Sweden",
-                "挪威": "Norway",
-                "瑞士": "Switzerland",
-                "乌克兰": "Ukraine",
-                "越南": "Vietnam",
-                "朝鲜": "North Korea",
-                "泰国": "Thailand",
-                "新加坡": "Singapore",
-                "印尼": "Indonesia",
-                "菲律宾": "Philippines",
-                "阿根廷": "Argentina",
-                "智利": "Chile",
-                "哥伦比亚": "Colombia",
-                "墨西哥": "Mexico",
-                "埃及": "Egypt",
-                "南非": "South Africa",
-                "土耳其": "Turkey",
-                "以色列": "Israel",
-                "沙特": "Saudi Arabia"
+                "United States": "美国",
+                "Netherlands": "荷兰",
+                "Localhost": "本机地址",
+                "China": "中国",
+                "Russia": "俄罗斯",
+                "Germany": "德国",
+                "United Kingdom": "英国",
+                "France": "法国",
+                "LAN": "局域网",
+                "Unknown": "未知",
+                "Iran": "伊朗",
+                "Canada": "加拿大",
+                "Czechia": "捷克",
+                "Europe": "欧洲地区",
+                "Belgium": "比利时",
+                "Spain": "西班牙",
+                "Japan": "日本",
+                "South Korea": "韩国",
+                "Brazil": "巴西",
+                "India": "印度",
+                "Italy": "意大利",
+                "Australia": "澳大利亚",
+                "Poland": "波兰",
+                "Finland": "芬兰",
+                "Sweden": "瑞典",
+                "Norway": "挪威",
+                "Switzerland": "瑞士",
+                "Ukraine": "乌克兰",
+                "Vietnam": "越南",
+                "North Korea": "朝鲜",
+                "Thailand": "泰国",
+                "Singapore": "新加坡",
+                "Indonesia": "印尼",
+                "Philippines": "菲律宾",
+                "Argentina": "阿根廷",
+                "Chile": "智利",
+                "Colombia": "哥伦比亚",
+                "Mexico": "墨西哥",
+                "Egypt": "埃及",
+                "South Africa": "南非",
+                "Turkey": "土耳其",
+                "Israel": "以色列",
+                "Saudi Arabia": "沙特"
             }
-            for cn, en in translations.items():
-                cursor.execute("UPDATE ipaddress SET country = %s, region = %s WHERE country = %s", (en, en, cn))
-                cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (en, cn)) # Just in case
-                # Also scrub region if it equals the country name (common in this DB)
-                cursor.execute("UPDATE ipaddress SET region = %s WHERE region = %s", (en, cn))
-
-            # 2. Scrub Services Description (Telnet)
-            cursor.execute("UPDATE services SET `describe` = 'Telnet service simulation used to record network connections and attacks.' WHERE `describe` LIKE '%Telnet%' AND `describe` LIKE '%蜜罐%'")
-            # Scrub generic "被攻击" in services describing honey pot
-            cursor.execute("UPDATE services SET `describe` = REPLACE(`describe`, '被攻击', 'attacked')")
-
-            # 3. Scrub scanning records (if any left in DB)
-            # cursor.execute("UPDATE infos SET `describe` = REGEXP_REPLACE(`describe`, '第([0-9]+)次扫描', 'Scan #\\1')") 
-            # Note: REGEXP_REPLACE might not be available in all MariaDB versions (10.0.5+ is required). 
-            # We wrap it in try-catch or just check version? HFish uses MariaDB 10+, so likely safe.
-            try:
-                 cursor.execute("UPDATE infos SET `describe` = REGEXP_REPLACE(`describe`, '第([0-9]+)次扫描', 'Scan #\\\\1') WHERE `describe` REGEXP '第[0-9]+次扫描'")
-                 cursor.execute("UPDATE infos SET `describe` = REGEXP_REPLACE(`describe`, '第([0-9]+)次攻击', 'Attack #\\\\1') WHERE `describe` REGEXP '第[0-9]+次攻击'")
-            except Exception:
-                 pass # Ignore if regex replace fails
-            
-            # 4. Scrub "Attacker" country in scans/infos if stored
-            # (Assuming source_ip_country column exists in other tables)
-            for cn, en in translations.items():
-                 # Check table existence first or just try-except
-                 for table in ['scans', 'scanners', 'infos']:
+            for en, cn in translations.items():
+                cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (cn, en))
+                # Also restore region if it looks like the country
+                cursor.execute("UPDATE ipaddress SET region = %s WHERE region = %s", (cn, en))
+                
+                # Restore in other tables
+                for table in ['scans', 'scanners', 'infos']:
                       try:
-                           cursor.execute(f"UPDATE {table} SET source_ip_country = %s WHERE source_ip_country = %s", (en, cn))
+                           cursor.execute(f"UPDATE {table} SET source_ip_country = %s WHERE source_ip_country = %s", (cn, en))
                       except:
                            pass
 
             conn.commit()
     except Exception as e:
-        logger.error(f"Error scrubbing DB: {e}")
+        logger.error(f"Error restoring DB names: {e}")
     finally:
         if conn: conn.close()
 
@@ -471,7 +454,7 @@ def main():
                     update_banned_list(attackers)
                 
                 fix_missing_severity()
-                scrub_database()
+                restore_chinese_names()
                 update_index()
                 
                 # Periodic Location Update (Every ~10 mins -> 60 loops * 10s)
