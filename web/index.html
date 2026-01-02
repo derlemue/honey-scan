@@ -82,10 +82,13 @@
                 console.log("[HoneyScan] Initializing Smart Interceptor...");
 
                 // 1. Load Trusted Location (Side-Channel)
-                // We use a promise so we can await it in the interceptors
-                // Added cache buster to ensure fresh location data (Fixes USA default bug)
-                const locationPromise = fetch('/assets/location.json?t=' + new Date().getTime())
-                    .then(r => r.json())
+                // Fix: Use relative path './assets/...' because the app is served under /web/
+                // Added cache buster to ensure fresh location data
+                const locationPromise = fetch('./assets/location.json?t=' + new Date().getTime())
+                    .then(r => {
+                        if (!r.ok) throw new Error("404 Not Found");
+                        return r.json();
+                    })
                     .then(data => {
                         console.log("[HoneyScan] Trusted Location Loaded:", data);
                         return data;
@@ -712,50 +715,42 @@
                     }
                 });
 
-                // 3. Fix Chinese Full-Width Colons and formatting
+                // 3. Fix Chinese Full-Width Colons and Formatting (Aggressive)
                 const fixTextContent = () => {
-                    // We only want to touch leaf nodes or text nodes to avoid breaking VDOM
-                    // Using a recursive walk or specific selectors is safer
-                    const elements = document.querySelectorAll('span, div, p, li, td, th, a, b, strong');
-                    elements.forEach(el => {
-                        // Only process if single child (text) to avoid destroying structure
-                        if (el.childNodes.length === 1 && el.childNodes[0].nodeType === 3) {
-                            let val = el.innerText;
-                            let changed = false;
+                    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+                    let node;
+                    while (node = walker.nextNode()) {
+                        const original = node.nodeValue;
+                        let val = original;
 
-                            // A) Full-Width Colon Fix
-                            if (val.includes('：')) {
-                                val = val.replace(/：/g, ': ');
-                                changed = true;
-                            }
-
-                            // B) "w" Suffix Fix (e.g., 1.5w -> 15k, 58w -> 580k)
-                            // Regex for number ending in w. 
-                            // We are careful not to replace random text ending in w.
-                            // Strict regex: Start of string, number, optional dot, number, w, End of string
-                            if (/^\d+(\.\d+)?w$/.test(val.trim())) {
-                                const numStr = val.trim().replace('w', '');
-                                const num = parseFloat(numStr);
-                                if (!isNaN(num)) {
-                                    // 1w = 10,000
-                                    // We want to display k? 1w = 10k.
-                                    // 1.5w = 15,000 = 15k.
-                                    // 58w = 580,000 = 580k.
-                                    // So multiply by 10 and add 'k'
-                                    val = (num * 10).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace('.0', '') + 'k';
-                                    changed = true;
-                                }
-                            }
-
-                            if (changed) {
-                                el.innerText = val;
-                            }
+                        // A) Full-Width Colon Fix (Global)
+                        if (val.includes('：')) {
+                            val = val.replace(/：/g, ': ');
                         }
-                    });
+
+                        // B) "w" Suffix Fix (e.g., 1.5w -> 15k)
+                        // Heuristic: Space or start of line, number, w, Space or end of line
+                        // We replace strict matches to avoid false positives
+                        const wMatch = val.match(/(\d+(\.\d+)?)w/);
+                        if (wMatch) {
+                            // Check context: usually isolated or followed by space
+                            // If it matches exactly "1.5w" or " 1.5w "
+                            // We construct a new string
+                            val = val.replace(/(\d+(\.\d+)?)w/g, (match, numStr) => {
+                                const num = parseFloat(numStr);
+                                // 1w = 10k
+                                return (num * 10).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace('.0', '') + 'k';
+                            });
+                        }
+
+                        if (val !== original) {
+                            node.nodeValue = val;
+                        }
+                    }
                 };
 
-                // Run periodically
-                setInterval(fixTextContent, 500);
+                // Run periodically and aggressively
+                setInterval(fixTextContent, 200);
 
             } catch (e) { console.error('Data patch error:', e); }
         };
