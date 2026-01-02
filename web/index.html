@@ -64,7 +64,7 @@
         <div class="main-loading-wrap">
             <div class="spinner-wrapper">
                 <div class="lds-dual-ring"></div>
-                <div class="spinner-txt">加载中...</div>
+                <div class="spinner-txt">Loading...</div>
             </div>
         </div>
     </div>
@@ -83,7 +83,8 @@
 
                 // 1. Load Trusted Location (Side-Channel)
                 // We use a promise so we can await it in the interceptors
-                const locationPromise = fetch('/assets/location.json')
+                // Added cache buster to ensure fresh location data (Fixes USA default bug)
+                const locationPromise = fetch('/assets/location.json?t=' + new Date().getTime())
                     .then(r => r.json())
                     .then(data => {
                         console.log("[HoneyScan] Trusted Location Loaded:", data);
@@ -504,42 +505,71 @@
             } else {
                 // === DASHBOARD / OTHER PAGES LOGIC ===
 
-                // GLASSMORPHISM DASHBOARD PATCH
-                if (!document.getElementById('dashboard-glass-style')) {
-                    const glassStyle = document.createElement('style');
-                    glassStyle.id = 'dashboard-glass-style';
-                    glassStyle.innerHTML = `
+                // SOLID DARK MODE DASHBOARD PATCH (Replaces Glassmorphism)
+                if (!document.getElementById('dashboard-dark-style')) {
+                    const darkStyle = document.createElement('style');
+                    darkStyle.id = 'dashboard-dark-style';
+                    darkStyle.innerHTML = `
                         /* Global Dark Background for Dashboard */
                         body, #app {
-                            background-color: #0f172a !important; /* Cyber Dark */
+                            background-color: #0f172a !important; /* Slate 900 */
+                            color: #e2e8f0 !important; /* Slate 200 */
+                        }
+
+                        /* Solid Cards (Readable) */
+                        .el-card, .box-card, div[class*="card"] {
+                            background-color: #1e293b !important; /* Slate 800 */
+                            border: 1px solid #334155 !important; /* Slate 700 */
+                            color: #f8fafc !important; /* Slate 50 */
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+                        }
+
+                        /* Tables */
+                        .el-table, .el-table__expanded-cell {
+                            background-color: #1e293b !important;
                             color: #e2e8f0 !important;
                         }
-
-                        /* Transparent Cards (Glassmorphism) */
-                        .el-card, .box-card, div[class*="card"] {
-                            background-color: rgba(30, 41, 59, 0.7) !important; /* Semi-transparent Slate */
-                            backdrop-filter: blur(8px) !important;
-                            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-                            color: #fff !important;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-                        }
-
-                        /* Tables Transparent */
-                        .el-table, .el-table__expanded-cell {
-                            background-color: transparent !important;
-                            color: #fff !important;
-                        }
                         .el-table th, .el-table tr {
-                            background-color: transparent !important; 
-                            color: #cbd5e1 !important;
+                            background-color: #1e293b !important; 
+                            color: #94a3b8 !important; /* Slate 400 */
+                            border-bottom: 1px solid #334155 !important;
                         }
+                        /* Table Hover */
                         .el-table--enable-row-hover .el-table__body tr:hover > td {
-                            background-color: rgba(255,255,255,0.1) !important;
+                            background-color: #334155 !important; /* Slate 700 */
+                        }
+                        
+                        /* Table Borders */
+                        .el-table td, .el-table th.is-leaf {
+                            border-bottom: 1px solid #334155 !important;
                         }
 
-                        /* Text Contrast Fix updates */
+                        /* Inputs / Stats */
+                        input, .el-input__inner {
+                            background-color: #334155 !important;
+                            border: 1px solid #475569 !important;
+                            color: white !important;
+                        }
+                        
+                        /* Headers */
                         .el-card__header {
-                            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                            border-bottom: 1px solid #334155 !important;
+                            background-color: #1e293b !important;
+                        }
+                        
+                        /* Menus / Sidebar */
+                        .el-menu, .el-menu-item {
+                           background-color: #0f172a !important;
+                           color: #cbd5e1 !important;
+                        }
+                        .el-menu-item:hover, .el-menu-item.is-active {
+                           background-color: #1e293b !important;
+                           color: #4ade80 !important;
+                        }
+
+                        /* Hide Language Switch (Heuristic) */
+                        .lang-select, .language-switch, .lang-wrapper {
+                            display: none !important;
                         }
                         
                         /* Scrollbars */
@@ -548,7 +578,7 @@
                             height: 8px;
                         }
                         ::-webkit-scrollbar-track {
-                            background: rgba(0,0,0,0.2); 
+                            background: #0f172a; 
                         }
                         ::-webkit-scrollbar-thumb {
                             background: #475569; 
@@ -558,7 +588,7 @@
                             background: #64748b; 
                         }
                      `;
-                    document.head.appendChild(glassStyle);
+                    document.head.appendChild(darkStyle);
                 }
 
                 // Restore UI parts if needed
@@ -570,6 +600,20 @@
 
                 const footer = document.getElementById('lemue-footer');
                 if (footer) footer.remove();
+
+                // Hide CN/EN Switch via Text Content Heuristic
+                const headers = document.querySelectorAll('div, span, li, p');
+                headers.forEach(el => {
+                    const txt = el.innerText.trim();
+                    if (txt === 'CN' || txt === 'EN' || txt === '中文' || txt === 'English') {
+                        // Check if it's potentially the switch (small container)
+                        if (el.parentElement && el.parentElement.offsetWidth < 120) {
+                            el.parentElement.style.display = 'none';
+                            // Also hide the parent's parent if it's a list item
+                            if (el.parentElement.tagName === 'LI') el.parentElement.style.display = 'none';
+                        }
+                    }
+                });
             }
 
             // Always Inject Favicons (Safe to check continuously)
