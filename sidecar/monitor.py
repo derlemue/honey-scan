@@ -68,6 +68,98 @@ def fix_missing_severity():
     finally:
         if conn: conn.close()
 
+def scrub_database():
+    """Remove Chinese strings from database."""
+    conn = get_db_connection()
+    if not conn: return
+
+    try:
+        cursor = conn.cursor()
+        if DB_TYPE == "mysql":
+            # 1. Scrub Country Names in ipaddress
+            translations = {
+                "美国": "United States",
+                "荷兰": "Netherlands",
+                "本机地址": "Localhost",
+                "中国": "China",
+                "俄罗斯": "Russia",
+                "德国": "Germany",
+                "英国": "United Kingdom",
+                "法国": "France",
+                "局域网": "LAN",
+                "未知": "Unknown",
+                "伊朗": "Iran",
+                "加拿大": "Canada",
+                "德国": "Germany",
+                "捷克": "Czechia",
+                "欧洲地区": "Europe",
+                "比利时": "Belgium",
+                "西班牙": "Spain",
+                "日本": "Japan",
+                "韩国": "South Korea",
+                "巴西": "Brazil",
+                "印度": "India",
+                "意大利": "Italy",
+                "澳大利亚": "Australia",
+                "波兰": "Poland",
+                "芬兰": "Finland",
+                "瑞典": "Sweden",
+                "挪威": "Norway",
+                "瑞士": "Switzerland",
+                "乌克兰": "Ukraine",
+                "越南": "Vietnam",
+                "朝鲜": "North Korea",
+                "泰国": "Thailand",
+                "新加坡": "Singapore",
+                "印尼": "Indonesia",
+                "菲律宾": "Philippines",
+                "阿根廷": "Argentina",
+                "智利": "Chile",
+                "哥伦比亚": "Colombia",
+                "墨西哥": "Mexico",
+                "埃及": "Egypt",
+                "南非": "South Africa",
+                "土耳其": "Turkey",
+                "以色列": "Israel",
+                "沙特": "Saudi Arabia"
+            }
+            for cn, en in translations.items():
+                cursor.execute("UPDATE ipaddress SET country = %s, region = %s WHERE country = %s", (en, en, cn))
+                cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (en, cn)) # Just in case
+                # Also scrub region if it equals the country name (common in this DB)
+                cursor.execute("UPDATE ipaddress SET region = %s WHERE region = %s", (en, cn))
+
+            # 2. Scrub Services Description (Telnet)
+            cursor.execute("UPDATE services SET `describe` = 'Telnet service simulation used to record network connections and attacks.' WHERE `describe` LIKE '%Telnet%' AND `describe` LIKE '%蜜罐%'")
+            # Scrub generic "被攻击" in services describing honey pot
+            cursor.execute("UPDATE services SET `describe` = REPLACE(`describe`, '被攻击', 'attacked')")
+
+            # 3. Scrub scanning records (if any left in DB)
+            # cursor.execute("UPDATE infos SET `describe` = REGEXP_REPLACE(`describe`, '第([0-9]+)次扫描', 'Scan #\\1')") 
+            # Note: REGEXP_REPLACE might not be available in all MariaDB versions (10.0.5+ is required). 
+            # We wrap it in try-catch or just check version? HFish uses MariaDB 10+, so likely safe.
+            try:
+                 cursor.execute("UPDATE infos SET `describe` = REGEXP_REPLACE(`describe`, '第([0-9]+)次扫描', 'Scan #\\\\1') WHERE `describe` REGEXP '第[0-9]+次扫描'")
+                 cursor.execute("UPDATE infos SET `describe` = REGEXP_REPLACE(`describe`, '第([0-9]+)次攻击', 'Attack #\\\\1') WHERE `describe` REGEXP '第[0-9]+次攻击'")
+            except Exception:
+                 pass # Ignore if regex replace fails
+            
+            # 4. Scrub "Attacker" country in scans/infos if stored
+            # (Assuming source_ip_country column exists in other tables)
+            for cn, en in translations.items():
+                 # Check table existence first or just try-except
+                 for table in ['scans', 'scanners', 'infos']:
+                      try:
+                           cursor.execute(f"UPDATE {table} SET source_ip_country = %s WHERE source_ip_country = %s", (en, cn))
+                      except:
+                           pass
+
+            conn.commit()
+    except Exception as e:
+        logger.error(f"Error scrubbing DB: {e}")
+    finally:
+        if conn: conn.close()
+
 def get_db_connection():
     """Establishes connection to SQLite or MariaDB based on DB_TYPE."""
     try:
@@ -80,7 +172,8 @@ def get_db_connection():
                 database=DB_NAME,
                 cursorclass=pymysql.cursors.DictCursor,
                 connect_timeout=5,
-                autocommit=True
+                autocommit=True,
+                charset='utf8mb4'
             )
         else:
             return sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
@@ -378,6 +471,7 @@ def main():
                     update_banned_list(attackers)
                 
                 fix_missing_severity()
+                scrub_database()
                 update_index()
                 
                 # Periodic Location Update (Every ~10 mins -> 60 loops * 10s)

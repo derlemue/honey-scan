@@ -26,6 +26,11 @@ services:
       - ./web/assets/favicon-16x16.png:/opt/hfish/3.3.6/web/assets/favicon-16x16.png:ro
       - ./web/assets/apple-touch-icon.png:/opt/hfish/current/web/assets/apple-touch-icon.png:ro
       - ./web/assets/apple-touch-icon.png:/opt/hfish/3.3.6/web/assets/apple-touch-icon.png:ro
+      - ./web/assets/location.json:/opt/hfish/current/web/assets/location.json:ro
+      - ./web/assets/location.json:/opt/hfish/current/web/assets/location.json:ro
+      - ./web/assets/location.json:/opt/hfish/3.3.6/web/assets/location.json:ro
+      - ./web/assets/app.6539b5af.js:/opt/hfish/current/web/assets/app.6539b5af.js:ro
+      - ./web/assets/app.6539b5af.js:/opt/hfish/3.3.6/web/assets/app.6539b5af.js:ro
     deploy:
       resources:
         limits:
@@ -72,6 +77,7 @@ services:
     volumes:
       - ./scans:/app/scans
       - ./feed:/app/feed
+      - ./web/assets:/app/assets
     depends_on:
       - hfish
       - mariadb
