@@ -104,134 +104,133 @@
                         "lng": 12.3713,
                         "query": "127.0.0.1"
                     };
-                };
-            }) ();
+                })();
 
-            // 2. Helper: Patch JSON Data
-            async function patchJsonData(json) {
-                const loc = await locationPromise;
-                if (!loc) return json;
+                // 2. Helper: Patch JSON Data
+                async function patchJsonData(json) {
+                    const loc = await locationPromise;
+                    if (!loc) return json;
 
-                let patched = false;
+                    let patched = false;
 
-                // Helper to update a single node object
-                const patchNode = (node) => {
-                    // Check if this looks like a node (has IP or ID)
-                    if (node.intranet_ip || node.id) {
-                        // Ensure geo_data exists
-                        if (!node.geo_data) node.geo_data = {};
+                    // Helper to update a single node object
+                    const patchNode = (node) => {
+                        // Check if this looks like a node (has IP or ID)
+                        if (node.intranet_ip || node.id) {
+                            // Ensure geo_data exists
+                            if (!node.geo_data) node.geo_data = {};
 
-                        // Force Update
-                        node.geo_data.Country = loc.country;
-                        node.geo_data.City = loc.city;
-                        // Inject coordinates if the map uses them directly
-                        node.geo_data.lat = loc.lat;
-                        node.geo_data.lng = loc.lng || loc.lon;
+                            // Force Update
+                            node.geo_data.Country = loc.country;
+                            node.geo_data.City = loc.city;
+                            // Inject coordinates if the map uses them directly
+                            node.geo_data.lat = loc.lat;
+                            node.geo_data.lng = loc.lng || loc.lon;
 
-                        // Some maps use 'value' array for coords: [lng, lat]
-                        if (node.value && Array.isArray(node.value)) {
-                            node.value = [loc.lng || loc.lon, loc.lat, ...node.value.slice(2)];
+                            // Some maps use 'value' array for coords: [lng, lat]
+                            if (node.value && Array.isArray(node.value)) {
+                                node.value = [loc.lng || loc.lon, loc.lat, ...node.value.slice(2)];
+                            }
+
+                            return true;
                         }
+                        return false;
+                    };
 
-                        return true;
+                    // Case A: Root Object is a Node or has geo_data
+                    if (patchNode(json)) patched = true;
+
+                    // Case B: Array of Nodes (e.g. /api/web/node/list)
+                    if (Array.isArray(json)) {
+                        json.forEach(item => {
+                            if (patchNode(item)) patched = true;
+                        });
                     }
-                    return false;
-                };
 
-                // Case A: Root Object is a Node or has geo_data
-                if (patchNode(json)) patched = true;
-
-                // Case B: Array of Nodes (e.g. /api/web/node/list)
-                if (Array.isArray(json)) {
-                    json.forEach(item => {
-                        if (patchNode(item)) patched = true;
-                    });
-                }
-
-                // Case C: Nested Data (Common in paginated responses: { data: { list: [...] } })
-                if (json.data) {
-                    if (Array.isArray(json.data)) {
-                        json.data.forEach(item => { if (patchNode(item)) patched = true; });
-                    } else if (json.data.list && Array.isArray(json.data.list)) {
-                        json.data.list.forEach(item => { if (patchNode(item)) patched = true; });
-                    }
-                }
-
-                if (patched) console.log("[HoneyScan] Hot-Patched API Response with Geolocation!");
-                return json;
-            }
-
-            // 3. Intercept Fetch
-            const originalFetch = window.fetch;
-            window.fetch = async function (...args) {
-                const url = args[0];
-                const response = await originalFetch(...args);
-
-                // Skip own requests
-                if (typeof url === 'string' && url.includes('location.json')) return response;
-
-                // Only process JSON
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    try {
-                        const clone = response.clone();
-                        const data = await clone.json();
-
-                        // Heuristic: Does it look like node data?
-                        const str = JSON.stringify(data);
-                        if (str.includes('intranet_ip') || str.includes('geo_data')) {
-                            const patchedData = await patchJsonData(data);
-                            return new Response(JSON.stringify(patchedData), {
-                                status: response.status,
-                                statusText: response.statusText,
-                                headers: response.headers
-                            });
+                    // Case C: Nested Data (Common in paginated responses: { data: { list: [...] } })
+                    if (json.data) {
+                        if (Array.isArray(json.data)) {
+                            json.data.forEach(item => { if (patchNode(item)) patched = true; });
+                        } else if (json.data.list && Array.isArray(json.data.list)) {
+                            json.data.list.forEach(item => { if (patchNode(item)) patched = true; });
                         }
-                    } catch (e) {
-                        // ignore parse errors, return original
                     }
+
+                    if (patched) console.log("[HoneyScan] Hot-Patched API Response with Geolocation!");
+                    return json;
                 }
-                return response;
-            };
 
-            // 4. Intercept XMLHttpRequest (for Axios/Legacy)
-            const XHR = XMLHttpRequest.prototype;
-            const open = XHR.open;
-            const send = XHR.send;
+                // 3. Intercept Fetch
+                const originalFetch = window.fetch;
+                window.fetch = async function (...args) {
+                    const url = args[0];
+                    const response = await originalFetch(...args);
 
-            XHR.open = function (method, url) {
-                this._url = url;
-                return open.apply(this, arguments);
-            };
+                    // Skip own requests
+                    if (typeof url === 'string' && url.includes('location.json')) return response;
 
-            XHR.send = function () {
-                this.addEventListener('load', async function () {
-                    if (this._url && this._url.includes('location.json')) return;
-
-                    if (this.responseText && (this.responseText.includes('intranet_ip') || this.responseText.includes('geo_data'))) {
+                    // Only process JSON
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
                         try {
-                            const json = JSON.parse(this.responseText);
-                            const patched = await patchJsonData(json);
+                            const clone = response.clone();
+                            const data = await clone.json();
 
-                            // Override responseText property
-                            Object.defineProperty(this, 'responseText', {
-                                get: () => JSON.stringify(patched),
-                                configurable: true
-                            });
-                            Object.defineProperty(this, 'response', {
-                                get: () => JSON.stringify(patched),
-                                configurable: true
-                            });
-                        } catch (e) { }
+                            // Heuristic: Does it look like node data?
+                            const str = JSON.stringify(data);
+                            if (str.includes('intranet_ip') || str.includes('geo_data')) {
+                                const patchedData = await patchJsonData(data);
+                                return new Response(JSON.stringify(patchedData), {
+                                    status: response.status,
+                                    statusText: response.statusText,
+                                    headers: response.headers
+                                });
+                            }
+                        } catch (e) {
+                            // ignore parse errors, return original
+                        }
                     }
-                });
-                return send.apply(this, arguments);
-            };
+                    return response;
+                };
 
-        } catch (e) {
-            console.error("[HoneyScan] Interceptor Init Failed", e);
-        }
-        }) ();
+                // 4. Intercept XMLHttpRequest (for Axios/Legacy)
+                const XHR = XMLHttpRequest.prototype;
+                const open = XHR.open;
+                const send = XHR.send;
+
+                XHR.open = function (method, url) {
+                    this._url = url;
+                    return open.apply(this, arguments);
+                };
+
+                XHR.send = function () {
+                    this.addEventListener('load', async function () {
+                        if (this._url && this._url.includes('location.json')) return;
+
+                        if (this.responseText && (this.responseText.includes('intranet_ip') || this.responseText.includes('geo_data'))) {
+                            try {
+                                const json = JSON.parse(this.responseText);
+                                const patched = await patchJsonData(json);
+
+                                // Override responseText property
+                                Object.defineProperty(this, 'responseText', {
+                                    get: () => JSON.stringify(patched),
+                                    configurable: true
+                                });
+                                Object.defineProperty(this, 'response', {
+                                    get: () => JSON.stringify(patched),
+                                    configurable: true
+                                });
+                            } catch (e) { }
+                        }
+                    });
+                    return send.apply(this, arguments);
+                };
+
+            } catch (e) {
+                console.error("[HoneyScan] Interceptor Init Failed", e);
+            }
+        })();
     </script>
     <script>
         // Branding Configuration
@@ -626,7 +625,8 @@
                         'Indonesia': 'id', 'Thailand': 'th', 'Malaysia': 'my', 'Philippines': 'ph', 'South Africa': 'za',
                         'Egypt': 'eg', 'Israel': 'il', 'Slovakia': 'sk', 'Bulgaria': 'bg', 'Saudi Arabia': 'sa',
                         'United Arab Emirates': 'ae', 'Colombia': 'co', 'Chile': 'cl', 'Peru': 'pe', 'Pakistan': 'pk',
-                        'Bangladesh': 'bd', 'New Zealand': 'nz', 'Hong Kong': 'hk'
+                        'Bangladesh': 'bd', 'New Zealand': 'nz', 'Hong Kong': 'hk', 'Britain': 'gb', 'England': 'gb',
+                        'Great Britain': 'gb'
                     };
 
                     const code = countryMap[country];
