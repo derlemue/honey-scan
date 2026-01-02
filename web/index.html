@@ -101,136 +101,137 @@
                         "country_code": "DE",
                         "city": "Falkenstein",
                         "lat": 50.4779,
-                        "lon": 12.3713,
+                        "lng": 12.3713,
                         "query": "127.0.0.1"
                     };
-                })();
+                };
+            }) ();
 
-                // 2. Helper: Patch JSON Data
-                async function patchJsonData(json) {
-                    const loc = await locationPromise;
-                    if (!loc) return json;
+            // 2. Helper: Patch JSON Data
+            async function patchJsonData(json) {
+                const loc = await locationPromise;
+                if (!loc) return json;
 
-                    let patched = false;
+                let patched = false;
 
-                    // Helper to update a single node object
-                    const patchNode = (node) => {
-                        // Check if this looks like a node (has IP or ID)
-                        if (node.intranet_ip || node.id) {
-                            // Ensure geo_data exists
-                            if (!node.geo_data) node.geo_data = {};
+                // Helper to update a single node object
+                const patchNode = (node) => {
+                    // Check if this looks like a node (has IP or ID)
+                    if (node.intranet_ip || node.id) {
+                        // Ensure geo_data exists
+                        if (!node.geo_data) node.geo_data = {};
 
-                            // Force Update
-                            node.geo_data.Country = loc.country;
-                            node.geo_data.City = loc.city;
-                            // Inject coordinates if the map uses them directly
-                            node.geo_data.lat = loc.lat;
-                            node.geo_data.lng = loc.lng;
+                        // Force Update
+                        node.geo_data.Country = loc.country;
+                        node.geo_data.City = loc.city;
+                        // Inject coordinates if the map uses them directly
+                        node.geo_data.lat = loc.lat;
+                        node.geo_data.lng = loc.lng || loc.lon;
 
-                            // Some maps use 'value' array for coords: [lng, lat]
-                            if (node.value && Array.isArray(node.value)) {
-                                node.value = [loc.lng, loc.lat, ...node.value.slice(2)];
-                            }
-
-                            return true;
+                        // Some maps use 'value' array for coords: [lng, lat]
+                        if (node.value && Array.isArray(node.value)) {
+                            node.value = [loc.lng || loc.lon, loc.lat, ...node.value.slice(2)];
                         }
-                        return false;
-                    };
 
-                    // Case A: Root Object is a Node or has geo_data
-                    if (patchNode(json)) patched = true;
-
-                    // Case B: Array of Nodes (e.g. /api/web/node/list)
-                    if (Array.isArray(json)) {
-                        json.forEach(item => {
-                            if (patchNode(item)) patched = true;
-                        });
+                        return true;
                     }
+                    return false;
+                };
 
-                    // Case C: Nested Data (Common in paginated responses: { data: { list: [...] } })
-                    if (json.data) {
-                        if (Array.isArray(json.data)) {
-                            json.data.forEach(item => { if (patchNode(item)) patched = true; });
-                        } else if (json.data.list && Array.isArray(json.data.list)) {
-                            json.data.list.forEach(item => { if (patchNode(item)) patched = true; });
-                        }
-                    }
+                // Case A: Root Object is a Node or has geo_data
+                if (patchNode(json)) patched = true;
 
-                    if (patched) console.log("[HoneyScan] Hot-Patched API Response with Geolocation!");
-                    return json;
+                // Case B: Array of Nodes (e.g. /api/web/node/list)
+                if (Array.isArray(json)) {
+                    json.forEach(item => {
+                        if (patchNode(item)) patched = true;
+                    });
                 }
 
-                // 3. Intercept Fetch
-                const originalFetch = window.fetch;
-                window.fetch = async function (...args) {
-                    const url = args[0];
-                    const response = await originalFetch(...args);
-
-                    // Skip own requests
-                    if (typeof url === 'string' && url.includes('location.json')) return response;
-
-                    // Only process JSON
-                    const contentType = response.headers.get("content-type");
-                    if (contentType && contentType.includes("application/json")) {
-                        try {
-                            const clone = response.clone();
-                            const data = await clone.json();
-
-                            // Heuristic: Does it look like node data?
-                            const str = JSON.stringify(data);
-                            if (str.includes('intranet_ip') || str.includes('geo_data')) {
-                                const patchedData = await patchJsonData(data);
-                                return new Response(JSON.stringify(patchedData), {
-                                    status: response.status,
-                                    statusText: response.statusText,
-                                    headers: response.headers
-                                });
-                            }
-                        } catch (e) {
-                            // ignore parse errors, return original
-                        }
+                // Case C: Nested Data (Common in paginated responses: { data: { list: [...] } })
+                if (json.data) {
+                    if (Array.isArray(json.data)) {
+                        json.data.forEach(item => { if (patchNode(item)) patched = true; });
+                    } else if (json.data.list && Array.isArray(json.data.list)) {
+                        json.data.list.forEach(item => { if (patchNode(item)) patched = true; });
                     }
-                    return response;
-                };
+                }
 
-                // 4. Intercept XMLHttpRequest (for Axios/Legacy)
-                const XHR = XMLHttpRequest.prototype;
-                const open = XHR.open;
-                const send = XHR.send;
-
-                XHR.open = function (method, url) {
-                    this._url = url;
-                    return open.apply(this, arguments);
-                };
-
-                XHR.send = function () {
-                    this.addEventListener('load', async function () {
-                        if (this._url && this._url.includes('location.json')) return;
-
-                        if (this.responseText && (this.responseText.includes('intranet_ip') || this.responseText.includes('geo_data'))) {
-                            try {
-                                const json = JSON.parse(this.responseText);
-                                const patched = await patchJsonData(json);
-
-                                // Override responseText property
-                                Object.defineProperty(this, 'responseText', {
-                                    get: () => JSON.stringify(patched),
-                                    configurable: true
-                                });
-                                Object.defineProperty(this, 'response', {
-                                    get: () => JSON.stringify(patched),
-                                    configurable: true
-                                });
-                            } catch (e) { }
-                        }
-                    });
-                    return send.apply(this, arguments);
-                };
-
-            } catch (e) {
-                console.error("[HoneyScan] Interceptor Init Failed", e);
+                if (patched) console.log("[HoneyScan] Hot-Patched API Response with Geolocation!");
+                return json;
             }
-        })();
+
+            // 3. Intercept Fetch
+            const originalFetch = window.fetch;
+            window.fetch = async function (...args) {
+                const url = args[0];
+                const response = await originalFetch(...args);
+
+                // Skip own requests
+                if (typeof url === 'string' && url.includes('location.json')) return response;
+
+                // Only process JSON
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    try {
+                        const clone = response.clone();
+                        const data = await clone.json();
+
+                        // Heuristic: Does it look like node data?
+                        const str = JSON.stringify(data);
+                        if (str.includes('intranet_ip') || str.includes('geo_data')) {
+                            const patchedData = await patchJsonData(data);
+                            return new Response(JSON.stringify(patchedData), {
+                                status: response.status,
+                                statusText: response.statusText,
+                                headers: response.headers
+                            });
+                        }
+                    } catch (e) {
+                        // ignore parse errors, return original
+                    }
+                }
+                return response;
+            };
+
+            // 4. Intercept XMLHttpRequest (for Axios/Legacy)
+            const XHR = XMLHttpRequest.prototype;
+            const open = XHR.open;
+            const send = XHR.send;
+
+            XHR.open = function (method, url) {
+                this._url = url;
+                return open.apply(this, arguments);
+            };
+
+            XHR.send = function () {
+                this.addEventListener('load', async function () {
+                    if (this._url && this._url.includes('location.json')) return;
+
+                    if (this.responseText && (this.responseText.includes('intranet_ip') || this.responseText.includes('geo_data'))) {
+                        try {
+                            const json = JSON.parse(this.responseText);
+                            const patched = await patchJsonData(json);
+
+                            // Override responseText property
+                            Object.defineProperty(this, 'responseText', {
+                                get: () => JSON.stringify(patched),
+                                configurable: true
+                            });
+                            Object.defineProperty(this, 'response', {
+                                get: () => JSON.stringify(patched),
+                                configurable: true
+                            });
+                        } catch (e) { }
+                    }
+                });
+                return send.apply(this, arguments);
+            };
+
+        } catch (e) {
+            console.error("[HoneyScan] Interceptor Init Failed", e);
+        }
+        }) ();
     </script>
     <script>
         // Branding Configuration
@@ -723,42 +724,7 @@
                     }
                 });
 
-                // 3. Fix Chinese Full-Width Colons and Formatting (Aggressive)
-                const fixTextContent = () => {
-                    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-                    let node;
-                    while (node = walker.nextNode()) {
-                        const original = node.nodeValue;
-                        let val = original;
 
-                        // A) Full-Width Colon Fix (Global)
-                        if (val.includes('：')) {
-                            val = val.replace(/：/g, ': ');
-                        }
-
-                        // B) "w" Suffix Fix (e.g., 1.5w -> 15k)
-                        // Broader regex to catch "1.5w" in any context. 
-                        // We check that the 'w' follows a digit.
-                        if (val.match(/\dw/i)) { // Optimization check
-                            val = val.replace(/(\d+(\.\d+)?)w/gi, (match, numStr) => {
-                                const num = parseFloat(numStr);
-                                // 1w = 10,000. Display as 10k.
-                                // 1.5w = 15,000. Display 15k.
-                                if (!isNaN(num)) {
-                                    return (num * 10).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace('.0', '') + 'k';
-                                }
-                                return match;
-                            });
-                        }
-
-                        if (val !== original) {
-                            node.nodeValue = val;
-                        }
-                    }
-                };
-
-                // Run periodically and aggressively
-                setInterval(fixTextContent, 200);
 
             } catch (e) { console.error('Data patch error:', e); }
         };
@@ -787,6 +753,39 @@
             patchDataIssues();
             hideEmptyCloudSection();
         }, 100);
+
+        // 3. Fix Chinese Full-Width Colons and Formatting (Aggressive)
+        const fixTextContent = () => {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            while (node = walker.nextNode()) {
+                const original = node.nodeValue;
+                let val = original;
+
+                // A) Full-Width Colon Fix (Global)
+                if (val.includes('：')) {
+                    val = val.replace(/：/g, ': ');
+                }
+
+                // B) "w" Suffix Fix (e.g., 1.5w -> 15k)
+                if (val.match(/\dw/i)) { // Optimization check
+                    val = val.replace(/(\d+(\.\d+)?)w/gi, (match, numStr) => {
+                        const num = parseFloat(numStr);
+                        if (!isNaN(num)) {
+                            return (num * 10).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace('.0', '') + 'k';
+                        }
+                        return match;
+                    });
+                }
+
+                if (val !== original) {
+                    node.nodeValue = val;
+                }
+            }
+        };
+
+        // Run periodically 
+        setInterval(fixTextContent, 500);
 
     </script>
 </body>
