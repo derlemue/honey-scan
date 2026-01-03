@@ -664,55 +664,79 @@
             } catch (e) { console.error('Data patch error:', e); }
         };
 
-        // === LAYOUT FIXES (Cloud Intel Overlap) ===
-        const fixLayout = () => {
-            // Fix Right Sidebar Overlap
-            // Find the "Recent active hackers" header
-            const headers = document.querySelectorAll('div, span, p');
-            for (let h of headers) {
-                if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
-                    // Found the header. Now find the list items container.
-                    // Usually it's in the same Card Body.
-                    // Structure: Card -> Body -> [Header, ListContainer]
-                    const parent = h.parentElement;
-                    if (parent) {
-                        // Iterate siblings to find the candidate list container
-                        for (let sibling of parent.children) {
-                            if (sibling === h) continue;
+        // === LAYOUT & FLAG FIXES ===
+        const fixLayoutAndFlags = () => {
+            try {
+                // 1. Sidebar Overlap Fix (Aggressive)
+                // Strategy: Find the header "Recent active hackers", then find the SIBLING in the container that has the most children (the list).
+                const headers = document.querySelectorAll('div, span, p, h3');
+                for (let h of headers) {
+                    if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
+                        // Go up to the card/container
+                        let parent = h.parentElement;
 
-                            // Check if this sibling contains the list items (it should have height > 0)
-                            // and usually has multiple children or text.
-                            if (sibling.children.length > 0 && sibling.clientHeight > 50) {
-                                // Apply Fix
-                                if (sibling.style.maxHeight !== '280px') {
-                                    sibling.style.maxHeight = '280px';
-                                    sibling.style.overflowY = 'auto';
-                                    sibling.style.paddingRight = '5px'; // Space for scrollbar
-                                    // console.log("[HoneyScan] Fixed Sidebar Layout for", h.innerText);
+                        // Check siblings of the header first
+                        let listContainer = null;
+                        let maxChildren = 0;
+
+                        // Helper to check a potential container
+                        const checkContainer = (container) => {
+                            if (!container) return;
+                            // Check direct children
+                            for (let child of container.children) {
+                                if (child === h || child.contains(h)) continue; // Skip header itself
+                                if (child.children.length > maxChildren) {
+                                    maxChildren = child.children.length;
+                                    listContainer = child;
                                 }
                             }
-                        }
-                    }
+                        };
 
-                    // Fallback: Grandparent check (if header is wrapped)
-                    const grandParent = parent.parentElement;
-                    if (grandParent && grandParent.children.length > 1) {
-                        for (let sibling of grandParent.children) {
-                            if (sibling.contains(h)) continue;
-                            if (sibling.children.length > 0 && sibling.clientHeight > 50) {
-                                if (sibling.style.maxHeight !== '280px') {
-                                    sibling.style.maxHeight = '280px';
-                                    sibling.style.overflowY = 'auto';
-                                }
+                        checkContainer(parent);
+                        // Also check grandparent if direct parent is just a wrapper
+                        if (!listContainer && parent.parentElement) checkContainer(parent.parentElement);
+
+                        if (listContainer && maxChildren > 2) {
+                            // Apply Styles
+                            if (listContainer.style.maxHeight !== '250px') {
+                                listContainer.style.maxHeight = '250px';
+                                listContainer.style.overflowY = 'auto';
+                                listContainer.style.paddingRight = '5px';
+                                // console.log("[HoneyScan] Fixed Sidebar List container:", listContainer);
                             }
                         }
                     }
                 }
-            }
+
+                // 2. Ticker Flag Fix (Broad)
+                // Target ANY SVG that looks like a flag but has no color
+                const svgs = document.querySelectorAll('svg');
+                svgs.forEach(svg => {
+                    const use = svg.querySelector('use');
+                    if (use) {
+                        const href = use.getAttribute('xlink:href') || use.getAttribute('href');
+                        if (href && href.includes('flag')) {
+                            // Remove Fill (Monochrome fix)
+                            if (svg.hasAttribute('fill')) svg.removeAttribute('fill');
+                            if (svg.style.fill) svg.style.fill = '';
+
+                            // Ensure Visibility
+                            if (svg.style.display === 'none') svg.style.display = 'inline-block';
+
+                            // Fix Dimensions if missing (symptom of invisible flags)
+                            if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
+                            if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
+                        }
+                    }
+                });
+
+            } catch (e) { console.error("Layout/Flag Fix Error:", e); }
         };
-        setInterval(fixLayout, 1000);
+
+        setInterval(fixLayoutAndFlags, 500);
 
     </script>
 </body>
 
 </html>
+```
