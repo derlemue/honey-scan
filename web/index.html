@@ -629,6 +629,7 @@
                     }
                 });
 
+
                 // 3. TICKER FLAG FIX (Bottom Scrolling Box)
                 // These SVGs often have a hardcoded fill="#c5c6c6" which makes them invisible/grey.
                 const tickerSvgs = document.querySelectorAll('svg.flag-icon-margin');
@@ -637,6 +638,7 @@
                     if (svg.getAttribute('fill')) {
                         svg.removeAttribute('fill');
                     }
+                    if (svg.style.fill) svg.style.fill = '';
 
                     // Also ensure the country code is correct if possible
                     // The structure is usually: SVG -> Parent Div -> Sibling Div with Text "Attacker Location: Country"
@@ -653,7 +655,15 @@
                                 const text = box.innerText;
                                 const country = Object.keys(countryMap).find(c => text.includes(c));
                                 if (country) {
-                                    use.setAttribute('xlink:href', `#hfish-flag-${countryMap[country]}`);
+                                    // DIRECT FIX: Point to external sprite immediately
+                                    const newHref = `/symbol-defs.svg#icon-${countryMap[country]}`;
+                                    use.setAttribute('xlink:href', newHref);
+                                    use.setAttribute('href', newHref);
+
+                                    // Ensure Visibility & Size
+                                    svg.style.display = 'inline-block';
+                                    if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
+                                    if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
                                 }
                             }
                         }
@@ -663,6 +673,9 @@
 
             } catch (e) { console.error('Data patch error:', e); }
         };
+
+        // Enable Data Patching Loop
+        setInterval(patchDataIssues, 500);
 
         // === LAYOUT & FLAG FIXES ===
         const fixLayoutAndFlags = () => {
