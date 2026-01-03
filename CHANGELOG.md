@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.14] - 2026-01-03
+
+### Fixed
+- 🎨 **Layout**: Refined right sidebar overlap fix with a smarter child-count heuristic to correctly identify and constrain the "Recent active hackers" list.
+- 🚩 **UI**: Broadened Ticker Flag fix to target all SVGs with potential `fill` attributes, ensuring visibility of color flags in all dashboard components.
+
 ## [3.8.13] - 2026-01-03
 
 ### Fixed
