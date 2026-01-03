@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.13] - 2026-01-03
+
+### Fixed
+- 🚩 **UI**: Fixed invisible flags in "Recent Attacks" ticker by removing monochromatic `fill` attribute from SVGs.
+- 🎨 **Layout**: Fixed "Cloud Intelligence" overlap on right sidebar by limiting the height of the "Recent active hackers" list.
+
 ## [3.8.12] - 2026-01-03
 
 ### Changed

@@ -629,12 +629,76 @@
                     }
                 });
 
+                // 3. TICKER FLAG FIX (Bottom Scrolling Box)
+                // These SVGs often have a hardcoded fill="#c5c6c6" which makes them invisible/grey.
+                const tickerSvgs = document.querySelectorAll('svg.flag-icon-margin');
+                tickerSvgs.forEach(svg => {
+                    // Remove the monochromatic fill to show the real flag colors
+                    if (svg.getAttribute('fill')) {
+                        svg.removeAttribute('fill');
+                    }
+
+                    // Also ensure the country code is correct if possible
+                    // The structure is usually: SVG -> Parent Div -> Sibling Div with Text "Attacker Location: Country"
+                    // But here it seems the 'use' tag might already have the code, just not showing due to fill.
+                    const use = svg.querySelector('use');
+                    if (use) {
+                        const href = use.getAttribute('xlink:href') || use.getAttribute('href');
+                        // If it's the broken default, try to fix it from context
+                        if (href && href.includes('flagdefault')) {
+                            // Try to find text context. The ticker box text is messy.
+                            // Strategy: Look for country name in the box text.
+                            const box = svg.closest('.ant-carousel-item') || svg.closest('div[style*="background"]');
+                            if (box) {
+                                const text = box.innerText;
+                                const country = Object.keys(countryMap).find(c => text.includes(c));
+                                if (country) {
+                                    use.setAttribute('xlink:href', `#hfish-flag-${countryMap[country]}`);
+                                }
+                            }
+                        }
+                    }
+                });
+
+
             } catch (e) { console.error('Data patch error:', e); }
         };
 
-        setInterval(() => {
-            patchDataIssues();
-        }, 100);
+        // === LAYOUT FIXES (Cloud Intel Overlap) ===
+        const fixLayout = () => {
+            // Fix Right Sidebar Overlap
+            // The "Recent active hackers" list often grows too long.
+            // We'll find the header, then get its parent container, and limit the list inside.
+            const headers = document.querySelectorAll('div');
+            for (let h of headers) {
+                if (h.innerText === 'Recent active hackers' && h.classList.length > 0) { // Ensure it's the header
+                    const card = h.closest('.el-card__body') || h.parentElement.parentElement;
+                    if (card) {
+                        // Find the list container sibling to the header
+                        const list = card.querySelector('div[class*="index-cssmodule__list"]');
+                        if (list) {
+                            list.style.maxHeight = '300px'; // Limit height
+                            list.style.overflowY = 'auto'; // Scrollable
+                            list.style.marginBottom = '20px'; // Spacing
+                        }
+
+                        // Alternatively, find the items container if class is obscure
+                        if (!list) {
+                            // Heuristic: The div containing the items properly
+                            const potentialLists = card.querySelectorAll('div');
+                            for (let d of potentialLists) {
+                                if (d.children.length > 3 && d !== card) { // It has many children (items)
+                                    d.style.maxHeight = '280px';
+                                    d.style.overflowY = 'auto';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        setInterval(fixLayout, 1000);
 
     </script>
 </body>
