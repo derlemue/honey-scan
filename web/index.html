@@ -664,78 +664,84 @@
             } catch (e) { console.error('Data patch error:', e); }
         };
 
-        // === ROBUST UI REPAIR ===
+        // === LAYOUT & FLAG FIXES ===
         const fixLayoutAndFlags = () => {
             try {
-                // 1. CLOUD INTELLIGENCE OVERLAP FIX
-                // Problem: The top card "Cloud intelligence" is too short (100px), causing its large numbers to bleed into the "Recent active hackers" card below.
-                // Fix: Find the card containing "Cloud intelligence" and force a larger height.
-                const cards = document.querySelectorAll('div[class*="infoCard"], div[class*="card"]');
-                cards.forEach(card => {
-                    if (card.innerText && card.innerText.includes('Cloud intelligence')) {
-                        // This is the top card. Check its height.
-                        if (card.clientHeight < 140) {
-                            // It seems to be hardcoded to ~100px in CSS. Force it open.
-                            card.style.minHeight = '140px';
-                            card.style.height = 'auto';
-                            card.style.marginBottom = '20px';
-                            // console.log("Fixed Cloud Intel Card Height");
-                        }
-                    }
-                });
-
-                // 2. TICKER FLAGS FIX
-                // Problem: SVGs in the bottom scrolling ticker have fill="#c5c6c6" (gray).
-                // Fix: Aggressively remove this attribute from any flag icon.
-                const svgs = document.querySelectorAll('svg');
-                svgs.forEach(svg => {
-                    // Heuristic: It has 'flag-icon' class OR use href contains 'flag'
-                    const isFlag = (svg.getAttribute('class') || '').includes('flag-icon') ||
-                        (svg.innerHTML.includes('flag'));
-
-                    if (isFlag) {
-                        // 1. Remove the Attribute
-                        if (svg.hasAttribute('fill') && svg.getAttribute('fill') !== 'none') {
-                            svg.removeAttribute('fill');
-                        }
-
-                        // 2. Override CSS
-                        if (svg.style.fill !== 'initial') {
-                            svg.style.fill = 'initial'; // Restore original colors
-                        }
-
-                        // 3. Fix Internal Paths (some SVGs put fill on the 'use' or 'path' tag)
-                        const children = svg.querySelectorAll('path, use, g');
-                        children.forEach(child => {
-                            if (child.hasAttribute('fill') && child.getAttribute('fill') === '#c5c6c6') {
-                                child.removeAttribute('fill');
-                                child.style.fill = 'initial';
-                            }
-                        });
-                    }
-                });
-
-                // 3. SIDEBAR LIST LIST FIX (Secondary)
-                // Ensure the "Recent active hackers" list doesn't grow infinitely
-                const headers = document.querySelectorAll('div');
+                // 1. Sidebar Overlap Fix (Aggressive)
+                // Strategy: Find the header "Recent active hackers", then find the SIBLING in the container that has the most children (the list).
+                const headers = document.querySelectorAll('div, span, p, h3');
                 for (let h of headers) {
-                    if (h.innerText === 'Recent active hackers') {
-                        const parent = h.parentElement;
-                        if (parent) {
-                            const list = parent.querySelector('div[class*="list"]');
-                            if (list && list.style.maxHeight !== '280px') {
-                                list.style.maxHeight = '280px';
-                                list.style.overflowY = 'auto';
+                    if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
+                        // Go up to the card/container
+                        let parent = h.parentElement;
+
+                        // Check siblings of the header first
+                        let listContainer = null;
+                        let maxChildren = 0;
+
+                        // Helper to check a potential container
+                        const checkContainer = (container) => {
+                            if (!container) return;
+                            // Check direct children
+                            for (let child of container.children) {
+                                if (child === h || child.contains(h)) continue; // Skip header itself
+                                if (child.children.length > maxChildren) {
+                                    maxChildren = child.children.length;
+                                    listContainer = child;
+                                }
+                            }
+                        };
+
+                        checkContainer(parent);
+                        // Also check grandparent if direct parent is just a wrapper
+                        if (!listContainer && parent.parentElement) checkContainer(parent.parentElement);
+
+                        if (listContainer && maxChildren > 2) {
+                            // Apply Styles
+                            if (listContainer.style.maxHeight !== '250px') {
+                                listContainer.style.maxHeight = '250px';
+                                listContainer.style.overflowY = 'auto';
+                                listContainer.style.paddingRight = '5px';
+                                // console.log("[HoneyScan] Fixed Sidebar List container:", listContainer);
                             }
                         }
                     }
                 }
 
-            } catch (e) { /* ignore safe errors */ }
+                // 2. Ticker Flag Fix (Robust External Reference)
+                // The issue: "The recent attacks" list uses invalid internal IDs like #hfish-flag-us
+                // The solution: Redirect them to the valid external sprite: /symbol-defs.svg#icon-us
+                const svgs = document.querySelectorAll('svg');
+                svgs.forEach(svg => {
+                    const use = svg.querySelector('use');
+                    if (use) {
+                        const href = use.getAttribute('xlink:href') || use.getAttribute('href');
+
+                        // Check for the broken internal pattern
+                        if (href && href.startsWith('#hfish-flag-')) {
+                            const countryCode = href.replace('#hfish-flag-', '');
+
+                            // Redirect to external symbol
+                            const newHref = `/symbol-defs.svg#icon-${countryCode}`;
+                            use.setAttribute('xlink:href', newHref);
+                            use.setAttribute('href', newHref);
+
+                            // Remove Fill (Monochrome fix)
+                            if (svg.hasAttribute('fill')) svg.removeAttribute('fill');
+                            if (svg.style.fill) svg.style.fill = '';
+
+                            // Ensure Visibility & Size
+                            svg.style.display = 'inline-block';
+                            if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
+                            if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
+                        }
+                    }
+                });
+
+            } catch (e) { console.error("Layout/Flag Fix Error:", e); }
         };
 
-        // Run frequently to catch new ticker items (carousel)
-        setInterval(fixLayoutAndFlags, 200);
+        setInterval(fixLayoutAndFlags, 500);
 
     </script>
 </body>
