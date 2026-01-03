@@ -36,6 +36,8 @@ services:
         limits:
           memory: 4G
     privileged: true
+    extra_hosts:
+      - "x.threatbook.cn:152.32.218.155"
     depends_on:
       - mariadb
 
