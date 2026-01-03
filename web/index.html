@@ -667,30 +667,42 @@
         // === LAYOUT FIXES (Cloud Intel Overlap) ===
         const fixLayout = () => {
             // Fix Right Sidebar Overlap
-            // The "Recent active hackers" list often grows too long.
-            // We'll find the header, then get its parent container, and limit the list inside.
-            const headers = document.querySelectorAll('div');
+            // Find the "Recent active hackers" header
+            const headers = document.querySelectorAll('div, span, p');
             for (let h of headers) {
-                if (h.innerText === 'Recent active hackers' && h.classList.length > 0) { // Ensure it's the header
-                    const card = h.closest('.el-card__body') || h.parentElement.parentElement;
-                    if (card) {
-                        // Find the list container sibling to the header
-                        const list = card.querySelector('div[class*="index-cssmodule__list"]');
-                        if (list) {
-                            list.style.maxHeight = '300px'; // Limit height
-                            list.style.overflowY = 'auto'; // Scrollable
-                            list.style.marginBottom = '20px'; // Spacing
-                        }
+                if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
+                    // Found the header. Now find the list items container.
+                    // Usually it's in the same Card Body.
+                    // Structure: Card -> Body -> [Header, ListContainer]
+                    const parent = h.parentElement;
+                    if (parent) {
+                        // Iterate siblings to find the candidate list container
+                        for (let sibling of parent.children) {
+                            if (sibling === h) continue;
 
-                        // Alternatively, find the items container if class is obscure
-                        if (!list) {
-                            // Heuristic: The div containing the items properly
-                            const potentialLists = card.querySelectorAll('div');
-                            for (let d of potentialLists) {
-                                if (d.children.length > 3 && d !== card) { // It has many children (items)
-                                    d.style.maxHeight = '280px';
-                                    d.style.overflowY = 'auto';
-                                    break;
+                            // Check if this sibling contains the list items (it should have height > 0)
+                            // and usually has multiple children or text.
+                            if (sibling.children.length > 0 && sibling.clientHeight > 50) {
+                                // Apply Fix
+                                if (sibling.style.maxHeight !== '280px') {
+                                    sibling.style.maxHeight = '280px';
+                                    sibling.style.overflowY = 'auto';
+                                    sibling.style.paddingRight = '5px'; // Space for scrollbar
+                                    // console.log("[HoneyScan] Fixed Sidebar Layout for", h.innerText);
+                                }
+                            }
+                        }
+                    }
+
+                    // Fallback: Grandparent check (if header is wrapped)
+                    const grandParent = parent.parentElement;
+                    if (grandParent && grandParent.children.length > 1) {
+                        for (let sibling of grandParent.children) {
+                            if (sibling.contains(h)) continue;
+                            if (sibling.children.length > 0 && sibling.clientHeight > 50) {
+                                if (sibling.style.maxHeight !== '280px') {
+                                    sibling.style.maxHeight = '280px';
+                                    sibling.style.overflowY = 'auto';
                                 }
                             }
                         }
