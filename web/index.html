@@ -516,8 +516,6 @@
             } else {
                 // === DASHBOARD / OTHER PAGES LOGIC ===
 
-
-
                 // Restore UI parts if needed
                 const style = document.getElementById('branding-style');
                 if (style) style.remove();
@@ -527,20 +525,6 @@
 
                 const footer = document.getElementById('lemue-footer');
                 if (footer) footer.remove();
-
-                // Hide CN/EN Switch via Text Content Heuristic
-                const headers = document.querySelectorAll('div, span, li, p');
-                headers.forEach(el => {
-                    const txt = el.innerText.trim();
-                    if (txt === 'CN' || txt === 'EN' || txt === '中文' || txt === 'English') {
-                        // Check if it's potentially the switch (small container)
-                        if (el.parentElement && el.parentElement.offsetWidth < 120) {
-                            el.parentElement.style.display = 'none';
-                            // Also hide the parent's parent if it's a list item
-                            if (el.parentElement.tagName === 'LI') el.parentElement.style.display = 'none';
-                        }
-                    }
-                });
             }
 
             // Always Inject Favicons (Safe to check continuously)
@@ -616,9 +600,6 @@
                     if (!countrySpan || countrySpan.tagName !== 'SPAN') return;
 
                     const country = countrySpan.innerText.trim();
-                    console.log("[HoneyScan] Debug: Found default flag for country: " + country);
-
-                    // Map Country Name to ISO Code (Expanded List)
 
                     // Map Country Name to ISO Code (Expanded List)
                     const countryMap = {
@@ -648,68 +629,12 @@
                     }
                 });
 
-
-
             } catch (e) { console.error('Data patch error:', e); }
-        };
-
-        // === HIDE EMPTY SECTIONS (Cloud Intel) ===
-        const hideEmptyCloudSection = () => {
-            // Broad search for any element with "Cloud Intelligence" text
-            // We use a tree walker or just specific selectors to find the header
-            const headers = document.querySelectorAll('div, span, p, h3, h4');
-            headers.forEach(h => {
-                // Check immediate text content to avoid hiding body by accident
-                if (h.children.length === 0 && h.innerText) {
-                    const text = h.innerText;
-                    if (text.includes('Cloud Intelligence') || text.includes('Threat Intelligence') || text.includes('Live Threat Monitor')) {
-                        // Walk up to find the Container Card
-                        const card = h.closest('.el-card') || h.closest('.box-card');
-                        if (card) {
-                            card.style.display = 'none';
-                        }
-                    }
-                }
-            });
         };
 
         setInterval(() => {
             patchDataIssues();
-            hideEmptyCloudSection();
         }, 100);
-
-        // 3. Fix Chinese Full-Width Colons and Formatting (Aggressive)
-        const fixTextContent = () => {
-            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-            let node;
-            while (node = walker.nextNode()) {
-                const original = node.nodeValue;
-                let val = original;
-
-                // A) Full-Width Colon Fix (Global)
-                if (val.includes('：')) {
-                    val = val.replace(/：/g, ': ');
-                }
-
-                // B) "w" Suffix Fix (e.g., 1.5w -> 15k)
-                if (val.match(/\dw/i)) { // Optimization check
-                    val = val.replace(/(\d+(\.\d+)?)w/gi, (match, numStr) => {
-                        const num = parseFloat(numStr);
-                        if (!isNaN(num)) {
-                            return (num * 10).toLocaleString('en-US', { maximumFractionDigits: 1 }).replace('.0', '') + 'k';
-                        }
-                        return match;
-                    });
-                }
-
-                if (val !== original) {
-                    node.nodeValue = val;
-                }
-            }
-        };
-
-        // Run periodically 
-        setInterval(fixTextContent, 500);
 
     </script>
 </body>

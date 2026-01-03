@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.12] - 2026-01-03
+
+### Changed
+- 🎨 **Dashboard**: Reverted dashboard UI to original HFish layout (restored "Cloud Intelligence", Language switch, and original styling) while maintaining critical bug fixes.
+- 🎨 **Login**: Preserved custom "lemueIO" login page styling.
+
 ## [3.8.11] - 2026-01-02
 
 ### Fixed
