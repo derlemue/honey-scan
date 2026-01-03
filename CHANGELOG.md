@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.15] - 2026-01-03
+
+### Fixed
+- 🎨 **Layout**: Fixed "Cloud Intelligence" overlap by forcing correct height on the top info card, preventing variable overflow onto the "Recent Hackers" list.
+- 🚩 **UI**: Implemented aggressive cleaning of Ticker SVGs to remove hardcoded `fill` attributes, restoring flag colors in the bottom scrolling ticker.
+
 ## [3.8.14] - 2026-01-03
 
 ### Fixed
