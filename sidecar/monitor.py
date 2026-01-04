@@ -307,10 +307,65 @@ def update_banned_list(ips):
 def update_index():
     try:
         scanned_files = sorted([f for f in os.listdir(SCANS_DIR) if f.endswith(".txt")])
-        html = "<html><body><h1>Scans</h1><ul>"
+        
+        list_items = ""
         for f in scanned_files:
-            html += f'<li><a href="scans/{f}">{f}</a></li>'
-        html += "</ul></body></html>"
+            list_items += f'<li class="report-item"><a href="scans/{f}">{f}</a></li>'
+
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lemueIO Active Intelligence Feed</title>
+    <style>
+        :root {{ --primary: #4ade80; --bg: #0f172a; --panel: #1e293b; --text: #e2e8f0; }}
+        body {{ background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }}
+        .container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
+        header {{ display: flex; align-items: center; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 30px; }}
+        .logo {{ width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }}
+        h1 {{ margin: 0; font-size: 1.5rem; color: var(--text); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }}
+        .section {{ background: var(--panel); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }}
+        h2 {{ margin-top: 0; font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }}
+        .resource-link {{ display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--primary); font-family: monospace; font-size: 1.1rem; padding: 5px 0; }}
+        .resource-link:hover {{ text-decoration: underline; }}
+        .resource-desc {{ color: #94a3b8; font-size: 0.9rem; font-family: sans-serif; }}
+        .report-list {{ list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }}
+        .report-item a {{ display: block; padding: 12px; background: rgba(255,255,255,0.03); color: var(--primary); text-decoration: none; border-radius: 4px; font-family: monospace; transition: all 0.2s; border: 1px solid transparent; }}
+        .report-item a:hover {{ background: rgba(74, 222, 128, 0.1); border-color: var(--primary); transform: translateY(-2px); }}
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {{ width: 8px; }}
+        ::-webkit-scrollbar-track {{ background: var(--bg); }}
+        ::-webkit-scrollbar-thumb {{ background: #334155; border-radius: 4px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: var(--primary); }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="logo.jpg" alt="Logo" class="logo">
+            <h1>lemueIO Active Intelligence Feed</h1>
+        </header>
+        
+        <div class="section">
+            <h2>Resources</h2>
+            <a href="banned_ips.txt" class="resource-link">banned_ips.txt <span class="resource-desc">List of unique attacker IPs (Fail2Ban Compatible)</span></a>
+        </div>
+
+        <div class="section">
+            <h2>Scan Reports</h2>
+            <ul class="report-list">
+                {list_items}
+            </ul>
+        </div>
+        
+        <footer style="margin-top: 50px; text-align: center; color: #64748b; font-size: 0.8rem;">
+            &copy; {time.strftime("%Y")} Honey-Scan Active Defense System. for you by lemue.org &hearts;
+        </footer>
+    </div>
+</body>
+</html>"""
         with open(INDEX_FILE, "w") as f:
             f.write(html)
     except Exception as e:
