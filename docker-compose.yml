@@ -58,10 +58,10 @@ services:
       - 1.0.0.1
     environment:
       - TZ=Europe/Amsterdam
-      - MYSQL_ROOT_PASSWORD=HoneyScan_DB_Pass_2025!
-      - MYSQL_DATABASE=hfish
-      - MYSQL_USER=hfish
-      - MYSQL_PASSWORD=HoneyScan_DB_Pass_2025!
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
     ports:
@@ -78,12 +78,12 @@ services:
       - 1.0.0.1
     environment:
       - TZ=Europe/Amsterdam
-      - DB_TYPE=mysql
-      - DB_HOST=mariadb
-      - DB_PORT=3306
-      - DB_USER=hfish
-      - DB_PASSWORD=HoneyScan_DB_Pass_2025!
-      - DB_NAME=hfish
+      - DB_TYPE=${DB_TYPE:-mysql}
+      - DB_HOST=${DB_HOST:-mariadb}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-hfish}
+      - DB_PASSWORD=${DB_PASSWORD:-hfish}
+      - DB_NAME=${DB_NAME:-hfish}
       - THREATBOOK_API_KEY=${THREATBOOK_API_KEY}
       - THREATBOOK_API_BASE_URL=${THREATBOOK_API_BASE_URL}
     volumes:
@@ -111,6 +111,7 @@ services:
       - ./scans:/usr/share/nginx/html/scans:ro
       - ./feed/index.html:/usr/share/nginx/html/index.html:ro
       - ./web/assets:/usr/share/nginx/html/assets:ro
+      - ./config/feed_nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   hfish_data:

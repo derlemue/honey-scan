@@ -238,7 +238,7 @@
         const updateData = async () => {
             try {
                 // 1. Live Threats
-                const threatResp = await fetch('/assets/live_threats.json?t=' + Date.now());
+                const threatResp = await fetch('https://feed.sec.lemue.org/assets/live_threats.json?t=' + Date.now());
                 const threatData = await threatResp.json();
 
                 renderHackers(threatData.hackers);
@@ -246,7 +246,7 @@
                 renderTicker(threatData.hackers);
 
                 // 2. Stats
-                const statsResp = await fetch('/assets/stats.json?t=' + Date.now());
+                const statsResp = await fetch('https://feed.sec.lemue.org/assets/stats.json?t=' + Date.now());
                 const statsData = await statsResp.json();
 
                 document.getElementById('stat-total').innerText = statsData.total_attacks.toLocaleString();
@@ -259,7 +259,7 @@
                 // 3. Location (Self Node)
                 // Only run once or less frequently
                 if (!window.nodeSet) {
-                    const locResp = await fetch('/assets/location.json');
+                    const locResp = await fetch('https://feed.sec.lemue.org/assets/location.json');
                     const locData = await locResp.json();
                     if (locData.lat && locData.lng) {
                         L.marker([locData.lat, locData.lng], { icon: nodeIcon }).addTo(map)
