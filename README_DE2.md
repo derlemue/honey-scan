@@ -180,6 +180,17 @@ chmod +x client_banned_ips.sh
 sudo ./client_banned_ips.sh
 ```
 
+### 4. Automatisch neu laden
+Die Liste soll immer aktuell sein. Mache das alle 5 Minuten.
+
+```bash
+# Planer öffnen (als Chef/Root)
+sudo crontab -e
+
+# Das hier eintragen (Pfad anpassen):
+*/5 * * * * /pfad/zur/datei/client_banned_ips.sh > /dev/null 2>&1
+```
+
 ## 📜 Über HFish
 
 Dieses Projekt basiert auf [HFish](https://hfish.net). Das ist ein bekannter Honeypot.

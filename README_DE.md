@@ -179,6 +179,17 @@ chmod +x client_banned_ips.sh
 sudo ./client_banned_ips.sh
 ```
 
+### 4. Automatische Updates (Cron)
+Halte deine Bannliste aktuell, indem das Skript alle 5 Minuten ausgeführt wird.
+
+```bash
+# Root-Crontab öffnen
+sudo crontab -e
+
+# Folgende Zeile hinzufügen (Pfad anpassen!):
+*/5 * * * * /pfad/zu/client_banned_ips.sh > /dev/null 2>&1
+```
+
 ## 📜 Über Core HFish
 
 Dieses Projekt basiert auf [HFish](https://hfish.net), einem leistungsstarken Community-Honeypot.

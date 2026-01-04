@@ -179,6 +179,17 @@ chmod +x client_banned_ips.sh
 sudo ./client_banned_ips.sh
 ```
 
+### 4. Configure Auto-Updates (Cron)
+Keep your ban list fresh by running the script every 5 minutes.
+
+```bash
+# Open root crontab
+sudo crontab -e
+
+# Add the following line (adjust path to your script location):
+*/5 * * * * /path/to/client_banned_ips.sh > /dev/null 2>&1
+```
+
 ## 📜 About Core HFish
 
 This project is built upon [HFish](https://hfish.net), a high-performance community honeypot.
