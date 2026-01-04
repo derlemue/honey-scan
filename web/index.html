@@ -369,9 +369,10 @@
 
                             container = document.createElement('div');
                             container.className = 'dynamic-hacker-list';
-                            container.style.height = '320px'; // Fixed height
+                            container.style.height = '240px'; // Reduced height to prevent overlap
                             container.style.overflow = 'hidden'; // No scrollbar
                             container.style.marginTop = '10px';
+                            container.style.marginBottom = '20px'; // Added safety margin
                             container.style.display = 'flex';
                             container.style.flexDirection = 'column';
                             container.style.gap = '6px';
@@ -472,4 +473,5 @@
     </script>
 
 </body>
+
 </html>
