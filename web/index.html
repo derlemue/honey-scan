@@ -187,11 +187,14 @@
             flex: 1;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 8px;
-            padding: 8px;
+            padding: 0;
+            /* Removed padding to maximize image size */
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 50px;
+            height: 50px;
+            /* Fixed height to match button */
+            overflow: hidden;
             cursor: pointer;
             transition: all 0.2s;
         }
