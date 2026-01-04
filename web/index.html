@@ -352,130 +352,165 @@
         // Update DOM
         const renderFeeds = () => {
             try {
+                // Find Headers (Standard vs Fallback)
+                let hackersHeader = null;
+                let csHeader = null;
+                
+                const headers = Array.from(document.querySelectorAll('div, span, p, h3'));
+                hackersHeader = headers.find(h => h.innerText && h.innerText.trim() === 'Recent active hackers');
+                csHeader = headers.find(h => h.innerText && h.innerText.trim() === 'The recent suspicious CS');
+
+                // FALLBACK: If standard headers are missing, inject our own container
+                if (!hackersHeader && !csHeader) {
+                    const rightWrapper = document.querySelector('div[class*="right-wrapper"]');
+                    if (rightWrapper) {
+                        let lemueContainer = document.getElementById('lemue-intelligence-container');
+                        if (!lemueContainer) {
+                            lemueContainer = document.createElement('div');
+                            lemueContainer.id = 'lemue-intelligence-container';
+                            lemueContainer.style.marginBottom = '20px';
+                            lemueContainer.style.padding = '0 10px';
+                            // Insert at top
+                            rightWrapper.insertBefore(lemueContainer, rightWrapper.firstChild);
+
+                            // Create Mock Headers
+                            const h1 = document.createElement('div');
+                            h1.innerText = 'Recent active hackers';
+                            h1.style.color = '#fff'; h1.style.fontSize = '14px'; h1.style.fontWeight = 'bold';
+                            h1.style.marginBottom = '10px'; h1.style.marginTop = '10px';
+                            lemueContainer.appendChild(h1);
+                            hackersHeader = h1;
+
+                            const h2 = document.createElement('div');
+                            h2.innerText = 'The recent suspicious CS';
+                            h2.style.color = '#fff'; h2.style.fontSize = '14px'; h2.style.fontWeight = 'bold';
+                            h2.style.marginBottom = '10px'; h2.style.marginTop = '20px';
+                            lemueContainer.appendChild(h2);
+                            csHeader = h2;
+                        } else {
+                             hackersHeader = Array.from(lemueContainer.children).find(el => el.innerText === 'Recent active hackers');
+                             csHeader = Array.from(lemueContainer.children).find(el => el.innerText === 'The recent suspicious CS');
+                        }
+                    }
+                }
+
                 // 1. Render "Recent active hackers" (Top Box)
-                const headers = document.querySelectorAll('div, span, p, h3');
-                headers.forEach(h => {
-                    if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
-                        // Find common container
-                        let container = h.parentElement.querySelector('.dynamic-hacker-list');
-                        if (!container) {
-                            // Clear siblings if first run (aggressive cleanup of React elements)
-                            const parent = h.parentElement;
+                if (hackersHeader) {
+                    let container = hackersHeader.parentElement.querySelector('.dynamic-hacker-list');
+                    if (!container) {
+                        if (hackersHeader.parentElement.id !== 'lemue-intelligence-container') {
+                            const parent = hackersHeader.parentElement;
                             Array.from(parent.children).forEach(child => {
-                                if (child !== h && !child.classList.contains('active-defense-title')) {
+                                if (child !== hackersHeader && !child.classList.contains('active-defense-title')) {
                                     child.style.display = 'none'; // Hide original React lists
                                 }
                             });
-
-                            container = document.createElement('div');
-                            container.className = 'dynamic-hacker-list';
-                            container.style.height = '240px';
-                            container.style.overflow = 'hidden';
-                            container.style.marginTop = '10px';
-                            container.style.marginBottom = '20px';
-                            container.style.display = 'flex';
-                            container.style.flexDirection = 'column';
-                            container.style.gap = '6px';
-                            parent.appendChild(container);
                         }
 
-                        // Render List
-                        let html = '';
-                        feedState.hackers.forEach((item, idx) => {
-                            let flagCode = 'unknown';
-                            if (item.flag && item.flag.length === 2) flagCode = item.flag.toLowerCase();
-                            else if (item.location) {
-                                const loc = item.location;
-                                // Use window.COUNTRY_MAP
-                                if (window.COUNTRY_MAP) {
-                                    // Direct match
-                                    if (window.COUNTRY_MAP[loc]) {
-                                        flagCode = window.COUNTRY_MAP[loc];
-                                    } else {
-                                        // Case-insensitive
-                                        const found = Object.keys(window.COUNTRY_MAP).find(k => k.toLowerCase() === loc.toLowerCase() || loc.includes(k));
-                                        if (found) flagCode = window.COUNTRY_MAP[found];
-                                    }
+                        container = document.createElement('div');
+                        container.className = 'dynamic-hacker-list';
+                        container.style.height = '240px';
+                        container.style.overflow = 'hidden';
+                        container.style.marginTop = '10px';
+                        container.style.marginBottom = '20px';
+                        container.style.display = 'flex';
+                        container.style.flexDirection = 'column';
+                        container.style.gap = '6px';
+                        hackersHeader.parentElement.appendChild(container);
+                    }
+
+                    let html = '';
+                    feedState.hackers.forEach((item, idx) => {
+                        let flagCode = 'unknown';
+                        if (item.flag && item.flag.length === 2) flagCode = item.flag.toLowerCase();
+                        else if (item.location) {
+                            const loc = item.location;
+                            if (window.COUNTRY_MAP) {
+                                if (window.COUNTRY_MAP[loc]) flagCode = window.COUNTRY_MAP[loc];
+                                else {
+                                    const found = Object.keys(window.COUNTRY_MAP).find(k => k.toLowerCase() === loc.toLowerCase() || loc.includes(k));
+                                    if (found) flagCode = window.COUNTRY_MAP[found];
                                 }
                             }
-
-                            html += `
-                                <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 4px;">
-                                    <div style="width: 24px; margin-right: 10px; display: flex; align-items: center;">
-                                        <svg viewBox="0 0 24 24" width="20" height="15" style="display:inline-block; vertical-align:middle;">
-                                            <use href="/assets/symbol-defs.svg#icon-${flagCode}"></use>
-                                        </svg>
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="color: #94a3b8; font-size: 11px; margin-bottom: 2px;">${item.location}</div>
-                                        <div style="color: #e2e8f0; font-family: monospace; font-size: 13px;">${item.ip}</div>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div style="color: #fca5a5; font-size: 11px;">SSH Brute</div> 
-                                        <div style="color: #4ade80; font-size: 10px; font-weight: bold;">${item.count || 1} hits</div>
-                                    </div>
-                                </div>
-                            `;
-                        });
-
-                        if (feedState.hackers.length === 0) {
-                            html = '<div style="color: #64748b; padding: 20px; text-align: center;">Waiting for incoming threats...</div>';
                         }
 
-                        container.innerHTML = html;
-                    }
+                        html += `
+                            <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 4px;">
+                                <div style="width: 24px; margin-right: 10px; display: flex; align-items: center;">
+                                    <svg viewBox="0 0 24 24" width="20" height="15" style="display:inline-block; vertical-align:middle;">
+                                        <use href="/assets/symbol-defs.svg#icon-${flagCode}"></use>
+                                    </svg>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="color: #94a3b8; font-size: 11px; margin-bottom: 2px;">${item.location}</div>
+                                    <div style="color: #e2e8f0; font-family: monospace; font-size: 13px;">${item.ip}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: #fca5a5; font-size: 11px;">SSH Brute</div> 
+                                    <div style="color: #4ade80; font-size: 10px; font-weight: bold;">${item.count || 1} hits</div>
+                                </div>
+                            </div>
+                        `;
+                    });
 
-                    // 2. Render "The recent suspicious CS" (Bottom Box)
-                    if (h.innerText && h.innerText.trim() === 'The recent suspicious CS') {
-                        let container = h.parentElement.querySelector('.dynamic-cs-list');
-                        if (!container) {
-                            const parent = h.parentElement;
+                    if (feedState.hackers.length === 0) {
+                        html = '<div style="color: #64748b; padding: 20px; text-align: center;">Waiting for incoming threats...</div>';
+                    }
+                    container.innerHTML = html;
+                }
+
+                // 2. Render "The recent suspicious CS" (Bottom Box)
+                if (csHeader) {
+                    let container = csHeader.parentElement.querySelector('.dynamic-cs-list');
+                    if (!container) {
+                        if (csHeader.parentElement.id !== 'lemue-intelligence-container') {
+                            const parent = csHeader.parentElement;
                             Array.from(parent.children).forEach(child => {
-                                if (child !== h) child.style.display = 'none';
+                                if (child !== csHeader) child.style.display = 'none';
                             });
-
-                            container = document.createElement('div');
-                            container.className = 'dynamic-cs-list';
-                            container.style.marginTop = '15px';
-                            container.style.display = 'flex';
-                            container.style.flexDirection = 'column';
-                            container.style.gap = '8px';
-                            parent.appendChild(container);
                         }
 
-                        let html = '';
-                        feedState.cs.forEach(item => {
-                            const risk = item.risk || 'Low';
-                            let color = '#eca913';
-                            if (risk === 'Critical') color = '#ef4444';
-                            if (risk === 'High') color = '#f97316';
+                        container = document.createElement('div');
+                        container.className = 'dynamic-cs-list';
+                        container.style.marginTop = '15px';
+                        container.style.display = 'flex';
+                        container.style.flexDirection = 'column';
+                        container.style.gap = '8px';
+                        csHeader.parentElement.appendChild(container);
+                    }
 
-                            html += `
-                                <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.5); padding: 8px 10px; border-radius: 4px; border-left: 3px solid ${color}; margin-bottom: 4px;">
-                                    <div style="margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 50%;">
-                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="${color}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="color: #f1f5f9; font-size: 13px; font-weight: bold; font-family: monospace; letter-spacing: 0.5px;">${item.ip}</div>
-                                        <div style="color: #94a3b8; font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
-                                            <span style="background:rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 2px;">${item.location}</span>
-                                        </div>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div style="color: ${color}; font-size: 11px; font-weight: 700; text-transform: uppercase;">${item.type}</div>
-                                        <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Risk: ${risk}</div>
+                    let html = '';
+                    feedState.cs.forEach(item => {
+                        const risk = item.risk || 'Low';
+                        let color = '#eca913';
+                        if (risk === 'Critical') color = '#ef4444';
+                        if (risk === 'High') color = '#f97316';
+
+                        html += `
+                            <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.5); padding: 8px 10px; border-radius: 4px; border-left: 3px solid ${color}; margin-bottom: 4px;">
+                                <div style="margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 50%;">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="${color}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="color: #f1f5f9; font-size: 13px; font-weight: bold; font-family: monospace; letter-spacing: 0.5px;">${item.ip}</div>
+                                    <div style="color: #94a3b8; font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                        <span style="background:rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 2px;">${item.location}</span>
                                     </div>
                                 </div>
-                            `;
-                        });
+                                <div style="text-align: right;">
+                                    <div style="color: ${color}; font-size: 11px; font-weight: 700; text-transform: uppercase;">${item.type}</div>
+                                    <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Risk: ${risk}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
 
-                        if (feedState.cs.length === 0) {
-                            html = '<div style="color: #64748b; padding: 20px; text-align: center;">Scanning...</div>';
-                        }
-
-                        container.innerHTML = html;
+                    if (feedState.cs.length === 0) {
+                        html = '<div style="color: #64748b; padding: 20px; text-align: center;">Scanning...</div>';
                     }
-                });
+                    container.innerHTML = html;
+                }
+
             } catch (e) { console.error("Feed Render Error:", e); }
         };
 
