@@ -295,86 +295,86 @@
         };
 
 
-// === REAL-TIME THREAT FEED (VIA JSON) ===
-const FEED_URL = '/assets/live_threats.json';
+        // === REAL-TIME THREAT FEED (VIA JSON) ===
+        const FEED_URL = 'assets/live_threats.json';
 
-// State Management
-let feedState = {
-    hackers: [],
-    cs: [],
-    api_active: false
-};
+        // State Management
+        let feedState = {
+            hackers: [],
+            cs: [],
+            api_active: false
+        };
 
-// Fetch Data
-const updateFeeds = async () => {
-    try {
-        const response = await fetch(FEED_URL + '?t=' + new Date().getTime());
-        if (response.ok) {
-            const data = await response.json();
+        // Fetch Data
+        const updateFeeds = async () => {
+            try {
+                const response = await fetch(FEED_URL + '?t=' + new Date().getTime());
+                if (response.ok) {
+                    const data = await response.json();
 
-            if (data.hackers) feedState.hackers = data.hackers;
-            if (data.cs) feedState.cs = data.cs;
-            feedState.api_active = data.api_active;
+                    if (data.hackers) feedState.hackers = data.hackers;
+                    if (data.cs) feedState.cs = data.cs;
+                    feedState.api_active = data.api_active;
 
-            renderFeeds();
-        }
-    } catch (e) {
-        // Silent fail
-    }
-};
-
-// Update DOM
-const renderFeeds = () => {
-    try {
-        // 1. Render "Recent active hackers" (Top Box)
-        const headers = document.querySelectorAll('div, span, p, h3');
-        headers.forEach(h => {
-            if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
-                // Find common container
-                let container = h.parentElement.querySelector('.dynamic-hacker-list');
-                if (!container) {
-                    // Clear siblings if first run (aggressive cleanup of React elements)
-                    const parent = h.parentElement;
-                    Array.from(parent.children).forEach(child => {
-                        if (child !== h && !child.classList.contains('active-defense-title')) {
-                            child.style.display = 'none'; // Hide original React lists
-                        }
-                    });
-
-                    container = document.createElement('div');
-                    container.className = 'dynamic-hacker-list';
-                    container.style.height = '240px';
-                    container.style.overflow = 'hidden';
-                    container.style.marginTop = '10px';
-                    container.style.marginBottom = '20px';
-                    container.style.display = 'flex';
-                    container.style.flexDirection = 'column';
-                    container.style.gap = '6px';
-                    parent.appendChild(container);
+                    renderFeeds();
                 }
+            } catch (e) {
+                // Silent fail
+            }
+        };
 
-                // Render List
-                let html = '';
-                feedState.hackers.forEach((item, idx) => {
-                    let flagCode = 'unknown';
-                    if (item.flag && item.flag.length === 2) flagCode = item.flag.toLowerCase();
-                    else if (item.location) {
-                        const loc = item.location.toLowerCase();
-                        if (loc.includes('china')) flagCode = 'cn';
-                        else if (loc.includes('united states') || loc.includes('usa')) flagCode = 'us';
-                        else if (loc.includes('russia')) flagCode = 'ru';
-                        else if (loc.includes('germany') || loc.includes('deutschland')) flagCode = 'de';
-                        else if (loc.includes('france')) flagCode = 'fr';
-                        else if (loc.includes('netherlands')) flagCode = 'nl';
-                        else if (loc.includes('brazil')) flagCode = 'br';
-                        else if (loc.includes('india')) flagCode = 'in';
-                        else if (loc.includes('vietnam')) flagCode = 'vn';
-                        else if (loc.includes('uk') || loc.includes('kingdom')) flagCode = 'gb';
-                        else if (loc.includes('japan')) flagCode = 'jp';
-                        else if (loc.includes('canada')) flagCode = 'ca';
-                    }
+        // Update DOM
+        const renderFeeds = () => {
+            try {
+                // 1. Render "Recent active hackers" (Top Box)
+                const headers = document.querySelectorAll('div, span, p, h3');
+                headers.forEach(h => {
+                    if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
+                        // Find common container
+                        let container = h.parentElement.querySelector('.dynamic-hacker-list');
+                        if (!container) {
+                            // Clear siblings if first run (aggressive cleanup of React elements)
+                            const parent = h.parentElement;
+                            Array.from(parent.children).forEach(child => {
+                                if (child !== h && !child.classList.contains('active-defense-title')) {
+                                    child.style.display = 'none'; // Hide original React lists
+                                }
+                            });
 
-                    html += `
+                            container = document.createElement('div');
+                            container.className = 'dynamic-hacker-list';
+                            container.style.height = '240px';
+                            container.style.overflow = 'hidden';
+                            container.style.marginTop = '10px';
+                            container.style.marginBottom = '20px';
+                            container.style.display = 'flex';
+                            container.style.flexDirection = 'column';
+                            container.style.gap = '6px';
+                            parent.appendChild(container);
+                        }
+
+                        // Render List
+                        let html = '';
+                        feedState.hackers.forEach((item, idx) => {
+                            let flagCode = 'unknown';
+                            if (item.flag && item.flag.length === 2) flagCode = item.flag.toLowerCase();
+                            else if (item.location) {
+                                const loc = item.location.toLowerCase();
+                                if (loc.includes('china')) flagCode = 'cn';
+                                else if (loc.includes('united states') || loc.includes('usa')) flagCode = 'us';
+                                else if (loc.includes('russia')) flagCode = 'ru';
+                                else if (loc.includes('germany') || loc.includes('deutschland')) flagCode = 'de';
+                                else if (loc.includes('france')) flagCode = 'fr';
+                                else if (loc.includes('netherlands')) flagCode = 'nl';
+                                else if (loc.includes('brazil')) flagCode = 'br';
+                                else if (loc.includes('india')) flagCode = 'in';
+                                else if (loc.includes('vietnam')) flagCode = 'vn';
+                                else if (loc.includes('uk') || loc.includes('kingdom')) flagCode = 'gb';
+                                else if (loc.includes('japan')) flagCode = 'jp';
+                                else if (loc.includes('canada')) flagCode = 'ca';
+                            }
+
+                            html += `
                                 <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 4px;">
                                     <div style="width: 24px; margin-right: 10px; display: flex; align-items: center;">
                                         <svg viewBox="0 0 24 24" width="20" height="15" style="display:inline-block; vertical-align:middle;">
@@ -391,41 +391,41 @@ const renderFeeds = () => {
                                     </div>
                                 </div>
                             `;
-                });
+                        });
 
-                if (feedState.hackers.length === 0) {
-                    html = '<div style="color: #64748b; padding: 20px; text-align: center;">Waiting for incoming threats...</div>';
-                }
+                        if (feedState.hackers.length === 0) {
+                            html = '<div style="color: #64748b; padding: 20px; text-align: center;">Waiting for incoming threats...</div>';
+                        }
 
-                container.innerHTML = html;
-            }
+                        container.innerHTML = html;
+                    }
 
-            // 2. Render "The recent suspicious CS" (Bottom Box)
-            if (h.innerText && h.innerText.trim() === 'The recent suspicious CS') {
-                let container = h.parentElement.querySelector('.dynamic-cs-list');
-                if (!container) {
-                    const parent = h.parentElement;
-                    Array.from(parent.children).forEach(child => {
-                        if (child !== h) child.style.display = 'none';
-                    });
+                    // 2. Render "The recent suspicious CS" (Bottom Box)
+                    if (h.innerText && h.innerText.trim() === 'The recent suspicious CS') {
+                        let container = h.parentElement.querySelector('.dynamic-cs-list');
+                        if (!container) {
+                            const parent = h.parentElement;
+                            Array.from(parent.children).forEach(child => {
+                                if (child !== h) child.style.display = 'none';
+                            });
 
-                    container = document.createElement('div');
-                    container.className = 'dynamic-cs-list';
-                    container.style.marginTop = '15px';
-                    container.style.display = 'flex';
-                    container.style.flexDirection = 'column';
-                    container.style.gap = '8px';
-                    parent.appendChild(container);
-                }
+                            container = document.createElement('div');
+                            container.className = 'dynamic-cs-list';
+                            container.style.marginTop = '15px';
+                            container.style.display = 'flex';
+                            container.style.flexDirection = 'column';
+                            container.style.gap = '8px';
+                            parent.appendChild(container);
+                        }
 
-                let html = '';
-                feedState.cs.forEach(item => {
-                    const risk = item.risk || 'Low';
-                    let color = '#eca913';
-                    if (risk === 'Critical') color = '#ef4444';
-                    if (risk === 'High') color = '#f97316';
+                        let html = '';
+                        feedState.cs.forEach(item => {
+                            const risk = item.risk || 'Low';
+                            let color = '#eca913';
+                            if (risk === 'Critical') color = '#ef4444';
+                            if (risk === 'High') color = '#f97316';
 
-                    html += `
+                            html += `
                                 <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.5); padding: 8px 10px; border-radius: 4px; border-left: 3px solid ${color}; margin-bottom: 4px;">
                                     <div style="margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 50%;">
                                         <svg viewBox="0 0 24 24" width="18" height="18" fill="${color}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
@@ -442,29 +442,30 @@ const renderFeeds = () => {
                                     </div>
                                 </div>
                             `;
+                        });
+
+                        if (feedState.cs.length === 0) {
+                            html = '<div style="color: #64748b; padding: 20px; text-align: center;">Scanning...</div>';
+                        }
+
+                        container.innerHTML = html;
+                    }
                 });
+            } catch (e) { console.error("Feed Render Error:", e); }
+        };
 
-                if (feedState.cs.length === 0) {
-                    html = '<div style="color: #64748b; padding: 20px; text-align: center;">Scanning...</div>';
-                }
+        // Initialize and Loop
+        updateFeeds();
 
-                container.innerHTML = html;
-            }
-        });
-    } catch (e) { console.error("Feed Render Error:", e); }
-};
+        setInterval(() => {
+            updateFeeds();
+            renderFeeds();
 
-// Initialize and Loop
-updateFeeds();
-
-setInterval(() => {
-    updateFeeds();
-    renderFeeds();
-
-    patchBrandingAggressive();
-    patchDataIssues();
-}, 5000);
+            patchBrandingAggressive();
+            patchDataIssues();
+        }, 5000);
 
     </script>
 </body>
+
 </html>
