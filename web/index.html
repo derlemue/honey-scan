@@ -1012,7 +1012,7 @@
                           height: auto !important;
                       }
                       
-                      /* Custom Footer */
+                      /* Custom Footer - DISABLED
                       #lemue-footer {
                           position: fixed;
                           bottom: 10px;
@@ -1023,6 +1023,7 @@
                           pointer-events: none;
                           z-index: 9999;
                       }
+                      */
 
                       /* Top Right Link Bar - FLUSH TOP (0px) */
                       #lemue-link-bar {
@@ -1066,13 +1067,15 @@
                     document.head.appendChild(style);
                 }
 
-                // 4. Inject Footer
+                // 4. Inject Footer - DISABLED (Duplicate Fix)
+                /* 
                 if (!document.getElementById('lemue-footer')) {
                     const footer = document.createElement('div');
                     footer.id = 'lemue-footer';
                     footer.innerHTML = 'for you by lemue.org ♥️';
                     document.body.appendChild(footer);
                 }
+                */
 
                 // 5. Inject Link Bar
                 if (!document.getElementById('lemue-link-bar')) {
