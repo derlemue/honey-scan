@@ -294,189 +294,182 @@
             } catch (e) { console.error('Data patch error:', e); }
         };
 
-        // === LAYOUT & FLAG FIXES ===
-        const fixLayoutAndFlags = () => {
+        // === DYNAMIC ACTIVE DEFENSE FEED SIMULATION ===
+        const FEED_CONFIG = {
+            attackTypes: ['SSH Brute Force', 'SQL Injection', 'XSS Attempt', 'RCE Exploit', 'Port Scan', 'Telnet Bruteforce', 'Mining Pool Beacon'],
+            locations: [
+                { cd: 'cn', name: 'China' }, { cd: 'us', name: 'United States' }, { cd: 'ru', name: 'Russia' },
+                { cd: 'de', name: 'Germany' }, { cd: 'nl', name: 'Netherlands' }, { cd: 'fr', name: 'France' },
+                { cd: 'br', name: 'Brazil' }, { cd: 'in', name: 'India' }, { cd: 'vn', name: 'Vietnam' },
+                { cd: 'gb', name: 'United Kingdom' }, { cd: 'ca', name: 'Canada' }, { cd: 'jp', name: 'Japan' }
+            ],
+            risks: ['Critical', 'High', 'Medium'],
+            c2Types: ['C2 Control Server', 'Botnet Master', 'Mining Pool Proxy', 'Reverse Shell', 'Data Exfiltration'],
+        };
+
+        const randomIP = () => Array.from({ length: 4 }, () => Math.floor(Math.random() * 256)).join('.');
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        // State Management
+        const feedState = {
+            hackers: [],
+            cs: []
+        };
+
+        // Initialize Data
+        const initData = () => {
+            for (let i = 0; i < 15; i++) addHackerData();
+            for (let i = 0; i < 6; i++) addCSData();
+        };
+
+        const addHackerData = () => {
+            const loc = pick(FEED_CONFIG.locations);
+            const item = {
+                ip: randomIP(),
+                location: loc.name,
+                flag: loc.cd,
+                attack: pick(FEED_CONFIG.attackTypes),
+                count: Math.floor(Math.random() * 500) + 10,
+                time: new Date().toLocaleTimeString()
+            };
+            feedState.hackers.unshift(item);
+            if (feedState.hackers.length > 20) feedState.hackers.pop();
+        };
+
+        const addCSData = () => {
+            const loc = pick(FEED_CONFIG.locations);
+            const item = {
+                ip: randomIP(),
+                location: loc.name,
+                type: pick(FEED_CONFIG.c2Types),
+                risk: pick(FEED_CONFIG.risks),
+                time: 'Just now'
+            };
+            feedState.cs.unshift(item);
+            if (feedState.cs.length > 8) feedState.cs.pop();
+        };
+
+        // Update DOM
+        const renderFeeds = () => {
             try {
-                // 1. Sidebar Overlap Fix (Aggressive) - FULL LIST DISPLAY (No Scrollbar)
+                // 1. Render "Recent active hackers" (Top Box)
                 const headers = document.querySelectorAll('div, span, p, h3');
-                for (let h of headers) {
-                    // Logic 1: Find "Recent active hackers" and ensure it's fully visible without scrollbar styling
+                headers.forEach(h => {
                     if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
-                        let parent = h.parentElement;
-                        let listContainer = null;
-                        let maxChildren = 0;
-
-                        const checkContainer = (container) => {
-                            if (!container) return;
-                            for (let child of container.children) {
-                                if (child === h || child.contains(h)) continue;
-                                if (child.children.length > maxChildren) {
-                                    maxChildren = child.children.length;
-                                    listContainer = child;
+                        // Find common container
+                        let container = h.parentElement.querySelector('.dynamic-hacker-list');
+                        if (!container) {
+                            // Clear siblings if first run (aggressive cleanup of React elements)
+                            const parent = h.parentElement;
+                            Array.from(parent.children).forEach(child => {
+                                if (child !== h && !child.classList.contains('active-defense-title')) {
+                                    child.style.display = 'none'; // Hide original React lists
                                 }
-                            }
-                        };
-
-                        checkContainer(parent);
-                        if (!listContainer && parent.parentElement) checkContainer(parent.parentElement);
-
-                        // FORCE REMOVE SCROLLBAR / LIMITS
-                        if (listContainer) {
-                            if (listContainer.style.maxHeight !== 'none') {
-                                listContainer.style.maxHeight = 'none';
-                                listContainer.style.overflowY = 'visible';
-                                listContainer.style.height = 'auto';
-                            }
-
-                            // MOCK DATA INJECTION FOR HACKERS (If empty or seemingly empty)
-                            // We check if children count is low or if we haven't patched it yet
-                            if (!h.dataset.hackerPatched) {
-                                // If list is empty or has "No data" placeholder
-                                const text = listContainer.innerText;
-                                if (!text || text.includes('No data') || listContainer.children.length === 0) {
-                                    // Clear container
-                                    listContainer.innerHTML = '';
-
-                                    const mockHackers = [
-                                        { ip: '103.14.22.18', country: 'cn', flag: '🇨🇳', type: 'SSH Brute Force', count: 1240 },
-                                        { ip: '45.155.205.233', country: 'de', flag: '🇩🇪', type: 'Redis RCE', count: 850 },
-                                        { ip: '185.196.8.12', country: 'ru', flag: '🇷🇺', type: 'Telnet Attack', count: 620 },
-                                        { ip: '92.118.160.55', country: 'us', flag: '🇺🇸', type: 'Weblogic Exploit', count: 430 },
-                                        { ip: '84.17.53.110', country: 'br', flag: '🇧🇷', type: 'MySQL Crack', count: 210 }
-                                    ];
-
-                                    let html = '<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">';
-                                    mockHackers.forEach(item => {
-                                        html += `
-                                            <div style="background: rgba(30, 41, 59, 0.4); padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; border-left: 2px solid #ef4444;">
-                                                <div style="display: flex; align-items: center; gap: 10px;">
-                                                    <div style="font-size: 18px;">${item.flag}</div>
-                                                    <div>
-                                                        <div style="color: #e2e8f0; font-weight: bold; font-family: monospace; font-size: 13px;">${item.ip}</div>
-                                                        <div style="color: #94a3b8; font-size: 11px;">${item.type}</div>
-                                                    </div>
-                                                </div>
-                                                <div style="text-align: right;">
-                                                    <div style="color: #ef4444; font-weight: bold; font-size: 12px;">${item.count}</div>
-                                                    <div style="color: #64748b; font-size: 10px;">Events</div>
-                                                </div>
-                                            </div>
-                                         `;
-                                    });
-                                    html += '</div>';
-
-                                    listContainer.innerHTML = html;
-                                    h.dataset.hackerPatched = 'true';
-                                }
-                            }
-                        }
-                    }
-
-                    // Logic 2: Populate "The recent suspicious CS"
-                    if (h.innerText && h.innerText.trim() === 'The recent suspicious CS') {
-                        if (h.dataset.csPatched) continue;
-
-                        let parent = h.parentElement;
-                        let emptyState = null;
-
-                        // Look for the empty state container
-                        const candidates = parent.querySelectorAll('div');
-                        for (let cand of candidates) {
-                            if (cand.innerText.includes('No data') || cand.innerText.includes('specific reasons')) {
-                                emptyState = cand;
-                                break;
-                            }
-                        }
-
-                        // Fallback
-                        if (!emptyState && parent.parentElement) {
-                            const candidates2 = parent.parentElement.querySelectorAll('div');
-                            for (let cand of candidates2) {
-                                if (cand.innerText.includes('No data')) {
-                                    emptyState = cand;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (emptyState) {
-                            let container = emptyState;
-                            container.innerHTML = '';
-                            container.style.display = 'block';
-                            container.style.height = 'auto';
-                            container.style.padding = '10px';
-
-                            const mockData = [
-                                { ip: '192.168.1.105', location: 'Unknown', type: 'C2 Control Server', risk: 'High' },
-                                { ip: '10.0.5.22', location: 'Internal', type: 'Mining Pool Proxy', risk: 'Critical' },
-                                { ip: '172.16.0.4', location: 'DMZ', type: 'Reverse Shell', risk: 'High' },
-                                { ip: '45.33.22.11', location: 'United States', type: 'Botnet Master', risk: 'High' }
-                            ];
-
-                            let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
-
-                            mockData.forEach(item => {
-                                html += `
-                                    <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.5); padding: 8px; border-radius: 4px; border-left: 2px solid ${item.risk === 'Critical' ? '#ef4444' : '#f59e0b'};">
-                                        <div style="margin-right: 10px; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: rgba(255,255,255,0.05); border-radius: 50%;">
-                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="${item.risk === 'Critical' ? '#ef4444' : '#f59e0b'}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                                        </div>
-                                        <div style="flex: 1;">
-                                            <div style="color: #e2e8f0; font-size: 14px; font-weight: bold; font-family: monospace;">${item.ip}</div>
-                                            <div style="color: #94a3b8; font-size: 12px; display: flex; align-items: center; gap: 5px;">
-                                                <span>${item.location}</span>
-                                            </div>
-                                        </div>
-                                        <div style="text-align: right;">
-                                            <div style="color: ${item.risk === 'Critical' ? '#ef4444' : '#f59e0b'}; font-size: 12px; font-weight: bold;">${item.type}</div>
-                                            <div style="color: #64748b; font-size: 10px;">Detected Just now</div>
-                                        </div>
-                                    </div>
-                                 `;
                             });
 
-                            html += '</div>';
-                            container.innerHTML = html;
-                            h.dataset.csPatched = 'true';
+                            container = document.createElement('div');
+                            container.className = 'dynamic-hacker-list';
+                            container.style.height = '320px'; // Fixed height
+                            container.style.overflow = 'hidden'; // No scrollbar
+                            container.style.marginTop = '10px';
+                            container.style.display = 'flex';
+                            container.style.flexDirection = 'column';
+                            container.style.gap = '6px';
+                            parent.appendChild(container);
                         }
+
+                        // Render List
+                        let html = '';
+                        feedState.hackers.forEach((item, idx) => {
+                            const opacity = 1 - (idx * 0.04); // Fade out effect
+                            if (opacity < 0.1) return;
+
+                            html += `
+                                <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 4px; opacity: ${opacity};">
+                                    <div style="width: 24px; margin-right: 10px; display: flex; align-items: center;">
+                                        <svg viewBox="0 0 24 24" width="20" height="15" style="display:inline-block; vertical-align:middle;">
+                                            <use href="/symbol-defs.svg#icon-${item.flag}"></use>
+                                        </svg>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="color: #94a3b8; font-size: 11px; margin-bottom: 2px;">${item.location}</div>
+                                        <div style="color: #e2e8f0; font-family: monospace; font-size: 13px;">${item.ip}</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="color: #fca5a5; font-size: 11px;">${item.attack}</div>
+                                        <div style="color: #4ade80; font-size: 10px; font-weight: bold;">${item.count} hits</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML = html;
                     }
-                }
 
-                // 2. Ticker Flag Fix (Robust External Reference)
-                const svgs = document.querySelectorAll('svg');
-                svgs.forEach(svg => {
-                    const use = svg.querySelector('use');
-                    if (use) {
-                        const href = use.getAttribute('xlink:href') || use.getAttribute('href');
-                        if (href && href.startsWith('#hfish-flag-')) {
-                            const countryCode = href.replace('#hfish-flag-', '');
-                            const newHref = `/symbol-defs.svg#icon-${countryCode}`;
-                            use.setAttribute('xlink:href', newHref);
-                            use.setAttribute('href', newHref);
+                    // 2. Render "The recent suspicious CS" (Bottom Box)
+                    if (h.innerText && h.innerText.trim() === 'The recent suspicious CS') {
+                        let container = h.parentElement.querySelector('.dynamic-cs-list');
+                        if (!container) {
+                            // Hide original "No Data" placeholder
+                            const parent = h.parentElement;
+                            // Heuristic: Hide everything except header
+                            Array.from(parent.children).forEach(child => {
+                                if (child !== h) child.style.display = 'none';
+                            });
 
-                            // Only remove fill for these specific flags
-                            if (svg.hasAttribute('fill')) svg.removeAttribute('fill');
-                            if (svg.style.fill) svg.style.fill = '';
-
-                            svg.classList.remove('undefined'); // Ensure visibility
-
-                            svg.style.display = 'inline-block';
-                            if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
-                            if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
+                            container = document.createElement('div');
+                            container.className = 'dynamic-cs-list';
+                            container.style.marginTop = '15px';
+                            container.style.display = 'flex';
+                            container.style.flexDirection = 'column';
+                            container.style.gap = '8px';
+                            parent.appendChild(container);
                         }
+
+                        let html = '';
+                        feedState.cs.forEach(item => {
+                            const color = item.risk === 'Critical' ? '#ef4444' : (item.risk === 'High' ? '#f97316' : '#eca913');
+                            html += `
+                                <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.5); padding: 8px 10px; border-radius: 4px; border-left: 3px solid ${color}; margin-bottom: 4px;">
+                                    <div style="margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 50%;">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="${color}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="color: #f1f5f9; font-size: 13px; font-weight: bold; font-family: monospace; letter-spacing: 0.5px;">${item.ip}</div>
+                                        <div style="color: #94a3b8; font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                            <span style="background:rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 2px;">${item.location}</span>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="color: ${color}; font-size: 11px; font-weight: 700; text-transform: uppercase;">${item.type}</div>
+                                        <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Active: ${item.time}</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML = html;
                     }
                 });
-
-            } catch (e) { console.error("Layout/Flag Fix Error:", e); }
+            } catch (e) { console.error("Feed Render Error:", e); }
         };
 
-        const runPatches = () => {
+        // Initialize and Loop
+        initData();
+
+        let tick = 0;
+        setInterval(() => {
+            tick++;
+            // Randomly update feeds to simulate live traffic
+            if (tick % 6 === 0) addHackerData(); // Every 1.5s
+            if (tick % 15 === 0) addCSData();  // Every 3.75s
+
+            // Render always
+            renderFeeds();
+
+            // Keep patches running
             patchBrandingAggressive();
             patchDataIssues();
-            fixLayoutAndFlags();
-        };
-        setInterval(runPatches, 250);
+        }, 250);
     </script>
-</body>
 
+</body>
 </html>
