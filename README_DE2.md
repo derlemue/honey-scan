@@ -181,14 +181,14 @@ sudo ./client_banned_ips.sh
 ```
 
 ### 4. Automatisch neu laden
-Die Liste soll immer aktuell sein. Mache das alle 5 Minuten.
+Die Liste soll immer aktuell sein. Mache das alle 15 Minuten.
 
 ```bash
 # Planer öffnen (als Chef/Root)
 sudo crontab -e
 
 # Das hier eintragen (Pfad anpassen):
-*/5 * * * * /pfad/zur/datei/client_banned_ips.sh > /dev/null 2>&1
+*/15 * * * * /pfad/zur/datei/client_banned_ips.sh > /dev/null 2>&1
 ```
 
 ## 📜 Über HFish
