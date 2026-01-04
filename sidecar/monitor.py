@@ -9,10 +9,8 @@ import logging
 import requests
 import json
 from concurrent.futures import ThreadPoolExecutor
-from dotenv import load_dotenv
 
 # Load Env
-load_dotenv()
 
 # Configuration
 # Version: 1.3 (Force Rebuild)
