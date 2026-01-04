@@ -25,7 +25,21 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px 0;
+            overflow-y: auto;
+            position: relative;
+            /* Ensure height handling allows scroll */
+            height: auto;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 768px),
+        (max-height: 800px) {
+            body {
+                justify-content: flex-start;
+                padding-top: 40px;
+                padding-bottom: 60px;
+                /* Space for footer */
+            }
         }
 
         /* Link Bar */
