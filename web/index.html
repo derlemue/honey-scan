@@ -21,6 +21,187 @@
             -ms-overflow-style: none !important;
         }
 
+        /* NATIVE LOGIN PAGE STYLES - LOADS BEFORE REACT (NO FOUC) */
+        .hscan-login-page {
+            display: none;
+            /* Hidden by default, shown by JS when on login page */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a;
+            z-index: 99999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .hscan-login-page.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hscan-link-bar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 15px;
+            z-index: 100000;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 20px;
+            border-bottom-left-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .hscan-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            opacity: 0.7;
+            transition: all 0.2s;
+            color: #4ade80;
+            text-decoration: none;
+        }
+
+        .hscan-link:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .hscan-link svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor;
+        }
+
+        .hscan-link img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .hscan-login-box {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .hscan-logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .hscan-logo-section img {
+            width: 80%;
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .hscan-brand-title {
+            color: #4ade80;
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .hscan-brand-subtitle {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .hscan-form-group {
+            margin-bottom: 20px;
+        }
+
+        .hscan-form-label {
+            display: block;
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .hscan-form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        .hscan-form-input:focus {
+            outline: none;
+            border-color: #4ade80;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .hscan-login-button {
+            width: 100%;
+            padding: 14px;
+            background-color: #4ade80;
+            border: none;
+            border-radius: 8px;
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .hscan-login-button:hover {
+            background-color: #22c55e;
+            transform: translateY(-1px);
+        }
+
+        .hscan-login-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .hscan-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .hscan-error.show {
+            display: block;
+        }
+
+        .hscan-footer {
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        /* ORIGINAL LOADING STYLES */
         .main-loading-wrap {
             text-align: center;
 
@@ -73,6 +254,65 @@
 </head>
 
 <body>
+    <!-- NATIVE LOGIN PAGE (NO FOUC) -->
+    <div class="hscan-login-page" id="hscanLoginPage">
+        <!-- Link Bar -->
+        <div class="hscan-link-bar">
+            <a href="https://github.com/derlemue/honey-scan" class="hscan-link" title="GitHub" target="_blank">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                </svg>
+            </a>
+            <a href="https://feed.sec.lemue.org/" class="hscan-link" title="Feed" target="_blank">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z" />
+                </svg>
+            </a>
+            <a href="https://feed.sec.lemue.org/feed/banned_ips.txt" class="hscan-link" title="Banned IPs"
+                target="_blank">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                </svg>
+            </a>
+            <a href="https://lemue.org" class="hscan-link" title="lemue.org" target="_blank">
+                <img src="https://lemue.org/favicon.ico" alt="lemue.org" onerror="this.style.display='none'">
+            </a>
+        </div>
+
+        <!-- Login Box -->
+        <div class="hscan-login-box">
+            <div class="hscan-logo-section">
+                <img src="/assets/logo_bear.png" alt="Honey Scan Logo">
+                <div class="hscan-brand-title">Honey Scan</div>
+                <div class="hscan-brand-subtitle">Active Defense Platform</div>
+            </div>
+
+            <form id="hscanLoginForm">
+                <div class="hscan-error" id="hscanError"></div>
+
+                <div class="hscan-form-group">
+                    <label class="hscan-form-label" for="hscanUsername">Username</label>
+                    <input type="text" id="hscanUsername" class="hscan-form-input" placeholder="Enter your username"
+                        required autocomplete="username">
+                </div>
+
+                <div class="hscan-form-group">
+                    <label class="hscan-form-label" for="hscanPassword">Password</label>
+                    <input type="password" id="hscanPassword" class="hscan-form-input" placeholder="Enter your password"
+                        required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="hscan-login-button" id="hscanLoginBtn">Sign In</button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="hscan-footer">for you by lemue.org ♥️</div>
+    </div>
+
     <!-- INJECTED FLAG DEFINITIONS -->
     <!-- Flags are now loaded from /assets/symbol-defs.svg -->
 
@@ -86,6 +326,87 @@
     </div>
     <script>
         __REACT_DEVTOOLS_GLOBAL_HOOK__ = parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    </script>
+    <script>
+        // NATIVE LOGIN PAGE ACTIVATION (NO FOUC)
+        (function () {
+            const isLoginPage = location.href.includes('/login') || location.hash.includes('login');
+
+            if (isLoginPage) {
+                // Activate login page immediately
+                const loginPage = document.getElementById('hscanLoginPage');
+                if (loginPage) {
+                    loginPage.classList.add('active');
+                }
+
+                // Hide React app
+                const app = document.getElementById('app');
+                if (app) {
+                    app.style.display = 'none';
+                }
+
+                // Login form handler
+                const form = document.getElementById('hscanLoginForm');
+                const errorDiv = document.getElementById('hscanError');
+                const loginBtn = document.getElementById('hscanLoginBtn');
+                const usernameInput = document.getElementById('hscanUsername');
+                const passwordInput = document.getElementById('hscanPassword');
+
+                if (form) {
+                    form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+
+                        errorDiv.classList.remove('show');
+                        errorDiv.textContent = '';
+
+                        const username = usernameInput.value.trim();
+                        const password = passwordInput.value;
+
+                        if (!username || !password) {
+                            errorDiv.textContent = 'Please enter both username and password';
+                            errorDiv.classList.add('show');
+                            return;
+                        }
+
+                        loginBtn.disabled = true;
+                        loginBtn.textContent = 'Signing In...';
+
+                        try {
+                            const response = await fetch('/api/v1/user/login', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    account: username,
+                                    password: password
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (response.ok && data.code === 0) {
+                                if (data.data && data.data.token) {
+                                    localStorage.setItem('hfish_token', data.data.token);
+                                }
+                                window.location.href = '/web/dashboard';
+                            } else {
+                                errorDiv.textContent = data.msg || 'Invalid username or password';
+                                errorDiv.classList.add('show');
+                                loginBtn.disabled = false;
+                                loginBtn.textContent = 'Sign In';
+                            }
+                        } catch (error) {
+                            console.error('Login error:', error);
+                            errorDiv.textContent = 'Connection error. Please try again.';
+                            errorDiv.classList.add('show');
+                            loginBtn.disabled = false;
+                            loginBtn.textContent = 'Sign In';
+                        }
+                    });
+                }
+            }
+        })();
     </script>
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
     <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
