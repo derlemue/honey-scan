@@ -1,6 +1,9 @@
 
 import os
 import pymysql
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)

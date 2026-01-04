@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.15] - 2026-01-04
+
+### Fixed
+- 🚩 **UI**: Fixed incorrect flag rendering for "Britain" (showing US flag) by adding missing mapping to the Ticker's internal country map.
+- 🌍 **Geography**: Added comprehensive country mapping to `web/index.html` to prevent future missing flags.
+
 ## [3.8.14] - 2026-01-03
 
 ### Fixed

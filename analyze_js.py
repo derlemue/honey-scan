@@ -1,4 +1,8 @@
 import re
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # path = 'web/assets/app.6539b5af.js'
 # Switch to DLL to check for ECharts Lib
@@ -8,6 +12,10 @@ path_app = 'web/assets/app.6539b5af.js'
 
 def analyze_file(filepath, label):
     print(f"\n\n========== ANALYZING {label} ==========")
+    if not os.path.exists(filepath):
+        print(f"Skipping {label}: File {filepath} not found.")
+        return
+
     try:
         with open(filepath, 'rb') as f:
             content = f.read()
@@ -23,6 +31,10 @@ def analyze_file(filepath, label):
         print(f"Error reading {label}: {e}")
 
 def analyze_app_map():
+    if not os.path.exists(path_app):
+        print(f"Skipping APP analysis: {path_app} not found.")
+        return
+
     try:
         with open(path_app, 'rb') as f:
             content = f.read()
