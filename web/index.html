@@ -9,202 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="/assets/hfish-ui.1.2.12.css" />
     <style type="text/css">
-        /* HIDE SCROLLBARS GLOBALLY */
-        ::-webkit-scrollbar {
-            display: none !important;
-            width: 0 !important;
-            height: 0 !important;
-        }
-
-        * {
-            scrollbar-width: none !important;
-            -ms-overflow-style: none !important;
-        }
-
-        /* NATIVE LOGIN PAGE STYLES - LOADS BEFORE REACT (NO FOUC) */
-        .hscan-login-page {
-            display: none;
-            /* Hidden by default, shown by JS when on login page */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #0f172a;
-            z-index: 99999;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .hscan-login-page.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .hscan-link-bar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            display: flex;
-            gap: 15px;
-            z-index: 100000;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 8px 20px;
-            border-bottom-left-radius: 15px;
-            backdrop-filter: blur(5px);
-        }
-
-        .hscan-link {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            opacity: 0.7;
-            transition: all 0.2s;
-            color: #4ade80;
-            text-decoration: none;
-        }
-
-        .hscan-link:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        .hscan-link svg {
-            width: 100%;
-            height: 100%;
-            fill: currentColor;
-        }
-
-        .hscan-link img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-        }
-
-        .hscan-login-box {
-            width: 100%;
-            max-width: 400px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 12px;
-            padding: 40px 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .hscan-logo-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .hscan-logo-section img {
-            width: 80%;
-            max-width: 200px;
-            height: auto;
-            margin-bottom: 20px;
-        }
-
-        .hscan-brand-title {
-            color: #4ade80;
-            font-size: 32px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-
-        .hscan-brand-subtitle {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            display: inline-block;
-        }
-
-        .hscan-form-group {
-            margin-bottom: 20px;
-        }
-
-        .hscan-form-label {
-            display: block;
-            color: #94a3b8;
-            font-size: 14px;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .hscan-form-input {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            color: #e2e8f0;
-            font-size: 14px;
-            transition: all 0.2s;
-            box-sizing: border-box;
-        }
-
-        .hscan-form-input:focus {
-            outline: none;
-            border-color: #4ade80;
-            background: rgba(15, 23, 42, 0.8);
-        }
-
-        .hscan-login-button {
-            width: 100%;
-            padding: 14px;
-            background-color: #4ade80;
-            border: none;
-            border-radius: 8px;
-            color: #0f172a;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
-        }
-
-        .hscan-login-button:hover {
-            background-color: #22c55e;
-            transform: translateY(-1px);
-        }
-
-        .hscan-login-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .hscan-error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .hscan-error.show {
-            display: block;
-        }
-
-        .hscan-footer {
-            position: fixed;
-            bottom: 10px;
-            width: 100%;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
-            pointer-events: none;
-        }
-
-        /* ORIGINAL LOADING STYLES */
         .main-loading-wrap {
             text-align: center;
-
             margin-top: 100px;
             color: rgba(17, 18, 34, 0.6);
             font-size: 12px;
@@ -254,68 +60,6 @@
 </head>
 
 <body>
-    <!-- NATIVE LOGIN PAGE (NO FOUC) -->
-    <div class="hscan-login-page" id="hscanLoginPage">
-        <!-- Link Bar -->
-        <div class="hscan-link-bar">
-            <a href="https://github.com/derlemue/honey-scan" class="hscan-link" title="GitHub" target="_blank">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                </svg>
-            </a>
-            <a href="https://feed.sec.lemue.org/" class="hscan-link" title="Feed" target="_blank">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z" />
-                </svg>
-            </a>
-            <a href="https://feed.sec.lemue.org/feed/banned_ips.txt" class="hscan-link" title="Banned IPs"
-                target="_blank">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
-                </svg>
-            </a>
-            <a href="https://lemue.org" class="hscan-link" title="lemue.org" target="_blank">
-                <img src="https://lemue.org/favicon.ico" alt="lemue.org" onerror="this.style.display='none'">
-            </a>
-        </div>
-
-        <!-- Login Box -->
-        <div class="hscan-login-box">
-            <div class="hscan-logo-section">
-                <img src="/assets/logo_bear.png" alt="Honey Scan Logo">
-                <div class="hscan-brand-title">Honey Scan</div>
-                <div class="hscan-brand-subtitle">Active Defense Platform</div>
-            </div>
-
-            <form id="hscanLoginForm">
-                <div class="hscan-error" id="hscanError"></div>
-
-                <div class="hscan-form-group">
-                    <label class="hscan-form-label" for="hscanUsername">Username</label>
-                    <input type="text" id="hscanUsername" class="hscan-form-input" placeholder="Enter your username"
-                        required autocomplete="username">
-                </div>
-
-                <div class="hscan-form-group">
-                    <label class="hscan-form-label" for="hscanPassword">Password</label>
-                    <input type="password" id="hscanPassword" class="hscan-form-input" placeholder="Enter your password"
-                        required autocomplete="current-password">
-                </div>
-
-                <button type="submit" class="hscan-login-button" id="hscanLoginBtn">Sign In</button>
-            </form>
-        </div>
-
-        <!-- Footer -->
-        <div class="hscan-footer">for you by lemue.org ♥️</div>
-    </div>
-
-    <!-- INJECTED FLAG DEFINITIONS -->
-    <!-- Flags are now loaded from /assets/symbol-defs.svg -->
-
     <div id="app">
         <div class="main-loading-wrap">
             <div class="spinner-wrapper">
@@ -327,131 +71,216 @@
     <script>
         __REACT_DEVTOOLS_GLOBAL_HOOK__ = parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
     </script>
-    <script>
-        // NATIVE LOGIN PAGE ACTIVATION (NO FOUC)
-        (function () {
-            const isLoginPage = location.href.includes('/login') || location.hash.includes('login');
-
-            if (isLoginPage) {
-                // Activate login page immediately
-                const loginPage = document.getElementById('hscanLoginPage');
-                if (loginPage) {
-                    loginPage.classList.add('active');
-                }
-
-                // Hide React app
-                const app = document.getElementById('app');
-                if (app) {
-                    app.style.display = 'none';
-                }
-
-                // Login form handler
-                const form = document.getElementById('hscanLoginForm');
-                const errorDiv = document.getElementById('hscanError');
-                const loginBtn = document.getElementById('hscanLoginBtn');
-                const usernameInput = document.getElementById('hscanUsername');
-                const passwordInput = document.getElementById('hscanPassword');
-
-                if (form) {
-                    form.addEventListener('submit', async (e) => {
-                        e.preventDefault();
-
-                        errorDiv.classList.remove('show');
-                        errorDiv.textContent = '';
-
-                        const username = usernameInput.value.trim();
-                        const password = passwordInput.value;
-
-                        if (!username || !password) {
-                            errorDiv.textContent = 'Please enter both username and password';
-                            errorDiv.classList.add('show');
-                            return;
-                        }
-
-                        loginBtn.disabled = true;
-                        loginBtn.textContent = 'Signing In...';
-
-                        try {
-                            const response = await fetch('/api/v1/user/login', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    account: username,
-                                    password: password
-                                })
-                            });
-
-                            const data = await response.json();
-
-                            if (response.ok && data.code === 0) {
-                                if (data.data && data.data.token) {
-                                    localStorage.setItem('hfish_token', data.data.token);
-                                }
-                                window.location.href = '/web/dashboard';
-                            } else {
-                                errorDiv.textContent = data.msg || 'Invalid username or password';
-                                errorDiv.classList.add('show');
-                                loginBtn.disabled = false;
-                                loginBtn.textContent = 'Sign In';
-                            }
-                        } catch (error) {
-                            console.error('Login error:', error);
-                            errorDiv.textContent = 'Connection error. Please try again.';
-                            errorDiv.classList.add('show');
-                            loginBtn.disabled = false;
-                            loginBtn.textContent = 'Sign In';
-                        }
-                    });
-                }
-            }
-        })();
-    </script>
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
     <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
     <script type="text/javascript" src="/assets/app.6539b5af.js"></script>
-    <script src="/assets/country_map.js"></script>
+    <script>
+        // === HoneyScan Smart Network Interceptor ===
+        // Dynamically patches API responses to fix geolocation bugs without touching the bundle.
+        (function () {
+            try {
+                console.log("[HoneyScan] Initializing Smart Interceptor...");
+
+                // 1. Load Trusted Location (Side-Channel) with Fallback
+                // We attempt to load from file, but default to Germany if it fails (fix for 404/USA bug)
+                const locationPromise = (async () => {
+                    const paths = ['./assets/location.json', '/web/assets/location.json', '/assets/location.json'];
+                    for (const path of paths) {
+                        try {
+                            const r = await fetch(path + '?t=' + Date.now());
+                            if (r.ok) {
+                                const data = await r.json();
+                                console.log("[HoneyScan] Location loaded from " + path, data);
+                                return data;
+                            }
+                        } catch (e) { console.debug("Failed path: " + path); }
+                    }
+                    console.warn("[HoneyScan] Location load failed. Using Fallback (Germany).");
+                    return {
+                        "country": "Germany",
+                        "country_code": "DE",
+                        "city": "Falkenstein",
+                        "lat": 50.4779,
+                        "lng": 12.3713,
+                        "query": "127.0.0.1"
+                    };
+                })();
+
+                // 2. Helper: Patch JSON Data
+                async function patchJsonData(json) {
+                    const loc = await locationPromise;
+                    if (!loc) return json;
+
+                    let patched = false;
+
+                    // Helper to update a single node object
+                    const patchNode = (node) => {
+                        // Check if this looks like a node (has IP or ID)
+                        if (node.intranet_ip || node.id) {
+                            // Ensure geo_data exists
+                            if (!node.geo_data) node.geo_data = {};
+
+                            // Force Update
+                            node.geo_data.Country = loc.country;
+                            node.geo_data.City = loc.city;
+                            // Inject coordinates if the map uses them directly
+                            node.geo_data.lat = loc.lat;
+                            node.geo_data.lng = loc.lng || loc.lon;
+
+                            // Some maps use 'value' array for coords: [lng, lat]
+                            if (node.value && Array.isArray(node.value)) {
+                                node.value = [loc.lng || loc.lon, loc.lat, ...node.value.slice(2)];
+                            }
+
+                            return true;
+                        }
+                        return false;
+                    };
+
+                    // Case A: Root Object is a Node or has geo_data
+                    if (patchNode(json)) patched = true;
+
+                    // Case B: Array of Nodes (e.g. /api/web/node/list)
+                    if (Array.isArray(json)) {
+                        json.forEach(item => {
+                            if (patchNode(item)) patched = true;
+                        });
+                    }
+
+                    // Case C: Nested Data (Common in paginated responses: { data: { list: [...] } })
+                    if (json.data) {
+                        if (Array.isArray(json.data)) {
+                            json.data.forEach(item => { if (patchNode(item)) patched = true; });
+                        } else if (json.data.list && Array.isArray(json.data.list)) {
+                            json.data.list.forEach(item => { if (patchNode(item)) patched = true; });
+                        }
+                    }
+
+                    if (patched) console.log("[HoneyScan] Hot-Patched API Response with Geolocation!");
+                    return json;
+                }
+
+                // 3. Intercept Fetch
+                const originalFetch = window.fetch;
+                window.fetch = async function (...args) {
+                    const url = args[0];
+                    const response = await originalFetch(...args);
+
+                    // Skip own requests
+                    if (typeof url === 'string' && url.includes('location.json')) return response;
+
+                    // Exclude Dashboard Lists (Attackers) to prevent corruption
+                    if (typeof url === 'string' && (url.includes('hack_portrait') || url.includes('latest_cs'))) return response;
+
+                    // Only process JSON
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        try {
+                            const clone = response.clone();
+                            const data = await clone.json();
+
+                            // Heuristic: Does it look like node data?
+                            const str = JSON.stringify(data);
+                            if (str.includes('intranet_ip') || str.includes('geo_data')) {
+                                const patchedData = await patchJsonData(data);
+                                return new Response(JSON.stringify(patchedData), {
+                                    status: response.status,
+                                    statusText: response.statusText,
+                                    headers: response.headers
+                                });
+                            }
+                        } catch (e) {
+                            // ignore parse errors, return original
+                        }
+                    }
+                    return response;
+                };
+
+                // 4. Intercept XMLHttpRequest (for Axios/Legacy)
+                const XHR = XMLHttpRequest.prototype;
+                const open = XHR.open;
+                const send = XHR.send;
+
+                XHR.open = function (method, url) {
+                    this._url = url;
+                    return open.apply(this, arguments);
+                };
+
+                XHR.send = function () {
+                    this.addEventListener('load', async function () {
+                        if (this._url && (this._url.includes('location.json') || this._url.includes('hack_portrait') || this._url.includes('latest_cs'))) return;
+
+                        if (this.responseText && (this.responseText.includes('intranet_ip') || this.responseText.includes('geo_data'))) {
+                            try {
+                                const json = JSON.parse(this.responseText);
+                                const patched = await patchJsonData(json);
+
+                                // Override responseText property
+                                Object.defineProperty(this, 'responseText', {
+                                    get: () => JSON.stringify(patched),
+                                    configurable: true
+                                });
+                                Object.defineProperty(this, 'response', {
+                                    get: () => JSON.stringify(patched),
+                                    configurable: true
+                                });
+                            } catch (e) { }
+                        }
+                    });
+                    return send.apply(this, arguments);
+                };
+
+            } catch (e) {
+                console.error("[HoneyScan] Interceptor Init Failed", e);
+            }
+        })();
+    </script>
     <script>
         // Branding Configuration
-        console.log("[HoneyScan] Patch Script v2.3 Loaded (No Interceptor)");
+        console.log("[HoneyScan] Patch Script v2.2 Loaded");
         const BRAND_TITLE = "Honey Scan Active Defense";
         const LOGO_PATH = '/assets/logo_bear.png';
 
         const patchBrandingAggressive = () => {
+            // Global: Keep Title Consistent
             if (document.title !== "lemueIO SecMonitor") {
                 document.title = "lemueIO SecMonitor";
             }
 
-            // === UNIVERSAL TEXT REPLACEMENT ===
+            // === UNIVERSAL TEXT REPLACEMENT (Runs everywhere) ===
+            // This fixes "XX Company Threat Monitor" on the dashboard
             const replaceTextContent = (selector, target, replacement) => {
                 try {
                     const elements = document.querySelectorAll(selector);
                     elements.forEach(el => {
+                        // Safety: Check if innerText exists
                         if (!el.innerText) return;
+
+                        // CRITICAL: Only replace text in LEAF nodes (no children) to avoid destroyed React/Vue bindings
+                        // replacing innerHTML on a container (like #app or a parent div) kills the application.
                         if (el.children.length === 0 && el.innerText.includes(target) && !el.dataset.branded) {
                             el.innerText = el.innerText.replace(target, replacement);
                             el.dataset.branded = 'true';
                         }
                     });
-                } catch (e) { }
+                } catch (e) { console.error('Branding patch error:', e); }
             };
+
+            // Specific HFish Dashboard Elements
+            // Use specific tags instead of '*' to improve performance and safety
             const textTags = 'div, span, h1, h2, h3, h4, h5, p, li, a, td, th';
             replaceTextContent(textTags, 'XX Company Threat Monitor', 'lemueIO SecMonitor');
             replaceTextContent(textTags, 'HFish Attack Map', 'lemueIO SecMonitor');
             replaceTextContent(textTags, 'HFish Statistics', 'lemueIO Statistics');
             replaceTextContent(textTags, 'Live Threat Monitor', 'lemueIO Active Intelligence Feed');
 
-            // Login Page Logic
+            // Route Detection: Only apply aggressive layout changes on Login Page
             const isLogin = location.href.includes('/login') || location.hash.includes('login');
+
             if (isLogin) {
-                // Remove original header elements more aggressively
-                if (!document.getElementById('branding-style')) {
-                    const style = document.createElement('style');
-                    style.id = 'branding-style';
-                    style.innerHTML = `html, body { background-color: #0f172a !important; margin: 0 !important; padding: 0 !important; overflow-x: hidden !important; } div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"], .screen-header-left-title, .screen-title, div[class*="top"], .el-card__header { display: none !important; opacity: 0 !important; visibility: hidden !important; height: 0 !important; width: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; overflow: hidden !important; } div[class*="header"] * { display: none !important; } div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box { margin-top: 10px !important; } div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary { background-color: #4ade80 !important; border-color: #4ade80 !important; color: #0f172a !important; font-weight: bold !important; } div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover { background-color: #22c55e !important; border-color: #22c55e !important; } .index-cssmodule__ipv6-1nOCE { background-color: #4ade80 !important; color: #ffffff !important; font-weight: bold !important; border-color: #4ade80 !important; border: 1px solid #4ade80 !important; } img[src*="logo_bear.png"] { width: 80% !important; max-width: 350px !important; display: block; margin: 0 auto; padding: 15px !important; box-sizing: border-box !important; aspect-ratio: 1 / 1 !important; object-fit: contain !important; height: auto !important; } #lemue-footer { position: fixed; bottom: 10px; width: 100%; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 12px; pointer-events: none; z-index: 9999; } #lemue-link-bar { position: fixed; top: 0; right: 0; display: flex; gap: 15px; z-index: 10000; background: rgba(0, 0, 0, 0.4); padding: 8px 20px; border-bottom-left-radius: 15px; backdrop-filter: blur(5px); } .lemue-link { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; opacity: 0.7; transition: opacity 0.2s; color: #4ade80; } .lemue-link:hover { opacity: 1; transform: scale(1.1); } .lemue-link svg { width: 100%; height: 100%; fill: currentColor; } .lemue-link img { width: 100%; height: 100%; border-radius: 50%; }`;
-                    document.head.appendChild(style);
-                }
+                // === LOGIN PAGE LOGIC ===
+
+                // 1. Logo Replacement (Left Side - SVG Wrapper)
                 const leftWrapper = document.querySelector('div[class*="left-wrapper"]');
                 if (leftWrapper) {
                     const svgs = leftWrapper.querySelectorAll('svg');
@@ -470,6 +299,8 @@
                         }
                     });
                 }
+
+                // 2. Central Branding Replacement (SVG -> HTML)
                 const rightWrapper = document.querySelector('div[class*="right-wrapper"]');
                 if (rightWrapper) {
                     const brandSvgs = rightWrapper.querySelectorAll('svg');
@@ -483,6 +314,7 @@
                                 container.style.flexDirection = 'column';
                                 container.style.alignItems = 'center';
                                 container.style.justifyContent = 'center';
+
                                 const title = document.createElement('div');
                                 title.innerText = "Honey Scan";
                                 title.style.color = "#4ade80";
@@ -492,6 +324,7 @@
                                 title.style.letterSpacing = "1px";
                                 title.style.marginBottom = "8px";
                                 title.style.lineHeight = "1.2";
+
                                 const pill = document.createElement('div');
                                 pill.innerText = "Active Defense Platform";
                                 pill.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
@@ -501,95 +334,303 @@
                                 pill.style.fontSize = "14px";
                                 pill.style.fontWeight = "500";
                                 pill.style.display = "inline-block";
+
                                 container.appendChild(title);
                                 container.appendChild(pill);
+
                                 svg.replaceWith(container);
                                 container.dataset.patched = 'true';
                             }
                         }
                     });
                 }
+
+                // 3. Inject "Nuclear" CSS for Login Only
+                if (!document.getElementById('branding-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'branding-style';
+                    style.innerHTML = `
+                      /* LOGIN PAGE ONLY STYLES */
+                      html, body {
+                          background-color: #0f172a !important; /* Cyber Dark */
+                          margin: 0 !important;
+                          padding: 0 !important;
+                          overflow-x: hidden !important;
+                      }
+
+                      /* HIDE ORIGINAL HEADER ONLY */
+                      div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"], 
+                      .screen-header-left-title, .screen-title,
+                      div[class*="top"], .el-card__header {
+                          display: none !important;
+                          opacity: 0 !important;
+                          visibility: hidden !important;
+                          height: 0 !important;
+                          width: 0 !important;
+                          padding: 0 !important;
+                          margin: 0 !important;
+                          border: none !important;
+                          overflow: hidden !important;
+                      }
+                      
+                      div[class*="header"] * { display: none !important; }
+
+                      /* Fix Title Spacing */
+                      div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box {
+                          margin-top: 10px !important; 
+                      }
+                      
+                      /* Login Button Green */
+                      div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary {
+                          background-color: #4ade80 !important;
+                          border-color: #4ade80 !important;
+                          color: #0f172a !important; 
+                          font-weight: bold !important;
+                      }
+                      div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover {
+                          background-color: #22c55e !important;
+                          border-color: #22c55e !important;
+                      }
+                      
+                      /* Footer IPv6 Button Green */
+                      .index-cssmodule__ipv6-1nOCE {
+                          background-color: #4ade80 !important;
+                          color: #ffffff !important; 
+                          font-weight: bold !important; 
+                          border-color: #4ade80 !important; 
+                          border: 1px solid #4ade80 !important;
+                      }
+
+                      /* Logo Padding For Clip Fix */
+                      img[src*="logo_bear.png"] {
+                          width: 80% !important; 
+                          max-width: 350px !important;
+                          display: block;
+                          margin: 0 auto;
+                          padding: 15px !important; 
+                          box-sizing: border-box !important;
+                          aspect-ratio: 1 / 1 !important; 
+                          object-fit: contain !important; 
+                          height: auto !important;
+                      }
+                      
+                      /* Custom Footer */
+                      #lemue-footer {
+                          position: fixed;
+                          bottom: 10px;
+                          width: 100%;
+                          text-align: center;
+                          color: rgba(255, 255, 255, 0.5);
+                          font-size: 12px;
+                          pointer-events: none;
+                          z-index: 9999;
+                      }
+
+                      /* Top Right Link Bar - FLUSH TOP (0px) */
+                      #lemue-link-bar {
+                          position: fixed;
+                          top: 0;
+                          right: 0;
+                          display: flex;
+                          gap: 15px;
+                          z-index: 10000;
+                          background: rgba(0, 0, 0, 0.4);
+                          padding: 8px 20px;
+                          border-bottom-left-radius: 15px;
+                          backdrop-filter: blur(5px);
+                      }
+                      .lemue-link {
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          width: 24px;
+                          height: 24px;
+                          opacity: 0.7;
+                          transition: opacity 0.2s;
+                          color: #4ade80;
+                      }
+                      .lemue-link:hover {
+                          opacity: 1;
+                          transform: scale(1.1);
+                          opacity: 1;
+                      }
+                      .lemue-link svg {
+                          width: 100%;
+                          height: 100%;
+                          fill: currentColor;
+                      }
+                      .lemue-link img {
+                          width: 100%;
+                          height: 100%;
+                          border-radius: 50%;
+                      }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                // 4. Inject Footer
                 if (!document.getElementById('lemue-footer')) {
                     const footer = document.createElement('div');
                     footer.id = 'lemue-footer';
                     footer.innerHTML = 'for you by lemue.org ♥️';
                     document.body.appendChild(footer);
                 }
+
+                // 5. Inject Link Bar
                 if (!document.getElementById('lemue-link-bar')) {
                     const linkBar = document.createElement('div');
                     linkBar.id = 'lemue-link-bar';
+
                     const links = [
-                        { href: 'https://github.com/derlemue/honey-scan', icon: '<svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>', title: 'GitHub' },
-                        { href: 'https://feed.sec.lemue.org/', icon: '<svg viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>', title: 'Feed' },
-                        { href: 'https://feed.sec.lemue.org/feed/banned_ips.txt', icon: '<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>', title: 'Banned IPs' },
-                        { href: 'https://lemue.org', icon: '<img src="https://lemue.org/favicon.ico" alt="lemue.org" onerror="this.style.display=\'none\'">', title: 'lemue.org' }
+                        {
+                            href: 'https://github.com/derlemue/honey-scan',
+                            icon: '<svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>',
+                            title: 'GitHub'
+                        },
+                        {
+                            href: 'https://feed.sec.lemue.org/',
+                            icon: '<svg viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>',
+                            title: 'Feed'
+                        },
+                        {
+                            href: 'https://feed.sec.lemue.org/feed/banned_ips.txt',
+                            icon: '<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
+                            title: 'Banned IPs'
+                        },
+                        {
+                            href: 'https://lemue.org',
+                            icon: '<img src="https://lemue.org/favicon.ico" alt="lemue.org" onerror="this.style.display=\'none\'">',
+                            title: 'lemue.org'
+                        }
                     ];
-                    links.forEach(link => { const a = document.createElement('a'); a.href = link.href; a.className = 'lemue-link'; a.target = '_blank'; a.innerHTML = link.icon; a.title = link.title; linkBar.appendChild(a); });
+
+                    links.forEach(link => {
+                        const a = document.createElement('a');
+                        a.href = link.href;
+                        a.className = 'lemue-link';
+                        a.target = '_blank';
+                        a.innerHTML = link.icon;
+                        a.title = link.title;
+                        linkBar.appendChild(a);
+                    });
+
                     document.body.appendChild(linkBar);
                 }
+
             } else {
-                const style = document.getElementById('branding-style'); if (style) style.remove();
-                const linkBar = document.getElementById('lemue-link-bar'); if (linkBar) linkBar.remove();
-                const footer = document.getElementById('lemue-footer'); if (footer) footer.remove();
+                // === DASHBOARD / OTHER PAGES LOGIC ===
+
+                // Restore UI parts if needed
+                const style = document.getElementById('branding-style');
+                if (style) style.remove();
+
+                const linkBar = document.getElementById('lemue-link-bar');
+                if (linkBar) linkBar.remove();
+
+                const footer = document.getElementById('lemue-footer');
+                if (footer) footer.remove();
             }
-            const addFavicon = (rel, href, sizes) => { if (!document.querySelector(`link[href="${href}"]`)) { let link = document.createElement('link'); link.rel = rel; link.href = href; if (sizes) link.sizes = sizes; document.head.appendChild(link); } };
-            if (!window.faviconsPatched) { document.querySelectorAll('link[rel="shortcut icon"]').forEach(e => e.remove()); window.faviconsPatched = true; }
-            addFavicon('icon', '/assets/favicon.ico'); addFavicon('icon', '/assets/favicon-32x32.png', '32x32'); addFavicon('icon', '/assets/favicon-16x16.png', '16x16'); addFavicon('apple-touch-icon', '/assets/apple-touch-icon.png');
+
+            // Always Inject Favicons (Safe to check continuously)
+            const addFavicon = (rel, href, sizes) => {
+                if (!document.querySelector(`link[href="${href}"]`)) {
+                    let link = document.createElement('link');
+                    link.rel = rel;
+                    link.href = href;
+                    if (sizes) link.sizes = sizes;
+                    document.head.appendChild(link);
+                }
+            };
+            // Only clean up defaults once really
+            if (!window.faviconsPatched) {
+                document.querySelectorAll('link[rel="shortcut icon"]').forEach(e => e.remove());
+                window.faviconsPatched = true;
+            }
+
+            addFavicon('icon', '/assets/favicon.ico');
+            addFavicon('icon', '/assets/favicon-32x32.png', '32x32');
+            addFavicon('icon', '/assets/favicon-16x16.png', '16x16');
+            addFavicon('apple-touch-icon', '/assets/apple-touch-icon.png');
         };
 
+        // === UNIFIED PATCH LOOP (Performance Optimization) ===
+        // Runs all patches in a single loop to reduce browser overhead
+        const runPatches = () => {
+            patchBrandingAggressive();
+            // patchDataIssues(); // DISABLED FOR DEBUGGING
+            // fixLayoutAndFlags(); // DISABLED FOR DEBUGGING
+        };
+
+        // Start Loop (250ms is a good balance)
+        setInterval(runPatches, 250);
+
+        // === DATA PATCHING (Timezone & Flags) ===
         const patchDataIssues = () => {
             try {
-                // Timezone
+                // 1. TIMEZONE FIX (+1 Hour for CET Correction)
                 const timeElements = document.querySelectorAll('p[class*="time"], span[class*="time"]');
                 timeElements.forEach(el => {
                     if (el.dataset.timePatched) return;
+                    // ... (Timezone logic remains valid, omitted for brevity if unchanged, but included here for completeness) ...
                     const text = el.innerText.trim();
                     if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) {
                         const dateStr = text.replace(/\//g, '-');
                         let date = new Date(dateStr);
                         if (!isNaN(date.getTime())) {
-                            date.setTime(date.getTime() + 3600000);
+                            date.setTime(date.getTime() + 3600000); // +1 Hour
                             const pad = (n) => n.toString().padStart(2, '0');
-                            el.innerText = `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+                            const newText = `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+                            el.innerText = newText;
                             el.dataset.timePatched = 'true';
                         }
                     }
                 });
-                // Flags in Recent Attacks Table (using old hfish-flag IDs)
+
+                // 2. FLAG FIX (Map Name -> SVG Class)
                 const flagSvgs = document.querySelectorAll('svg.flag-icon');
                 flagSvgs.forEach(svg => {
+                    if (svg.dataset.flagPatched) return; // IDEMPOTENCY CHECK
+
                     const useHref = svg.querySelector('use');
-                    if (!useHref) return; // Wait for use element
+                    if (!useHref) return;
+
                     const href = useHref.getAttribute('xlink:href') || useHref.getAttribute('href');
+                    if (!href || !href.includes('flagdefault')) return;
 
                     const countrySpan = svg.nextElementSibling;
                     if (!countrySpan || countrySpan.tagName !== 'SPAN') return;
+
                     const country = countrySpan.innerText.trim();
+                    const countryMap = {
+                        'China': 'cn', 'United States': 'us', 'Germany': 'de', 'France': 'fr',
+                        'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'Brazil': 'br',
+                        'India': 'in', 'Canada': 'ca', 'Korea': 'kr', 'Japan': 'jp', 'Vietnam': 'vn',
+                        'Italy': 'it', 'Spain': 'es', 'Australia': 'au', 'Taiwan': 'tw', 'Singapore': 'sg',
+                        'Nigeria': 'ng', 'Sweden': 'se', 'Poland': 'pl', 'Iran': 'ir', 'Turkey': 'tr',
+                        'Romania': 'ro', 'Ukraine': 'ua', 'Mexico': 'mx', 'Argentina': 'ar', 'Ireland': 'ie',
+                        'Austria': 'at', 'Switzerland': 'ch', 'Belgium': 'be', 'Denmark': 'dk', 'Norway': 'no',
+                        'Finland': 'fi', 'Portugal': 'pt', 'Greece': 'gr', 'Czech Republic': 'cz', 'Hungary': 'hu',
+                        'Indonesia': 'id', 'Thailand': 'th', 'Malaysia': 'my', 'Philippines': 'ph', 'South Africa': 'za',
+                        'Egypt': 'eg', 'Israel': 'il', 'Slovakia': 'sk', 'Bulgaria': 'bg', 'Saudi Arabia': 'sa',
+                        'United Arab Emirates': 'ae', 'Colombia': 'co', 'Chile': 'cl', 'Peru': 'pe', 'Pakistan': 'pk',
+                        'Bangladesh': 'bd', 'New Zealand': 'nz', 'Hong Kong': 'hk', 'Britain': 'gb', 'England': 'gb',
+                        'Great Britain': 'gb'
+                    };
 
-                    // Use Global Map
-                    let code = null;
-                    if (window.COUNTRY_MAP && window.COUNTRY_MAP[country]) {
-                        code = window.COUNTRY_MAP[country];
-                    } else if (window.COUNTRY_MAP) {
-                        // Fallback case-insensitive
-                        const found = Object.keys(window.COUNTRY_MAP).find(k => k.toLowerCase() === country.toLowerCase());
-                        if (found) code = window.COUNTRY_MAP[found];
-                    }
-
+                    const code = countryMap[country];
                     if (code) {
-                        const expectedHref = `/assets/symbol-defs.svg#icon-${code}`;
-                        // Only update if not already correct
-                        if (!href || !href.includes(expectedHref)) {
-                            useHref.setAttribute('xlink:href', expectedHref);
-                            useHref.setAttribute('href', expectedHref);
-                            svg.classList.remove('undefined');
-                            svg.classList.add(`flag-icon-${code}`);
-                            svg.dataset.flagPatched = 'true';
-                        }
+                        useHref.setAttribute('xlink:href', `#hfish-flag-${code}`);
+                        svg.classList.remove('undefined');
+                        svg.classList.add(`flag-icon-${code}`);
+                        svg.dataset.flagPatched = 'true';
                     }
                 });
 
-                // Ticker (Bottom Carousel)
+
+                // 3. TICKER FLAG FIX (Bottom Scrolling Box)
+                // SAFETY UPDATE: START
+                // Only act on SVGs that are confirmed to be flags or have the specific 'flag-icon-margin' class AND look like flags.
+                // The issue was we were removing 'fill' from EVERYTHING with flag-icon-margin, killing Cloud Intelligence icons.
                 const tickerSvgs = document.querySelectorAll('svg.flag-icon-margin');
                 tickerSvgs.forEach(svg => {
                     const use = svg.querySelector('use');
@@ -597,259 +638,105 @@
 
                     const href = use.getAttribute('xlink:href') || use.getAttribute('href');
 
-                    if (href && (href.includes('flag') || href.includes('icon-') || href.includes('default'))) {
+                    // Strict Check: Only hack the fill if it's actually pointing to a flag or default flag
+                    // Cloud Intelligence icons usually don't have 'flag' in their href
+                    const isFlag = href && (href.includes('flag') || href.includes('icon-') || href.includes('default'));
+
+                    if (isFlag) {
                         // Remove the monochromatic fill ONLY for flags
                         if (svg.getAttribute('fill')) svg.removeAttribute('fill');
                         if (svg.style.fill) svg.style.fill = '';
 
-                        // Fix Broken Defaults or incomplete flags in Ticker
-                        if (href.includes('flagdefault') || href.includes('symbol-defs')) {
+                        // Fix Broken Defaults in Ticker
+                        if (href.includes('flagdefault')) {
                             const box = svg.closest('.ant-carousel-item') || svg.closest('div[style*="background"]');
                             if (box) {
+                                // Re-use country map from above (scope issue, redefined here for safety or move to global)
+                                const cMap = { 'China': 'cn', 'United States': 'us', 'Germany': 'de', 'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'France': 'fr' }; // Short list for speed, full list above is better but this is patch
                                 const text = box.innerText;
-                                // Attempt to extract country name from text "Attack Source: Germany" or similar?
-                                // Usually ticker text is "IP Location" or just "Germany"
-                                // We check against all keys in COUNTRY_MAP. This might be slow but robust.
-                                // Optimization: Common countries first?
-
-                                let country = null;
-                                if (window.COUNTRY_MAP) {
-                                    // Try to find a country name in the text
-                                    // Sort by length desc to match "United States" before "States" etc.
-                                    const names = Object.keys(window.COUNTRY_MAP).sort((a, b) => b.length - a.length);
-                                    country = names.find(c => text.includes(c));
-                                }
-
+                                const country = Object.keys(cMap).find(c => text.includes(c));
                                 if (country) {
-                                    const code = window.COUNTRY_MAP[country];
-                                    const newHref = `/assets/symbol-defs.svg#icon-${code}`;
-
-                                    // Update if different
-                                    if (href !== newHref) {
-                                        use.setAttribute('xlink:href', newHref);
-                                        use.setAttribute('href', newHref);
-                                        svg.classList.remove('undefined');
-                                        svg.style.display = 'inline-block';
-                                        if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
-                                        if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
-                                    }
+                                    const newHref = `/symbol-defs.svg#icon-${cMap[country]}`;
+                                    use.setAttribute('xlink:href', newHref);
+                                    use.setAttribute('href', newHref);
+                                    svg.style.display = 'inline-block';
+                                    if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
+                                    if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
                                 }
                             }
                         }
                     }
                 });
+                // SAFETY UPDATE: END
+
             } catch (e) { console.error('Data patch error:', e); }
         };
 
-
-        // === REAL-TIME THREAT FEED (VIA JSON) ===
-        const FEED_URL = 'assets/live_threats.json';
-
-        // State Management
-        let feedState = {
-            hackers: [],
-            cs: [],
-            api_active: false
-        };
-
-        // Fetch Data
-        const updateFeeds = async () => {
+        // === LAYOUT & FLAG FIXES ===
+        const fixLayoutAndFlags = () => {
             try {
-                const response = await fetch(FEED_URL + '?t=' + new Date().getTime());
-                if (response.ok) {
-                    const data = await response.json();
+                // 1. Sidebar Overlap Fix (Aggressive)
+                const headers = document.querySelectorAll('div, span, p, h3');
+                for (let h of headers) {
+                    if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
+                        let parent = h.parentElement;
+                        let listContainer = null;
+                        let maxChildren = 0;
 
-                    if (data.hackers) feedState.hackers = data.hackers;
-                    if (data.cs) feedState.cs = data.cs;
-                    feedState.api_active = data.api_active;
-
-                    renderFeeds();
-                }
-            } catch (e) {
-                // Silent fail
-            }
-        };
-
-        // Update DOM
-        const renderFeeds = () => {
-            // [Fix] Do NOT render feeds on login page
-            if (location.href.includes('/login') || location.hash.includes('login')) return;
-
-            try {
-                // Find Headers (Standard vs Fallback)
-                let hackersHeader = null;
-                let csHeader = null;
-
-                const headers = Array.from(document.querySelectorAll('div, span, p, h3'));
-                hackersHeader = headers.find(h => h.innerText && h.innerText.trim() === 'Recent active hackers');
-                csHeader = headers.find(h => h.innerText && h.innerText.trim() === 'The recent suspicious CS');
-
-                // FALLBACK: If standard headers are missing, inject our own container
-                if (!hackersHeader && !csHeader) {
-                    const rightWrapper = document.querySelector('div[class*="right-wrapper"]');
-                    if (rightWrapper) {
-                        let lemueContainer = document.getElementById('lemue-intelligence-container');
-                        if (!lemueContainer) {
-                            lemueContainer = document.createElement('div');
-                            lemueContainer.id = 'lemue-intelligence-container';
-                            lemueContainer.style.marginBottom = '20px';
-                            lemueContainer.style.padding = '0 10px';
-                            // Insert at top
-                            rightWrapper.insertBefore(lemueContainer, rightWrapper.firstChild);
-
-                            // Create Mock Headers
-                            const h1 = document.createElement('div');
-                            h1.innerText = 'Recent active hackers';
-                            h1.style.color = '#fff'; h1.style.fontSize = '14px'; h1.style.fontWeight = 'bold';
-                            h1.style.marginBottom = '10px'; h1.style.marginTop = '10px';
-                            lemueContainer.appendChild(h1);
-                            hackersHeader = h1;
-
-                            const h2 = document.createElement('div');
-                            h2.innerText = 'The recent suspicious CS';
-                            h2.style.color = '#fff'; h2.style.fontSize = '14px'; h2.style.fontWeight = 'bold';
-                            h2.style.marginBottom = '10px'; h2.style.marginTop = '20px';
-                            lemueContainer.appendChild(h2);
-                            csHeader = h2;
-                        } else {
-                            hackersHeader = Array.from(lemueContainer.children).find(el => el.innerText === 'Recent active hackers');
-                            csHeader = Array.from(lemueContainer.children).find(el => el.innerText === 'The recent suspicious CS');
-                        }
-                    }
-                }
-
-                // 1. Render "Recent active hackers" (Top Box)
-                if (hackersHeader) {
-                    let container = hackersHeader.parentElement.querySelector('.dynamic-hacker-list');
-                    if (!container) {
-                        if (hackersHeader.parentElement.id !== 'lemue-intelligence-container') {
-                            const parent = hackersHeader.parentElement;
-                            Array.from(parent.children).forEach(child => {
-                                if (child !== hackersHeader && !child.classList.contains('active-defense-title')) {
-                                    child.style.display = 'none'; // Hide original React lists
-                                }
-                            });
-                        }
-
-                        container = document.createElement('div');
-                        container.className = 'dynamic-hacker-list';
-                        container.style.height = '240px';
-                        container.style.overflow = 'hidden';
-                        container.style.marginTop = '10px';
-                        container.style.marginBottom = '20px';
-                        container.style.display = 'flex';
-                        container.style.flexDirection = 'column';
-                        container.style.gap = '6px';
-                        hackersHeader.parentElement.appendChild(container);
-                    }
-
-                    let html = '';
-                    feedState.hackers.forEach((item, idx) => {
-                        let flagCode = 'unknown';
-                        if (item.flag && item.flag.length === 2) flagCode = item.flag.toLowerCase();
-                        else if (item.location) {
-                            const loc = item.location;
-                            if (window.COUNTRY_MAP) {
-                                if (window.COUNTRY_MAP[loc]) flagCode = window.COUNTRY_MAP[loc];
-                                else {
-                                    const found = Object.keys(window.COUNTRY_MAP).find(k => k.toLowerCase() === loc.toLowerCase() || loc.includes(k));
-                                    if (found) flagCode = window.COUNTRY_MAP[found];
+                        const checkContainer = (container) => {
+                            if (!container) return;
+                            for (let child of container.children) {
+                                if (child === h || child.contains(h)) continue;
+                                if (child.children.length > maxChildren) {
+                                    maxChildren = child.children.length;
+                                    listContainer = child;
                                 }
                             }
+                        };
+
+                        checkContainer(parent);
+                        if (!listContainer && parent.parentElement) checkContainer(parent.parentElement);
+
+                        if (listContainer && maxChildren > 2) {
+                            if (listContainer.style.maxHeight !== '250px') {
+                                listContainer.style.maxHeight = '250px';
+                                listContainer.style.overflowY = 'auto';
+                                listContainer.style.paddingRight = '5px';
+                            }
                         }
-
-                        html += `
-                            <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 4px;">
-                                <div style="width: 24px; margin-right: 10px; display: flex; align-items: center;">
-                                    <svg viewBox="0 0 24 24" width="20" height="15" style="display:inline-block; vertical-align:middle;">
-                                        <use href="/assets/symbol-defs.svg#icon-${flagCode}"></use>
-                                    </svg>
-                                </div>
-                                <div style="flex: 1;">
-                                    <div style="color: #94a3b8; font-size: 11px; margin-bottom: 2px;">${item.location}</div>
-                                    <div style="color: #e2e8f0; font-family: monospace; font-size: 13px;">${item.ip}</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="color: #fca5a5; font-size: 11px;">SSH Brute</div> 
-                                    <div style="color: #4ade80; font-size: 10px; font-weight: bold;">${item.count || 1} hits</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    if (feedState.hackers.length === 0) {
-                        html = '<div style="color: #64748b; padding: 20px; text-align: center;">Waiting for incoming threats...</div>';
                     }
-                    container.innerHTML = html;
                 }
 
-                // 2. Render "The recent suspicious CS" (Bottom Box)
-                if (csHeader) {
-                    let container = csHeader.parentElement.querySelector('.dynamic-cs-list');
-                    if (!container) {
-                        if (csHeader.parentElement.id !== 'lemue-intelligence-container') {
-                            const parent = csHeader.parentElement;
-                            Array.from(parent.children).forEach(child => {
-                                if (child !== csHeader) child.style.display = 'none';
-                            });
+                // 2. Ticker Flag Fix (Robust External Reference)
+                const svgs = document.querySelectorAll('svg');
+                svgs.forEach(svg => {
+                    const use = svg.querySelector('use');
+                    if (use) {
+                        const href = use.getAttribute('xlink:href') || use.getAttribute('href');
+                        if (href && href.startsWith('#hfish-flag-')) {
+                            const countryCode = href.replace('#hfish-flag-', '');
+                            const newHref = `/symbol-defs.svg#icon-${countryCode}`;
+                            use.setAttribute('xlink:href', newHref);
+                            use.setAttribute('href', newHref);
+
+                            // Only remove fill for these specific flags
+                            if (svg.hasAttribute('fill')) svg.removeAttribute('fill');
+                            if (svg.style.fill) svg.style.fill = '';
+
+                            svg.style.display = 'inline-block';
+                            if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
+                            if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
                         }
-
-                        container = document.createElement('div');
-                        container.className = 'dynamic-cs-list';
-                        container.style.marginTop = '15px';
-                        container.style.display = 'flex';
-                        container.style.flexDirection = 'column';
-                        container.style.gap = '8px';
-                        csHeader.parentElement.appendChild(container);
                     }
+                });
 
-                    let html = '';
-                    feedState.cs.forEach(item => {
-                        const risk = item.risk || 'Low';
-                        let color = '#eca913';
-                        if (risk === 'Critical') color = '#ef4444';
-                        if (risk === 'High') color = '#f97316';
-
-                        html += `
-                            <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.5); padding: 8px 10px; border-radius: 4px; border-left: 3px solid ${color}; margin-bottom: 4px;">
-                                <div style="margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 50%;">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="${color}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                                </div>
-                                <div style="flex: 1;">
-                                    <div style="color: #f1f5f9; font-size: 13px; font-weight: bold; font-family: monospace; letter-spacing: 0.5px;">${item.ip}</div>
-                                    <div style="color: #94a3b8; font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
-                                        <span style="background:rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 2px;">${item.location}</span>
-                                    </div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="color: ${color}; font-size: 11px; font-weight: 700; text-transform: uppercase;">${item.type}</div>
-                                    <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Risk: ${risk}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    if (feedState.cs.length === 0) {
-                        html = '<div style="color: #64748b; padding: 20px; text-align: center;">Scanning...</div>';
-                    }
-                    container.innerHTML = html;
-                }
-
-            } catch (e) { console.error("Feed Render Error:", e); }
+            } catch (e) { console.error("Layout/Flag Fix Error:", e); }
         };
 
-        // Initialize and Loop
-        updateFeeds();
-
-        setInterval(() => {
-            updateFeeds();
-            renderFeeds();
-
-            patchBrandingAggressive();
-            patchDataIssues();
-        }, 5000);
+    </script>
 
     </script>
 </body>
 
 </html>
+```
