@@ -16,6 +16,8 @@ services:
       - ./web/index.html:/opt/hfish/3.3.6/web/index.html:ro
       - ./web/login.html:/opt/hfish/current/web/login.html:ro
       - ./web/login.html:/opt/hfish/3.3.6/web/login.html:ro
+      - ./web/login_native.html:/opt/hfish/current/web/login_native.html:ro
+      - ./web/login_native.html:/opt/hfish/3.3.6/web/login_native.html:ro
       - ./web/assets/flags.svg:/opt/hfish/current/web/assets/flags.svg:ro
       - ./web/assets/flags.svg:/opt/hfish/3.3.6/web/assets/flags.svg:ro
       - ./web/assets/symbol-defs.svg:/opt/hfish/current/web/assets/symbol-defs.svg:ro
