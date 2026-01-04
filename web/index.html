@@ -709,8 +709,25 @@
     </script>
 
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
-    <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
-    <script type="text/javascript" src="/assets/app.6539b5af.js"></script>
+    <script type="text/javascript">
+        (function () {
+            // Only load React app if NOT in login page
+            // This ensures the Native Login page is shown without interference
+            if (!location.href.includes('/login') && !location.hash.includes('login')) {
+                var s1 = document.createElement('script');
+                s1.type = 'text/javascript';
+                s1.src = '/assets/dllSelf.09a1636445d39f4f9ec3.js';
+                document.body.appendChild(s1);
+
+                var s2 = document.createElement('script');
+                s2.type = 'text/javascript';
+                s2.src = '/assets/app.6539b5af.js';
+                document.body.appendChild(s2);
+            } else {
+                console.log("Native Login Active - React App Disabled");
+            }
+        })();
+    </script>
     <script>
         // === HoneyScan Smart Network Interceptor ===
         // Dynamically patches API responses to fix geolocation bugs without touching the bundle.
