@@ -84,6 +84,7 @@ services:
       - ./scans:/app/scans
       - ./feed:/app/feed
       - ./web/assets:/app/assets
+      - ./sidecar/monitor.py:/app/monitor.py
     depends_on:
       - hfish
       - mariadb

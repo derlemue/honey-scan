@@ -410,15 +410,22 @@ def get_geolocation():
 def check_cloud_connectivity():
     """Check connectivity to ThreatBook/HFish Cloud."""
     try:
-        # ThreatBook API endpoint often used by HFish
-        resp = requests.get("https://api.threatbook.cn/v3/scene/ip_reputation", timeout=15)
-        if resp.status_code == 404 or resp.status_code == 200: 
-            # 404 is expected if no auth, but proves connectivity.
-            logger.info("Cloud Intelligence Connectivity: OK (ThreatBook API reachable)")
-        else:
-            logger.warning(f"Cloud Intelligence Connectivity: Unexpected status {resp.status_code}")
+        # Use configured Base URL or fallback
+        base_url = os.getenv("THREATBOOK_API_BASE_URL", "https://api.threatbook.io/v3")
+        url = f"{base_url}/scene/ip_reputation"
+        
+        # Test request (using query params that are harmless or empty to check reachability)
+        try:
+             resp = requests.get(url, timeout=10)
+             if resp.status_code in [200, 400, 401, 403, 404]: 
+                 logger.info(f"Cloud Intelligence Connectivity: OK ({base_url})")
+             else:
+                 logger.warning(f"Cloud Intelligence Connectivity: HTTP {resp.status_code}")
+        except Exception as e:
+             logger.error(f"Cloud Intelligence Connectivity: FAILED ({base_url}) - {e}")
+
     except Exception as e:
-        logger.error(f"Cloud Intelligence Connectivity: FAILED - {e}")
+        logger.error(f"Cloud Intelligence Connectivity: Critical Error - {e}")
 
 def update_node_location():
     """Update valid node location in database and side-channel JSON."""
