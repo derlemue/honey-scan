@@ -33,6 +33,20 @@
 
 ---
 
+## 🔴 Live Preview (Early Beta)
+
+Try the system live!
+
+### Dashboard (Early Beta)
+*   **URL**: [https://sec.lemue.org/web/login](https://sec.lemue.org/web/login)
+*   **User**: `beta_view`
+*   **Pass**: `O7u1uN98H65Lcna6TV`
+
+### Feed (Live)
+*   **URL**: [https://feed.sec.lemue.org/](https://feed.sec.lemue.org/)
+
+---
+
 ## 📖 Overview
 
 **Honey-Scan** transforms a passive HFish honeypot into an **Active Defense System**. Instead of just logging attacks, it bites back (informatively).

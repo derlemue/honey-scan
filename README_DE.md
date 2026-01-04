@@ -33,6 +33,20 @@
 
 ---
 
+## 🔴 Live Vorschau (Early Beta)
+
+Testen Sie das System live!
+
+### Dashboard (Early Beta)
+*   **URL**: [https://sec.lemue.org/web/login](https://sec.lemue.org/web/login)
+*   **Benutzer**: `beta_view`
+*   **Passwort**: `O7u1uN98H65Lcna6TV`
+
+### Feed (Live)
+*   **URL**: [https://feed.sec.lemue.org/](https://feed.sec.lemue.org/)
+
+---
+
 ## 📖 Übersicht
 
 **Honey-Scan** transformiert einen passiven HFish-Honeypot in ein **Aktives Verteidigungssystem**. Anstatt Angriffe nur zu protokollieren, reagiert es (informativ).
