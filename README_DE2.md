@@ -161,8 +161,8 @@ docker compose up -d --build
 ```
 
 ### 2. Anschauen
-*   **Berichte**: `https://feed.sec.lemue.org/`
-*   **Admin**: `https://sec.lemue.org` (Login: `admin` / `HFish2021`)
+*   **Berichte**: `http://localhost:8888`
+*   **Admin**: `https://localhost:4433` (Login: `admin` / `HFish2021`)
 
 ### 3. Schutz für andere Server (Fail2Ban)
 Schütze deine anderen Server. Sie sollen die Angreifer automatisch blockieren.

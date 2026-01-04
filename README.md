@@ -160,8 +160,8 @@ docker compose up -d --build
 ```
 
 ### 2. Access Dashboards
-*   **lemueIO Active Intelligence Feed**: `https://feed.sec.lemue.org/`
-*   **HFish Admin**: `https://sec.lemue.org` (Default: `admin` / `HFish2021`)
+*   **lemueIO Active Intelligence Feed**: `http://localhost:8888`
+*   **HFish Admin**: `https://localhost:4433` (Default: `admin` / `HFish2021`)
 
 ### 3. Deploy Client Shield (Fail2Ban Integration)
 Protect your *other* servers by automatically banning IPs detected by this honeypot.

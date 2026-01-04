@@ -170,7 +170,7 @@ docker compose up -d --build
 Запустіть це на ваших виробничих серверах:
 ```bash
 # Завантажити скрипт
-wget http://23.88.40.46:8888/scripts/client_banned_ips.sh
+wget https://feed.sec.lemue.org/scripts/client_banned_ips.sh
 
 # Зробити виконуваним
 chmod +x client_banned_ips.sh

@@ -170,7 +170,7 @@ Benötigt **Fail2Ban**. Das Skript bietet die Installation an, falls es fehlt.
 Führe dies auf deinen Produktionsservern aus:
 ```bash
 # Skript herunterladen
-wget http://23.88.40.46:8888/scripts/client_banned_ips.sh
+wget https://feed.sec.lemue.org/scripts/client_banned_ips.sh
 
 # Ausführbar machen
 chmod +x client_banned_ips.sh
