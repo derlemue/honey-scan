@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.16] - 2026-01-04
+
+### Fixed
+- 🎨 **UI**: Removed unsightly scrollbars from dashboard panels using global CSS override.
+- 📊 **Data**: Populated "The recent suspicious CS" panel with mock active defense data (C2/Mining IPs) to demonstrate capabilities.
+
+
 ## [3.8.15] - 2026-01-04
 
 ### Fixed
