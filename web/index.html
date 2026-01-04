@@ -70,6 +70,19 @@
         }
     </script>
     <link rel="shortcut icon" href="/assets/favicon.ico">
+    <script>
+        // [FOUC FIX] Immediate Styling for Login Page
+        // This runs before body renders to prevent the "Red Flash"
+        (function () {
+            const isLogin = location.href.includes('/login') || location.hash.includes('login');
+            if (isLogin) {
+                const style = document.createElement('style');
+                style.id = 'branding-style';
+                style.innerHTML = `html, body { background-color: #0f172a !important; margin: 0 !important; padding: 0 !important; overflow-x: hidden !important; } div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"], .screen-header-left-title, .screen-title, div[class*="top"], .el-card__header { display: none !important; opacity: 0 !important; visibility: hidden !important; height: 0 !important; width: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; overflow: hidden !important; } div[class*="header"] * { display: none !important; } div[class*="index-cssmodule__login-wrapper"], .login-container, .login-box { margin-top: 10px !important; } div[class*="index-cssmodule__btn"], button[class*="index-cssmodule__btn"], .el-button--primary { background-color: #4ade80 !important; border-color: #4ade80 !important; color: #0f172a !important; font-weight: bold !important; } div[class*="index-cssmodule__btn"]:hover, button[class*="index-cssmodule__btn"]:hover, .el-button--primary:hover { background-color: #22c55e !important; border-color: #22c55e !important; } .index-cssmodule__ipv6-1nOCE { background-color: #4ade80 !important; color: #ffffff !important; font-weight: bold !important; border-color: #4ade80 !important; border: 1px solid #4ade80 !important; } img[src*="logo_bear.png"] { width: 80% !important; max-width: 350px !important; display: block; margin: 0 auto; padding: 15px !important; box-sizing: border-box !important; aspect-ratio: 1 / 1 !important; object-fit: contain !important; height: auto !important; } #lemue-footer { position: fixed; bottom: 10px; width: 100%; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 12px; pointer-events: none; z-index: 9999; } #lemue-link-bar { position: fixed; top: 0; right: 0; display: flex; gap: 15px; z-index: 10000; background: rgba(0, 0, 0, 0.4); padding: 8px 20px; border-bottom-left-radius: 15px; backdrop-filter: blur(5px); } .lemue-link { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; opacity: 0.7; transition: opacity 0.2s; color: #4ade80; } .lemue-link:hover { opacity: 1; transform: scale(1.1); } .lemue-link svg { width: 100%; height: 100%; fill: currentColor; } .lemue-link img { width: 100%; height: 100%; border-radius: 50%; }`;
+                document.head.appendChild(style);
+            }
+        })();
+    </script>
 </head>
 
 <body>
@@ -355,7 +368,7 @@
                 // Find Headers (Standard vs Fallback)
                 let hackersHeader = null;
                 let csHeader = null;
-                
+
                 const headers = Array.from(document.querySelectorAll('div, span, p, h3'));
                 hackersHeader = headers.find(h => h.innerText && h.innerText.trim() === 'Recent active hackers');
                 csHeader = headers.find(h => h.innerText && h.innerText.trim() === 'The recent suspicious CS');
@@ -388,8 +401,8 @@
                             lemueContainer.appendChild(h2);
                             csHeader = h2;
                         } else {
-                             hackersHeader = Array.from(lemueContainer.children).find(el => el.innerText === 'Recent active hackers');
-                             csHeader = Array.from(lemueContainer.children).find(el => el.innerText === 'The recent suspicious CS');
+                            hackersHeader = Array.from(lemueContainer.children).find(el => el.innerText === 'Recent active hackers');
+                            csHeader = Array.from(lemueContainer.children).find(el => el.innerText === 'The recent suspicious CS');
                         }
                     }
                 }
