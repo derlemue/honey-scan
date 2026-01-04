@@ -9,3 +9,5 @@ __pycache__/
 .env
 config/hfish.toml
 verification_credentials.json
+.env.browser
+.cursorrules
