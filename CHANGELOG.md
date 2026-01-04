@@ -1,3 +1,12 @@
+## [4.2.1] - 2026-01-04
+
+### Security
+- 🛡️ **Cleanup**: Removed `fix_credentials.sql` and ensured no sensitive credentials are in the repository.
+
+### Maintenance
+- 🧹 **Cleanup**: Removed temporary files and abandoned scripts (`README_en_temp.md`, `check_db.py`, `app_debug.js`, `analyze_js.py`, `login_native.html`, `index.html.bak`).
+- 🧹 **Assets**: Removed temporary asset dumps (`logo_bear_b64.txt`, `logo_bear_head.b64`).
+
 ## [4.2.0] - 2026-01-04
 
 ### Added
