@@ -7,7 +7,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -58,13 +58,13 @@
         <img src="docs/img/login_v2.png" width="80%">
         <p><em>Інтерфейс входу</em></p>
         </div>
-    *   **Live Threat Monitor** ("Feed"):
+    *   **Live Threat Feed**:
         <br>
         <div align="center">
-        <img src="docs/img/feed_dashboard_v4.png" width="80%">
+        <img src="docs/img/feed_dashboard_v5.png" width="80%">
         <p><em>Панель каналу загроз</em></p>
         </div>
-    *   **lemueIO SecMonitor** (Внутрішній):
+    *   **lemueIO SecMonitor ("Screen")**:
         <br>
         <div align="center">
         <img src="docs/img/hfish_screen_v4.png" width="80%">

@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.1.0] - 2026-01-04
+
+### Changed
+- 🎨 **Feed**: Restored functionality with a new **Cyberpunk UI** matching the platform's theme.
+- 🖼️ **Assets**: Added new circular "Honey Scan" logo to Feed header.
+- 📸 **Documentation**: Updated "Live Threat Feed" screenshot and refined README captions.
+- 🐛 **Fix**: Corrected resource paths in `monitor.py` to fix missing Logo and `banned_ips.txt` link on the Feed page.
+
 ## [4.0.0] - 2026-01-04
 
 ### Added
