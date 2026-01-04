@@ -344,13 +344,13 @@ def update_index():
 <body>
     <div class="container">
         <header>
-            <img src="logo.jpg" alt="Logo" class="logo">
+            <img src="feed/logo.jpg" alt="Logo" class="logo">
             <h1>lemueIO Active Intelligence Feed</h1>
         </header>
         
         <div class="section">
             <h2>Resources</h2>
-            <a href="banned_ips.txt" class="resource-link">banned_ips.txt <span class="resource-desc">List of unique attacker IPs (Fail2Ban Compatible)</span></a>
+            <a href="feed/banned_ips.txt" class="resource-link">banned_ips.txt <span class="resource-desc">List of unique attacker IPs (Fail2Ban Compatible)</span></a>
         </div>
 
         <div class="section">
