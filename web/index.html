@@ -73,6 +73,9 @@
 </head>
 
 <body>
+    <!-- INJECTED FLAG DEFINITIONS -->
+    <!-- Flags are now loaded from /assets/symbol-defs.svg -->
+
     <div id="app">
         <div class="main-loading-wrap">
             <div class="spinner-wrapper">
@@ -87,6 +90,7 @@
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
     <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
     <script type="text/javascript" src="/assets/app.6539b5af.js"></script>
+    <script src="/assets/country_map.js"></script>
     <script>
         // Branding Configuration
         console.log("[HoneyScan] Patch Script v2.3 Loaded (No Interceptor)");
@@ -230,28 +234,41 @@
                         }
                     }
                 });
-                // Flags
+                // Flags in Recent Attacks Table (using old hfish-flag IDs)
                 const flagSvgs = document.querySelectorAll('svg.flag-icon');
                 flagSvgs.forEach(svg => {
-                    if (svg.dataset.flagPatched) return;
                     const useHref = svg.querySelector('use');
-                    if (!useHref) return;
+                    if (!useHref) return; // Wait for use element
                     const href = useHref.getAttribute('xlink:href') || useHref.getAttribute('href');
-                    if (!href || !href.includes('flagdefault')) return;
+
                     const countrySpan = svg.nextElementSibling;
                     if (!countrySpan || countrySpan.tagName !== 'SPAN') return;
                     const country = countrySpan.innerText.trim();
-                    const countryMap = { 'China': 'cn', 'United States': 'us', 'Germany': 'de', 'France': 'fr', 'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'Brazil': 'br', 'India': 'in', 'Canada': 'ca', 'Korea': 'kr', 'Japan': 'jp', 'Vietnam': 'vn', 'Italy': 'it', 'Spain': 'es', 'Australia': 'au', 'Taiwan': 'tw', 'Singapore': 'sg', 'Nigeria': 'ng', 'Sweden': 'se', 'Poland': 'pl', 'Iran': 'ir', 'Turkey': 'tr', 'Romania': 'ro', 'Ukraine': 'ua', 'Mexico': 'mx', 'Argentina': 'ar', 'Ireland': 'ie', 'Austria': 'at', 'Switzerland': 'ch', 'Belgium': 'be', 'Denmark': 'dk', 'Norway': 'no', 'Finland': 'fi', 'Portugal': 'pt', 'Greece': 'gr', 'Czech Republic': 'cz', 'Hungary': 'hu', 'Indonesia': 'id', 'Thailand': 'th', 'Malaysia': 'my', 'Philippines': 'ph', 'South Africa': 'za', 'Egypt': 'eg', 'Israel': 'il', 'Slovakia': 'sk', 'Bulgaria': 'bg', 'Saudi Arabia': 'sa', 'United Arab Emirates': 'ae', 'Colombia': 'co', 'Chile': 'cl', 'Peru': 'pe', 'Pakistan': 'pk', 'Bangladesh': 'bd', 'New Zealand': 'nz', 'Hong Kong': 'hk', 'Britain': 'gb', 'England': 'gb', 'Great Britain': 'gb' };
-                    const code = countryMap[country];
+
+                    // Use Global Map
+                    let code = null;
+                    if (window.COUNTRY_MAP && window.COUNTRY_MAP[country]) {
+                        code = window.COUNTRY_MAP[country];
+                    } else if (window.COUNTRY_MAP) {
+                        // Fallback case-insensitive
+                        const found = Object.keys(window.COUNTRY_MAP).find(k => k.toLowerCase() === country.toLowerCase());
+                        if (found) code = window.COUNTRY_MAP[found];
+                    }
+
                     if (code) {
-                        useHref.setAttribute('xlink:href', `#hfish-flag-${code}`);
-                        svg.classList.remove('undefined');
-                        svg.classList.add(`flag-icon-${code}`);
-                        svg.dataset.flagPatched = 'true';
+                        const expectedHref = `/assets/symbol-defs.svg#icon-${code}`;
+                        // Only update if not already correct
+                        if (!href || !href.includes(expectedHref)) {
+                            useHref.setAttribute('xlink:href', expectedHref);
+                            useHref.setAttribute('href', expectedHref);
+                            svg.classList.remove('undefined');
+                            svg.classList.add(`flag-icon-${code}`);
+                            svg.dataset.flagPatched = 'true';
+                        }
                     }
                 });
-                // Ticker
-                // SAFETY UPDATE: START
+
+                // Ticker (Bottom Carousel)
                 const tickerSvgs = document.querySelectorAll('svg.flag-icon-margin');
                 tickerSvgs.forEach(svg => {
                     const use = svg.querySelector('use');
@@ -259,38 +276,47 @@
 
                     const href = use.getAttribute('xlink:href') || use.getAttribute('href');
 
-                    // Strict Check: Only hack the fill if it's actually pointing to a flag or default flag
-                    const isFlag = href && (href.includes('flag') || href.includes('icon-') || href.includes('default'));
-
-                    if (isFlag) {
+                    if (href && (href.includes('flag') || href.includes('icon-') || href.includes('default'))) {
                         // Remove the monochromatic fill ONLY for flags
                         if (svg.getAttribute('fill')) svg.removeAttribute('fill');
                         if (svg.style.fill) svg.style.fill = '';
 
-                        // Fix Broken Defaults in Ticker
-                        if (href.includes('flagdefault')) {
+                        // Fix Broken Defaults or incomplete flags in Ticker
+                        if (href.includes('flagdefault') || href.includes('symbol-defs')) {
                             const box = svg.closest('.ant-carousel-item') || svg.closest('div[style*="background"]');
                             if (box) {
-                                const cMap = { 'China': 'cn', 'United States': 'us', 'Germany': 'de', 'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'France': 'fr', 'Britain': 'gb', 'England': 'gb', 'Great Britain': 'gb', 'Canada': 'ca', 'India': 'in', 'Japan': 'jp', 'Australia': 'au', 'Brazil': 'br', 'Italy': 'it', 'Spain': 'es', 'Korea': 'kr', 'Vietnam': 'vn', 'Taiwan': 'tw', 'Poland': 'pl', 'Sweden': 'se', 'Iran': 'ir', 'Turkey': 'tr', 'Ukraine': 'ua', 'Mexico': 'mx', 'Argentina': 'ar', 'Ireland': 'ie', 'Switzerland': 'ch', 'Belgium': 'be', 'Norway': 'no', 'Finland': 'fi', 'Portugal': 'pt', 'Greece': 'gr', 'Czech Republic': 'cz', 'Hungary': 'hu', 'Indonesia': 'id', 'Thailand': 'th', 'Malaysia': 'my', 'Philippines': 'ph', 'South Africa': 'za', 'Egypt': 'eg', 'Israel': 'il', 'Slovakia': 'sk', 'Bulgaria': 'bg' };
                                 const text = box.innerText;
-                                const country = Object.keys(cMap).find(c => text.includes(c));
+                                // Attempt to extract country name from text "Attack Source: Germany" or similar?
+                                // Usually ticker text is "IP Location" or just "Germany"
+                                // We check against all keys in COUNTRY_MAP. This might be slow but robust.
+                                // Optimization: Common countries first?
+
+                                let country = null;
+                                if (window.COUNTRY_MAP) {
+                                    // Try to find a country name in the text
+                                    // Sort by length desc to match "United States" before "States" etc.
+                                    const names = Object.keys(window.COUNTRY_MAP).sort((a, b) => b.length - a.length);
+                                    country = names.find(c => text.includes(c));
+                                }
+
                                 if (country) {
-                                    const newHref = `/symbol-defs.svg#icon-${cMap[country]}`;
-                                    use.setAttribute('xlink:href', newHref);
-                                    use.setAttribute('href', newHref);
+                                    const code = window.COUNTRY_MAP[country];
+                                    const newHref = `/assets/symbol-defs.svg#icon-${code}`;
 
-                                    // FIX: Remove 'undefined' class if present, it hides the icon
-                                    svg.classList.remove('undefined');
-
-                                    svg.style.display = 'inline-block';
-                                    if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
-                                    if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
+                                    // Update if different
+                                    if (href !== newHref) {
+                                        use.setAttribute('xlink:href', newHref);
+                                        use.setAttribute('href', newHref);
+                                        svg.classList.remove('undefined');
+                                        svg.style.display = 'inline-block';
+                                        if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
+                                        if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
+                                    }
                                 }
                             }
                         }
                     }
                 });
-                // SAFETY UPDATE: END
             } catch (e) { console.error('Data patch error:', e); }
         };
 
@@ -359,26 +385,25 @@
                             let flagCode = 'unknown';
                             if (item.flag && item.flag.length === 2) flagCode = item.flag.toLowerCase();
                             else if (item.location) {
-                                const loc = item.location.toLowerCase();
-                                if (loc.includes('china')) flagCode = 'cn';
-                                else if (loc.includes('united states') || loc.includes('usa')) flagCode = 'us';
-                                else if (loc.includes('russia')) flagCode = 'ru';
-                                else if (loc.includes('germany') || loc.includes('deutschland')) flagCode = 'de';
-                                else if (loc.includes('france')) flagCode = 'fr';
-                                else if (loc.includes('netherlands')) flagCode = 'nl';
-                                else if (loc.includes('brazil')) flagCode = 'br';
-                                else if (loc.includes('india')) flagCode = 'in';
-                                else if (loc.includes('vietnam')) flagCode = 'vn';
-                                else if (loc.includes('uk') || loc.includes('kingdom')) flagCode = 'gb';
-                                else if (loc.includes('japan')) flagCode = 'jp';
-                                else if (loc.includes('canada')) flagCode = 'ca';
+                                const loc = item.location;
+                                // Use window.COUNTRY_MAP
+                                if (window.COUNTRY_MAP) {
+                                    // Direct match
+                                    if (window.COUNTRY_MAP[loc]) {
+                                        flagCode = window.COUNTRY_MAP[loc];
+                                    } else {
+                                        // Case-insensitive
+                                        const found = Object.keys(window.COUNTRY_MAP).find(k => k.toLowerCase() === loc.toLowerCase() || loc.includes(k));
+                                        if (found) flagCode = window.COUNTRY_MAP[found];
+                                    }
+                                }
                             }
 
                             html += `
                                 <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 4px;">
                                     <div style="width: 24px; margin-right: 10px; display: flex; align-items: center;">
                                         <svg viewBox="0 0 24 24" width="20" height="15" style="display:inline-block; vertical-align:middle;">
-                                            <use href="/symbol-defs.svg#icon-${flagCode}"></use>
+                                            <use href="/assets/symbol-defs.svg#icon-${flagCode}"></use>
                                         </svg>
                                     </div>
                                     <div style="flex: 1;">
