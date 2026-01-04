@@ -9,6 +9,10 @@ import logging
 import requests
 import json
 from concurrent.futures import ThreadPoolExecutor
+from dotenv import load_dotenv
+
+# Load Env
+load_dotenv()
 
 # Configuration
 # Version: 1.3 (Force Rebuild)
@@ -234,7 +238,7 @@ def check_cloud_connectivity():
     """Check connectivity to ThreatBook/HFish Cloud."""
     try:
         # ThreatBook API endpoint often used by HFish
-        resp = requests.get("https://api.threatbook.cn/v3/scene/ip_reputation", timeout=5)
+        resp = requests.get("https://api.threatbook.cn/v3/scene/ip_reputation", timeout=15)
         if resp.status_code == 404 or resp.status_code == 200: 
             # 404 is expected if no auth, but proves connectivity.
             logger.info("Cloud Intelligence Connectivity: OK (ThreatBook API reachable)")
