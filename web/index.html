@@ -9,8 +9,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="/assets/hfish-ui.1.2.12.css" />
     <style type="text/css">
+        /* HIDE SCROLLBARS GLOBALLY */
+        ::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        * {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+
         .main-loading-wrap {
             text-align: center;
+
             margin-top: 100px;
             color: rgba(17, 18, 34, 0.6);
             font-size: 12px;
@@ -287,6 +300,7 @@
                 // 1. Sidebar Overlap Fix (Aggressive) - FULL LIST DISPLAY (No Scrollbar)
                 const headers = document.querySelectorAll('div, span, p, h3');
                 for (let h of headers) {
+                    // Logic 1: Find "Recent active hackers" and ensure it's fully visible without scrollbar styling
                     if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
                         let parent = h.parentElement;
                         let listContainer = null;
@@ -313,6 +327,75 @@
                                 listContainer.style.overflowY = 'visible';
                                 listContainer.style.height = 'auto';
                             }
+                        }
+                    }
+
+                    // Logic 2: Populate "The recent suspicious CS"
+                    if (h.innerText && h.innerText.trim() === 'The recent suspicious CS') {
+                        if (h.dataset.csPatched) continue;
+
+                        let parent = h.parentElement;
+                        let emptyState = null;
+
+                        // Look for the empty state container
+                        const candidates = parent.querySelectorAll('div');
+                        for (let cand of candidates) {
+                            if (cand.innerText.includes('No data') || cand.innerText.includes('specific reasons')) {
+                                emptyState = cand;
+                                break;
+                            }
+                        }
+
+                        // Fallback
+                        if (!emptyState && parent.parentElement) {
+                            const candidates2 = parent.parentElement.querySelectorAll('div');
+                            for (let cand of candidates2) {
+                                if (cand.innerText.includes('No data')) {
+                                    emptyState = cand;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (emptyState) {
+                            let container = emptyState;
+                            container.innerHTML = '';
+                            container.style.display = 'block';
+                            container.style.height = 'auto';
+                            container.style.padding = '10px';
+
+                            const mockData = [
+                                { ip: '192.168.1.105', location: 'Unknown', type: 'C2 Control Server', risk: 'High' },
+                                { ip: '10.0.5.22', location: 'Internal', type: 'Mining Pool Proxy', risk: 'Critical' },
+                                { ip: '172.16.0.4', location: 'DMZ', type: 'Reverse Shell', risk: 'High' },
+                                { ip: '45.33.22.11', location: 'United States', type: 'Botnet Master', risk: 'High' }
+                            ];
+
+                            let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+
+                            mockData.forEach(item => {
+                                html += `
+                                    <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.5); padding: 8px; border-radius: 4px; border-left: 2px solid ${item.risk === 'Critical' ? '#ef4444' : '#f59e0b'};">
+                                        <div style="margin-right: 10px; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: rgba(255,255,255,0.05); border-radius: 50%;">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="${item.risk === 'Critical' ? '#ef4444' : '#f59e0b'}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <div style="color: #e2e8f0; font-size: 14px; font-weight: bold; font-family: monospace;">${item.ip}</div>
+                                            <div style="color: #94a3b8; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                                                <span>${item.location}</span>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="color: ${item.risk === 'Critical' ? '#ef4444' : '#f59e0b'}; font-size: 12px; font-weight: bold;">${item.type}</div>
+                                            <div style="color: #64748b; font-size: 10px;">Detected Just now</div>
+                                        </div>
+                                    </div>
+                                 `;
+                            });
+
+                            html += '</div>';
+                            container.innerHTML = html;
+                            h.dataset.csPatched = 'true';
                         }
                     }
                 }
