@@ -627,13 +627,15 @@
                         }
 
                         try {
-                            const response = await fetch('/api/v1/user/login', {
+                            // Using /api/web/auth endpoint found in app.js
+                            const response = await fetch('/api/web/auth', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                 },
                                 body: JSON.stringify({
-                                    account: username,
+                                    account: username,  // Send both to be safe
+                                    username: username,
                                     password: password
                                 })
                             });
