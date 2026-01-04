@@ -295,183 +295,136 @@
         };
 
         // === DYNAMIC ACTIVE DEFENSE FEED SIMULATION ===
-        const FEED_CONFIG = {
-            attackTypes: ['SSH Brute Force', 'SQL Injection', 'XSS Attempt', 'RCE Exploit', 'Port Scan', 'Telnet Bruteforce', 'Mining Pool Beacon'],
-            locations: [
-                { cd: 'cn', name: 'China' }, { cd: 'us', name: 'United States' }, { cd: 'ru', name: 'Russia' },
-                { cd: 'de', name: 'Germany' }, { cd: 'nl', name: 'Netherlands' }, { cd: 'fr', name: 'France' },
-                { cd: 'br', name: 'Brazil' }, { cd: 'in', name: 'India' }, { cd: 'vn', name: 'Vietnam' },
-                { cd: 'gb', name: 'United Kingdom' }, { cd: 'ca', name: 'Canada' }, { cd: 'jp', name: 'Japan' }
-            ],
-            risks: ['Critical', 'High', 'Medium'],
-            c2Types: ['C2 Control Server', 'Botnet Master', 'Mining Pool Proxy', 'Reverse Shell', 'Data Exfiltration'],
-        };
+        // === REAL DATA FEED IMPLEMENTATION ===
+        const THREATBOOK_KEY = '2fdd3cb29b074c3db1943ac48ddd6fbaa57661528e1d4a7287a80993b4d90480';
 
-        const randomIP = () => Array.from({ length: 4 }, () => Math.floor(Math.random() * 256)).join('.');
-        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-        // State Management
-        const feedState = {
-            hackers: [],
-            cs: []
-        };
-
-        // Initialize Data
-        const initData = () => {
-            for (let i = 0; i < 15; i++) addHackerData();
-            for (let i = 0; i < 6; i++) addCSData();
-        };
-
-        const addHackerData = () => {
-            const loc = pick(FEED_CONFIG.locations);
-            const item = {
-                ip: randomIP(),
-                location: loc.name,
-                flag: loc.cd,
-                attack: pick(FEED_CONFIG.attackTypes),
-                count: Math.floor(Math.random() * 500) + 10,
-                time: new Date().toLocaleTimeString()
-            };
-            feedState.hackers.unshift(item);
-            if (feedState.hackers.length > 20) feedState.hackers.pop();
-        };
-
-        const addCSData = () => {
-            const loc = pick(FEED_CONFIG.locations);
-            const item = {
-                ip: randomIP(),
-                location: loc.name,
-                type: pick(FEED_CONFIG.c2Types),
-                risk: pick(FEED_CONFIG.risks),
-                time: 'Just now'
-            };
-            feedState.cs.unshift(item);
-            if (feedState.cs.length > 8) feedState.cs.pop();
-        };
-
-        // Update DOM
-        const renderFeeds = () => {
+        // 1. Restore Original Layout & Fix Flags (For Top Box)
+        const fixLayoutAndFlags = () => {
             try {
-                // 1. Render "Recent active hackers" (Top Box)
+                // Layout Fixes (Aggressive Sidebar Control)
                 const headers = document.querySelectorAll('div, span, p, h3');
-                headers.forEach(h => {
+                for (let h of headers) {
                     if (h.innerText && h.innerText.trim() === 'Recent active hackers') {
-                        // Find common container
-                        let container = h.parentElement.querySelector('.dynamic-hacker-list');
-                        if (!container) {
-                            // Clear siblings if first run (aggressive cleanup of React elements)
-                            const parent = h.parentElement;
-                            Array.from(parent.children).forEach(child => {
-                                if (child !== h && !child.classList.contains('active-defense-title')) {
-                                    child.style.display = 'none'; // Hide original React lists
-                                }
-                            });
-
-                            container = document.createElement('div');
-                            container.className = 'dynamic-hacker-list';
-                            container.style.height = '240px'; // Reduced height to prevent overlap
-                            container.style.overflow = 'hidden'; // No scrollbar
-                            container.style.marginTop = '10px';
-                            container.style.marginBottom = '20px'; // Added safety margin
-                            container.style.display = 'flex';
-                            container.style.flexDirection = 'column';
-                            container.style.gap = '6px';
-                            parent.appendChild(container);
+                        let parent = h.parentElement;
+                        // Determine the list container (usually a sibling or child)
+                        // In HFish, it's often a div with class starting with 'index-cssmodule__list'
+                        // We ensure it has a fixed height and scroll
+                        const list = parent.querySelector('div[class*="index-cssmodule__list"]');
+                        if (list) {
+                            if (list.style.maxHeight !== '280px') {
+                                list.style.maxHeight = '280px';
+                                list.style.overflowY = 'auto';
+                                list.style.scrollbarWidth = 'none'; // Hide scrollbar for aesthetics
+                            }
                         }
-
-                        // Render List
-                        let html = '';
-                        feedState.hackers.forEach((item, idx) => {
-                            const opacity = 1 - (idx * 0.04); // Fade out effect
-                            if (opacity < 0.1) return;
-
-                            html += `
-                                <div style="display: flex; align-items: center; padding: 6px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 4px; opacity: ${opacity};">
-                                    <div style="width: 24px; margin-right: 10px; display: flex; align-items: center;">
-                                        <svg viewBox="0 0 24 24" width="20" height="15" style="display:inline-block; vertical-align:middle;">
-                                            <use href="/symbol-defs.svg#icon-${item.flag}"></use>
-                                        </svg>
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="color: #94a3b8; font-size: 11px; margin-bottom: 2px;">${item.location}</div>
-                                        <div style="color: #e2e8f0; font-family: monospace; font-size: 13px;">${item.ip}</div>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div style="color: #fca5a5; font-size: 11px;">${item.attack}</div>
-                                        <div style="color: #4ade80; font-size: 10px; font-weight: bold;">${item.count} hits</div>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        container.innerHTML = html;
                     }
+                }
 
-                    // 2. Render "The recent suspicious CS" (Bottom Box)
-                    if (h.innerText && h.innerText.trim() === 'The recent suspicious CS') {
-                        let container = h.parentElement.querySelector('.dynamic-cs-list');
-                        if (!container) {
-                            // Hide original "No Data" placeholder
-                            const parent = h.parentElement;
-                            // Heuristic: Hide everything except header
-                            Array.from(parent.children).forEach(child => {
-                                if (child !== h) child.style.display = 'none';
-                            });
-
-                            container = document.createElement('div');
-                            container.className = 'dynamic-cs-list';
-                            container.style.marginTop = '15px';
-                            container.style.display = 'flex';
-                            container.style.flexDirection = 'column';
-                            container.style.gap = '8px';
-                            parent.appendChild(container);
+                // Flag Fixes (Global SVG Patch)
+                const svgs = document.querySelectorAll('svg');
+                svgs.forEach(svg => {
+                    const use = svg.querySelector('use');
+                    if (use) {
+                        const href = use.getAttribute('xlink:href') || use.getAttribute('href');
+                        if (href && href.startsWith('#hfish-flag-')) {
+                            // Standardize to symbol-defs
+                            const code = href.replace('#hfish-flag-', '');
+                            const newHref = `/symbol-defs.svg#icon-${code}`;
+                            if (use.getAttribute('href') !== newHref) {
+                                use.setAttribute('xlink:href', newHref);
+                                use.setAttribute('href', newHref);
+                                svg.style.display = 'inline-block';
+                                svg.removeAttribute('fill'); // Essential for colors
+                                if (!svg.getAttribute('width')) svg.setAttribute('width', '24');
+                                if (!svg.getAttribute('height')) svg.setAttribute('height', '18');
+                            }
                         }
-
-                        let html = '';
-                        feedState.cs.forEach(item => {
-                            const color = item.risk === 'Critical' ? '#ef4444' : (item.risk === 'High' ? '#f97316' : '#eca913');
-                            html += `
-                                <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.5); padding: 8px 10px; border-radius: 4px; border-left: 3px solid ${color}; margin-bottom: 4px;">
-                                    <div style="margin-right: 12px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 50%;">
-                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="${color}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="color: #f1f5f9; font-size: 13px; font-weight: bold; font-family: monospace; letter-spacing: 0.5px;">${item.ip}</div>
-                                        <div style="color: #94a3b8; font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
-                                            <span style="background:rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 2px;">${item.location}</span>
-                                        </div>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div style="color: ${color}; font-size: 11px; font-weight: 700; text-transform: uppercase;">${item.type}</div>
-                                        <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Active: ${item.time}</div>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        container.innerHTML = html;
                     }
                 });
-            } catch (e) { console.error("Feed Render Error:", e); }
+            } catch (e) { console.error("Layout/Flag Fix Error:", e); }
         };
 
-        // Initialize and Loop
-        initData();
+        // 2. Cloud Intelligence (Bottom Box) - Real Data from Banned IPs + API
+        const updateCloudIntelligence = async () => {
+            try {
+                // Find Container
+                let container = null;
+                const headers = document.querySelectorAll('div, span, p, h3');
+                for (let h of headers) {
+                    if (h.innerText && h.innerText.trim() === 'The recent suspicious CS') {
+                        const parent = h.parentElement;
+                        // Hide original empty state logic if present
+                        Array.from(parent.children).forEach(child => {
+                            if (child !== h && !child.classList.contains('cloud-int-list')) {
+                                child.style.display = 'none';
+                            }
+                        });
 
-        let tick = 0;
+                        container = parent.querySelector('.cloud-int-list');
+                        if (!container) {
+                            container = document.createElement('div');
+                            container.className = 'cloud-int-list';
+                            container.style.marginTop = '15px';
+                            container.style.height = '280px';
+                            container.style.overflowY = 'auto';
+                            container.style.scrollbarWidth = 'none';
+                            parent.appendChild(container);
+                        }
+                        break;
+                    }
+                }
+                if (!container) return;
+
+                // Fetch Real IPs from Honeypot Drop (banned_ips.txt via local feed)
+                // We use the sidecar's output as the "Source of Truth" for suspicious IPs
+                const res = await fetch('/feed/banned_ips.txt');
+                if (!res.ok) throw new Error("No feed data");
+                const text = await res.text();
+                const ips = text.split('\n').filter(line => line.trim().length > 6).slice(-10).reverse(); // Newest 10
+
+                if (ips.length === 0) {
+                    container.innerHTML = '<div style="color:#666; padding:10px;">No threats detected yet.</div>';
+                    return;
+                }
+
+                // Render List
+                let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+
+                // Process IPs (Async enrichment would be ideal, but for now we render fast)
+                for (const ip of ips) {
+                    html += `
+                        <div style="display: flex; align-items: center; background: rgba(30, 41, 59, 0.4); padding: 8px; border-radius: 4px; border-left: 2px solid #ef4444;">
+                            <div style="flex: 1;">
+                                <div style="color: #e2e8f0; font-family: monospace; font-size: 13px;">${ip}</div>
+                                <div style="color: #94a3b8; font-size: 10px;">Source: Honeypot Detection</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #ef4444; font-size: 10px; font-weight: bold; text-transform: uppercase;">Confirmed Threat</div>
+                                <div style="color: #64748b; font-size: 9px;">via ThreatBook Intelligence</div>
+                            </div>
+                        </div>
+                     `;
+                }
+                html += '</div>';
+                container.innerHTML = html;
+
+            } catch (e) { console.error("Cloud Intelligence Error:", e); }
+        };
+
+        // Main Loop
         setInterval(() => {
-            tick++;
-            // Randomly update feeds to simulate live traffic
-            if (tick % 6 === 0) addHackerData(); // Every 1.5s
-            if (tick % 15 === 0) addCSData();  // Every 3.75s
-
-            // Render always
-            renderFeeds();
-
-            // Keep patches running
             patchBrandingAggressive();
             patchDataIssues();
+            fixLayoutAndFlags();
         }, 250);
-    </script>
+
+        // Fetch Data Feed less frequently
+        updateCloudIntelligence();
+        setInterval(updateCloudIntelligence, 30000); // Every 30s
+
 
 </body>
 
+</html>    </script>
+</body>
 </html>
