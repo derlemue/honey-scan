@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lemueIO SecMonitor</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+
+    <!-- New Dashboard Assets (Preload) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="/assets/country_map.js"></script>
+
+    <style>
+        /* Shared / Base */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0f172a;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* New Dashboard Styles */
+        #new-dashboard {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            color: #f8fafc;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .map-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .overlay {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .pointer-events-auto {
+            pointer-events: auto;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 2px;
+        }
+
+        @keyframes ticker {
+            0% {
+                transform: translateX(100%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .ticker-wrap {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .ticker-move {
+            display: inline-block;
+            animation: ticker 30s linear infinite;
+        }
+
+        .ticker-item {
+            display: inline-block;
+            padding: 0 2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NEW DASHBOARD CONTAINER -->
+    <div id="new-dashboard" style="display:none;">
+        <div id="map" class="map-container"></div>
+        <div class="overlay flex flex-col justify-between p-4">
+            <!-- Header -->
+            <div class="flex justify-between items-start pointer-events-auto">
+                <div class="glass rounded-xl p-4 flex items-center gap-4">
+                    <img src="/assets/logo_bear.png" class="h-12 w-12 object-contain" alt="Logo">
+                    <div>
+                        <h1 class="text-xl font-bold text-green-400 tracking-wider">HONEY SCAN</h1>
+                        <p class="text-xs text-slate-400 uppercase tracking-widest">Active Defense Platform</p>
+                    </div>
+                </div>
+                <!-- Stats -->
+                <div class="flex gap-4">
+                    <div class="glass rounded-xl p-3 w-40 text-center">
+                        <p class="text-xs text-slate-400 uppercase">Total Attacks</p>
+                        <p id="stat-total" class="text-2xl font-mono font-bold text-white">Loading...</p>
+                    </div>
+                    <div class="glass rounded-xl p-3 w-40 text-center">
+                        <p class="text-xs text-slate-400 uppercase">Today</p>
+                        <p id="stat-today" class="text-2xl font-mono font-bold text-red-400">Loading...</p>
+                    </div>
+                    <div class="glass rounded-xl p-3 w-40 text-center">
+                        <p class="text-xs text-slate-400 uppercase">Top Source</p>
+                        <div class="flex items-center justify-center gap-2 mt-1">
+                            <svg class="w-6 h-4" id="stat-flag-svg">
+                                <use id="stat-flag-use" href=""></use>
+                            </svg>
+                            <p id="stat-top" class="text-lg font-bold text-yellow-400">...</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Links (Admin pointing to Login) -->
+                <div class="glass rounded-xl p-2 flex gap-3">
+                    <a href="/web/login" title="Admin Login" class="text-slate-400 hover:text-green-400 transition"><svg
+                            class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1">
+                            </path>
+                        </svg></a>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 flex gap-4 mt-4 overflow-hidden pointer-events-none">
+                <div class="flex-1"></div>
+                <div class="w-96 glass rounded-xl flex flex-col overflow-hidden pointer-events-auto">
+                    <div class="p-3 border-b border-slate-700 bg-slate-800/50">
+                        <h2 class="text-sm font-bold text-green-400">Live Active Threats</h2>
+                    </div>
+                    <div id="hacker-list" class="flex-1 overflow-y-auto p-2 space-y-2">
+                        <div class="text-center text-slate-500 py-10">Connecting to feed...</div>
+                    </div>
+                    <div class="p-3 border-t border-slate-700 bg-slate-800/50">
+                        <h2 class="text-sm font-bold text-orange-400">Suspicious Scanners</h2>
+                    </div>
+                    <div id="scanner-list" class="h-1/3 overflow-y-auto p-2 space-y-2 border-t border-slate-700"></div>
+                </div>
+            </div>
+
+            <!-- Ticker -->
+            <div class="mt-4 pointer-events-auto">
+                <div class="glass rounded-xl p-2 flex items-center overflow-hidden">
+                    <div class="bg-red-500/20 text-red-400 px-3 py-1 rounded text-xs font-bold mr-4 animate-pulse">LIVE
+                    </div>
+                    <div class="ticker-wrap flex-1">
+                        <div id="ticker-content" class="ticker-move"></div>
+                    </div>
+                    <div id="clock" class="ml-4 font-mono text-xs text-slate-400 w-32 text-right">00:00:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEGACY CONTAINER -->
+    <div id="app"></div>
+
+    <!-- ROUTING LOGIC -->
+    <script>
+        const path = window.location.pathname;
+        const isDashboard = path === '/web/index' || path === '/web/';
+
+        if (isDashboard) {
+            // --- NEW DASHBOARD MODE ---
+            document.getElementById('new-dashboard').style.display = 'block';
+            initNewDashboard();
+        } else {
+            // --- LEGACY MODE (Login/Admin) ---
+            document.getElementById('new-dashboard').remove(); // Cleanup
+
+            // Inject Legacy CSS
+            const css = document.createElement('link');
+            css.rel = 'stylesheet';
+            css.href = '/assets/hfish-ui.1.2.12.css';
+            document.head.appendChild(css);
+
+            // Inject Legacy Scripts
+            const dl = document.createElement('script'); dl.src = "/assets/dllSelf.09a1636445d39f4f9ec3.js"; document.body.appendChild(dl);
+            const app = document.createElement('script'); app.src = "/assets/app.6539b5af.js"; document.body.appendChild(app);
+            const svg = document.createElement('script'); svg.src = "/assets/flags/svgxuse.min.js"; svg.defer = true; document.body.appendChild(svg);
+
+            // Branding Patch
+            // Branding Patch
+            const restoreBranding = () => {
+                if (document.title !== "lemueIO SecMonitor") document.title = "lemueIO SecMonitor";
+
+                // 1. Style Overrides (Dark Theme, Hide Junk)
+                if (!document.getElementById('branding-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'branding-style';
+                    style.innerHTML = `
+                        html, body { background-color: #0f172a !important; margin: 0 !important; padding: 0 !important; overflow-x: hidden !important; }
+                        /* Hide Header & Footer */
+                        div[class*="header"], header, .el-header, .header-wrapper, nav, section[class*="header"] { display: none !important; }
+                        /* Styling Buttons */
+                        .el-button--primary { background-color: #4ade80 !important; border-color: #4ade80 !important; color: #0f172a !important; font-weight: bold !important; }
+                        .el-button--primary:hover { background-color: #22c55e !important; border-color: #22c55e !important; }
+                        /* Bear Logo Style */
+                        img.bear-logo { width: 100px !important; display: block; margin: 0 auto 20px auto; object-fit: contain; }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                // 2. Replace Existing Logo (image)
+                const logos = document.querySelectorAll('img');
+                logos.forEach(img => {
+                    if (img.src.startsWith('data:image/png;base64,iVBORw')) {
+                        if (!img.dataset.patched) {
+                            img.src = '/assets/logo_bear.png';
+                            img.dataset.patched = 'true';
+                            img.classList.add('bear-logo');
+                            img.style.width = '120px';
+                            img.style.objectFit = 'contain';
+                        }
+                    }
+                });
+
+                // 3. Inject Logo if Logic 2 failed (Fallback)
+                const input = document.querySelector('input[placeholder*="account"]'); // Find via placeholder
+                if (input) {
+                    const loginBox = input.closest('div').parentElement.parentElement;
+                    if (loginBox) {
+                        // Check if we have a logo in here
+                        const hasLogo = loginBox.querySelector('.bear-logo') || loginBox.querySelector('img[src*="logo_bear.png"]');
+                        if (!hasLogo) {
+                            const img = document.createElement('img');
+                            img.src = '/assets/logo_bear.png';
+                            img.className = 'bear-logo';
+                            loginBox.insertBefore(img, loginBox.firstChild);
+                        }
+                    }
+                }
+            };
+
+            // Watcher loop
+            setInterval(() => {
+                restoreBranding();
+                const p = window.location.pathname;
+                if (p === '/web/index' || p === '/web/') {
+                    window.location.reload();
+                }
+            }, 1000);
+        }
+
+        // --- NEW DASHBOARD FUNCTION ---
+        function initNewDashboard() {
+            // Config
+            const DEFAULT_LOCATION = [51.1657, 10.4515];
+            const DEFAULT_ZOOM = 5;
+
+            // Map
+            const map = L.map('map', { zoomControl: false, attributionControl: false, zoomSnap: 0.1 }).setView(DEFAULT_LOCATION, DEFAULT_ZOOM);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+
+            const nodeIcon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#4ade80; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px #4ade80;'></div>", iconSize: [12, 12], iconAnchor: [6, 6] });
+
+            // Data Fetching
+            const getFlagUrl = (countryName) => {
+                if (!countryName) return '';
+                let code = 'unknown';
+                if (window.COUNTRY_MAP) {
+                    if (window.COUNTRY_MAP[countryName]) { code = window.COUNTRY_MAP[countryName]; }
+                    else { const found = Object.keys(window.COUNTRY_MAP).find(k => k.toLowerCase() === countryName.toLowerCase() || countryName.includes(k)); if (found) code = window.COUNTRY_MAP[found]; }
+                }
+                return `/assets/symbol-defs.svg#icon-${code}`;
+            };
+
+            const updateData = async () => {
+                try {
+                    const threatResp = await fetch('https://feed.sec.lemue.org/assets/live_threats.json?t=' + Date.now());
+                    const threatData = await threatResp.json();
+                    renderHackers(threatData.hackers);
+                    renderScanners(threatData.cs);
+                    renderTicker(threatData.hackers);
+
+                    const statsResp = await fetch('https://feed.sec.lemue.org/assets/stats.json?t=' + Date.now());
+                    const statsData = await statsResp.json();
+                    document.getElementById('stat-total').innerText = statsData.total_attacks.toLocaleString();
+                    document.getElementById('stat-today').innerText = statsData.today_attacks.toLocaleString();
+                    document.getElementById('stat-top').innerText = statsData.top_country;
+                    document.getElementById('stat-flag-use').setAttribute('href', getFlagUrl(statsData.top_country));
+
+                    if (!window.nodeSet) {
+                        const locResp = await fetch('https://feed.sec.lemue.org/assets/location.json');
+                        const locData = await locResp.json();
+                        if (locData.lat && locData.lng) {
+                            L.marker([locData.lat, locData.lng], { icon: nodeIcon }).addTo(map).bindPopup(`<b>Node: ${locData.city}</b><br>${locData.ip}`);
+                            map.flyTo([locData.lat, locData.lng], 6);
+                            window.nodeSet = true;
+                        }
+                    }
+                } catch (e) { console.error("Update failed", e); }
+            };
+
+            const renderHackers = (list) => {
+                document.getElementById('hacker-list').innerHTML = list.map(item => `
+                    <div class="flex items-center bg-slate-800/80 p-2 rounded border-l-2 border-red-500 hover:bg-slate-700 transition">
+                        <div class="w-8 flex-shrink-0"><svg class="w-6 h-4"><use href="${getFlagUrl(item.location)}"></use></svg></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between"><span class="font-mono text-sm text-white truncate">${item.ip}</span><span class="text-xs text-green-400 font-bold">${item.count} hits</span></div>
+                            <div class="text-xs text-slate-400 capitalize">${item.location}</div>
+                        </div>
+                    </div>`).join('');
+            };
+
+            const renderScanners = (list) => {
+                document.getElementById('scanner-list').innerHTML = list.map(item => `
+                    <div class="flex items-center bg-slate-800/50 p-2 rounded text-xs">
+                         <div class="w-2 h-2 rounded-full mr-2 ${item.risk === 'Critical' ? 'bg-red-500' : 'bg-orange-400'}"></div>
+                         <span class="font-mono text-slate-300 flex-1">${item.ip}</span><span class="text-slate-500">${item.type}</span>
+                    </div>`).join('');
+            };
+
+            const renderTicker = (list) => {
+                const items = [...list, ...list].map(item => `
+                    <div class="ticker-item"><span class="text-slate-400 mr-2">Attack from</span><span class="font-bold text-red-400 flex items-center gap-2"><svg class="w-4 h-3 inline-block"><use href="${getFlagUrl(item.location)}"></use></svg>${item.location}</span><span class="text-slate-600 mx-2">via</span><span class="font-mono text-slate-300">${item.ip}</span></div>`).join('');
+                document.getElementById('ticker-content').innerHTML = items;
+            };
+
+            setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+            updateData();
+            setInterval(updateData, 5000);
+        }
+    </script>
+</body>
+
+</html>
