@@ -29,6 +29,8 @@ services:
       - ./web/assets/location.json:/opt/hfish/current/web/assets/location.json:ro
       - ./web/assets/location.json:/opt/hfish/current/web/assets/location.json:ro
       - ./web/assets/location.json:/opt/hfish/3.3.6/web/assets/location.json:ro
+      - ./web/assets/live_threats.json:/opt/hfish/current/web/assets/live_threats.json:ro
+      - ./web/assets/live_threats.json:/opt/hfish/3.3.6/web/assets/live_threats.json:ro
       - ./web/assets/app.6539b5af.js:/opt/hfish/current/web/assets/app.6539b5af.js:ro
       - ./web/assets/app.6539b5af.js:/opt/hfish/3.3.6/web/assets/app.6539b5af.js:ro
     deploy:
@@ -76,6 +78,8 @@ services:
       - DB_USER=${DB_USER:-hfish}
       - DB_PASSWORD=${DB_PASSWORD:-hfish}
       - DB_NAME=${DB_NAME:-hfish}
+      - THREATBOOK_API_KEY=${THREATBOOK_API_KEY}
+      - THREATBOOK_API_BASE_URL=${THREATBOOK_API_BASE_URL}
     volumes:
       - ./scans:/app/scans
       - ./feed:/app/feed
