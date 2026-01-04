@@ -409,7 +409,8 @@
                     <label class="native-form-label" for="nativeCaptcha">Verification Code</label>
                     <div class="native-captcha-container">
                         <div class="native-captcha-display" id="nativeCaptchaDisplay" title="Click to refresh">
-                            <svg class="native-captcha-svg" id="nativeCaptchaSvg"></svg>
+                            <img id="nativeCaptchaImg" src="" alt="Captcha"
+                                style="width: 100%; height: 100%; object-fit: contain; display: block;">
                         </div>
                         <button type="button" class="native-captcha-refresh" id="nativeCaptchaRefresh"
                             title="Refresh captcha">
@@ -455,282 +456,173 @@
     </script>
 
     <script id="nativeLoginScript">
-        // NATIVE LOGIN PAGE ACTIVATION
-        document.addEventListener('DOMContentLoaded', function () {
+        // NATIVE LOGIN PAGE ACTIVATION - EXECUTED IMMEDIATELY
+        (function () {
             try {
-                // NATIVE LOGIN ENABLED - Using /api/web/auth endpoint
-                // Robust URL check (handles query params and hash)
+                // Check if we are on the login page
                 const isLoginPage = location.pathname.includes('/login') || location.hash.includes('login') || location.href.includes('login');
 
                 console.log("[NativeLogin] Check:", { url: location.href, isLoginPage });
 
                 if (isLoginPage) {
-                    // Activate native login
+                    // 1. Activate Native Login Interface
                     const nativeLogin = document.getElementById('nativeLogin');
                     if (nativeLogin) {
                         nativeLogin.classList.add('active');
-                        nativeLogin.style.display = 'flex'; // Enforce visibility check
-                        console.log("[NativeLogin] Activated");
+                        nativeLogin.style.display = 'flex'; // FORCE visibility
+                        console.log("[NativeLogin] Activated UI");
                     } else {
-                        console.error("[NativeLogin] Element #nativeLogin not found!");
+                        console.error("[NativeLogin] #nativeLogin element not found!");
                     }
 
-                    // Hide React app root container completely
+                    // 2. Hide React App Container
                     const app = document.getElementById('app');
                     if (app) {
                         app.style.display = 'none';
-                        app.innerHTML = ''; // Clear React content to save memory
+                        // Keep content cleared to save memory and prevent background execution
+                        app.innerHTML = '';
                     }
 
-                    // Captcha Generator
-                    let currentCaptcha = '';
-
-                    function generateCaptcha() {
-                        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-                        let captcha = '';
-                        for (let i = 0; i < 6; i++) {
-                            captcha += chars.charAt(Math.floor(Math.random() * chars.length));
-                        }
-                        return captcha;
-                    }
-
-                    function renderCaptcha(code) {
-                        const svg = document.getElementById('nativeCaptchaSvg');
-                        if (!svg) return;
-                        const width = 200;
-                        const height = 50;
-                        svg.innerHTML = '';
-                        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-                        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-                        const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
-                        pattern.setAttribute('id', 'nativeNoise');
-                        pattern.setAttribute('width', '100');
-                        pattern.setAttribute('height', '100');
-                        pattern.setAttribute('patternUnits', 'userSpaceOnUse');
-                        for (let i = 0; i < 50; i++) {
-                            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                            circle.setAttribute('cx', Math.random() * 100);
-                            circle.setAttribute('cy', Math.random() * 100);
-                            circle.setAttribute('r', Math.random() * 2);
-                            circle.setAttribute('fill', `rgba(0,0,0,${Math.random() * 0.1})`);
-                            pattern.appendChild(circle);
-                        }
-                        defs.appendChild(pattern);
-                        svg.appendChild(defs);
-                        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                        bg.setAttribute('width', width);
-                        bg.setAttribute('height', height);
-                        bg.setAttribute('fill', 'url(#nativeNoise)');
-                        svg.appendChild(bg);
-                        for (let i = 0; i < 3; i++) {
-                            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                            line.setAttribute('x1', Math.random() * width);
-                            line.setAttribute('y1', Math.random() * height);
-                            line.setAttribute('x2', Math.random() * width);
-                            line.setAttribute('y2', Math.random() * height);
-                            line.setAttribute('stroke', `rgba(${Math.random() * 100},${Math.random() * 100},${Math.random() * 100},0.3)`);
-                            line.setAttribute('stroke-width', '2');
-                            svg.appendChild(line);
-                        }
-                        const charWidth = width / code.length;
-                        for (let i = 0; i < code.length; i++) {
-                            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                            const x = charWidth * i + charWidth / 2;
-                            const y = height / 2 + 5;
-                            const rotation = (Math.random() - 0.5) * 30;
-                            text.setAttribute('x', x);
-                            text.setAttribute('y', y);
-                            text.setAttribute('font-size', '28');
-                            text.setAttribute('font-weight', 'bold');
-                            text.setAttribute('font-family', 'monospace');
-                            text.setAttribute('fill', `hsl(${Math.random() * 360}, 70%, 40%)`);
-                            text.setAttribute('text-anchor', 'middle');
-                            text.setAttribute('transform', `rotate(${rotation} ${x} ${y})`);
-                            text.textContent = code[i];
-                            svg.appendChild(text);
-                        }
-                    }
-
-                    function refreshCaptcha() {
-                        currentCaptcha = generateCaptcha();
-                        renderCaptcha(currentCaptcha);
-                        const captchaInput = document.getElementById('nativeCaptcha');
-                        if (captchaInput) captchaInput.value = '';
-                    }
-
-                    // Initialize captcha
-                    setTimeout(refreshCaptcha, 100);
-
-                    // Event Listeners
-                    const captchaRefresh = document.getElementById('nativeCaptchaRefresh');
-                    const captchaDisplay = document.getElementById('nativeCaptchaDisplay');
-                    if (captchaRefresh) captchaRefresh.addEventListener('click', refreshCaptcha);
-                    if (captchaDisplay) captchaDisplay.addEventListener('click', refreshCaptcha);
-
-                    // Forgot Password Modal
-                    const modal = document.getElementById('nativeForgotPasswordModal');
-                    const forgotLink = document.getElementById('nativeForgotPasswordLink');
-                    const modalClose = document.getElementById('nativeModalClose');
-
-                    if (forgotLink && modal) {
-                        forgotLink.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            modal.classList.add('show');
-                        });
-                    }
-
-                    if (modalClose && modal) {
-                        modalClose.addEventListener('click', () => {
-                            modal.classList.remove('show');
-                        });
-                    }
-
-                    if (modal) {
-                        modal.addEventListener('click', (e) => {
-                            if (e.target === modal) {
-                                modal.classList.remove('show');
-                            }
-                        });
-                    }
-
-                    // Login Form Handler
-                    const form = document.getElementById('nativeLoginForm');
-                    const errorDiv = document.getElementById('nativeErrorMessage');
-                    const loginBtn = document.getElementById('nativeLoginButton');
-                    const usernameInput = document.getElementById('nativeUsername');
-                    const passwordInput = document.getElementById('nativePassword');
+                    // 3. Captcha Logic (Server-Side)
+                    const captchaImg = document.getElementById('nativeCaptchaImg');
                     const captchaInput = document.getElementById('nativeCaptcha');
 
+                    window.fetchCaptcha = function () {
+                        if (!captchaImg) return;
+
+                        // Add rotation effect to refresh button
+                        const refreshBtn = document.getElementById('nativeCaptchaRefresh');
+                        if (refreshBtn) refreshBtn.style.transform = 'rotate(180deg)';
+                        setTimeout(() => { if (refreshBtn) refreshBtn.style.transform = 'none'; }, 300);
+
+                        fetch('/v1/captcha')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.response_code === 0 && data.data) {
+                                    captchaImg.src = data.data;
+                                    captchaInput.value = ''; // Clear input on refresh
+                                } else {
+                                    console.error("[NativeLogin] Captcha API error:", data);
+                                }
+                            })
+                            .catch(err => {
+                                console.error("[NativeLogin] Captcha Fetch Error:", err);
+                                // Fallback or user notification could go here
+                            });
+                    };
+
+                    // Initial Captcha Load
+                    window.fetchCaptcha();
+
+                    // refresh button handler
+                    const refreshBtn = document.getElementById('nativeCaptchaRefresh');
+                    const captchaDisplay = document.getElementById('nativeCaptchaDisplay');
+                    if (refreshBtn) refreshBtn.onclick = window.fetchCaptcha;
+                    if (captchaDisplay) captchaDisplay.onclick = window.fetchCaptcha;
+
+                    // 4. Login Logic
+                    const form = document.getElementById('nativeLoginForm');
                     if (form) {
-                        form.addEventListener('submit', async (e) => {
+                        form.onsubmit = function (e) {
                             e.preventDefault();
 
-                            if (errorDiv) {
-                                errorDiv.classList.remove('show');
-                                errorDiv.textContent = '';
-                            }
+                            const username = document.getElementById('nativeUsername').value.trim();
+                            const password = document.getElementById('nativePassword').value;
+                            const captcha = document.getElementById('nativeCaptcha').value.trim();
+                            const errorDiv = document.getElementById('nativeErrorMessage');
+                            const loginBtn = document.getElementById('nativeLoginButton');
 
-                            const username = usernameInput ? usernameInput.value.trim() : '';
-                            const password = passwordInput ? passwordInput.value : '';
-                            const captcha = captchaInput ? captchaInput.value.trim().toUpperCase() : '';
+                            if (!username || !password || !captcha) return;
 
-                            if (!username || !password || !captcha) {
-                                if (errorDiv) {
-                                    errorDiv.textContent = 'Please fill in all fields';
-                                    errorDiv.classList.add('show');
-                                }
-                                return;
-                            }
+                            // Reset error
+                            errorDiv.style.display = 'none';
+                            errorDiv.textContent = '';
 
-                            if (captcha !== currentCaptcha) {
-                                if (errorDiv) {
-                                    errorDiv.textContent = 'Invalid verification code. Please try again.';
-                                    errorDiv.classList.add('show');
-                                }
-                                refreshCaptcha();
-                                return;
-                            }
+                            // Set loading state
+                            loginBtn.disabled = true;
+                            const originalBtnText = loginBtn.textContent;
+                            loginBtn.textContent = 'Verifying...';
 
-                            if (loginBtn) {
-                                loginBtn.disabled = true;
-                                loginBtn.textContent = 'Signing In...';
-                            }
-
-                            try {
-                                // Using /api/web/auth endpoint found in app.js
-                                const response = await fetch('/api/web/auth', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        account: username,  // Send both to be safe
-                                        username: username,
-                                        password: password
-                                    })
-                                });
-
-                                let data;
-                                try {
+                            // Login Request
+                            fetch('/v1/login', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                // Send all potential keys to be safe
+                                body: JSON.stringify({
+                                    account: username,
+                                    username: username,
+                                    password: password,
+                                    verification_code: captcha,
+                                    captcha: captcha
+                                })
+                            })
+                                .then(async response => {
                                     const text = await response.text();
+                                    let data;
                                     try {
                                         data = JSON.parse(text);
                                     } catch (e) {
-                                        console.error('Failed to parse JSON:', e);
-                                        data = { code: -1, msg: `Server returned non-JSON: ${text.substring(0, 100)}...` };
+                                        throw new Error("Invalid Server Response: " + text.substring(0, 50));
                                     }
-                                } catch (e) {
-                                    console.error('Failed to read response:', e);
-                                    data = null;
-                                }
 
-                                // Log for debugging
-                                console.log('Login Debug:', { status: response.status, data });
+                                    console.log("[NativeLogin] Response:", data);
 
-                                if (response.ok && data && data.code === 0) {
-                                    if (data.data && data.data.token) {
-                                        localStorage.setItem('hfish_token', data.data.token);
+                                    if (data.response_code === 0) {
+                                        // Success! Redirect.
+                                        // Sometimes token is in data.data.token, sometimes set via cookie.
+                                        // HFish typically uses cookie (JSESSIONID/token).
+                                        // We just redirect to dashboard.
+                                        window.location.href = '/web/dashboard';
+                                    } else {
+                                        // Logic Error
+                                        throw new Error(data.verbose_msg || data.msg || "Login Failed");
                                     }
-                                    window.location.href = '/web/dashboard';
-                                } else {
-                                    const statusMsg = `HTTP ${response.status}`;
-                                    const errorMsg = (data && (data.msg || data.message))
-                                        ? (data.msg || data.message)
-                                        : 'Unknown error';
-
-                                    if (errorDiv) {
-                                        errorDiv.textContent = `Login Error (${statusMsg}): ${errorMsg}`;
-                                        errorDiv.classList.add('show');
-                                    }
-                                    if (loginBtn) {
-                                        loginBtn.disabled = false;
-                                        loginBtn.textContent = 'Sign In';
-                                    }
-                                    refreshCaptcha();
-                                }
-                            } catch (error) {
-                                console.error('Network error:', error);
-                                if (errorDiv) {
-                                    errorDiv.textContent = `Network Error: ${error.message}`;
+                                })
+                                .catch(error => {
+                                    console.error("[NativeLogin] Error:", error);
+                                    errorDiv.textContent = error.message;
+                                    errorDiv.style.display = 'block';
                                     errorDiv.classList.add('show');
-                                }
-                                if (loginBtn) {
+
+                                    // Reset button
                                     loginBtn.disabled = false;
-                                    loginBtn.textContent = 'Sign In';
-                                }
-                                refreshCaptcha();
-                            }
-                        } catch (error) {
-                            console.error('Login error:', error);
-                            if (errorDiv) {
-                                errorDiv.textContent = 'Connection error. Please try again.';
-                                errorDiv.classList.add('show');
-                            }
-                            if (loginBtn) {
-                                loginBtn.disabled = false;
-                                loginBtn.textContent = 'Sign In';
-                            }
-                            refreshCaptcha();
-                        }
-                    });
-            }
-        }
-                // Error Handler for inner logic
+                                    loginBtn.textContent = originalBtnText;
+
+                                    // Refresh captcha on failure
+                                    window.fetchCaptcha();
+                                });
+                        };
+                    }
+
+                    // 5. Modal Logic (Forgot Password)
+                    const modal = document.getElementById('nativeForgotPasswordModal');
+                    const link = document.getElementById('nativeForgotPasswordLink');
+                    const close = document.getElementById('nativeModalClose');
+                    if (modal && link && close) {
+                        link.onclick = (e) => { e.preventDefault(); modal.classList.add('show'); };
+                        close.onclick = () => { modal.classList.remove('show'); };
+                        modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+                    }
+                }
             } catch (err) {
-            console.error("[NativeLogin] Critical Error:", err);
-            // Fallback: Try to show it anyway if error occurred
-            const nl = document.getElementById('nativeLogin');
-            if (nl) nl.style.display = 'flex';
-        }
-        });
+                console.error("[NativeLogin] Critical Setup Error:", err);
+                // Last resort fallback
+                const nl = document.getElementById('nativeLogin');
+                if (nl) nl.style.display = 'flex';
+            }
+        })();
     </script>
 
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
     <script type="text/javascript">
+        // React Blocking Logic - Strict Mode
         (function () {
-            // TEMPORARILY ENABLE REACT FOR DEBUGGING
-            // We need to sniff the correct API endpoint
-            if (false && !location.href.includes('/login') && !location.hash.includes('login')) {
+            // Only load React app if NOT in login page
+            const isLogin = location.pathname.includes('/login') || location.hash.includes('login') || location.href.includes('login');
+
+            if (!isLogin) {
                 var s1 = document.createElement('script');
                 s1.type = 'text/javascript';
                 s1.src = '/assets/dllSelf.09a1636445d39f4f9ec3.js';
@@ -741,18 +633,7 @@
                 s2.src = '/assets/app.6539b5af.js';
                 document.body.appendChild(s2);
             } else {
-                // Load React ALWAYS for now
-                var s1 = document.createElement('script');
-                s1.type = 'text/javascript';
-                s1.src = '/assets/dllSelf.09a1636445d39f4f9ec3.js';
-                document.body.appendChild(s1);
-
-                var s2 = document.createElement('script');
-                s2.type = 'text/javascript';
-                s2.src = '/assets/app.6539b5af.js';
-                document.body.appendChild(s2);
-
-                console.log("React App Enabled for Debugging");
+                console.log("[NativeLogin] React App Blocked (Login Page)");
             }
         })();
     </script>
