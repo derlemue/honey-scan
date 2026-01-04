@@ -31,6 +31,7 @@ ASSETS_DIR = "/app/assets"
 BANNED_IPS_FILE = os.path.join(FEED_DIR, "banned_ips.txt")
 INDEX_FILE = os.path.join(FEED_DIR, "index.html")
 LIVE_THREATS_FILE = os.path.join(ASSETS_DIR, "live_threats.json")
+STATS_FILE = os.path.join(ASSETS_DIR, "stats.json")
 
 MAX_WORKERS = 5 
 
@@ -222,6 +223,36 @@ def update_threat_feed():
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
         with open(LIVE_THREATS_FILE, "w") as f:
             json.dump(output, f)
+
+        # Generate General Stats
+        stats = {
+            "total_attacks": 0,
+            "today_attacks": 0,
+            "top_country": "Unknown"
+        }
+        try:
+             # Total
+             cursor.execute("SELECT COUNT(*) FROM attack_log")
+             row = cursor.fetchone()
+             stats["total_attacks"] = row['COUNT(*)'] if isinstance(row, dict) else row[0]
+
+             # Today (Approximation, assume timestamps are standard)
+             # MariaDB/MySQL specific syntax
+             cursor.execute("SELECT COUNT(*) FROM attack_log WHERE create_time >= CURDATE()")
+             row = cursor.fetchone()
+             stats["today_attacks"] = row['COUNT(*)'] if isinstance(row, dict) else row[0]
+
+             # Top Country
+             cursor.execute("SELECT country, COUNT(*) as c FROM ipaddress GROUP BY country ORDER BY c DESC LIMIT 1")
+             row = cursor.fetchone()
+             if row:
+                 stats["top_country"] = row['country'] if isinstance(row, dict) else row[0]
+        except Exception as e:
+            logger.warning(f"Stats calculation partial failure: {e}")
+
+        with open(STATS_FILE, "w") as f:
+            json.dump(stats, f)
+
     except Exception as e:
         logger.error(f"Error updating threat feed: {e}")
     finally:
