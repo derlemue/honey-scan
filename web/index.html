@@ -456,9 +456,8 @@
     <script id="nativeLoginScript">
         // NATIVE LOGIN PAGE ACTIVATION
         (function () {
-            // NATIVE LOGIN DISABLED - Using React app for login (API routing issue)
-            // Native login code preserved for future use when API routing is fixed
-            const isLoginPage = false; // was: location.href.includes('/login') || location.hash.includes('login');
+            // NATIVE LOGIN ENABLED - Using /api/web/auth endpoint
+            const isLoginPage = location.href.includes('/login') || location.hash.includes('login');
 
             if (isLoginPage) {
                 // Activate native login
