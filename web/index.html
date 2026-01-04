@@ -350,6 +350,38 @@
         #nativeLogin .native-modal-close:hover {
             background-color: #22c55e;
         }
+
+        /* Mobile Fixes for v4.1.1 */
+        @media (max-height: 800px) {
+
+            html,
+            body {
+                overflow-y: auto !important;
+                height: auto !important;
+            }
+
+            #nativeLogin {
+                position: relative !important;
+                height: auto !important;
+                min-height: 100vh;
+                padding-bottom: 60px;
+                /* Space for footer */
+                overflow-y: visible !important;
+            }
+
+            .native-login-container {
+                margin: 60px auto 20px !important;
+                transform: none !important;
+                top: 0 !important;
+            }
+
+            .native-footer {
+                position: relative !important;
+                bottom: auto !important;
+                margin-top: 40px;
+                padding-bottom: 20px;
+            }
+        }
     </style>
     <!-- <link rel="stylesheet" href="/styles/index.css"> -->
     <script type="text/javascript">

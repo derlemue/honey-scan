@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.1.1] - 2026-01-04
+
+### Fixed
+- 📱 **Mobile UI**: Fixed Login page scrolling on mobile devices (Footer overlap issue).
+- 📱 **Mobile UI**: Converted Login page layout to Flex Column for better responsiveness on small screens.
+
 ## [4.1.0] - 2026-01-04
 
 ### Changed
