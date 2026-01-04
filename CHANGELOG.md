@@ -1,3 +1,14 @@
+## [4.2.0] - 2026-01-04
+
+### Added
+- Added "Simple German" translation README_DE2.md.
+
+### Fixed
+- Fixed mobile login page scrolling issues on small screens.
+- Fixed footer overlap on mobile login page.
+- Removed duplicate footer injection on login page.
+- Updated desktop login footer layout to match mobile (static position under content).
+
 # Changelog
 
 ## [4.1.1] - 2026-01-04
