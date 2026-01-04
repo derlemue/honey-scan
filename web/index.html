@@ -366,13 +366,22 @@
     <div id="nativeLogin">
         <div class="link-bar">
             <a href="https://github.com/derlemue/honey-scan" title="GitHub" target="_blank">
-                <svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                </svg>
             </a>
             <a href="https://feed.sec.lemue.org/" title="Feed" target="_blank">
-                <svg viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z" />
+                </svg>
             </a>
             <a href="https://feed.sec.lemue.org/feed/banned_ips.txt" title="Banned IPs" target="_blank">
-                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                </svg>
             </a>
             <a href="https://lemue.org" title="lemue.org" target="_blank">
                 <img src="https://lemue.org/favicon.ico" alt="lemue.org" onerror="this.style.display='none'">
@@ -388,11 +397,13 @@
                 <div class="error-message" id="nativeErrorMessage"></div>
                 <div class="form-group">
                     <label class="form-label" for="nativeUsername">Username</label>
-                    <input type="text" id="nativeUsername" class="form-input" placeholder="Enter your username" required autocomplete="username">
+                    <input type="text" id="nativeUsername" class="form-input" placeholder="Enter your username" required
+                        autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="nativePassword">Password</label>
-                    <input type="password" id="nativePassword" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+                    <input type="password" id="nativePassword" class="form-input" placeholder="Enter your password"
+                        required autocomplete="current-password">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="nativeCaptcha">Verification Code</label>
@@ -401,10 +412,14 @@
                             <svg class="captcha-svg" id="nativeCaptchaSvg"></svg>
                         </div>
                         <button type="button" class="captcha-refresh" id="nativeCaptchaRefresh" title="Refresh captcha">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                            </svg>
                         </button>
                     </div>
-                    <input type="text" id="nativeCaptcha" class="form-input" placeholder="Enter the code above" required autocomplete="off" style="margin-top: 10px;">
+                    <input type="text" id="nativeCaptcha" class="form-input" placeholder="Enter the code above" required
+                        autocomplete="off" style="margin-top: 10px;">
                 </div>
                 <button type="submit" class="login-button" id="nativeLoginButton">Sign In</button>
                 <div class="forgot-password">
@@ -440,25 +455,27 @@
 
     <script id="nativeLoginScript">
         // NATIVE LOGIN PAGE ACTIVATION
-        (function() {
-            const isLoginPage = location.href.includes('/login') || location.hash.includes('login');
-            
+        (function () {
+            // NATIVE LOGIN DISABLED - Using React app for login (API routing issue)
+            // Native login code preserved for future use when API routing is fixed
+            const isLoginPage = false; // was: location.href.includes('/login') || location.hash.includes('login');
+
             if (isLoginPage) {
                 // Activate native login
                 const nativeLogin = document.getElementById('nativeLogin');
                 if (nativeLogin) {
                     nativeLogin.classList.add('active');
                 }
-                
+
                 // Hide React app
                 const app = document.getElementById('app');
                 if (app) {
                     app.style.display = 'none';
                 }
-                
+
                 // Captcha Generator
                 let currentCaptcha = '';
-                
+
                 function generateCaptcha() {
                     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
                     let captcha = '';
@@ -467,7 +484,7 @@
                     }
                     return captcha;
                 }
-                
+
                 function renderCaptcha(code) {
                     const svg = document.getElementById('nativeCaptchaSvg');
                     if (!svg) return;
@@ -524,41 +541,41 @@
                         svg.appendChild(text);
                     }
                 }
-                
+
                 function refreshCaptcha() {
                     currentCaptcha = generateCaptcha();
                     renderCaptcha(currentCaptcha);
                     const captchaInput = document.getElementById('nativeCaptcha');
                     if (captchaInput) captchaInput.value = '';
                 }
-                
+
                 // Initialize captcha
                 setTimeout(refreshCaptcha, 100);
-                
+
                 // Event Listeners
                 const captchaRefresh = document.getElementById('nativeCaptchaRefresh');
                 const captchaDisplay = document.getElementById('nativeCaptchaDisplay');
                 if (captchaRefresh) captchaRefresh.addEventListener('click', refreshCaptcha);
                 if (captchaDisplay) captchaDisplay.addEventListener('click', refreshCaptcha);
-                
+
                 // Forgot Password Modal
                 const modal = document.getElementById('nativeForgotPasswordModal');
                 const forgotLink = document.getElementById('nativeForgotPasswordLink');
                 const modalClose = document.getElementById('nativeModalClose');
-                
+
                 if (forgotLink && modal) {
                     forgotLink.addEventListener('click', (e) => {
                         e.preventDefault();
                         modal.classList.add('show');
                     });
                 }
-                
+
                 if (modalClose && modal) {
                     modalClose.addEventListener('click', () => {
                         modal.classList.remove('show');
                     });
                 }
-                
+
                 if (modal) {
                     modal.addEventListener('click', (e) => {
                         if (e.target === modal) {
@@ -566,7 +583,7 @@
                         }
                     });
                 }
-                
+
                 // Login Form Handler
                 const form = document.getElementById('nativeLoginForm');
                 const errorDiv = document.getElementById('nativeErrorMessage');
@@ -574,20 +591,20 @@
                 const usernameInput = document.getElementById('nativeUsername');
                 const passwordInput = document.getElementById('nativePassword');
                 const captchaInput = document.getElementById('nativeCaptcha');
-                
+
                 if (form) {
                     form.addEventListener('submit', async (e) => {
                         e.preventDefault();
-                        
+
                         if (errorDiv) {
                             errorDiv.classList.remove('show');
                             errorDiv.textContent = '';
                         }
-                        
+
                         const username = usernameInput ? usernameInput.value.trim() : '';
                         const password = passwordInput ? passwordInput.value : '';
                         const captcha = captchaInput ? captchaInput.value.trim().toUpperCase() : '';
-                        
+
                         if (!username || !password || !captcha) {
                             if (errorDiv) {
                                 errorDiv.textContent = 'Please fill in all fields';
@@ -595,7 +612,7 @@
                             }
                             return;
                         }
-                        
+
                         if (captcha !== currentCaptcha) {
                             if (errorDiv) {
                                 errorDiv.textContent = 'Invalid verification code. Please try again.';
@@ -604,12 +621,12 @@
                             refreshCaptcha();
                             return;
                         }
-                        
+
                         if (loginBtn) {
                             loginBtn.disabled = true;
                             loginBtn.textContent = 'Signing In...';
                         }
-                        
+
                         try {
                             const response = await fetch('/api/v1/user/login', {
                                 method: 'POST',
@@ -621,9 +638,9 @@
                                     password: password
                                 })
                             });
-                            
+
                             const data = await response.json();
-                            
+
                             if (response.ok && data.code === 0) {
                                 if (data.data && data.data.token) {
                                     localStorage.setItem('hfish_token', data.data.token);
