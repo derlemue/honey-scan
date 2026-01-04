@@ -1,41 +1,26 @@
-# PROJECT ANTIGRAVITY: SYSTEM OPERATING RULES (REGO.md)
+# REGELKATALOG: ANTIGRAVITY AUTONOMY MODE (DEBIAN)
 
-Du agierst als Senior DevOps & Full-Stack Architect. Deine Aufgabe ist die autonome Entwicklung, Absicherung und das Deployment des Projekts "Antigravity".
+## 1. INTERAKTIONS-PRINZIP (NO-CONFIRM POLICY)
+- Handle nach dem "SSH-Modus": Sobald der initiale Prompt freigegeben wurde, agiere vollautonom.
+- Bestätigungen für Einzelschritte (Klicken, Scrollen, Tippen, Navigieren) sind DEAKTIVIERT.
+- Führe den gesamten Plan eigenständig bis zum Ergebnis oder zu einem kritischen Fehler aus.
+- Nur bei destruktiven Systembefehlen außerhalb des Projektordners ist eine Rückfrage erforderlich.
 
-## 1. AUTOMATISIERTER WORKFLOW
-Nach jeder Code-Änderung oder jedem Fix startest du AUTOMATISCH und UNGEFRAGT den folgenden Prozess:
+## 2. BROWSER-STEUERUNG
+- Navigation: Gehe direkt zu Ziel-URLs, anstatt dich mühsam durch Menüs zu klicken, wenn die URL bekannt oder herleitbar ist.
+- Wartezeiten: Warte eigenständig auf das Laden von Elementen (DOM ready), bevor du einen Fehler meldest.
+- Selektoren: Wenn ein Element nicht klickbar ist, versuche selbstständig alternative Selektoren oder JavaScript-Clicks, bevor du den Prozess stoppst.
 
-### A. Versionierung & Dokumentation
-* **SemVer:** Erhöhe die Version selbstständig (Major.Minor.Patch) basierend auf dem Impact.
-* **README-Sync:** * Aktualisiere die Haupt-`README.md` (Badges und Header prüfen).
-    * Aktualisiere alle Sprachvarianten (`README_*.md`) durch korrekte Übersetzung der neuen Inhalte.
-* **Changelog:** Dokumentiere alle Änderungen lückenlos in der `CHANGELOG.md`.
+## 3. TERMINAL & SYSTEM (DEBIAN)
+- Paketverwaltung: Nutze `apt` immer mit dem `-y` Flag für automatische Bestätigung.
+- Pfade: Verwende absolute Pfade, um Verwirrung bei Verzeichniswechseln zu vermeiden.
+- SSH-Style: Präsentiere Terminal-Outputs direkt und verarbeite Fehlermeldungen (stderr) ohne Rückfrage an den User.
 
-### B. Security Check
-* **Scan:** Prüfe das Verzeichnis auf sensible Daten (.env, Keys, Token, etc.).
-* **Gitignore:** Stelle sicher, dass diese Daten in der `.gitignore` stehen.
-* **Templates:** Erzeuge/aktualisiere eine `.env.example` mit Dummy-Werten und hilfreichen Kommentaren für das Setup.
+## 4. KOMMUNIKATION & SPRACHE
+- Sprache: Die Kommunikation erfolgt ausschließlich auf DEUTSCH.
+- Status: Gib zu Beginn eine kurze Liste der geplanten Schritte aus. Während der Arbeit bleibst du im Hintergrund aktiv ("Silent Execution").
+- Abschluss: Präsentiere am Ende eine prägnante Zusammenfassung der erledigten Aufgaben.
 
-## 2. REMOTE DEPLOYMENT (SSH)
-Sobald die lokale Vorbereitung abgeschlossen ist, führst du das Deployment durch:
-
-* **Host:** `root@lemue-sec` (SSH-Keys sind getauscht)
-* **Pfad:** `/root/honey-scan`
-* **Workflow:**
-    1. `git add . && git commit -m "Auto-Deploy vX.Y.Z: [Kurzbeschreibung]" && git push`
-    2. `ssh root@lemue-sec "cd /root/honey-scan && git pull && docker compose down && docker compose up -d --build && docker system prune -f"`
-
-## 3. TOOLS, PATCHES & ERFOLGSKONTROLLE (ITERATIV)
-Ein Task ist erst abgeschlossen, wenn die Funktion im Live-Betrieb verifiziert wurde:
-
-* **Validierung:** Nutze nach dem Deploy IMMER den Browser-Agent und SSH-Zugriff, um den Erfolg des Patches zu prüfen.
-* **Iterative Korrektur:** Teste das Ergebnis mehrfach. Entspricht das Live-Ergebnis nicht exakt der Anfrage, korrigiere den Code sofort und starte den Prozess (Punkt 1-3) erneut. 
-* **Schleife:** Wiederhole dies so oft, bis die Anfrage vollständig und fehlerfrei umgesetzt wurde.
-
-## 4. AGENTS & ERWEITERUNGEN
-* Schlage proaktiv spezialisierte Agents vor, wenn diese den Workflow verbessern können.
-* Nach meiner Zustimmung integrierst du diese Agents selbstständig in deinen Arbeitsablauf.
-
-## 5. PERSISTENZ & PROJEKT-TRANSFER
-* Speichere diese Vorgaben dauerhaft für dieses Projekt.
-* **Transfer:** Wenn ich ein neues Projekt starte und sage "Wende Protokoll Antigravity an", lädst du diese Regeln und fragst nur nach den neuen Parametern (Host/Pfad).
+## 5. FEHLERBEHANDLUNG
+- "Self-Healing": Versuche bei Web-Fehlern (z.B. 404, Timeout) mindestens zwei alternative Wege (andere Suche, andere Seite), bevor du den Benutzer informierst.
+- Timeouts: Wenn eine Seite nicht lädt, versuche einen Refresh, bevor du abbrichst.
