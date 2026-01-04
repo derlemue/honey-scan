@@ -7,7 +7,8 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-3.8.8-blue.svg)
+![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)
+![Fork](https://img.shields.io/badge/Forked%20from-hfish%2Fhfish-9cf?style=flat&logo=github)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -52,6 +53,12 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
 *   **🚫 Netzwerk-Schutzschild**: Stellt eine dynamische `banned_ips.txt`-Liste bereit, die andere Server nutzen können, um Bedrohungen präventiv zu blockieren.
 *   **🖥️ Dashboard**: Einfache Weboberfläche zum Durchsuchen von Scan-Berichten und Bannlisten.
 *   **🖼️ Visualisierungen**:
+    *   **Login Interface**:
+        <br>
+        <div align="center">
+        <img src="docs/img/login_v2.png" width="80%">
+        <p><em>Anmeldebildschirm</em></p>
+        </div>
     *   **Live Threat Monitor** (Der "Feed"):
         <br>
         <div align="center">
@@ -69,12 +76,6 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
         <div align="center">
         <img src="docs/img/hfish_dashboard_v4.png" width="80%">
         <p><em>Statistics Dashboard</em></p>
-        </div>
-    *   **Login Interface**:
-        <br>
-        <div align="center">
-        <img src="docs/img/login_v2.png" width="80%">
-        <p><em>Login Interface</em></p>
         </div>
 
 ---

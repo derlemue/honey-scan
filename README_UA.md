@@ -7,7 +7,8 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-3.8.8-blue.svg)
+![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)
+![Fork](https://img.shields.io/badge/Forked%20from-hfish%2Fhfish-9cf?style=flat&logo=github)
 ![Powered By](https://img.shields.io/badge/Powered%20By-HFish-orange)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -52,29 +53,29 @@
 *   **🚫 Мережевий щит**: Надає динамічний список `banned_ips.txt`, який ваші інші сервери можуть використовувати для превентивного блокування загроз.
 *   **🖥️ Панель керування**: Простий веб-інтерфейс для перегляду звітів сканування та списків бану.
 *   **🖼️ Візуалізація**:
-    *   **Live Threat Monitor** (Фід):
-        <br>
-        <div align="center">
-        <img src="docs/img/feed_dashboard_v4.png" width="80%">
-        <p><em>Feed Dashboard</em></p>
-        </div>
-    *   **lemueIO SecMonitor** (Внутрішня):
-        <br>
-        <div align="center">
-        <img src="docs/img/hfish_screen_v4.png" width="80%">
-        <p><em>Attack Map Dashboard</em></p>
-        </div>
-    *   **lemueIO Statistics** (Внутрішня):
-        <br>
-        <div align="center">
-        <img src="docs/img/hfish_dashboard_v4.png" width="80%">
-        <p><em>Statistics Dashboard</em></p>
-        </div>
-    *   **Інтерфейс входу**:
+    *   **Login Interface**:
         <br>
         <div align="center">
         <img src="docs/img/login_v2.png" width="80%">
-        <p><em>Login Interface</em></p>
+        <p><em>Інтерфейс входу</em></p>
+        </div>
+    *   **Live Threat Monitor** ("Feed"):
+        <br>
+        <div align="center">
+        <img src="docs/img/feed_dashboard_v4.png" width="80%">
+        <p><em>Панель каналу загроз</em></p>
+        </div>
+    *   **lemueIO SecMonitor** (Внутрішній):
+        <br>
+        <div align="center">
+        <img src="docs/img/hfish_screen_v4.png" width="80%">
+        <p><em>Карта атак</em></p>
+        </div>
+    *   **lemueIO Statistics** (Внутрішній):
+        <br>
+        <div align="center">
+        <img src="docs/img/hfish_dashboard_v4.png" width="80%">
+        <p><em>Статистика</em></p>
         </div>
 
 ---

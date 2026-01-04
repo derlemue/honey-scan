@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.0.0] - 2026-01-04
+
+### Added
+- 🎉 **Major Release**: Version 4.0.0 marks the complete transition to the **Active Defense Ecosystem**.
+- 🌟 **Feature**: Fully Native Login Page (`/web/login`) integrated directly into the HFish core.
+    - **Design**: "Honey Scan" Dark Mode Cyberpunk aesthetics.
+    - **Security**: Server-side Captcha Validation (`/v1/captcha`).
+    - **UX**: Rotation animations, Loading states, and forgotten password modal.
+    - **Integration**: Direct API calls to `/v1/login` bypassing legacy routing issues.
+
+### Changed
+- 🚨 **Rebranding**: Complete branding overhaul for Login and Dashboard.
+- 📸 **Documentation**: Updated all README screenshots, placing the new Login Interface at the top.
+- 📦 **Badges**: Added "Forked from hfish/hfish" badge to READMEs.
+
 ## [3.8.16] - 2026-01-04
 
 ### Fixed

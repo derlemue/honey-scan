@@ -46,6 +46,308 @@
             }
         }
     </style>
+    <style id="nativeLoginStyles">
+        /* Native Login Page - Hidden by default, shown via JavaScript on /login route */
+        #nativeLogin {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a;
+            z-index: 99999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #nativeLogin.active {
+            display: flex;
+        }
+
+        #nativeLogin .link-bar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 15px;
+            z-index: 100000;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 20px;
+            border-bottom-left-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        #nativeLogin .link-bar a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            opacity: 0.7;
+            transition: all 0.2s;
+            color: #4ade80;
+            text-decoration: none;
+        }
+
+        #nativeLogin .link-bar a:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        #nativeLogin .link-bar svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor;
+        }
+
+        #nativeLogin .link-bar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        #nativeLogin .login-container {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 40px 35px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        #nativeLogin .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #nativeLogin .logo-section img {
+            width: 80%;
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        #nativeLogin .brand-title {
+            color: #4ade80;
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        #nativeLogin .brand-subtitle {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        #nativeLogin .form-group {
+            margin-bottom: 20px;
+        }
+
+        #nativeLogin .form-label {
+            display: block;
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        #nativeLogin .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        #nativeLogin .form-input:focus {
+            outline: none;
+            border-color: #4ade80;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        #nativeLogin .captcha-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #nativeLogin .captcha-display {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #nativeLogin .captcha-display:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.02);
+        }
+
+        #nativeLogin .captcha-svg {
+            width: 100%;
+            height: 50px;
+        }
+
+        #nativeLogin .captcha-refresh {
+            width: 50px;
+            height: 50px;
+            background: rgba(74, 222, 128, 0.2);
+            border: 1px solid #4ade80;
+            border-radius: 8px;
+            color: #4ade80;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #nativeLogin .captcha-refresh:hover {
+            background: rgba(74, 222, 128, 0.3);
+            transform: rotate(180deg);
+        }
+
+        #nativeLogin .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        #nativeLogin .error-message.show {
+            display: block;
+        }
+
+        #nativeLogin .login-button {
+            width: 100%;
+            padding: 14px;
+            background-color: #4ade80;
+            border: none;
+            border-radius: 8px;
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        #nativeLogin .login-button:hover {
+            background-color: #22c55e;
+            transform: translateY(-1px);
+        }
+
+        #nativeLogin .login-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #nativeLogin .forgot-password {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        #nativeLogin .forgot-password a {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        #nativeLogin .forgot-password a:hover {
+            color: #22c55e;
+            text-decoration: underline;
+        }
+
+        #nativeLogin .footer {
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        #nativeLogin .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 20000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #nativeLogin .modal.show {
+            display: flex;
+        }
+
+        #nativeLogin .modal-content {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        #nativeLogin .modal-title {
+            color: #4ade80;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        #nativeLogin .modal-text {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        #nativeLogin .modal-close {
+            width: 100%;
+            padding: 12px;
+            background-color: #4ade80;
+            border: none;
+            border-radius: 8px;
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #nativeLogin .modal-close:hover {
+            background-color: #22c55e;
+        }
+    </style>
     <!-- <link rel="stylesheet" href="/styles/index.css"> -->
     <script type="text/javascript">
         if (!('remove' in Element.prototype)) {
@@ -60,6 +362,85 @@
 </head>
 
 <body>
+    <!-- NATIVE LOGIN PAGE (Hidden by default, shown via JS on /login route) -->
+    <div id="nativeLogin">
+        <div class="link-bar">
+            <a href="https://github.com/derlemue/honey-scan" title="GitHub" target="_blank">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                </svg>
+            </a>
+            <a href="https://feed.sec.lemue.org/" title="Feed" target="_blank">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z" />
+                </svg>
+            </a>
+            <a href="https://feed.sec.lemue.org/feed/banned_ips.txt" title="Banned IPs" target="_blank">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                </svg>
+            </a>
+            <a href="https://lemue.org" title="lemue.org" target="_blank">
+                <img src="https://lemue.org/favicon.ico" alt="lemue.org" onerror="this.style.display='none'">
+            </a>
+        </div>
+        <div class="login-container">
+            <div class="logo-section">
+                <img src="/assets/logo_bear.png" alt="Honey Scan Logo">
+                <div class="brand-title">Honey Scan</div>
+                <div class="brand-subtitle">Active Defense Platform</div>
+            </div>
+            <form id="nativeLoginForm">
+                <div class="error-message" id="nativeErrorMessage"></div>
+                <div class="form-group">
+                    <label class="form-label" for="nativeUsername">Username</label>
+                    <input type="text" id="nativeUsername" class="form-input" placeholder="Enter your username" required
+                        autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="nativePassword">Password</label>
+                    <input type="password" id="nativePassword" class="form-input" placeholder="Enter your password"
+                        required autocomplete="current-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="nativeCaptcha">Verification Code</label>
+                    <div class="captcha-container">
+                        <div class="captcha-display" id="nativeCaptchaDisplay" title="Click to refresh">
+                            <svg class="captcha-svg" id="nativeCaptchaSvg"></svg>
+                        </div>
+                        <button type="button" class="captcha-refresh" id="nativeCaptchaRefresh" title="Refresh captcha">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="text" id="nativeCaptcha" class="form-input" placeholder="Enter the code above" required
+                        autocomplete="off" style="margin-top: 10px;">
+                </div>
+                <button type="submit" class="login-button" id="nativeLoginButton">Sign In</button>
+                <div class="forgot-password">
+                    <a href="#" id="nativeForgotPasswordLink">Forgot Password?</a>
+                </div>
+            </form>
+        </div>
+        <div class="footer">for you by lemue.org ♥️</div>
+        <div class="modal" id="nativeForgotPasswordModal">
+            <div class="modal-content">
+                <div class="modal-title">Password Recovery</div>
+                <div class="modal-text">
+                    Please contact your system administrator to reset your password.<br><br>
+                    For security reasons, password recovery must be handled through secure channels.
+                </div>
+                <button class="modal-close" id="nativeModalClose">Close</button>
+            </div>
+        </div>
+    </div>
+
+
     <div id="app">
         <div class="main-loading-wrap">
             <div class="spinner-wrapper">
@@ -71,6 +452,262 @@
     <script>
         __REACT_DEVTOOLS_GLOBAL_HOOK__ = parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
     </script>
+
+    <script id="nativeLoginScript">
+        // NATIVE LOGIN PAGE ACTIVATION
+        (function () {
+            // NATIVE LOGIN ENABLED - Using /api/web/auth endpoint
+            const isLoginPage = location.href.includes('/login') || location.hash.includes('login');
+
+            if (isLoginPage) {
+                // Activate native login
+                const nativeLogin = document.getElementById('nativeLogin');
+                if (nativeLogin) {
+                    nativeLogin.classList.add('active');
+                }
+
+                // Hide React app
+                const app = document.getElementById('app');
+                if (app) {
+                    app.style.display = 'none';
+                }
+
+                // Captcha Generator
+                let currentCaptcha = '';
+
+                function generateCaptcha() {
+                    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                    let captcha = '';
+                    for (let i = 0; i < 6; i++) {
+                        captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    return captcha;
+                }
+
+                function renderCaptcha(code) {
+                    const svg = document.getElementById('nativeCaptchaSvg');
+                    if (!svg) return;
+                    const width = 200;
+                    const height = 50;
+                    svg.innerHTML = '';
+                    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                    const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+                    pattern.setAttribute('id', 'nativeNoise');
+                    pattern.setAttribute('width', '100');
+                    pattern.setAttribute('height', '100');
+                    pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+                    for (let i = 0; i < 50; i++) {
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', Math.random() * 100);
+                        circle.setAttribute('cy', Math.random() * 100);
+                        circle.setAttribute('r', Math.random() * 2);
+                        circle.setAttribute('fill', `rgba(0,0,0,${Math.random() * 0.1})`);
+                        pattern.appendChild(circle);
+                    }
+                    defs.appendChild(pattern);
+                    svg.appendChild(defs);
+                    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    bg.setAttribute('width', width);
+                    bg.setAttribute('height', height);
+                    bg.setAttribute('fill', 'url(#nativeNoise)');
+                    svg.appendChild(bg);
+                    for (let i = 0; i < 3; i++) {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', Math.random() * width);
+                        line.setAttribute('y1', Math.random() * height);
+                        line.setAttribute('x2', Math.random() * width);
+                        line.setAttribute('y2', Math.random() * height);
+                        line.setAttribute('stroke', `rgba(${Math.random() * 100},${Math.random() * 100},${Math.random() * 100},0.3)`);
+                        line.setAttribute('stroke-width', '2');
+                        svg.appendChild(line);
+                    }
+                    const charWidth = width / code.length;
+                    for (let i = 0; i < code.length; i++) {
+                        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        const x = charWidth * i + charWidth / 2;
+                        const y = height / 2 + 5;
+                        const rotation = (Math.random() - 0.5) * 30;
+                        text.setAttribute('x', x);
+                        text.setAttribute('y', y);
+                        text.setAttribute('font-size', '28');
+                        text.setAttribute('font-weight', 'bold');
+                        text.setAttribute('font-family', 'monospace');
+                        text.setAttribute('fill', `hsl(${Math.random() * 360}, 70%, 40%)`);
+                        text.setAttribute('text-anchor', 'middle');
+                        text.setAttribute('transform', `rotate(${rotation} ${x} ${y})`);
+                        text.textContent = code[i];
+                        svg.appendChild(text);
+                    }
+                }
+
+                function refreshCaptcha() {
+                    currentCaptcha = generateCaptcha();
+                    renderCaptcha(currentCaptcha);
+                    const captchaInput = document.getElementById('nativeCaptcha');
+                    if (captchaInput) captchaInput.value = '';
+                }
+
+                // Initialize captcha
+                setTimeout(refreshCaptcha, 100);
+
+                // Event Listeners
+                const captchaRefresh = document.getElementById('nativeCaptchaRefresh');
+                const captchaDisplay = document.getElementById('nativeCaptchaDisplay');
+                if (captchaRefresh) captchaRefresh.addEventListener('click', refreshCaptcha);
+                if (captchaDisplay) captchaDisplay.addEventListener('click', refreshCaptcha);
+
+                // Forgot Password Modal
+                const modal = document.getElementById('nativeForgotPasswordModal');
+                const forgotLink = document.getElementById('nativeForgotPasswordLink');
+                const modalClose = document.getElementById('nativeModalClose');
+
+                if (forgotLink && modal) {
+                    forgotLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        modal.classList.add('show');
+                    });
+                }
+
+                if (modalClose && modal) {
+                    modalClose.addEventListener('click', () => {
+                        modal.classList.remove('show');
+                    });
+                }
+
+                if (modal) {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.classList.remove('show');
+                        }
+                    });
+                }
+
+                // Login Form Handler
+                const form = document.getElementById('nativeLoginForm');
+                const errorDiv = document.getElementById('nativeErrorMessage');
+                const loginBtn = document.getElementById('nativeLoginButton');
+                const usernameInput = document.getElementById('nativeUsername');
+                const passwordInput = document.getElementById('nativePassword');
+                const captchaInput = document.getElementById('nativeCaptcha');
+
+                if (form) {
+                    form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+
+                        if (errorDiv) {
+                            errorDiv.classList.remove('show');
+                            errorDiv.textContent = '';
+                        }
+
+                        const username = usernameInput ? usernameInput.value.trim() : '';
+                        const password = passwordInput ? passwordInput.value : '';
+                        const captcha = captchaInput ? captchaInput.value.trim().toUpperCase() : '';
+
+                        if (!username || !password || !captcha) {
+                            if (errorDiv) {
+                                errorDiv.textContent = 'Please fill in all fields';
+                                errorDiv.classList.add('show');
+                            }
+                            return;
+                        }
+
+                        if (captcha !== currentCaptcha) {
+                            if (errorDiv) {
+                                errorDiv.textContent = 'Invalid verification code. Please try again.';
+                                errorDiv.classList.add('show');
+                            }
+                            refreshCaptcha();
+                            return;
+                        }
+
+                        if (loginBtn) {
+                            loginBtn.disabled = true;
+                            loginBtn.textContent = 'Signing In...';
+                        }
+
+                        try {
+                            // Using /api/web/auth endpoint found in app.js
+                            const response = await fetch('/api/web/auth', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    account: username,  // Send both to be safe
+                                    username: username,
+                                    password: password
+                                })
+                            });
+
+                            let data;
+                            try {
+                                const text = await response.text();
+                                try {
+                                    data = JSON.parse(text);
+                                } catch (e) {
+                                    console.error('Failed to parse JSON:', e);
+                                    data = { code: -1, msg: `Server returned non-JSON: ${text.substring(0, 100)}...` };
+                                }
+                            } catch (e) {
+                                console.error('Failed to read response:', e);
+                                data = null;
+                            }
+
+                            // Log for debugging
+                            console.log('Login Debug:', { status: response.status, data });
+
+                            if (response.ok && data && data.code === 0) {
+                                if (data.data && data.data.token) {
+                                    localStorage.setItem('hfish_token', data.data.token);
+                                }
+                                window.location.href = '/web/dashboard';
+                            } else {
+                                const statusMsg = `HTTP ${response.status}`;
+                                const errorMsg = (data && (data.msg || data.message))
+                                    ? (data.msg || data.message)
+                                    : 'Unknown error';
+
+                                if (errorDiv) {
+                                    errorDiv.textContent = `Login Error (${statusMsg}): ${errorMsg}`;
+                                    errorDiv.classList.add('show');
+                                }
+                                if (loginBtn) {
+                                    loginBtn.disabled = false;
+                                    loginBtn.textContent = 'Sign In';
+                                }
+                                refreshCaptcha();
+                            }
+                        } catch (error) {
+                            console.error('Network error:', error);
+                            if (errorDiv) {
+                                errorDiv.textContent = `Network Error: ${error.message}`;
+                                errorDiv.classList.add('show');
+                            }
+                            if (loginBtn) {
+                                loginBtn.disabled = false;
+                                loginBtn.textContent = 'Sign In';
+                            }
+                            refreshCaptcha();
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Connection error. Please try again.';
+                            errorDiv.classList.add('show');
+                        }
+                        if (loginBtn) {
+                            loginBtn.disabled = false;
+                            loginBtn.textContent = 'Sign In';
+                        }
+                        refreshCaptcha();
+                    }
+                });
+            }
+        }
+        }) ();
+    </script>
+
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
     <script type="text/javascript" src="/assets/dllSelf.09a1636445d39f4f9ec3.js"></script>
     <script type="text/javascript" src="/assets/app.6539b5af.js"></script>
