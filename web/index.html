@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>lemueIO SecMonitor</title>
-    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -101,7 +101,7 @@
         <!-- Header -->
         <div class="flex justify-between items-start pointer-events-auto">
             <div class="glass rounded-xl p-4 flex items-center gap-4">
-                <img src="assets/logo_bear.png" class="h-12 w-12 object-contain" alt="Logo">
+                <img src="/assets/logo_bear.png" class="h-12 w-12 object-contain" alt="Logo">
                 <div>
                     <h1 class="text-xl font-bold text-green-400 tracking-wider">HONEY SCAN</h1>
                     <p class="text-xs text-slate-400 uppercase tracking-widest">Active Defense Platform</p>
@@ -184,7 +184,7 @@
         </div>
     </div>
 
-    <script src="assets/country_map.js"></script>
+    <script src="/assets/country_map.js"></script>
     <script>
         // --- Configuration ---
         const DEFAULT_LOCATION = [51.1657, 10.4515]; // Germany
@@ -232,13 +232,13 @@
                     if (found) code = window.COUNTRY_MAP[found];
                 }
             }
-            return `assets/symbol-defs.svg#icon-${code}`;
+            return `/assets/symbol-defs.svg#icon-${code}`;
         };
 
         const updateData = async () => {
             try {
                 // 1. Live Threats
-                const threatResp = await fetch('assets/live_threats.json?t=' + Date.now());
+                const threatResp = await fetch('/assets/live_threats.json?t=' + Date.now());
                 const threatData = await threatResp.json();
 
                 renderHackers(threatData.hackers);
@@ -246,7 +246,7 @@
                 renderTicker(threatData.hackers);
 
                 // 2. Stats
-                const statsResp = await fetch('assets/stats.json?t=' + Date.now());
+                const statsResp = await fetch('/assets/stats.json?t=' + Date.now());
                 const statsData = await statsResp.json();
 
                 document.getElementById('stat-total').innerText = statsData.total_attacks.toLocaleString();
@@ -259,7 +259,7 @@
                 // 3. Location (Self Node)
                 // Only run once or less frequently
                 if (!window.nodeSet) {
-                    const locResp = await fetch('assets/location.json');
+                    const locResp = await fetch('/assets/location.json');
                     const locData = await locResp.json();
                     if (locData.lat && locData.lng) {
                         L.marker([locData.lat, locData.lng], { icon: nodeIcon }).addTo(map)
