@@ -640,16 +640,36 @@
                                 })
                             });
 
-                            const data = await response.json();
+                            let data;
+                            try {
+                                const text = await response.text();
+                                try {
+                                    data = JSON.parse(text);
+                                } catch (e) {
+                                    console.error('Failed to parse JSON:', e);
+                                    data = { code: -1, msg: `Server returned non-JSON: ${text.substring(0, 100)}...` };
+                                }
+                            } catch (e) {
+                                console.error('Failed to read response:', e);
+                                data = null;
+                            }
 
-                            if (response.ok && data.code === 0) {
+                            // Log for debugging
+                            console.log('Login Debug:', { status: response.status, data });
+
+                            if (response.ok && data && data.code === 0) {
                                 if (data.data && data.data.token) {
                                     localStorage.setItem('hfish_token', data.data.token);
                                 }
                                 window.location.href = '/web/dashboard';
                             } else {
+                                const statusMsg = `HTTP ${response.status}`;
+                                const errorMsg = (data && (data.msg || data.message))
+                                    ? (data.msg || data.message)
+                                    : 'Unknown error';
+
                                 if (errorDiv) {
-                                    errorDiv.textContent = data.msg || 'Invalid username or password';
+                                    errorDiv.textContent = `Login Error (${statusMsg}): ${errorMsg}`;
                                     errorDiv.classList.add('show');
                                 }
                                 if (loginBtn) {
@@ -659,9 +679,9 @@
                                 refreshCaptcha();
                             }
                         } catch (error) {
-                            console.error('Login error:', error);
+                            console.error('Network error:', error);
                             if (errorDiv) {
-                                errorDiv.textContent = 'Connection error. Please try again.';
+                                errorDiv.textContent = `Network Error: ${error.message}`;
                                 errorDiv.classList.add('show');
                             }
                             if (loginBtn) {
@@ -670,10 +690,22 @@
                             }
                             refreshCaptcha();
                         }
-                    });
-                }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Connection error. Please try again.';
+                            errorDiv.classList.add('show');
+                        }
+                        if (loginBtn) {
+                            loginBtn.disabled = false;
+                            loginBtn.textContent = 'Sign In';
+                        }
+                        refreshCaptcha();
+                    }
+                });
             }
-        })();
+        }
+        }) ();
     </script>
 
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
