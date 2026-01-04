@@ -455,221 +455,242 @@
 
     <script id="nativeLoginScript">
         // NATIVE LOGIN PAGE ACTIVATION
-        (function () {
-            // NATIVE LOGIN ENABLED - Using /api/web/auth endpoint
-            const isLoginPage = location.href.includes('/login') || location.hash.includes('login');
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                // NATIVE LOGIN ENABLED - Using /api/web/auth endpoint
+                // Robust URL check (handles query params and hash)
+                const isLoginPage = location.pathname.includes('/login') || location.hash.includes('login') || location.href.includes('login');
 
-            if (isLoginPage) {
-                // Activate native login
-                const nativeLogin = document.getElementById('nativeLogin');
-                if (nativeLogin) {
-                    nativeLogin.classList.add('active');
-                }
+                console.log("[NativeLogin] Check:", { url: location.href, isLoginPage });
 
-                // Hide React app
-                const app = document.getElementById('app');
-                if (app) {
-                    app.style.display = 'none';
-                }
-
-                // Captcha Generator
-                let currentCaptcha = '';
-
-                function generateCaptcha() {
-                    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-                    let captcha = '';
-                    for (let i = 0; i < 6; i++) {
-                        captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+                if (isLoginPage) {
+                    // Activate native login
+                    const nativeLogin = document.getElementById('nativeLogin');
+                    if (nativeLogin) {
+                        nativeLogin.classList.add('active');
+                        nativeLogin.style.display = 'flex'; // Enforce visibility check
+                        console.log("[NativeLogin] Activated");
+                    } else {
+                        console.error("[NativeLogin] Element #nativeLogin not found!");
                     }
-                    return captcha;
-                }
 
-                function renderCaptcha(code) {
-                    const svg = document.getElementById('nativeCaptchaSvg');
-                    if (!svg) return;
-                    const width = 200;
-                    const height = 50;
-                    svg.innerHTML = '';
-                    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-                    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-                    const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
-                    pattern.setAttribute('id', 'nativeNoise');
-                    pattern.setAttribute('width', '100');
-                    pattern.setAttribute('height', '100');
-                    pattern.setAttribute('patternUnits', 'userSpaceOnUse');
-                    for (let i = 0; i < 50; i++) {
-                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                        circle.setAttribute('cx', Math.random() * 100);
-                        circle.setAttribute('cy', Math.random() * 100);
-                        circle.setAttribute('r', Math.random() * 2);
-                        circle.setAttribute('fill', `rgba(0,0,0,${Math.random() * 0.1})`);
-                        pattern.appendChild(circle);
+                    // Hide React app root container completely
+                    const app = document.getElementById('app');
+                    if (app) {
+                        app.style.display = 'none';
+                        app.innerHTML = ''; // Clear React content to save memory
                     }
-                    defs.appendChild(pattern);
-                    svg.appendChild(defs);
-                    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                    bg.setAttribute('width', width);
-                    bg.setAttribute('height', height);
-                    bg.setAttribute('fill', 'url(#nativeNoise)');
-                    svg.appendChild(bg);
-                    for (let i = 0; i < 3; i++) {
-                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                        line.setAttribute('x1', Math.random() * width);
-                        line.setAttribute('y1', Math.random() * height);
-                        line.setAttribute('x2', Math.random() * width);
-                        line.setAttribute('y2', Math.random() * height);
-                        line.setAttribute('stroke', `rgba(${Math.random() * 100},${Math.random() * 100},${Math.random() * 100},0.3)`);
-                        line.setAttribute('stroke-width', '2');
-                        svg.appendChild(line);
+
+                    // Captcha Generator
+                    let currentCaptcha = '';
+
+                    function generateCaptcha() {
+                        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                        let captcha = '';
+                        for (let i = 0; i < 6; i++) {
+                            captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                        return captcha;
                     }
-                    const charWidth = width / code.length;
-                    for (let i = 0; i < code.length; i++) {
-                        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        const x = charWidth * i + charWidth / 2;
-                        const y = height / 2 + 5;
-                        const rotation = (Math.random() - 0.5) * 30;
-                        text.setAttribute('x', x);
-                        text.setAttribute('y', y);
-                        text.setAttribute('font-size', '28');
-                        text.setAttribute('font-weight', 'bold');
-                        text.setAttribute('font-family', 'monospace');
-                        text.setAttribute('fill', `hsl(${Math.random() * 360}, 70%, 40%)`);
-                        text.setAttribute('text-anchor', 'middle');
-                        text.setAttribute('transform', `rotate(${rotation} ${x} ${y})`);
-                        text.textContent = code[i];
-                        svg.appendChild(text);
+
+                    function renderCaptcha(code) {
+                        const svg = document.getElementById('nativeCaptchaSvg');
+                        if (!svg) return;
+                        const width = 200;
+                        const height = 50;
+                        svg.innerHTML = '';
+                        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                        const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+                        pattern.setAttribute('id', 'nativeNoise');
+                        pattern.setAttribute('width', '100');
+                        pattern.setAttribute('height', '100');
+                        pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+                        for (let i = 0; i < 50; i++) {
+                            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            circle.setAttribute('cx', Math.random() * 100);
+                            circle.setAttribute('cy', Math.random() * 100);
+                            circle.setAttribute('r', Math.random() * 2);
+                            circle.setAttribute('fill', `rgba(0,0,0,${Math.random() * 0.1})`);
+                            pattern.appendChild(circle);
+                        }
+                        defs.appendChild(pattern);
+                        svg.appendChild(defs);
+                        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        bg.setAttribute('width', width);
+                        bg.setAttribute('height', height);
+                        bg.setAttribute('fill', 'url(#nativeNoise)');
+                        svg.appendChild(bg);
+                        for (let i = 0; i < 3; i++) {
+                            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                            line.setAttribute('x1', Math.random() * width);
+                            line.setAttribute('y1', Math.random() * height);
+                            line.setAttribute('x2', Math.random() * width);
+                            line.setAttribute('y2', Math.random() * height);
+                            line.setAttribute('stroke', `rgba(${Math.random() * 100},${Math.random() * 100},${Math.random() * 100},0.3)`);
+                            line.setAttribute('stroke-width', '2');
+                            svg.appendChild(line);
+                        }
+                        const charWidth = width / code.length;
+                        for (let i = 0; i < code.length; i++) {
+                            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            const x = charWidth * i + charWidth / 2;
+                            const y = height / 2 + 5;
+                            const rotation = (Math.random() - 0.5) * 30;
+                            text.setAttribute('x', x);
+                            text.setAttribute('y', y);
+                            text.setAttribute('font-size', '28');
+                            text.setAttribute('font-weight', 'bold');
+                            text.setAttribute('font-family', 'monospace');
+                            text.setAttribute('fill', `hsl(${Math.random() * 360}, 70%, 40%)`);
+                            text.setAttribute('text-anchor', 'middle');
+                            text.setAttribute('transform', `rotate(${rotation} ${x} ${y})`);
+                            text.textContent = code[i];
+                            svg.appendChild(text);
+                        }
                     }
-                }
 
-                function refreshCaptcha() {
-                    currentCaptcha = generateCaptcha();
-                    renderCaptcha(currentCaptcha);
-                    const captchaInput = document.getElementById('nativeCaptcha');
-                    if (captchaInput) captchaInput.value = '';
-                }
+                    function refreshCaptcha() {
+                        currentCaptcha = generateCaptcha();
+                        renderCaptcha(currentCaptcha);
+                        const captchaInput = document.getElementById('nativeCaptcha');
+                        if (captchaInput) captchaInput.value = '';
+                    }
 
-                // Initialize captcha
-                setTimeout(refreshCaptcha, 100);
+                    // Initialize captcha
+                    setTimeout(refreshCaptcha, 100);
 
-                // Event Listeners
-                const captchaRefresh = document.getElementById('nativeCaptchaRefresh');
-                const captchaDisplay = document.getElementById('nativeCaptchaDisplay');
-                if (captchaRefresh) captchaRefresh.addEventListener('click', refreshCaptcha);
-                if (captchaDisplay) captchaDisplay.addEventListener('click', refreshCaptcha);
+                    // Event Listeners
+                    const captchaRefresh = document.getElementById('nativeCaptchaRefresh');
+                    const captchaDisplay = document.getElementById('nativeCaptchaDisplay');
+                    if (captchaRefresh) captchaRefresh.addEventListener('click', refreshCaptcha);
+                    if (captchaDisplay) captchaDisplay.addEventListener('click', refreshCaptcha);
 
-                // Forgot Password Modal
-                const modal = document.getElementById('nativeForgotPasswordModal');
-                const forgotLink = document.getElementById('nativeForgotPasswordLink');
-                const modalClose = document.getElementById('nativeModalClose');
+                    // Forgot Password Modal
+                    const modal = document.getElementById('nativeForgotPasswordModal');
+                    const forgotLink = document.getElementById('nativeForgotPasswordLink');
+                    const modalClose = document.getElementById('nativeModalClose');
 
-                if (forgotLink && modal) {
-                    forgotLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        modal.classList.add('show');
-                    });
-                }
+                    if (forgotLink && modal) {
+                        forgotLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            modal.classList.add('show');
+                        });
+                    }
 
-                if (modalClose && modal) {
-                    modalClose.addEventListener('click', () => {
-                        modal.classList.remove('show');
-                    });
-                }
-
-                if (modal) {
-                    modal.addEventListener('click', (e) => {
-                        if (e.target === modal) {
+                    if (modalClose && modal) {
+                        modalClose.addEventListener('click', () => {
                             modal.classList.remove('show');
-                        }
-                    });
-                }
+                        });
+                    }
 
-                // Login Form Handler
-                const form = document.getElementById('nativeLoginForm');
-                const errorDiv = document.getElementById('nativeErrorMessage');
-                const loginBtn = document.getElementById('nativeLoginButton');
-                const usernameInput = document.getElementById('nativeUsername');
-                const passwordInput = document.getElementById('nativePassword');
-                const captchaInput = document.getElementById('nativeCaptcha');
+                    if (modal) {
+                        modal.addEventListener('click', (e) => {
+                            if (e.target === modal) {
+                                modal.classList.remove('show');
+                            }
+                        });
+                    }
 
-                if (form) {
-                    form.addEventListener('submit', async (e) => {
-                        e.preventDefault();
+                    // Login Form Handler
+                    const form = document.getElementById('nativeLoginForm');
+                    const errorDiv = document.getElementById('nativeErrorMessage');
+                    const loginBtn = document.getElementById('nativeLoginButton');
+                    const usernameInput = document.getElementById('nativeUsername');
+                    const passwordInput = document.getElementById('nativePassword');
+                    const captchaInput = document.getElementById('nativeCaptcha');
 
-                        if (errorDiv) {
-                            errorDiv.classList.remove('show');
-                            errorDiv.textContent = '';
-                        }
+                    if (form) {
+                        form.addEventListener('submit', async (e) => {
+                            e.preventDefault();
 
-                        const username = usernameInput ? usernameInput.value.trim() : '';
-                        const password = passwordInput ? passwordInput.value : '';
-                        const captcha = captchaInput ? captchaInput.value.trim().toUpperCase() : '';
-
-                        if (!username || !password || !captcha) {
                             if (errorDiv) {
-                                errorDiv.textContent = 'Please fill in all fields';
-                                errorDiv.classList.add('show');
-                            }
-                            return;
-                        }
-
-                        if (captcha !== currentCaptcha) {
-                            if (errorDiv) {
-                                errorDiv.textContent = 'Invalid verification code. Please try again.';
-                                errorDiv.classList.add('show');
-                            }
-                            refreshCaptcha();
-                            return;
-                        }
-
-                        if (loginBtn) {
-                            loginBtn.disabled = true;
-                            loginBtn.textContent = 'Signing In...';
-                        }
-
-                        try {
-                            // Using /api/web/auth endpoint found in app.js
-                            const response = await fetch('/api/web/auth', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    account: username,  // Send both to be safe
-                                    username: username,
-                                    password: password
-                                })
-                            });
-
-                            let data;
-                            try {
-                                const text = await response.text();
-                                try {
-                                    data = JSON.parse(text);
-                                } catch (e) {
-                                    console.error('Failed to parse JSON:', e);
-                                    data = { code: -1, msg: `Server returned non-JSON: ${text.substring(0, 100)}...` };
-                                }
-                            } catch (e) {
-                                console.error('Failed to read response:', e);
-                                data = null;
+                                errorDiv.classList.remove('show');
+                                errorDiv.textContent = '';
                             }
 
-                            // Log for debugging
-                            console.log('Login Debug:', { status: response.status, data });
+                            const username = usernameInput ? usernameInput.value.trim() : '';
+                            const password = passwordInput ? passwordInput.value : '';
+                            const captcha = captchaInput ? captchaInput.value.trim().toUpperCase() : '';
 
-                            if (response.ok && data && data.code === 0) {
-                                if (data.data && data.data.token) {
-                                    localStorage.setItem('hfish_token', data.data.token);
-                                }
-                                window.location.href = '/web/dashboard';
-                            } else {
-                                const statusMsg = `HTTP ${response.status}`;
-                                const errorMsg = (data && (data.msg || data.message))
-                                    ? (data.msg || data.message)
-                                    : 'Unknown error';
-
+                            if (!username || !password || !captcha) {
                                 if (errorDiv) {
-                                    errorDiv.textContent = `Login Error (${statusMsg}): ${errorMsg}`;
+                                    errorDiv.textContent = 'Please fill in all fields';
+                                    errorDiv.classList.add('show');
+                                }
+                                return;
+                            }
+
+                            if (captcha !== currentCaptcha) {
+                                if (errorDiv) {
+                                    errorDiv.textContent = 'Invalid verification code. Please try again.';
+                                    errorDiv.classList.add('show');
+                                }
+                                refreshCaptcha();
+                                return;
+                            }
+
+                            if (loginBtn) {
+                                loginBtn.disabled = true;
+                                loginBtn.textContent = 'Signing In...';
+                            }
+
+                            try {
+                                // Using /api/web/auth endpoint found in app.js
+                                const response = await fetch('/api/web/auth', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        account: username,  // Send both to be safe
+                                        username: username,
+                                        password: password
+                                    })
+                                });
+
+                                let data;
+                                try {
+                                    const text = await response.text();
+                                    try {
+                                        data = JSON.parse(text);
+                                    } catch (e) {
+                                        console.error('Failed to parse JSON:', e);
+                                        data = { code: -1, msg: `Server returned non-JSON: ${text.substring(0, 100)}...` };
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to read response:', e);
+                                    data = null;
+                                }
+
+                                // Log for debugging
+                                console.log('Login Debug:', { status: response.status, data });
+
+                                if (response.ok && data && data.code === 0) {
+                                    if (data.data && data.data.token) {
+                                        localStorage.setItem('hfish_token', data.data.token);
+                                    }
+                                    window.location.href = '/web/dashboard';
+                                } else {
+                                    const statusMsg = `HTTP ${response.status}`;
+                                    const errorMsg = (data && (data.msg || data.message))
+                                        ? (data.msg || data.message)
+                                        : 'Unknown error';
+
+                                    if (errorDiv) {
+                                        errorDiv.textContent = `Login Error (${statusMsg}): ${errorMsg}`;
+                                        errorDiv.classList.add('show');
+                                    }
+                                    if (loginBtn) {
+                                        loginBtn.disabled = false;
+                                        loginBtn.textContent = 'Sign In';
+                                    }
+                                    refreshCaptcha();
+                                }
+                            } catch (error) {
+                                console.error('Network error:', error);
+                                if (errorDiv) {
+                                    errorDiv.textContent = `Network Error: ${error.message}`;
                                     errorDiv.classList.add('show');
                                 }
                                 if (loginBtn) {
@@ -679,9 +700,9 @@
                                 refreshCaptcha();
                             }
                         } catch (error) {
-                            console.error('Network error:', error);
+                            console.error('Login error:', error);
                             if (errorDiv) {
-                                errorDiv.textContent = `Network Error: ${error.message}`;
+                                errorDiv.textContent = 'Connection error. Please try again.';
                                 errorDiv.classList.add('show');
                             }
                             if (loginBtn) {
@@ -690,22 +711,17 @@
                             }
                             refreshCaptcha();
                         }
-                    } catch (error) {
-                        console.error('Login error:', error);
-                        if (errorDiv) {
-                            errorDiv.textContent = 'Connection error. Please try again.';
-                            errorDiv.classList.add('show');
-                        }
-                        if (loginBtn) {
-                            loginBtn.disabled = false;
-                            loginBtn.textContent = 'Sign In';
-                        }
-                        refreshCaptcha();
-                    }
-                });
+                    });
             }
         }
-        }) ();
+                // Error Handler for inner logic
+            } catch (err) {
+            console.error("[NativeLogin] Critical Error:", err);
+            // Fallback: Try to show it anyway if error occurred
+            const nl = document.getElementById('nativeLogin');
+            if (nl) nl.style.display = 'flex';
+        }
+        });
     </script>
 
     <script type="text/javascript" defer src="/assets/flags/svgxuse.min.js"></script>
