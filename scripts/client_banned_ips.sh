@@ -6,6 +6,7 @@ import hashlib
 import urllib.request
 import subprocess
 import logging
+import fcntl
 from shutil import which
 
 # ==========================================
@@ -122,8 +123,17 @@ def ban_ip_remote(ip, host):
     return False
 
 def main():
-    logger.info("=" * 40)
-    logger.info("lemueIO Active Intelligence Feed - Client Shield")
+    lock_path = "/tmp/client_banned_ips.lock"
+    lock_file = open(lock_path, "w")
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        logger.warning("Another instance of the script is already running. Exiting.")
+        sys.exit(0)
+
+    try:
+        logger.info("=" * 40)
+        logger.info("lemueIO Active Intelligence Feed - Client Shield")
     logger.info("Starting execution (Cron mode)...")
     logger.info("=" * 40)
     
