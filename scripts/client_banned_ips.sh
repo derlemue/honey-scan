@@ -17,9 +17,7 @@ import logging
 
 # --- CONFIGURATION ---
 UPDATE_URL = "https://feed.sec.lemue.org/scripts/client_banned_ips.sh"
-IP_FEED_URL = "https://feed.sec.lemue.org/feed/banned_ips.txt"
-DB_PATH = "./data/hfish.db"
-PROCESSED_FILE = "processed_ips.txt"
+IP_FEED_URL = "https://feed.sec.lemue.org/banned_ips.txt"
 SCANS_DIR = "./scans"
 TARGET_JAIL = "sshd"
 # WICHTIG: Auf den Ziel-Hosts muss in der jail.local für dieses Jail 'banaction = iptables-allports' und 'port = anyport' konfiguriert sein, damit der Block systemweit greift.
@@ -60,40 +58,6 @@ def self_update():
     except Exception as e:
         logger.error(f"Self-update failed: {e}")
 
-def get_processed_ips():
-    if not os.path.exists(PROCESSED_FILE):
-        return set()
-    with open(PROCESSED_FILE, 'r') as f:
-        return set(line.strip() for line in f if line.strip())
-
-def save_processed_ip(ip):
-    with open(PROCESSED_FILE, 'a') as f:
-        f.write(f"{ip}\n")
-
-def fetch_new_ips(processed_ips):
-    """Fetches unique IPs from the database that haven't been processed."""
-    if not os.path.exists(DB_PATH):
-        logger.error(f"Database not found at {DB_PATH}")
-        return []
-    
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        # Assuming table hfish_attack and column source_ip based on request
-        cursor.execute("SELECT DISTINCT source_ip FROM hfish_attack")
-        rows = cursor.fetchall()
-        conn.close()
-
-        new_ips = []
-        for row in rows:
-            ip = row[0]
-            if ip and ip not in processed_ips:
-                new_ips.append(ip)
-        return new_ips
-    except sqlite3.Error as e:
-        logger.error(f"Database error: {e}")
-        return []
-
 def fetch_ips_from_feed():
     """Fetches IPs from the remote text feed."""
     logger.info(f"Fetching IPs from feed {IP_FEED_URL}...")
@@ -113,6 +77,9 @@ def run_nmap(ip):
         os.makedirs(SCANS_DIR)
     
     output_file = os.path.join(SCANS_DIR, f"{ip}.txt")
+    if os.path.exists(output_file):
+        return
+
     cmd = ["nmap", "-A", "-T4", ip, "-oN", output_file]
     logger.info(f"Starting Nmap scan for {ip}...")
     try:
@@ -143,11 +110,10 @@ def ban_ip_remote(ip):
     """Bans IP on all remote hosts, skipping if already banned."""
     for host in REMOTE_HOSTS:
         if is_already_banned(ip, host):
-            logger.info(f"IP {ip} is already banned on {host}. Skipping.")
+            # logger.info(f"IP {ip} already banned on {host}. Skipping.")
             continue
             
         logger.info(f"Banning {ip} on {host}...")
-        # Command: ssh {host} 'sudo fail2ban-client set {TARGET_JAIL} banip {ip}'
         ssh_cmd = [
             "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
             host, 
@@ -169,42 +135,42 @@ def main():
     # 1. Self Update
     self_update()
 
-    # 2. Get Processed IPs from local tracking file
-    processed_ips = get_processed_ips()
-    logger.info(f"Loaded {len(processed_ips)} previously processed IPs from {PROCESSED_FILE}")
-
-    # 3. Fetch New IPs (DB + Feed)
-    db_ips = fetch_new_ips(processed_ips)
-    logger.info(f"Fetched {len(db_ips)} NEW IPs from database.")
-    
+    # 2. Fetch IPs from Feed
     feed_ips = fetch_ips_from_feed()
-    new_feed_ips = [ip for ip in feed_ips if ip not in processed_ips]
-    logger.info(f"Fetched {len(new_feed_ips)} NEW IPs from remote feed.")
-
-    # Combine and Deduplicate
-    all_new_ips = sorted(list(set(db_ips + new_feed_ips)))
     
-    if not all_new_ips:
-        logger.info("No new IPs to process. Exiting.")
+    # Unique set
+    all_ips = sorted(list(set(feed_ips)))
+    
+    if not all_ips:
+        logger.info("No IPs found in feed. Exiting.")
         return
 
-    logger.info(f"Total unique new IPs to process: {len(all_new_ips)}")
+    logger.info(f"Found {len(all_ips)} IPs to verify.")
     logger.info("-" * 40)
 
-    for i, ip in enumerate(all_new_ips, 1):
-        logger.info(f"[{i}/{len(all_new_ips)}] Processing {ip}...")
+    processed_count = 0
+    banned_count = 0
+
+    for ip in all_ips:
+        if len(ip) < 7: continue
         
-        # 4. Reconnaissance
+        # We use Fail2Ban as the source of truth for 'processed'
+        # To avoid heavy SSH calls, we only log when we ACTION something
+        if is_already_banned(ip, "localhost"): # Simple check for local/primary host
+            continue
+            
+        processed_count += 1
+        logger.info(f"[{processed_count}] New IP detected: {ip}")
+        
+        # 3. Reconnaissance
         run_nmap(ip)
 
-        # 5. Ban Action
+        # 4. Ban Action
         ban_ip_remote(ip)
-
-        # 6. Mark as processed
-        save_processed_ip(ip)
+        banned_count += 1
 
     logger.info("=" * 40)
-    logger.info("Execution finished successfully.")
+    logger.info(f"Execution finished. Processed {processed_count} new IPs, Banned {banned_count}.")
     logger.info("=" * 40)
 
 if __name__ == "__main__":
