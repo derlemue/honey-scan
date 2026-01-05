@@ -1,3 +1,13 @@
+## [5.2.0] - 2026-01-05
+
+### Added
+- 🛡️ **Active Defense**: Major upgrade to `client_banned_ips.sh` (Python).
+    - **SQLite Integration**: Automatically fetches malicious IPs from the local `hfish.db`.
+    - **Nmap Reconnaissance**: New IPs are now automatically scanned with Nmap (`-A -T4 -Pn`), results saved to `scans/`.
+    - **Deduplication**: Persistent tracking via `processed_ips.txt` to prevent redundant scans and API calls.
+    - **Jail Cleanup**: Added feature to check Fail2Ban jails for duplicates and "refresh" them (unban/re-ban) to ensure a clean state.
+    - **Robustness**: Improved error handling, lock file management, and logging.
+
 ## [4.2.1] - 2026-01-04
 
 ### Security
