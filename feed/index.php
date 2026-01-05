@@ -56,10 +56,7 @@
         </div>
 
         <div class="section">
-            <h2>Scan Reports</h2>
-            <input type="text" id="searchInput" class="search-box" placeholder="Search reports..." onkeyup="filterReports()">
-            <ul class="report-list">
-                <?php
+            <h2>Scan Reports<?php
                 $scanDir = './scans';
                 if (is_dir($scanDir)) {
                     $files = scandir($scanDir);
@@ -69,6 +66,14 @@
                             $txtFiles[] = $file;
                         }
                     }
+                    $reportCount = count($txtFiles);
+                    echo ' (' . number_format($reportCount) . ' Reports)';
+                }
+            ?></h2>
+            <input type="text" id="searchInput" class="search-box" placeholder="Search reports..." onkeyup="filterReports()">
+            <ul class="report-list">
+                <?php
+                if (is_dir($scanDir)) {
                     sort($txtFiles);
                     foreach ($txtFiles as $file) {
                         echo '<li class="report-item"><a href="scans/' . htmlspecialchars($file) . '">' . htmlspecialchars($file) . '</a></li>';
