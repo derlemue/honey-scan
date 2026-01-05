@@ -273,7 +273,20 @@ def get_new_attackers():
     except Exception as e:
         logger.error(f"Error fetching attackers: {e}")
         if conn: conn.close()
-    return ips
+    
+    # Filter out IPs already in banned list
+    current_banned = set()
+    if os.path.exists(BANNED_IPS_FILE):
+        try:
+            with open(BANNED_IPS_FILE, "r") as f:
+                current_banned = set(line.strip() for line in f if line.strip())
+        except Exception as e:
+            logger.error(f"Error reading banned IPs: {e}")
+    
+    new_ips = [ip for ip in ips if ip not in current_banned and len(ip) >= 7]
+    if new_ips:
+        logger.info(f"Found {len(new_ips)} new attacker IPs to process")
+    return new_ips
 
 def scan_ip(ip):
     report_path = os.path.join(SCANS_DIR, f"{ip}.txt")
@@ -358,10 +371,11 @@ def main():
         while True:
             try:
                 attackers = get_new_attackers()
-                for ip in attackers:
-                    if len(ip) < 7: continue
-                    executor.submit(scan_ip, ip)
-                if attackers: update_banned_list(attackers)
+                if attackers:
+                    logger.info(f"Processing {len(attackers)} new attacker IPs...")
+                    for ip in attackers:
+                        executor.submit(scan_ip, ip)
+                    update_banned_list(attackers)
                 fix_missing_severity()
                 restore_chinese_names()
                 # update_index() removed
