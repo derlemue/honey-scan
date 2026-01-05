@@ -76,7 +76,7 @@ When an attacker touches your honeypot, Honey-Scan automatically:
     *   **Login Interface**:
         <br>
         <div align="center">
-        <img src="docs/img/login_v2.png" width="80%">
+        <img src="docs/img/login_v5.png" width="80%">
         <p><em>Login Interface</em></p>
         </div>
     *   **Live Threat Feed**:
