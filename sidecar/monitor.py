@@ -232,13 +232,13 @@ def update_threat_feed():
         }
         try:
              # Total
-             cursor.execute("SELECT COUNT(*) FROM attack_log")
+             cursor.execute("SELECT COUNT(*) FROM infos")
              row = cursor.fetchone()
              stats["total_attacks"] = row['COUNT(*)'] if isinstance(row, dict) else row[0]
 
              # Today (Approximation, assume timestamps are standard)
              # MariaDB/MySQL specific syntax
-             cursor.execute("SELECT COUNT(*) FROM attack_log WHERE create_time >= CURDATE()")
+             cursor.execute("SELECT COUNT(*) FROM infos WHERE create_time >= CURDATE()")
              row = cursor.fetchone()
              stats["today_attacks"] = row['COUNT(*)'] if isinstance(row, dict) else row[0]
 
