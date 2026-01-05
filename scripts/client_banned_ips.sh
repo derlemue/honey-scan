@@ -13,7 +13,7 @@ from collections import Counter
 # ==========================================
 #  lemueIO Active Intelligence Feed - Client Shield (Python Variant)
 # ==========================================
-#  Version: 5.3.0
+#  Version: 5.3.1
 #  Description: Fetches malicious IPs, bans them on remote hosts, and cleans up Fail2Ban jails.
 # ==========================================
 
@@ -22,6 +22,7 @@ UPDATE_URL = "https://feed.sec.lemue.org/scripts/client_banned_ips.sh"
 IP_FEED_URL = "https://feed.sec.lemue.org/banned_ips.txt"
 DATA_DIR = "./data"
 HFISH_DB_PATH = os.path.join(DATA_DIR, "hfish.db")
+TARGET_JAIL = "sshd"
 REMOTE_HOSTS = ["localhost"] # TODO: Add your remote hosts here, e.g. ["user@host1", "user@host2"]
 
 # --- LOGGING ---
@@ -185,7 +186,7 @@ def main():
 
     try:
         logger.info("=" * 60)
-        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.0")
+        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.1")
         logger.info("Starting execution (Cron mode)...")
         logger.info("=" * 60)
         
