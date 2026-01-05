@@ -8,14 +8,13 @@ import logging
 import fcntl
 import sqlite3
 import time
-from shutil import which
 from collections import Counter
 
 # ==========================================
 #  lemueIO Active Intelligence Feed - Client Shield (Python Variant)
 # ==========================================
-#  Version: 5.2.1
-#  Description: Fetches malicious IPs, bans them on remote hosts, performs Nmap reconnaissance, and cleans up Fail2Ban jails.
+#  Version: 5.3.0
+#  Description: Fetches malicious IPs, bans them on remote hosts, and cleans up Fail2Ban jails.
 # ==========================================
 
 # --- CONFIGURATION ---
@@ -23,10 +22,6 @@ UPDATE_URL = "https://feed.sec.lemue.org/scripts/client_banned_ips.sh"
 IP_FEED_URL = "https://feed.sec.lemue.org/banned_ips.txt"
 DATA_DIR = "./data"
 HFISH_DB_PATH = os.path.join(DATA_DIR, "hfish.db")
-PROCESSED_IPS_FILE = os.path.join(DATA_DIR, "processed_ips.txt")
-SCANS_DIR = "./scans"
-TARGET_JAIL = "sshd"
-MAX_NEW_SCANS = 10  # Limit Nmap scans per run to avoid hangs
 REMOTE_HOSTS = ["localhost"] # TODO: Add your remote hosts here, e.g. ["user@host1", "user@host2"]
 
 # --- LOGGING ---
@@ -96,52 +91,6 @@ def fetch_ips_from_db():
         logger.error(f"Failed to fetch IPs from DB: {e}")
         return []
 
-def scan_ip(ip):
-    """Performs an Nmap scan on the given IP and saves the result."""
-    if not os.path.exists(SCANS_DIR):
-        os.makedirs(SCANS_DIR)
-    
-    report_path = os.path.join(SCANS_DIR, f"{ip}.txt")
-    if os.path.exists(report_path):
-        return False
-        
-    logger.info(f"Starting reconnaissance scan for {ip}...")
-    try:
-        # Use -F for fast scan, or -A for aggressive as requested in implementation plan
-        # We use -T4 and -Pn for speed and stealth/reliability
-        cmd = ["nmap", "-A", "-T4", "-Pn", ip]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        with open(report_path, "w") as f:
-            f.write(f"Scan Time: {time.ctime()}\n")
-            f.write(f"Target: {ip}\n")
-            f.write("-" * 40 + "\n")
-            f.write(result.stdout)
-        logger.info(f"Scan complete for {ip}. Results saved to {report_path}")
-        return True
-    except Exception as e:
-        logger.error(f"Nmap scan failed for {ip}: {e}")
-        return False
-
-def load_processed_ips():
-    """Loads already processed IPs from a local file."""
-    if not os.path.exists(PROCESSED_IPS_FILE):
-        return set()
-    try:
-        with open(PROCESSED_IPS_FILE, "r") as f:
-            return set(line.strip() for line in f if line.strip())
-    except Exception as e:
-        logger.error(f"Failed to load processed IPs: {e}")
-        return set()
-
-def save_processed_ip(ip):
-    """Saves a processed IP to the local tracking file."""
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
-    try:
-        with open(PROCESSED_IPS_FILE, "a") as f:
-            f.write(f"{ip}\n")
-    except Exception as e:
-        logger.error(f"Failed to save processed IP {ip}: {e}")
 
 def get_already_banned_list(host):
     """Fetches all currently banned IPs from the host as a list (to detect duplicates)."""
@@ -236,7 +185,7 @@ def main():
 
     try:
         logger.info("=" * 60)
-        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.2.1")
+        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.0")
         logger.info("Starting execution (Cron mode)...")
         logger.info("=" * 60)
         
@@ -250,24 +199,7 @@ def main():
             logger.info("No IPs found from any source. Exiting.")
             return
 
-        # 2. Local Deduplication (Recon & DB Tracking)
-        processed_ips = load_processed_ips()
-        new_for_recon = [ip for ip in all_ips if ip not in processed_ips and len(ip) >= 7]
-        
-        if new_for_recon:
-            logger.info(f"Found {len(new_for_recon)} new IPs for reconnaissance scan.")
-            scan_count = 0
-            for ip in new_for_recon:
-                if scan_count >= MAX_NEW_SCANS:
-                    logger.info(f"Reached MAX_NEW_SCANS ({MAX_NEW_SCANS}). Skipping further scans this run.")
-                    break
-                if scan_ip(ip):
-                    scan_count += 1
-                save_processed_ip(ip) # Mark as processed regardless of scan success to avoid loops
-        else:
-            logger.info("No new IPs for reconnaissance.")
-
-        # 3. Process per host (Cleanup + Banning)
+        # 2. Process per host (Cleanup + Banning)
         for host in REMOTE_HOSTS:
             logger.info(f"--- Processing host: {host} ---")
             
