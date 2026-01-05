@@ -123,9 +123,29 @@ def run_nmap(ip):
     except subprocess.SubprocessError as e:
         logger.error(f"Nmap scan failed for {ip}: {e}")
 
+def is_already_banned(ip, host):
+    """Checks if the IP is already present in the target Fail2Ban jail on the remote host."""
+    check_cmd = [
+        "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+        host,
+        f"sudo fail2ban-client status {TARGET_JAIL}"
+    ]
+    try:
+        result = subprocess.run(check_cmd, capture_output=True, text=True, check=True)
+        # Fail2Ban output usually contains 'Banned IP list: ...'
+        if ip in result.stdout:
+            return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to check ban status for {ip} on {host}. Error: {e.stderr.strip()}")
+    return False
+
 def ban_ip_remote(ip):
-    """Bans IP on all remote hosts."""
+    """Bans IP on all remote hosts, skipping if already banned."""
     for host in REMOTE_HOSTS:
+        if is_already_banned(ip, host):
+            logger.info(f"IP {ip} is already banned on {host}. Skipping.")
+            continue
+            
         logger.info(f"Banning {ip} on {host}...")
         # Command: ssh {host} 'sudo fail2ban-client set {TARGET_JAIL} banip {ip}'
         ssh_cmd = [
@@ -135,33 +155,45 @@ def ban_ip_remote(ip):
         ]
         
         try:
-            result = subprocess.run(ssh_cmd, capture_output=True, text=True, check=True)
+            subprocess.run(ssh_cmd, capture_output=True, text=True, check=True)
             logger.info(f"Successfully banned {ip} on {host}.")
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to ban {ip} on {host}. Error: {e.stderr.strip()}")
 
 def main():
+    logger.info("=" * 40)
+    logger.info("lemueIO Active Intelligence Feed - Client Shield")
     logger.info("Starting execution (Cron mode)...")
+    logger.info("=" * 40)
     
     # 1. Self Update
     self_update()
 
-    # 2. Get Processed IPs
+    # 2. Get Processed IPs from local tracking file
     processed_ips = get_processed_ips()
+    logger.info(f"Loaded {len(processed_ips)} previously processed IPs from {PROCESSED_FILE}")
 
     # 3. Fetch New IPs (DB + Feed)
-    db_ips = fetch_new_ips(processed_ips) # Returns IPs not in processed_ips
-    feed_ips = fetch_ips_from_feed()
+    db_ips = fetch_new_ips(processed_ips)
+    logger.info(f"Fetched {len(db_ips)} NEW IPs from database.")
     
-    # Filter feed IPs against processed_ips
+    feed_ips = fetch_ips_from_feed()
     new_feed_ips = [ip for ip in feed_ips if ip not in processed_ips]
+    logger.info(f"Fetched {len(new_feed_ips)} NEW IPs from remote feed.")
 
     # Combine and Deduplicate
-    all_new_ips = list(set(db_ips + new_feed_ips))
+    all_new_ips = sorted(list(set(db_ips + new_feed_ips)))
     
-    logger.info(f"Found {len(all_new_ips)} new IPs to process (DB: {len(db_ips)}, Feed: {len(new_feed_ips)}).")
+    if not all_new_ips:
+        logger.info("No new IPs to process. Exiting.")
+        return
 
-    for ip in all_new_ips:
+    logger.info(f"Total unique new IPs to process: {len(all_new_ips)}")
+    logger.info("-" * 40)
+
+    for i, ip in enumerate(all_new_ips, 1):
+        logger.info(f"[{i}/{len(all_new_ips)}] Processing {ip}...")
+        
         # 4. Reconnaissance
         run_nmap(ip)
 
@@ -171,7 +203,9 @@ def main():
         # 6. Mark as processed
         save_processed_ip(ip)
 
-    logger.info("Execution finished.")
+    logger.info("=" * 40)
+    logger.info("Execution finished successfully.")
+    logger.info("=" * 40)
 
 if __name__ == "__main__":
     try:
