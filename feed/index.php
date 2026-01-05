@@ -43,7 +43,7 @@
                 <img src="feed/logo.jpg" alt="Logo" class="logo">
                 <h1>lemueIO Active Intelligence Feed</h1>
             </div>
-            <button class="status-btn" onclick="checkStatus()" id="statusBtn">
+            <button class="status-btn" onclick="fillSearch()" id="statusBtn">
                 <div class="status-dot"></div>
                 <span id="statusText">Check My Status</span>
             </button>
@@ -84,6 +84,8 @@
         </footer>
     </div>
     <script>
+        window.onload = checkStatus;
+
         function filterReports() {
             var input, filter, ul, li, a, i, txtValue;
             input = document.getElementById('searchInput');
@@ -101,34 +103,46 @@
             }
         }
 
+        let currentUserIp = '';
+
         async function checkStatus() {
             const btn = document.getElementById('statusBtn');
             const txt = document.getElementById('statusText');
             
-            txt.innerText = "Checking...";
+            // txt.innerText = "Checking..."; // Don't show loading text on auto-check to avoid flicker
             
             try {
                 // 1. Get User IP
                 const ipResp = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipResp.json();
-                const userIp = ipData.ip;
+                currentUserIp = ipData.ip;
                 
                 // 2. Get Banned List
                 const listResp = await fetch('banned_ips.txt');
                 const listText = await listResp.text();
                 
-                const isBanned = listText.includes(userIp);
+                const isBanned = listText.includes(currentUserIp);
                 
                 if (isBanned) {
                     btn.className = "status-btn status-banned";
-                    txt.innerText = "You are BANNED (" + userIp + ")";
+                    txt.innerText = "You are BANNED (" + currentUserIp + ")";
                 } else {
                     btn.className = "status-btn status-safe";
-                    txt.innerText = "You are Safe (" + userIp + ")";
+                    txt.innerText = "You are Safe (" + currentUserIp + ")";
                 }
             } catch (e) {
                 console.error(e);
                 txt.innerText = "Check Failed";
+            }
+        }
+
+        function fillSearch() {
+            if (currentUserIp) {
+                const input = document.getElementById('searchInput');
+                input.value = currentUserIp;
+                filterReports();
+            } else {
+                checkStatus(); // Retry check if empty
             }
         }
     </script>
