@@ -2,6 +2,7 @@ hfish_data/
 scans/
 feed/*
 !feed/index.html
+!feed/index.php
 !feed/.gitkeep
 __pycache__/
 *.pyc
