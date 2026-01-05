@@ -82,7 +82,7 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
     *   **Live Threat Feed**:
         <br>
         <div align="center">
-        <img src="docs/img/feed_dashboard_v5.png" width="80%">
+        <img src="docs/img/feed_dashboard_v6.png" width="80%">
         <p><em>Feed Dashboard</em></p>
         </div>
     *   **lemueIO SecMonitor ("Screen")**:
