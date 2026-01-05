@@ -334,6 +334,15 @@ def update_index():
         .report-item a {{ display: block; padding: 12px; background: rgba(255,255,255,0.03); color: var(--primary); text-decoration: none; border-radius: 4px; font-family: monospace; transition: all 0.2s; border: 1px solid transparent; }}
         .report-item a:hover {{ background: rgba(74, 222, 128, 0.1); border-color: var(--primary); transform: translateY(-2px); }}
         
+        .search-box {{ width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #334155; color: var(--text); border-radius: 4px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box; }}
+        .search-box:focus {{ outline: none; border-color: var(--primary); background: rgba(255,255,255,0.1); }}
+
+        .status-btn {{ padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid #334155; color: var(--text); border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; gap: 8px; text-decoration: none; }}
+        .status-btn:hover {{ background: rgba(255,255,255,0.1); border-color: var(--primary); }}
+        .status-dot {{ width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; box-shadow: 0 0 5px rgba(148, 163, 184, 0.5); }}
+        .status-safe .status-dot {{ background: #4ade80; box-shadow: 0 0 8px #4ade80; }}
+        .status-banned .status-dot {{ background: #ef4444; box-shadow: 0 0 8px #ef4444; }}
+
         /* Scrollbar */
         ::-webkit-scrollbar {{ width: 8px; }}
         ::-webkit-scrollbar-track {{ background: var(--bg); }}
@@ -344,8 +353,14 @@ def update_index():
 <body>
     <div class="container">
         <header>
-            <img src="feed/logo.jpg" alt="Logo" class="logo">
-            <h1>lemueIO Active Intelligence Feed</h1>
+            <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+                <img src="feed/logo.jpg" alt="Logo" class="logo">
+                <h1>lemueIO Active Intelligence Feed</h1>
+            </div>
+            <button class="status-btn" onclick="checkStatus()" id="statusBtn">
+                <div class="status-dot"></div>
+                <span id="statusText">Check My Status</span>
+            </button>
         </header>
         
         <div class="section">
@@ -355,6 +370,7 @@ def update_index():
 
         <div class="section">
             <h2>Scan Reports</h2>
+            <input type="text" id="searchInput" class="search-box" placeholder="Search reports..." onkeyup="filterReports()">
             <ul class="report-list">
                 {list_items}
             </ul>
@@ -364,6 +380,55 @@ def update_index():
             &copy; {time.strftime("%Y")} Honey-Scan Active Defense System. for you by lemue.org &hearts;
         </footer>
     </div>
+    <script>
+        function filterReports() {{
+            var input, filter, ul, li, a, i, txtValue;
+            input = document.getElementById('searchInput');
+            filter = input.value.toUpperCase();
+            ul = document.querySelector('.report-list');
+            li = ul.getElementsByTagName('li');
+            for (i = 0; i < li.length; i++) {{
+                a = li[i].getElementsByTagName("a")[0];
+                txtValue = a.textContent || a.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {{
+                    li[i].style.display = "";
+                }} else {{
+                    li[i].style.display = "none";
+                }}
+            }}
+        }}
+
+        async function checkStatus() {{
+            const btn = document.getElementById('statusBtn');
+            const txt = document.getElementById('statusText');
+            
+            txt.innerText = "Checking...";
+            
+            try {{
+                // 1. Get User IP
+                const ipResp = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResp.json();
+                const userIp = ipData.ip;
+                
+                // 2. Get Banned List
+                const listResp = await fetch('feed/banned_ips.txt');
+                const listText = await listResp.text();
+                
+                const isBanned = listText.includes(userIp);
+                
+                if (isBanned) {{
+                    btn.className = "status-btn status-banned";
+                    txt.innerText = "You are BANNED (" + userIp + ")";
+                }} else {{
+                    btn.className = "status-btn status-safe";
+                    txt.innerText = "You are Safe (" + userIp + ")";
+                }}
+            }} catch (e) {{
+                console.error(e);
+                txt.innerText = "Check Failed";
+            }}
+        }}
+    </script>
 </body>
 </html>"""
         with open(INDEX_FILE, "w") as f:
