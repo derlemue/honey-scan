@@ -38,9 +38,8 @@
 </head>
 <body>
     <div class="container">
-        <header>
             <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
-                <img src="feed/logo.jpg" alt="Logo" class="logo">
+                <img src="logo.jpg" alt="Logo" class="logo">
                 <h1>lemueIO Active Intelligence Feed</h1>
             </div>
             <button class="status-btn" onclick="fillSearch()" id="statusBtn">
