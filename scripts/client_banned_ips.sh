@@ -14,7 +14,7 @@ from collections import Counter
 # ==========================================
 #  lemueIO Active Intelligence Feed - Client Shield (Python Variant)
 # ==========================================
-#  Version: 5.2.0
+#  Version: 5.2.1
 #  Description: Fetches malicious IPs, bans them on remote hosts, performs Nmap reconnaissance, and cleans up Fail2Ban jails.
 # ==========================================
 
@@ -236,7 +236,7 @@ def main():
 
     try:
         logger.info("=" * 60)
-        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.2.0")
+        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.2.1")
         logger.info("Starting execution (Cron mode)...")
         logger.info("=" * 60)
         
