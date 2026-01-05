@@ -2,17 +2,17 @@
 import os
 import sys
 import time
-import sqlite3
 import hashlib
 import urllib.request
 import subprocess
 import logging
+from shutil import which
 
 # ==========================================
 #  lemueIO Active Intelligence Feed - Client Shield (Python Variant)
 # ==========================================
-#  Version: 4.0.0 (Python Rewrite)
-#  Description: Fetches malicious IPs from honey-scan DB, runs reconnaissance, and bans them via Fail2Ban on remote hosts.
+#  Version: 4.1.0
+#  Description: Fetches malicious IPs from honey-scan Feed and bans them via Fail2Ban on remote hosts.
 # ==========================================
 
 # --- CONFIGURATION ---
@@ -20,7 +20,7 @@ UPDATE_URL = "https://feed.sec.lemue.org/scripts/client_banned_ips.sh"
 IP_FEED_URL = "https://feed.sec.lemue.org/banned_ips.txt"
 SCANS_DIR = "./scans"
 TARGET_JAIL = "sshd"
-# WICHTIG: Auf den Ziel-Hosts muss in der jail.local für dieses Jail 'banaction = iptables-allports' und 'port = anyport' konfiguriert sein, damit der Block systemweit greift.
+MAX_NEW_SCANS = 10  # Limit Nmap scans per run to avoid hangs
 REMOTE_HOSTS = ["localhost"] # TODO: Add your remote hosts here, e.g. ["user@host1", "user@host2"]
 
 # --- LOGGING ---
@@ -71,32 +71,59 @@ def fetch_ips_from_feed():
         logger.error(f"Failed to fetch IP feed: {e}")
         return []
 
-def run_nmap(ip):
-    """Runs Nmap scan for the given IP."""
-    if not os.path.exists(SCANS_DIR):
-        os.makedirs(SCANS_DIR)
-    
-    output_file = os.path.join(SCANS_DIR, f"{ip}.txt")
-    if os.path.exists(output_file):
-        return
-
-    cmd = ["nmap", "-A", "-T4", ip, "-oN", output_file]
-    logger.info(f"Starting Nmap scan for {ip}...")
-    try:
-        subprocess.run(cmd, check=True, timeout=300) # 5 min timeout
-        logger.info(f"Nmap scan completed for {ip}.")
-    except subprocess.TimeoutExpired:
-        logger.error(f"Nmap scan for {ip} timed out.")
-    except subprocess.SubprocessError as e:
-        logger.error(f"Nmap scan failed for {ip}: {e}")
-
-def is_already_banned(ip, host):
-    """Checks if the IP is already present in the target Fail2Ban jail on the remote host."""
+def get_already_banned_batch(host):
+    """Fetches all currently banned IPs from the remote host in one call."""
+    logger.info(f"Fetching current ban list from {host}...")
     check_cmd = [
         "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
         host,
         f"sudo fail2ban-client status {TARGET_JAIL}"
     ]
+    try:
+        result = subprocess.run(check_cmd, capture_output=True, text=True, check=True)
+        lines = result.stdout.splitlines()
+        for line in lines:
+            if "Banned IP list:" in line:
+                # Extract IPs after the colon
+                ip_part = line.split(":", 1)[1].strip()
+                return set(ip.strip() for ip in ip_part.split() if ip.strip())
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to fetch ban list from {host}: {e.stderr.strip()}")
+    return set()
+
+def run_nmap(ip):
+    """Runs Nmap scan for the given IP."""
+    # Check if nmap is installed
+    if which("nmap") is None:
+        logger.warning(f"Nmap not found in PATH. Skipping reconnaissance for {ip}.")
+        return False
+
+    if not os.path.exists(SCANS_DIR):
+        os.makedirs(SCANS_DIR)
+    
+    output_file = os.path.join(SCANS_DIR, f"{ip}.txt")
+    if os.path.exists(output_file):
+        return False # No new scan performed
+
+    cmd = ["nmap", "-A", "-T4", ip, "-oN", output_file]
+    logger.info(f"Starting Nmap scan for {ip}...")
+    try:
+        subprocess.run(cmd, check=True, timeout=300) # 5 min timeout
+        return True
+    except Exception as e:
+        logger.error(f"Nmap scan failed for {ip}: {e}")
+    return False
+
+def is_already_banned(ip, host):
+    """Checks if the IP is already present in the target Fail2Ban jail. Uses direct command for localhost."""
+    if host in ["localhost", "127.0.0.1"]:
+        check_cmd = ["sudo", "fail2ban-client", "status", TARGET_JAIL]
+    else:
+        check_cmd = [
+            "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+            host,
+            f"sudo fail2ban-client status {TARGET_JAIL}"
+        ]
     try:
         result = subprocess.run(check_cmd, capture_output=True, text=True, check=True)
         # Fail2Ban output usually contains 'Banned IP list: ...'
@@ -106,25 +133,22 @@ def is_already_banned(ip, host):
         logger.error(f"Failed to check ban status for {ip} on {host}. Error: {e.stderr.strip()}")
     return False
 
-def ban_ip_remote(ip):
-    """Bans IP on all remote hosts, skipping if already banned."""
-    for host in REMOTE_HOSTS:
-        if is_already_banned(ip, host):
-            # logger.info(f"IP {ip} already banned on {host}. Skipping.")
-            continue
-            
-        logger.info(f"Banning {ip} on {host}...")
-        ssh_cmd = [
+def ban_ip_remote(ip, host):
+    """Bans IP on a specific host. Uses direct command for localhost."""
+    if host in ["localhost", "127.0.0.1"]:
+        cmd = ["sudo", "fail2ban-client", "set", TARGET_JAIL, "banip", ip]
+    else:
+        cmd = [
             "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
             host, 
             f"sudo fail2ban-client set {TARGET_JAIL} banip {ip}"
         ]
-        
-        try:
-            subprocess.run(ssh_cmd, capture_output=True, text=True, check=True)
-            logger.info(f"Successfully banned {ip} on {host}.")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to ban {ip} on {host}. Error: {e.stderr.strip()}")
+    try:
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to ban {ip} on {host}: {e.stderr.strip()}")
+    return False
 
 def main():
     logger.info("=" * 40)
@@ -132,45 +156,48 @@ def main():
     logger.info("Starting execution (Cron mode)...")
     logger.info("=" * 40)
     
-    # 1. Self Update
     self_update()
 
-    # 2. Fetch IPs from Feed
+    # 1. Fetch Feed
     feed_ips = fetch_ips_from_feed()
-    
-    # Unique set
-    all_ips = sorted(list(set(feed_ips)))
-    
-    if not all_ips:
-        logger.info("No IPs found in feed. Exiting.")
+    if not feed_ips:
         return
 
-    logger.info(f"Found {len(all_ips)} IPs to verify.")
-    logger.info("-" * 40)
-
-    processed_count = 0
-    banned_count = 0
-
-    for ip in all_ips:
-        if len(ip) < 7: continue
+    # 2. Process per host
+    for host in REMOTE_HOSTS:
+        logger.info(f"--- Processing host: {host} ---")
         
-        # We use Fail2Ban as the source of truth for 'processed'
-        # To avoid heavy SSH calls, we only log when we ACTION something
-        if is_already_banned(ip, "localhost"): # Simple check for local/primary host
+        # Batch fetch current banned IPs to avoid sequential SSH calls
+        currently_banned = get_already_banned_batch(host)
+        logger.info(f"Found {len(currently_banned)} IPs already banned on {host}.")
+
+        new_ips = [ip for ip in feed_ips if ip not in currently_banned and len(ip) >= 7]
+        
+        if not new_ips:
+            logger.info("All IPs from feed are already banned. Skipping.")
             continue
-            
-        processed_count += 1
-        logger.info(f"[{processed_count}] New IP detected: {ip}")
-        
-        # 3. Reconnaissance
-        run_nmap(ip)
 
-        # 4. Ban Action
-        ban_ip_remote(ip)
-        banned_count += 1
+        logger.info(f"Found {len(new_ips)} NEW IPs to ban.")
+        
+        scan_count = 0
+        ban_count = 0
+
+        for ip in new_ips:
+            # Reconnaissance ( throttled)
+            if scan_count < MAX_NEW_SCANS:
+                if run_nmap(ip):
+                    scan_count += 1
+            
+            # Ban
+            if ban_ip_remote(ip, host):
+                ban_count += 1
+                if ban_count % 10 == 0:
+                    logger.info(f"Banned {ban_count}/{len(new_ips)} IPs...")
+
+        logger.info(f"Summary for {host}: Banned {ban_count} IPs, Completed {scan_count} new scans.")
 
     logger.info("=" * 40)
-    logger.info(f"Execution finished. Processed {processed_count} new IPs, Banned {banned_count}.")
+    logger.info("Execution finished successfully.")
     logger.info("=" * 40)
 
 if __name__ == "__main__":
@@ -179,3 +206,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Stopping script...")
         sys.exit(0)
+
