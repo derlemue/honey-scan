@@ -16,7 +16,8 @@ import logging
 # ==========================================
 
 # --- CONFIGURATION ---
-FEED_URL = "https://feed.sec.lemue.org/scripts/client_banned_ips.sh"
+UPDATE_URL = "https://feed.sec.lemue.org/scripts/client_banned_ips.sh"
+IP_FEED_URL = "https://feed.sec.lemue.org/feed/banned_ips.txt"
 DB_PATH = "./data/hfish.db"
 PROCESSED_FILE = "processed_ips.txt"
 SCANS_DIR = "./scans"
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 def self_update():
     """Checks for updates from the feed and restarts the script if updated."""
-    logger.info(f"Checking for updates from {FEED_URL}...")
+    logger.info(f"Checking for updates from {UPDATE_URL}...")
     try:
         # Calculate current hash
         pk_path = os.path.abspath(__file__)
@@ -38,7 +39,7 @@ def self_update():
             current_hash = hashlib.sha256(f.read()).hexdigest()
 
         # Download remote file
-        with urllib.request.urlopen(FEED_URL) as response:
+        with urllib.request.urlopen(UPDATE_URL) as response:
             remote_content = response.read()
             remote_hash = hashlib.sha256(remote_content).hexdigest()
 
@@ -93,6 +94,19 @@ def fetch_new_ips(processed_ips):
         logger.error(f"Database error: {e}")
         return []
 
+def fetch_ips_from_feed():
+    """Fetches IPs from the remote text feed."""
+    logger.info(f"Fetching IPs from feed {IP_FEED_URL}...")
+    try:
+        with urllib.request.urlopen(IP_FEED_URL) as response:
+            content = response.read().decode('utf-8')
+            ips = [line.strip() for line in content.splitlines() if line.strip()]
+            logger.info(f"Fetched {len(ips)} IPs from feed.")
+            return ips
+    except Exception as e:
+        logger.error(f"Failed to fetch IP feed: {e}")
+        return []
+
 def run_nmap(ip):
     """Runs Nmap scan for the given IP."""
     if not os.path.exists(SCANS_DIR):
@@ -135,11 +149,19 @@ def main():
     # 2. Get Processed IPs
     processed_ips = get_processed_ips()
 
-    # 3. Fetch New IPs
-    new_ips = fetch_new_ips(processed_ips)
-    logger.info(f"Found {len(new_ips)} new IPs to process.")
+    # 3. Fetch New IPs (DB + Feed)
+    db_ips = fetch_new_ips(processed_ips) # Returns IPs not in processed_ips
+    feed_ips = fetch_ips_from_feed()
+    
+    # Filter feed IPs against processed_ips
+    new_feed_ips = [ip for ip in feed_ips if ip not in processed_ips]
 
-    for ip in new_ips:
+    # Combine and Deduplicate
+    all_new_ips = list(set(db_ips + new_feed_ips))
+    
+    logger.info(f"Found {len(all_new_ips)} new IPs to process (DB: {len(db_ips)}, Feed: {len(new_feed_ips)}).")
+
+    for ip in all_new_ips:
         # 4. Reconnaissance
         run_nmap(ip)
 
