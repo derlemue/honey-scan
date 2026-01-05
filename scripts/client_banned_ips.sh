@@ -72,20 +72,23 @@ def fetch_ips_from_feed():
         return []
 
 def get_already_banned_batch(host):
-    """Fetches all currently banned IPs from the remote host in one call."""
+    """Fetches all currently banned IPs from the host. Uses direct command for localhost."""
     logger.info(f"Fetching current ban list from {host}...")
-    check_cmd = [
-        "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
-        host,
-        f"sudo fail2ban-client status {TARGET_JAIL}"
-    ]
+    if host in ["localhost", "127.0.0.1"]:
+        check_cmd = ["sudo", "fail2ban-client", "status", TARGET_JAIL]
+    else:
+        check_cmd = [
+            "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+            host,
+            f"sudo fail2ban-client status {TARGET_JAIL}"
+        ]
     try:
         result = subprocess.run(check_cmd, capture_output=True, text=True, check=True)
-        lines = result.stdout.splitlines()
-        for line in lines:
+        # Banned IP list can be multi-line or very long
+        for line in result.stdout.splitlines():
             if "Banned IP list:" in line:
-                # Extract IPs after the colon
                 ip_part = line.split(":", 1)[1].strip()
+                # Fail2Ban uses spaces to separate IPs
                 return set(ip.strip() for ip in ip_part.split() if ip.strip())
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to fetch ban list from {host}: {e.stderr.strip()}")
