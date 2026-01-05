@@ -8,7 +8,8 @@
         :root { --primary: #4ade80; --bg: #0f172a; --panel: #1e293b; --text: #e2e8f0; }
         body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        header { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 30px; }
+        header { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 30px; flex-wrap: wrap; }
+        .header-brand { display: flex; align-items: center; gap: 20px; flex: 1; min-width: 250px; }
         .logo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
         h1 { margin: 0; font-size: 1.5rem; color: var(--text); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
         .section { background: var(--panel); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
@@ -23,7 +24,7 @@
         .search-box { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #334155; color: var(--text); border-radius: 4px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box; }
         .search-box:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.1); }
 
-        .status-btn { padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid #334155; color: var(--text); border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .status-btn { padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid #334155; color: var(--text); border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
         .status-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; box-shadow: 0 0 5px rgba(148, 163, 184, 0.5); }
         .status-safe .status-dot { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
@@ -39,7 +40,7 @@
 <body>
     <div class="container">
         <header>
-            <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+            <div class="header-brand">
                 <img src="logo.jpg" alt="Logo" class="logo">
                 <h1>lemueIO Active Intelligence Feed</h1>
             </div>
