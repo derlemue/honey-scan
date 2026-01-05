@@ -51,7 +51,14 @@
         </header>
         
         <div class="section">
-            <h2>Resources</h2>
+            <h2>Resources<?php
+                $bannedIpsFile = './banned_ips.txt';
+                if (file_exists($bannedIpsFile)) {
+                    $lines = file($bannedIpsFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                    $bannedCount = count($lines);
+                    echo ' (' . number_format($bannedCount) . ' Banned IPs)';
+                }
+            ?></h2>
             <a href="banned_ips.txt" class="resource-link">banned_ips.txt <span class="resource-desc">List of unique attacker IPs (Fail2Ban Compatible)</span></a>
         </div>
 
