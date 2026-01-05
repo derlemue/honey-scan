@@ -72,9 +72,14 @@ def fetch_ips_from_feed():
         return []
 
 def get_already_banned_batch(host):
-    """Fetches all currently banned IPs from the host. Uses direct command for localhost."""
+    """Fetches all currently banned IPs from the host. Uses direct command for local hosts."""
     logger.info(f"Fetching current ban list from {host}...")
-    if host in ["localhost", "127.0.0.1"]:
+    
+    h_clean = host.strip().lower()
+    is_local = h_clean in ["localhost", "127.0.0.1", "::1"]
+    
+    if is_local:
+        # Use fail2ban-client directly if local
         check_cmd = ["sudo", "fail2ban-client", "status", TARGET_JAIL]
     else:
         check_cmd = [
@@ -82,21 +87,26 @@ def get_already_banned_batch(host):
             host,
             f"sudo fail2ban-client status {TARGET_JAIL}"
         ]
+        
     try:
         result = subprocess.run(check_cmd, capture_output=True, text=True, check=True)
-        # Banned IP list can be multi-line or very long
-        for line in result.stdout.splitlines():
-            if "Banned IP list:" in line:
-                ip_part = line.split(":", 1)[1].strip()
-                # Fail2Ban uses spaces to separate IPs
-                return set(ip.strip() for ip in ip_part.split() if ip.strip())
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to fetch ban list from {host}: {e.stderr.strip()}")
+        stdout = result.stdout
+        if "Banned IP list:" in stdout:
+            # Split by the header to get only the IP part
+            # Use '1' as maxsplit to get everything after the first match
+            _, ip_part = stdout.split("Banned IP list:", 1)
+            # Remove existing commas or other separators if present, though F2B usually uses spaces
+            # Replace newlines with spaces and split to get clean IPs
+            ips = set(ip.strip().strip(',') for ip in ip_part.replace('\n', ' ').split() if ip.strip())
+            return ips
+    except Exception as e:
+        logger.error(f"Failed to fetch ban list from {host}: {e}")
     return set()
 
 def ban_ip_remote(ip, host):
-    """Bans IP on a specific host. Uses direct command for localhost."""
-    if host in ["localhost", "127.0.0.1"]:
+    """Bans IP on a specific host. Uses direct command for local hosts."""
+    h_clean = host.strip().lower()
+    if h_clean in ["localhost", "127.0.0.1", "::1"]:
         cmd = ["sudo", "fail2ban-client", "set", TARGET_JAIL, "banip", ip]
     else:
         cmd = [
@@ -108,7 +118,7 @@ def ban_ip_remote(ip, host):
         subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True
     except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to ban {ip} on {host}: {e.stderr.strip()}")
+        logger.error(f"Failed to ban {ip} on {host}: {e.stderr.strip() if e.stderr else e}")
     return False
 
 def main():
