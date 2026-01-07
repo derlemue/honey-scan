@@ -1955,20 +1955,26 @@
                     return;
                 }
 
-                // Create overlay div that sits ON TOP of the card
+                // Get card's position and dimensions
+                const cardRect = card.getBoundingClientRect();
+                console.log(logPrefix + "Card position:", cardRect);
+
+                // Create overlay div that sits ON TOP of the card using FIXED positioning
+                // This way we DON'T touch React's DOM at all
                 const overlay = document.createElement('div');
                 overlay.id = 'honeyscan-cloud-overlay';
                 overlay.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
+                    position: fixed;
+                    top: ${cardRect.top}px;
+                    left: ${cardRect.left}px;
+                    width: ${cardRect.width}px;
+                    height: ${cardRect.height}px;
                     background: rgba(15, 23, 42, 0.98);
-                    z-index: 1000;
+                    z-index: 9999;
                     padding: 20px;
                     overflow-y: auto;
                     pointer-events: auto;
+                    box-sizing: border-box;
                 `;
 
                 // Build overlay content
@@ -2022,11 +2028,9 @@
                     </div>
                 `;
 
-                // Make card position: relative so overlay can be absolute
-                card.style.position = 'relative';
-
-                // Append overlay to card
-                card.appendChild(overlay);
+                // Append overlay to BODY, not to the card
+                // This way we don't touch React's DOM at all
+                document.body.appendChild(overlay);
 
                 console.log(logPrefix + "✅ Overlay injected successfully");
 
