@@ -92,12 +92,23 @@
                 const now = Date.now();
                 // Cache for 30 seconds
                 if (threatDataCache && (now - lastFetchTime) < 30000) {
+                    setStatus('#00ff00', 'Served from Cache');
                     return threatDataCache;
                 }
 
                 try {
                     setStatus('purple', 'Fetching...'); // Fetching
-                    const response = await originalFetch('/assets/live_threats.json?t=' + Math.floor(now / 60000));
+
+                    // Create a timeout promise
+                    const timeout = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error("Fetch Timeout (5s)")), 5000)
+                    );
+
+                    // Race fetch against timeout
+                    const response = await Promise.race([
+                        originalFetch('/assets/live_threats.json?t=' + now),
+                        timeout
+                    ]);
                     if (!response.ok) throw new Error("HTTP " + response.status);
 
                     setStatus('orange', 'Parsing JSON...'); // JSON Parsing
