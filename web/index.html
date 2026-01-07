@@ -1671,15 +1671,27 @@
 
         const injectCloudIntelligence = async () => {
             try {
-                // V17: THE "NO DATA" HUNTER
-                // Strategy: Find the "Trying to identify specific reasons" text and replace it.
+                // V18: DIAGNOSTICS & HYBRID HUNTER
 
-                // 1. CLEANUP OLD OVERLAY
-                const oldOverlay = document.getElementById('hs-fixed-overlay');
-                if (oldOverlay) oldOverlay.remove();
+                // 1. DIAGNOSTICS DOT (Visual Heartbeat)
+                let dot = document.getElementById('hs-status-dot');
+                if (!dot) {
+                    dot = document.createElement('div');
+                    dot.id = 'hs-status-dot';
+                    dot.style.cssText = "position:fixed; top:5px; right:5px; width:8px; height:8px; background:red; border-radius:50%; z-index:99999; pointer-events:none; box-shadow:0 0 5px red;";
+                    document.body.appendChild(dot);
+                }
+                const setDot = (color) => {
+                    dot.style.background = color;
+                    dot.style.boxShadow = `0 0 5px ${color}`;
+                };
 
                 // 2. PATH CHECK
-                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return;
+                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) {
+                    dot.style.display = 'none';
+                    return;
+                }
+                dot.style.display = 'block';
 
                 // 3. FETCH DATA
                 const fetchThreatDataLocal = async () => {
@@ -1701,14 +1713,12 @@
                     if (cachedThreatData) cachedThreatData.timestamp = Date.now();
                 }
                 const threatData = cachedThreatData;
-                if (!threatData) return;
+                if (!threatData) {
+                    setDot('orange'); // Data fetch warning
+                    return;
+                }
 
-                // 4. FIND TARGETS (The "No Data" Placeholders)
-                // We search for elements containing the specific empty-state text.
-                const allElements = Array.from(document.querySelectorAll('span, div, p'));
-                const emptyStateNodes = allElements.filter(el => el.innerText && el.innerText.includes('Trying to identify specific reasons'));
-
-                // Helper to generate rows
+                // Helper: Generate HTML Rows
                 const generateRows = (items, type) => {
                     return items.map(item => {
                         if (type === 'hacker') {
@@ -1729,64 +1739,85 @@
 
                 const injectIntoContainer = (container, data, type) => {
                     const currentSig = getTsSignature();
-                    // If we already injected our version, skip
-                    // We check if the container has our data-ver AND doesn't have the "no data" text anymore
-                    if (container.dataset.ver === currentSig) return;
+                    if (container.dataset.ver === currentSig) return; // Already updated
 
-                    // Inject
                     container.innerHTML = `
                         <div style="height:100%; overflow-y:auto; padding:10px; scrollbar-width:thin;">
                             ${generateRows(data, type)}
                         </div>
                     `;
                     container.dataset.ver = currentSig;
-                    // Reset alignment just in case
                     container.style.textAlign = 'left';
                     container.style.display = 'block';
                 };
 
-                // STRATEGY A: We found the "No Data" nodes matches
-                if (emptyStateNodes.length >= 2) {
-                    // 0 is Top (Hackers), 1 is Bottom (CS) - usually reverse in DOM order? No, top down.
-                    // Let's assume document order: Top first.
+                // STRATEGY A: FUZZY "NO DATA" HUNTER
+                // Search for any element with text roughly matching "specific reasons"
+                // This covers "Trying to identify specific reasons", case variations, etc.
+                const allElements = Array.from(document.querySelectorAll('span, div, p'));
+                const emptyStateNodes = allElements.filter(el => {
+                    const txt = (el.innerText || "").toLowerCase();
+                    return txt.includes('specific reasons');
+                });
 
-                    // We need the PARENT of the text node to be the container we replace.
-                    // Usually the text is inside a wrapper inside the body.
-                    // Let's go up until we hit a reasonable container (height > 50).
+                let success = false;
+
+                if (emptyStateNodes.length >= 2) {
+                    console.log("[HoneyScan] Fuzzy Hunter Hit: Found " + emptyStateNodes.length + " nodes.");
+                    // Assume 0=Top, 1=Bottom. 
                     const getBodyContainer = (node) => {
                         let parent = node.parentElement;
-                        while (parent && parent.clientHeight < 50 && parent.tagName !== 'BODY') {
+                        // Walk up max 5 levels or until body/card
+                        for (let i = 0; i < 5; i++) {
+                            if (!parent || parent.tagName === 'BODY' || parent.classList.contains('el-card__body')) break;
+                            if (parent.clientHeight > 50) return parent; // Good candidate
                             parent = parent.parentElement;
                         }
-                        return parent;
+                        return parent || node.parentElement;
                     };
 
                     const hackersContainer = getBodyContainer(emptyStateNodes[0]);
                     const csContainer = getBodyContainer(emptyStateNodes[1]);
 
-                    if (hackersContainer) injectIntoContainer(hackersContainer, (threatData.hackers || []).slice(0, 20), 'hacker');
-                    if (csContainer) injectIntoContainer(csContainer, (threatData.cs || []).slice(0, 20), 'cs');
-                }
-                // STRATEGY B: Fallback to Header Search (Previous Logic) if specific text not found
-                // (Maybe user has data but it's just not our data?)
-                else {
-                    const injectByHeader = (headerText, data, type) => {
-                        const allDivs = Array.from(document.querySelectorAll('div, span, h4, h5, .title'));
-                        const header = allDivs.find(el => el.innerText && el.innerText.includes(headerText));
-                        if (!header) return;
-                        const card = header.closest('[class*="card"]') || header.parentElement?.parentElement;
-                        if (!card) return;
-                        let body = Array.from(card.children).find(child => child !== header && child !== header.parentElement && child.tagName === 'DIV');
-                        if (!body) body = card.querySelector('.el-card__body');
-                        if (!body) body = card.lastElementChild;
-                        if (body) injectIntoContainer(body, data, type);
-                    };
-                    injectByHeader('Recent active hackers', (threatData.hackers || []).slice(0, 20), 'hacker');
-                    injectByHeader('suspicious CS', (threatData.cs || []).slice(0, 20), 'cs');
+                    if (hackersContainer && csContainer) {
+                        injectIntoContainer(hackersContainer, (threatData.hackers || []).slice(0, 20), 'hacker');
+                        injectIntoContainer(csContainer, (threatData.cs || []).slice(0, 20), 'cs');
+                        success = true;
+                    }
                 }
 
+                // STRATEGY B: HEADER HUNTER (Fallback)
+                if (!success) {
+                    // Try to find by Header Text "Recent active hackers"
+                    const injectByHeader = (headerText, data, type) => {
+                        const headers = Array.from(document.querySelectorAll('div, span, h4, h5, .title'));
+                        const header = headers.find(el => el.innerText && el.innerText.includes(headerText));
+                        if (!header) return false;
+
+                        const card = header.closest('[class*="card"]') || header.parentElement?.parentElement;
+                        if (!card) return false;
+
+                        let body = Array.from(card.children).find(child => child !== header && child !== header.parentElement && child.tagName === 'DIV');
+                        if (!body) body = card.querySelector('.el-card__body') || card.lastElementChild;
+
+                        if (body) {
+                            injectIntoContainer(body, data, type);
+                            return true;
+                        }
+                        return false;
+                    };
+                    const hSuccess = injectByHeader('Recent active hackers', (threatData.hackers || []).slice(0, 20), 'hacker');
+                    const cSuccess = injectByHeader('suspicious CS', (threatData.cs || []).slice(0, 20), 'cs');
+                    if (hSuccess || cSuccess) success = true;
+                }
+
+                // STATUS UPDATE
+                setDot(success ? '#00d2ff' : 'red'); // Blue = Success, Red = Fail
+
             } catch (e) {
-                // Silent catch
+                console.error("[HoneyScan] Injection Error:", e);
+                const dot = document.getElementById('hs-status-dot');
+                if (dot) dot.style.background = 'purple'; // Purple = Crash
             }
         };
 
