@@ -113,16 +113,11 @@ services:
     ports:
       - "8888:80"
     volumes:
-      # Support path stripping (Proxy requests /)
+      - ./config/feed_apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ./feed:/var/www/html
       - ./scans:/var/www/html/scans:ro
       - ./web/assets:/var/www/html/assets:ro
       - ./scripts:/var/www/html/scripts:ro
-      # Support path preservation (Proxy requests /feed/)
-      - ./feed:/var/www/html/feed
-      - ./scans:/var/www/html/feed/scans:ro
-      - ./web/assets:/var/www/html/feed/assets:ro
-      - ./scripts:/var/www/html/feed/scripts:ro
 
 volumes:
   hfish_data:
