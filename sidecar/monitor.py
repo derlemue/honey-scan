@@ -205,7 +205,7 @@ def update_threat_feed():
     suspicious_cs = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 20"
+        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 50"
         cursor.execute(query)
         rows = cursor.fetchall()
         for row in rows:
@@ -218,7 +218,7 @@ def update_threat_feed():
                 "flag": country, 
                 "count": 1
             })
-            if len(suspicious_cs) < 20:
+            if len(suspicious_cs) < 50:
                 threat_data = query_threatbook_ip(ip)
                 if threat_data:
                     suspicious_cs.append({
