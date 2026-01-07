@@ -54,20 +54,29 @@
             console.log("[Cloud Intelligence] Installing fetch interceptor...");
 
             // === VISUAL DEBUG BANNER ===
-            const debugBanner = document.createElement('div');
-            debugBanner.id = 'ci-debug-banner';
-            debugBanner.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:5px 15px;z-index:999999;font-family:monospace;font-size:14px;border-bottom-left-radius:8px;border-bottom-right-radius:8px;border:1px solid #444;border-top:none;display:flex;gap:15px;align-items:center;";
-            debugBanner.innerHTML = `
-                <span id="db-status" style="font-weight:bold;color:#a855f7">INIT</span>
-                <span id="db-network" style="color:#666">Net: ???</span>
-                <span id="db-error" style="color:#ef4444;display:none"></span>
-                <span id="db-retry" style="color:#fbbf24;display:none">Retries: 0</span>
-            `;
-            document.body.appendChild(debugBanner);
+            window.addEventListener('DOMContentLoaded', () => {
+                try {
+                    const debugBanner = document.createElement('div');
+                    debugBanner.id = 'ci-debug-banner';
+                    debugBanner.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:5px 15px;z-index:999999;font-family:monospace;font-size:14px;border-bottom-left-radius:8px;border-bottom-right-radius:8px;border:1px solid #444;border-top:none;display:flex;gap:15px;align-items:center;";
+                    debugBanner.innerHTML = `
+                        <span id="db-status" style="font-weight:bold;color:#a855f7">INIT</span>
+                        <span id="db-network" style="color:#666">Net: ???</span>
+                        <span id="db-error" style="color:#ef4444;display:none"></span>
+                        <span id="db-retry" style="color:#fbbf24;display:none">Retries: 0</span>
+                    `;
+                    document.body.appendChild(debugBanner);
+                    console.log("[Cloud Intelligence] Debug banner injected.");
+                } catch (e) {
+                    console.error("[Cloud Intelligence] Failed to inject banner:", e);
+                }
+            });
 
             let retryCount = 0;
             const updateBanner = (status, color, error = null, netStatus = null) => {
                 const sEl = document.getElementById('db-status');
+                if (!sEl) return; // Banner might not be ready yet
+
                 const eEl = document.getElementById('db-error');
                 const nEl = document.getElementById('db-network');
 
