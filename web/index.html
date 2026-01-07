@@ -1647,8 +1647,22 @@
 
                 // Inject table with FULL HEIGHT styling
                 try {
+                    // Force parent card to use full height
+                    if (card) {
+                        card.style.height = '100%';
+                        card.style.display = 'flex';
+                        card.style.flexDirection = 'column';
+                    }
+                    if (body) {
+                        body.style.flex = '1';
+                        body.style.display = 'flex';
+                        body.style.flexDirection = 'column';
+                        body.style.minHeight = '0';
+                        body.style.padding = '0';
+                    }
+
                     body.innerHTML = `
-                        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden;">
+                        <div style="width: 100%; height: 100%; min-height: 400px; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden;">
                             <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed;">
                                 <thead style="background: rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 10;">
                                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
@@ -1660,7 +1674,7 @@
                                     </tr>
                                 </thead>
                             </table>
-                            <div style="flex: 1; overflow-y: auto; overflow-x: hidden;">
+                            <div style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 350px;">
                                 <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed;">
                                     <tbody>
                                         ${rowHtml}
