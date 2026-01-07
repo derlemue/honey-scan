@@ -1788,45 +1788,30 @@
                     return;
                 }
 
-                // Find boxes by looking for "Trying to identify specific reasons" text
-                const allElements = Array.from(document.querySelectorAll('*'));
-                const noDataElements = allElements.filter(el => {
-                    const text = (el.textContent || '').trim();
-                    return text === 'Trying to identify specific reasons';
+                // NEW APPROACH: Find all el-card__body elements on the right side
+                const allCardBodies = Array.from(document.querySelectorAll('.el-card__body'));
+                console.log(`[HoneyScan] Found ${allCardBodies.length} card bodies total`);
+
+                // Filter for right-side cards (x position > 70% of screen width)
+                const rightSideCards = allCardBodies.filter(card => {
+                    const rect = card.getBoundingClientRect();
+                    return rect.left > window.innerWidth * 0.7 && rect.height < 500;
                 });
 
-                if (noDataElements.length < 2) {
-                    console.warn('[HoneyScan] Could not find both boxes');
+                console.log(`[HoneyScan] Found ${rightSideCards.length} right-side cards`);
+
+                if (rightSideCards.length < 2) {
+                    console.warn('[HoneyScan] Not enough right-side cards found');
                     return;
                 }
 
-                // Function to find the card body container
-                const findCardBody = (element) => {
-                    let current = element;
-                    for (let i = 0; i < 10; i++) {
-                        if (!current || !current.parentElement) break;
-                        current = current.parentElement;
-                        // Look for el-card__body class
-                        if (current.classList && current.classList.contains('el-card__body')) {
-                            return current;
-                        }
-                    }
-                    return null;
-                };
+                // Sort by Y position (top to bottom)
+                rightSideCards.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
 
-                const hackersBody = findCardBody(noDataElements[0]);
-                const csBody = findCardBody(noDataElements[1]);
+                const hackersCard = rightSideCards[0];
+                const csCard = rightSideCards[1];
 
-                if (!hackersBody || !csBody) {
-                    console.warn('[HoneyScan] Could not find card bodies');
-                    return;
-                }
-
-                // Safety check - make sure containers aren't too large
-                if (hackersBody.clientHeight > 600 || csBody.clientHeight > 600) {
-                    console.warn('[HoneyScan] Containers too large, aborting');
-                    return;
-                }
+                console.log('[HoneyScan] Target cards:', hackersCard, csCard);
 
                 // Generate table rows (similar to dashboard)
                 const generateTableRows = (items, type) => {
@@ -1862,7 +1847,7 @@
                 };
 
                 // Inject into hackers box
-                hackersBody.innerHTML = `
+                hackersCard.innerHTML = `
                     <div style="width:100%; height:100%; overflow-y:auto; background: transparent; border-radius: 4px;">
                         <table style="width:100%; border-collapse:collapse; color:#fff; font-size:11px;">
                             <thead style="background: rgba(0,0,0,0.2); position: sticky; top: 0;">
@@ -1877,7 +1862,7 @@
                     </div>`;
 
                 // Inject into CS box
-                csBody.innerHTML = `
+                csCard.innerHTML = `
                     <div style="width:100%; height:100%; overflow-y:auto; background: transparent; border-radius: 4px;">
                         <table style="width:100%; border-collapse:collapse; color:#fff; font-size:11px;">
                             <thead style="background: rgba(0,0,0,0.2); position: sticky; top: 0;">
