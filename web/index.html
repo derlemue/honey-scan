@@ -1558,24 +1558,24 @@
                     flex-direction: column !important;
                     gap: 20px !important;
                     justify-content: flex-start !important;
-                    height: calc(100vh - 120px) !important; /* Full vertical height */
+                    height: calc(100vh - 120px) !important;
                     min-height: 0 !important;
                 }
 
-                /* FORCE CARDS TO EXPAND */
+                /* FORCE CARDS TO EXPAND & BE RELATIVE FOR OVERLAY */
                 div[class*="card"],
                 .el-card {
                     display: flex !important;
                     flex-direction: column !important;
-                    flex: 1 1 auto !important; /* Grow to fill space */
-                    min-height: 0 !important; /* Allow shrinking for scroll */
+                    flex: 1 1 auto !important;
+                    min-height: 0 !important;
                     height: auto !important;
                     margin-bottom: 0 !important;
                     visibility: visible !important;
-                    position: relative !important; /* Context for absolute children if needed */
+                    position: relative !important; /* CRITICAL FOR OVERLAY */
                 }
 
-                /* CARD CONTENT EXPANSION */
+                /* HIDE ORIGINAL CONTENT VISUALLY (Optional safety net) */
                 div[class*="content"],
                 .el-card__body {
                     flex: 1 1 auto !important;
@@ -1583,25 +1583,29 @@
                     flex-direction: column !important;
                     height: 100% !important;
                     min-height: 0 !important;
-                    overflow: hidden !important; /* Container handles overflow */
+                    overflow: hidden !important;
                     padding: 0 !important;
                 }
 
-                /* HIDE HFISH PLACEHOLDERS AGGRESSIVELY via CSS */
-                .HS_HIDDEN,
-                div[class*="emptyWrap"],
-                div[class*="noData"] {
-                    display: none !important;
-                    visibility: hidden !important;
-                    height: 0 !important;
-                    width: 0 !important;
-                    opacity: 0 !important;
-                    pointer-events: none !important;
+                /* OVERLAY CONTAINER */
+                .hs-intelligence-overlay {
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    z-index: 99 !important;
+                    background-color: #050e21 !important; /* Match theme background to mask underlying content */
+                    display: flex !important;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
                 }
 
                 /* STATUS HEADER */
                 .hs-cloud-status-brief {
                     flex-shrink: 0 !important;
+                    background: rgba(0,0,0,0.2);
+                    padding: 5px 10px;
                 }
             `;
             document.head.appendChild(style);
@@ -1643,91 +1647,78 @@
                 const cards = Array.from(rightCol.querySelectorAll('div[class*="card"]'));
                 if (cards.length < 2) return;
 
-                // Identify boxes implicitly if specific classes fail
-                // specific class: index-cssmodule__doubtfulCsCard-2RIFX
                 const csBox = cards.find(c => c.className.includes('doubtfulCsCard')) || cards[1];
                 const hackerBox = cards.find(c => !c.className.includes('doubtfulCsCard') && c !== csBox) || cards[0];
 
                 if (!hackerBox || !csBox) return;
 
-                // 3. Content Injection & Persistence Check
+                // 3. Content Injection via Overlay
                 const processBox = (box, dataList, type) => {
-                    // SEARCH AND DESTROY: Find any element containing "No data" and kill it
-                    // This is the "Nuclear Option" against React re-renders
-                    const allElements = box.querySelectorAll('*');
-                    for (let el of allElements) {
-                        // Skip our own list
-                        if (el.classList.contains('hs-intelligence-list') || el.closest('.hs-intelligence-list')) continue;
-
-                        // Check for bad text
-                        if (el.childNodes.length === 1 && el.childNodes[0].nodeType === 3) {
-                            const text = el.innerText.trim().toLowerCase();
-                            if (text === 'no data' || text.includes('identify specific reasons')) {
-                                el.classList.add('HS_HIDDEN'); // Hide via global CSS
-                                el.style.setProperty('display', 'none', 'important');
-                            }
-                        }
-                        // Check for empty wrapper classes
-                        if (el.className && typeof el.className === 'string' && (el.className.includes('emptyWrap') || el.className.includes('noData'))) {
-                            el.classList.add('HS_HIDDEN');
-                        }
+                    // Create or Get Overlay
+                    let overlay = box.querySelector('.hs-intelligence-overlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.className = 'hs-intelligence-overlay';
+                        // Move any existing title/header into the overlay? 
+                        // Actually, we want to KEEP the title bar if it's outside. 
+                        // Usually titles are above content.
+                        box.appendChild(overlay);
                     }
 
-                    // Check if our list exists
-                    let list = box.querySelector('.hs-intelligence-list');
+                    // Check if our list exists IN THE OVERLAY
+                    let list = overlay.querySelector('.hs-intelligence-list');
                     if (!list) {
                         list = document.createElement('div');
                         list.className = 'hs-intelligence-list';
                         list.style.cssText = 'flex: 1; overflow-y: auto; padding: 10px; font-family: Outfit, sans-serif; min-height: 0; color: white;';
-
-                        // Try append to content wrapper first
-                        const target = box.querySelector('[class*="content"]') || box.querySelector('.el-card__body') || box;
-                        target.appendChild(list);
+                        overlay.appendChild(list);
                     }
 
-                    // Only update innerHTML if empty or version changed
-                    if (list.childElementCount === 0 || list.dataset.ver !== getTsSignature()) {
-                        const rows = dataList.map(item => {
-                            if (type === 'hacker') {
-                                return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                }
+
+                // Only update innerHTML if empty or version changed
+                if (list.childElementCount === 0 || list.dataset.ver !== getTsSignature()) {
+                    const rows = dataList.map(item => {
+                        if (type === 'hacker') {
+                            return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
                                             <span style="color:#ff4d4f; font-weight:bold; width: 90px;">${item.ip}</span>
                                             <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.location}</span>
                                             <span style="color:#4a5568; width: 50px; text-align:right;">${item.time.split(' ')[1] || item.time}</span>
                                         </div>`;
-                            } else {
-                                return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                        } else {
+                            return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
                                             <span style="color:#faad14; font-weight:bold; width: 90px;">${item.ip}</span>
                                             <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.type}</span>
                                             <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 4px; border-radius:2px; font-size:10px;">${item.risk}</span>
                                         </div>`;
-                            }
-                        }).join('');
-                        list.innerHTML = rows;
-                        list.dataset.ver = getTsSignature();
-                    }
-                };
-
-                // Helper to version data
-                const getTsSignature = () => Math.floor((cachedThreatData.timestamp || 0) / 10000).toString();
-
-                processBox(hackerBox, (threatData.hackers || []).slice(0, 20), 'hacker');
-                processBox(csBox, (threatData.cs || []).slice(0, 20), 'cs');
-
-                // Status Bar
-                let statusHeader = document.querySelector('.hs-cloud-status-brief');
-                if (!statusHeader) {
-                    statusHeader = document.createElement('div');
-                    statusHeader.className = 'hs-cloud-status-brief';
-                    statusHeader.style.cssText = 'padding:10px 15px; background:rgba(0,10,30,0.4); border-left:3px solid #1890ff; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; color:#fff; flex-shrink: 0;';
-                    rightCol.prepend(statusHeader);
+                        }
+                    }).join('');
+                    list.innerHTML = rows;
+                    list.dataset.ver = getTsSignature();
                 }
-                const hCount = (threatData.hackers || []).length;
-                const cCount = (threatData.cs || []).length;
-                statusHeader.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
+            };
 
-            } catch (e) {
-                // Silent catch to prevent console flooding
+            // Helper to version data
+            const getTsSignature = () => Math.floor((cachedThreatData.timestamp || 0) / 10000).toString();
+
+            processBox(hackerBox, (threatData.hackers || []).slice(0, 20), 'hacker');
+            processBox(csBox, (threatData.cs || []).slice(0, 20), 'cs');
+
+            // Status Bar
+            let statusHeader = document.querySelector('.hs-cloud-status-brief');
+            if (!statusHeader) {
+                statusHeader = document.createElement('div');
+                statusHeader.className = 'hs-cloud-status-brief';
+                statusHeader.style.cssText = 'padding:10px 15px; background:rgba(0,10,30,0.4); border-left:3px solid #1890ff; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; color:#fff; flex-shrink: 0;';
+                rightCol.prepend(statusHeader);
             }
+            const hCount = (threatData.hackers || []).length;
+            const cCount = (threatData.cs || []).length;
+            statusHeader.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
+
+        } catch (e) {
+            // Silent catch to prevent console flooding
+        }
         };
 
         // 4. AGGRESSIVE LOOP (The "Enforcer")
