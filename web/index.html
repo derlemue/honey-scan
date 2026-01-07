@@ -1554,12 +1554,12 @@
                 /* V7 XPATH HUNTER STYLES */
                 
                 /* Target Discovered Column via ID */
-                /* V8 FIXED OVERLAY STYLES */
+                /* V9 FORCE OVERLAY STYLES */
                 
                 #hs-fixed-overlay {
                     position: fixed !important;
                     z-index: 99999 !important;
-                    background: #040c1c !important; /* Deep dark background to mask original */
+                    background: #040c1c !important; 
                     display: flex !important;
                     flex-direction: column !important;
                     gap: 20px !important;
@@ -1661,8 +1661,12 @@
 
         const injectCloudIntelligence = async () => {
             try {
-                // Only run on dashboard
+                // V9 DEBUG LOG
+                console.log('%c HoneyScan V9 Anti-Gravity Loaded ', 'background: #222; color: #bada55; font-size:12px;');
+
+                // Path check soft-enforced
                 if (!(location.pathname.includes('/index') || location.hash.includes('index'))) {
+                    // Check if we accidentally left it open
                     const overlay = document.getElementById('hs-fixed-overlay');
                     if (overlay) overlay.style.display = 'none';
                     return;
@@ -1671,18 +1675,13 @@
                 // 0. Ensure CSS Rules exist
                 ensureLayoutStyles();
 
-                // 1. ANCHOR SEARCH (Find where the column *should* be)
-                // We assume there is some original structure we can latch onto for X coordinates.
-                // If not, we fallback to hardcoded % logic.
+                // 1. ANCHOR SEARCH
                 let anchorRect = null;
-
-                // Try to find the "Recent active hackers" header to localize right column
                 const allDivs = document.querySelectorAll('div, span, h4, h5, section');
                 for (let el of allDivs) {
                     if (el.innerText && el.innerText.includes('Recent active hackers')) {
                         const card = el.closest('[class*="card"]') || el.parentElement?.parentElement;
                         if (card) {
-                            // The column is the parent of the card
                             const col = card.parentElement;
                             if (col) anchorRect = col.getBoundingClientRect();
                         }
@@ -1690,14 +1689,12 @@
                     }
                 }
 
-                // Fallback: Use window dimensions if we can't find specific element (likely because we overlaid it!)
-                // But wait, if we overlaid it, we don't need to re-find it constantly unless window resized.
+                // Fallback: Default Right Position
                 if (!anchorRect) {
-                    // Hard fallback: Right 25% of screen
                     anchorRect = {
-                        left: window.innerWidth * 0.73, // approx
+                        left: window.innerWidth * 0.73,
                         width: window.innerWidth * 0.26,
-                        top: 100 // Header height approx
+                        top: 100
                     };
                 }
 
@@ -1706,9 +1703,8 @@
                 if (!overlay) {
                     overlay = document.createElement('div');
                     overlay.id = 'hs-fixed-overlay';
-                    document.body.appendChild(overlay); // Append to BODY, outside React root
+                    document.body.appendChild(overlay);
 
-                    // Initial Layout
                     overlay.innerHTML = `
                          <div class="hs-custom-dashboard">
                             <div class="hs-cloud-status-brief"></div>
@@ -1724,17 +1720,14 @@
                     `;
                 }
 
-                // Sync Geometry (The "Fixed" part)
-                // We force it to match the horizontal position of the anchor, but override Vertical to fill screen
+                // Sync Geometry
                 overlay.style.display = 'flex';
+                // Adjust for fallback/detected
                 overlay.style.left = anchorRect.left + 'px';
                 overlay.style.width = anchorRect.width + 'px';
-                // Top should be below the main header. Let's say 100px or detected top.
-                const topPos = anchorRect.top > 60 ? anchorRect.top : 100;
+                const topPos = anchorRect.top > 60 ? anchorRect.top : 80;
                 overlay.style.top = topPos + 'px';
-                // Force height to bottom of screen minus padding
                 overlay.style.height = `calc(100vh - ${topPos}px - 20px)`;
-
 
                 // 3. FETCH DATA
                 if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 30000)) {
@@ -1747,14 +1740,12 @@
                 const threatData = cachedThreatData;
                 if (!threatData) return;
 
-
-                // 4. UPDATE DATA (Standard logic)
+                // 4. UPDATE DATA
                 const updateList = (cardId, items, type) => {
                     const card = overlay.querySelector(cardId);
                     if (!card) return;
                     const body = card.querySelector('.hs-custom-body');
 
-                    // Only update if signature changed
                     const currentSig = getTsSignature();
                     if (body.dataset.ver === currentSig && body.childElementCount > 0) return;
 
@@ -1788,7 +1779,8 @@
                 statusBrief.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
 
             } catch (e) {
-                // Silent catch
+                // Debug Log
+                console.error(e);
             }
         };
 
