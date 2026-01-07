@@ -218,7 +218,7 @@ def update_threat_feed():
                 "flag": country, 
                 "count": 1
             })
-            if len(suspicious_cs) < 5:
+            if len(suspicious_cs) < 20:
                 threat_data = query_threatbook_ip(ip)
                 if threat_data:
                     suspicious_cs.append({

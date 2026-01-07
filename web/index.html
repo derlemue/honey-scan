@@ -1478,12 +1478,7 @@
                 let body = card.lastElementChild;
                 if (!body) return;
 
-                // 4. Check if already injected
-                if (body.getAttribute('data-honeyscan-injected') === 'true') return;
-
-                // 5. Fetch Data
-                if (window.hasInjectedThreatsRobust) return;
-
+                // 4. Fetch Data (allow refresh by removing one-time flag)
                 const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000));
                 if (!response.ok) return;
                 const json = await response.json();
@@ -1507,7 +1502,7 @@
                     return map[loc] || loc;
                 };
 
-                // 6. Build Content
+                // 5. Build Content
                 let rowHtml = '';
                 threats.forEach(t => {
                     let c = '#4ade80'; if (t.risk === 'Medium') c = '#facc15'; if (t.risk === 'High') c = '#fb923c'; if (t.risk === 'Critical') c = '#ef4444';
@@ -1542,23 +1537,179 @@
                             <tbody>${rowHtml}</tbody>
                         </table>
                         <div style="padding: 5px 10px; text-align: right; font-size: 10px; color: rgba(255,255,255,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
-                            Source: Live Threat API
+                            Source: Live Threat API • ${threats.length} threats
                         </div>
                     </div>
                 `;
 
-                // 7. Inject
+                // 6. Inject
                 body.innerHTML = tableHtml;
-                // Important: clear any existing styles that might conflict or cause white background
                 body.style.padding = '0';
                 body.setAttribute('data-honeyscan-injected', 'true');
-                window.hasInjectedThreatsRobust = true;
                 console.log(logPrefix + "Injected " + threats.length + " threats with styling.");
 
             } catch (e) {
                 console.error(e);
             }
         };
+
+        // Auto-refresh support: Re-run injection every 30 seconds
+        setInterval(() => {
+            if (location.pathname.includes('/dashboard')) {
+                injectCloudThreatsRobust();
+            }
+        }, 30000);
+
+        // === MAP PAGE CLOUD INTELLIGENCE INJECTOR ===
+        const injectMapCloudIntelligence = async () => {
+            try {
+                // Only run on map page
+                if (!location.pathname.includes('/index') && !location.hash.includes('index')) return;
+
+                const logPrefix = "[HoneyScan Map Injector] ";
+
+                // Fetch Data
+                const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000));
+                if (!response.ok) return;
+                const json = await response.json();
+
+                const hackers = json.hackers || [];
+                const cs = json.cs || [];
+
+                if (hackers.length === 0 && cs.length === 0) return;
+
+                // Helper: Translate Location
+                const translateLocation = (loc) => {
+                    const map = {
+                        '美国': 'United States', '加拿大': 'Canada', '中国': 'China', '俄罗斯': 'Russia',
+                        '德国': 'Germany', '英国': 'United Kingdom', '法国': 'France', '荷兰': 'Netherlands',
+                        '巴西': 'Brazil', '印度': 'India', '日本': 'Japan', '韩国': 'South Korea',
+                        '阿根廷': 'Argentina', '新加坡': 'Singapore', '澳大利亚': 'Australia',
+                        '越南': 'Vietnam', '泰国': 'Thailand', '印度尼西亚': 'Indonesia',
+                        '台湾': 'Taiwan', '香港': 'Hong Kong', '乌克兰': 'Ukraine', '波兰': 'Poland',
+                        '意大利': 'Italy', '西班牙': 'Spain', '瑞典': 'Sweden', '挪威': 'Norway',
+                        '芬兰': 'Finland', '丹麦': 'Denmark', '瑞士': 'Switzerland', '奥地利': 'Austria',
+                        '比利时': 'Belgium', '爱尔兰': 'Ireland', '墨西哥': 'Mexico', '土耳其': 'Turkey',
+                        '伊朗': 'Iran', '以色列': 'Israel', '沙特阿拉伯': 'Saudi Arabia', '南非': 'South Africa'
+                    };
+                    return map[loc] || loc;
+                };
+
+                // Find Cloud Intelligence section
+                const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
+
+                // Update "Daily" and "Total" stats in Cloud intelligence header
+                const cloudIntelHeader = allElements.find(el => el.textContent && el.textContent.includes('Cloud intelligence'));
+                if (cloudIntelHeader) {
+                    const parent = cloudIntelHeader.closest('div[class*="card"]') || cloudIntelHeader.parentElement;
+                    if (parent) {
+                        // Find Daily and Total elements
+                        const dailyEl = Array.from(parent.querySelectorAll('*')).find(el => el.textContent && el.textContent.includes('Daily'));
+                        const totalEl = Array.from(parent.querySelectorAll('*')).find(el => el.textContent && el.textContent.includes('Total'));
+
+                        if (dailyEl) {
+                            const dailyCount = cs.length;
+                            dailyEl.innerHTML = dailyEl.innerHTML.replace(/Daily\s*--/, `Daily ${dailyCount}`);
+                        }
+                        if (totalEl) {
+                            const totalCount = hackers.length;
+                            totalEl.innerHTML = totalEl.innerHTML.replace(/Total\s*--/, `Total ${totalCount}`);
+                        }
+                    }
+                }
+
+                // Inject "Recent active hackers"
+                const hackersHeader = allElements.find(el => el.textContent && el.textContent.trim() === 'Recent active hackers');
+                if (hackersHeader && hackers.length > 0) {
+                    let container = hackersHeader.parentElement;
+                    while (container && !container.querySelector('ul, div[class*="list"]')) {
+                        container = container.parentElement;
+                        if (container === document.body) break;
+                    }
+
+                    if (container) {
+                        const listContainer = container.querySelector('ul, div[class*="list"]') || container;
+
+                        // Build hacker list (show first 10)
+                        let hackersHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;">';
+                        hackers.slice(0, 10).forEach(h => {
+                            const loc = translateLocation(h.location);
+                            hackersHtml += `
+                                <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-family: monospace; color: #4ade80; font-size: 12px;">${h.ip}</span>
+                                    <span style="color: #94a3b8; font-size: 11px;">${loc}</span>
+                                </li>
+                            `;
+                        });
+                        hackersHtml += '</ul>';
+
+                        if (listContainer.tagName === 'UL') {
+                            listContainer.outerHTML = hackersHtml;
+                        } else {
+                            listContainer.innerHTML = hackersHtml;
+                        }
+                        console.log(logPrefix + "Injected " + Math.min(10, hackers.length) + " recent hackers");
+                    }
+                }
+
+                // Inject "The recent suspicious CS"
+                const csHeader = allElements.find(el => el.textContent && el.textContent.trim() === 'The recent suspicious CS');
+                if (csHeader && cs.length > 0) {
+                    let container = csHeader.parentElement;
+                    while (container && !container.querySelector('ul, div[class*="list"]')) {
+                        container = container.parentElement;
+                        if (container === document.body) break;
+                    }
+
+                    if (container) {
+                        const listContainer = container.querySelector('ul, div[class*="list"]') || container;
+
+                        // Build CS list (show first 10)
+                        let csHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;">';
+                        cs.slice(0, 10).forEach(c => {
+                            const loc = translateLocation(c.location);
+                            let riskColor = '#4ade80';
+                            if (c.risk === 'Medium') riskColor = '#facc15';
+                            if (c.risk === 'High') riskColor = '#fb923c';
+                            if (c.risk === 'Critical') riskColor = '#ef4444';
+
+                            csHtml += `
+                                <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex: 1;">
+                                        <div style="font-family: monospace; color: #e2e8f0; font-size: 12px;">${c.ip}</div>
+                                        <div style="color: #94a3b8; font-size: 10px;">${loc} • ${c.type}</div>
+                                    </div>
+                                    <span style="color: ${riskColor}; background: ${riskColor}20; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid ${riskColor}40;">${c.risk}</span>
+                                </li>
+                            `;
+                        });
+                        csHtml += '</ul>';
+
+                        if (listContainer.tagName === 'UL') {
+                            listContainer.outerHTML = csHtml;
+                        } else {
+                            listContainer.innerHTML = csHtml;
+                        }
+                        console.log(logPrefix + "Injected " + Math.min(10, cs.length) + " suspicious CS");
+                    }
+                }
+
+            } catch (e) {
+                console.error("[HoneyScan Map Injector] Error:", e);
+            }
+        };
+
+        // Auto-refresh for map page: Re-run injection every 30 seconds
+        setInterval(() => {
+            if (location.pathname.includes('/index') || location.hash.includes('index')) {
+                injectMapCloudIntelligence();
+            }
+        }, 30000);
+
+        // Initial run for map page
+        if (location.pathname.includes('/index') || location.hash.includes('index')) {
+            setTimeout(injectMapCloudIntelligence, 2000); // Wait for page to load
+        }
 
     </script>
 
