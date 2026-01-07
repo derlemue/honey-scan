@@ -1671,86 +1671,24 @@
 
         const injectCloudIntelligence = async () => {
             try {
-                // V13 DEBUG LOG
-                console.log('%c HoneyScan V13 Design Match Loaded ', 'background: #000; color: #00d2ff; font-weight:bold;');
+                // V16 NATIVE INJECTION (No Overlay)
+                // We find the existing headers and inject directly into the existing boxes.
 
-                // Path check soft-enforced
-                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) {
-                    const overlay = document.getElementById('hs-fixed-overlay');
-                    if (overlay) overlay.style.display = 'none';
-                    return;
-                }
+                // 1. CLEANUP OLD OVERLAY (If exists)
+                const oldOverlay = document.getElementById('hs-fixed-overlay');
+                if (oldOverlay) oldOverlay.remove();
 
-                // 0. Ensure CSS Rules exist
-                ensureLayoutStyles();
+                // 2. PATH CHECK
+                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return;
 
-                // 1. ANCHOR SEARCH
-                let anchorRect = null;
-                const allDivs = document.querySelectorAll('div, span, h4, h5, section');
-                for (let el of allDivs) {
-                    if (el.innerText && el.innerText.includes('Recent active hackers')) {
-                        const card = el.closest('[class*="card"]') || el.parentElement?.parentElement;
-                        if (card) {
-                            const col = card.parentElement;
-                            if (col) anchorRect = col.getBoundingClientRect();
-                        }
-                        break;
-                    }
-                }
-
-                // Fallback: Default Right Position
-                if (!anchorRect) {
-                    anchorRect = {
-                        left: window.innerWidth * 0.73,
-                        width: window.innerWidth * 0.26,
-                        top: 100
-                    };
-                }
-
-                // 2. CREATE / UPDATE OVERLAY
-                let currentOverlay = document.getElementById('hs-fixed-overlay');
-                if (!currentOverlay) {
-                    currentOverlay = document.createElement('div');
-                    currentOverlay.id = 'hs-fixed-overlay';
-                    document.body.appendChild(currentOverlay);
-
-                    // V13 Structure: No Status Brief, Just Two Cards
-                    currentOverlay.innerHTML = `
-                         <div class="hs-custom-dashboard">
-                            <div class="hs-custom-card" id="hs-hackers-card">
-                                <div class="hs-custom-header">Recent active hackers</div>
-                                <div class="hs-custom-body"></div>
-                            </div>
-                            <div class="hs-custom-card" id="hs-cs-card">
-                                <div class="hs-custom-header">The recent suspicious CS</div>
-                                <div class="hs-custom-body"></div>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                // Sync Geometry - LAYOUT TUNING (V13)
-                currentOverlay.style.display = 'flex';
-                currentOverlay.style.left = anchorRect.left + 'px';
-                currentOverlay.style.width = anchorRect.width + 'px';
-
-                // Top Tuning (V13): Match Left Column Top
-                // Typically ~10-12% top.
-                const topPos = window.innerHeight * 0.13;
-                currentOverlay.style.top = topPos + 'px';
-                // Height: 80% to leave gap at bottom
-                currentOverlay.style.height = '80vh';
-
-                // 3. ROBUST FETCH
+                // 3. ROBUST DATA FETCH
                 const fetchThreatDataLocal = async () => {
-                    // Try global function
                     if (typeof window.getThreatData === 'function') {
                         try {
                             const d = await window.getThreatData();
                             if (d && (d.hackers || d.cs)) return d;
                         } catch (e) { }
                     }
-                    // Try direct fetch (Fallback)
                     try {
                         const r = await fetch('/assets/live_threats.json');
                         if (r.ok) return await r.json();
@@ -1763,27 +1701,45 @@
                     if (cachedThreatData) cachedThreatData.timestamp = Date.now();
                 }
                 const threatData = cachedThreatData;
-
                 if (!threatData) return;
 
-                // 4. UPDATE DATA
-                const updateList = (cardId, items, type) => {
-                    const card = currentOverlay.querySelector(cardId);
-                    if (!card) return;
-                    const body = card.querySelector('.hs-custom-body');
+                // 4. FIND TARGETS & INJECT
+                const injectIntoBox = (headerText, data, type) => {
+                    // Find Header
+                    const allDivs = Array.from(document.querySelectorAll('div, span, h4, h5, .title'));
+                    const header = allDivs.find(el => el.innerText && el.innerText.includes(headerText));
 
+                    if (!header) return;
+
+                    // Find Container (Parent of header, or Grandparent)
+                    // The structure is likely: Card -> Header + Body
+                    const card = header.closest('[class*="card"]') || header.parentElement?.parentElement;
+                    if (!card) return;
+
+                    // Find Body (Sibling of Header or child of Card)
+                    // We look for a container that is NOT the header and has some height
+                    let body = Array.from(card.children).find(child => child !== header && child !== header.parentElement && child.tagName === 'DIV');
+
+                    // Fallbacks for finding the body
+                    if (!body) body = card.querySelector('.el-card__body');
+                    if (!body) body = card.lastElementChild;
+
+                    if (!body) return;
+
+                    // Version Check
                     const currentSig = getTsSignature();
                     if (body.dataset.ver === currentSig && body.childElementCount > 0) return;
 
-                    const rows = items.map(item => {
+                    // Generate HTML
+                    const rows = data.map(item => {
                         if (type === 'hacker') {
-                            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
+                            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
                                         <span style="color:#ff4d4f; font-weight:bold; width: 100px;">${item.ip}</span>
                                         <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.location}</span>
                                         <span style="color:#4a5568; width: 60px; text-align:right;">${item.time.split(' ')[1] || item.time}</span>
                                     </div>`;
                         } else {
-                            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
+                            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
                                         <span style="color:#faad14; font-weight:bold; width: 100px;">${item.ip}</span>
                                         <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.type}</span>
                                         <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 6px; border-radius:2px; font-size:11px;">${item.risk}</span>
@@ -1791,26 +1747,37 @@
                         }
                     }).join('');
 
-                    body.innerHTML = rows;
+                    // Inject
+                    // We need to ensure we don't wipe the header if it's in the same container
+                    // But usually body is separate. 
+                    // We'll create a scrollable wrapper to be safe.
+                    body.innerHTML = `
+                        <div style="height:100%; overflow-y:auto; padding:10px; scrollbar-width:thin;">
+                            ${rows}
+                        </div>
+                    `;
                     body.dataset.ver = currentSig;
                 };
 
-                updateList('#hs-hackers-card', (threatData.hackers || []).slice(0, 20), 'hacker');
-                updateList('#hs-cs-card', (threatData.cs || []).slice(0, 20), 'cs');
+                injectIntoBox('Recent active hackers', (threatData.hackers || []).slice(0, 20), 'hacker');
+                injectIntoBox('suspicious CS', (threatData.cs || []).slice(0, 20), 'cs');
 
             } catch (e) {
-                console.log(e);
+                // Silent catch to prevent console spam
             }
         };
 
         // 4. AGGRESSIVE LOOP (The "Enforcer")
-        // Uses requestAnimationFrame for high-performance checking without blocking UI
         let frameCount = 0;
         const persistenceLoop = () => {
             frameCount++;
+            const now = performance.now();
 
-            // Run checks every frame for the first 5 seconds (rapid healing)
-            // Then throttle to every 20 frames (~300ms) to save battery
+            // Run checks throttled
+            if (now < 60000 || frameCount % 20 === 0) {
+                if (location.href.includes('/dashboard')) injectDashboardThreats();
+                if (location.href.includes('/index')) injectCloudIntelligence();
+            }
             requestAnimationFrame(persistenceLoop);
         };
 
