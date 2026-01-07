@@ -1748,6 +1748,10 @@
         let cachedThreatData = null;
 
         const injectCloudIntelligence = async () => {
+            // TEMPORARY DISABLE: Preventing full-page overlay issue
+            console.log('[HoneyScan] Cloud Intelligence injection temporarily disabled');
+            return;
+
             try {
                 // V19: VIOLET CRASH FIX & DEFENSIVE CODING
 
