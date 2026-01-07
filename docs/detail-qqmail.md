@@ -1,31 +1,28 @@
+#### QQ Mail (SMTP) Configuration
 
-#### QQ信箱配置
+> **1. Login to QQ Mail Settings**
 
-该页面介绍如果配置HFish通过QQ信箱发送告警邮件。
+Go to [https://mail.qq.com](https://mail.qq.com/), Login -> **Settings**.
 
-> 登录QQ信箱进入设置页面
+![qq_1](../images/20220103194402.png)
 
-打开[https://mail.qq.com](https://mail.qq.com/)，登录后进入【设置】页面
+> **2. Enable SMTP & Get App Password**
 
-<img src="https://hfish.net/images/20220103194402.png" style="zoom: 100%;" />
+Under **POP3/IMAP/SMTP/Exchange/CardDAV/CalDAV Service**:
+1. Enable **POP3/SMTP Service**.
+2. Click **Generate Authorization Code** (App Password). You will need to verify via SMS.
 
+![qq_2](../images/20211231163518.png)
 
-> 开启SMTP功能和获取SMTP专用密码
+> **3. Configure HFish**
 
-在【设置】页面中下拉找到“POP3/IMAP/SMTP/Exchange/CardDAV/CalDAV服务”段落，如下图：
+Go to **[Alert Configuration]** -> **[Notification Config]** -> **[Email Server]**.
 
-<img src="https://hfish.net/images/20211231163717.png" style="zoom: 100%;" />
+- **SMTP Host**: `smtp.qq.com`
+- **Port**: `465` (SSL) or `587`
+- **Account**: Your QQ Email
+- **Password**: **The Authorization Code** (NOT your login password)
 
-第一步，开启“POP3/SMTP服务”服务，根据提示进行手机验证；
-第二步，点击“生成授权码”，根据提示进行手机验证，获取SMTP专用密码，如下图：
+Click **[Test]**. You should receive a test email.
 
-<img src="https://hfish.net/images/20211231163518.png" style="zoom: 100%;" />
-
-
-> HFish页面配置
-
-登录HFish，打开【告警配置】-【通知配置】，找到“邮件服务器配置”段落，按照下图填写，点击【测试】：
-
-<img src="https://hfish.net/images/20211231163415.png" style="zoom: 100%;" />
-
-如果一切正常，系统会提示“测试成功”，用户信箱会收到一封测试邮件。
+![qq_3](../images/20211231163415.png)

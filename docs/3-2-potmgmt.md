@@ -1,35 +1,40 @@
-#### 添加/删除蜜罐
+#### Manage Honeypots
 
-每个蜜罐服务必须由在节点程序构建，这里指的蜜罐服务例如MySQL、Redis等具体服务。因此用户必须先添加节点后才可以为节点配置蜜罐服务，HFish提供两种方式配置节点服务。
+Every honeypot service (e.g., MySQL, Redis) must be built on a Node. Therefore, you must add a node first before configuring services for it. HFish provides two ways to configure services.
 
-#### 直接修改蜜罐服务
+#### Direct Configuration (Single Node)
 
-该方法可以快速修改单个节点上的蜜罐服务，其操作步骤如下：
+This method is for quickly modifying services on a specific node.
 
-> ##### 点击单个节点，可直接对节点上的服务进行添加和删除 ##### 
+> **Click on a node in the list to directly Add or Delete services.**
 
-<img src="https://hfish.net/images/image-20210914120052175.png" alt="image-20210914120052175" style="zoom:33%;" />
+![direct_manage](../images/image-20210914120052175.png)
 
+#### Template Configuration (Batch Management)
 
+Honeypot Templates allow you to manage multiple nodes simultaneously by applying a standard set of services to them.
 
-#### 创建模版，应用到多节点
+> **Step 1: Create Template**
 
-蜜罐模板便于用户同时管理很多节点，批量更改蜜罐服务，即将一套模板批量应用到多个节点上，其操作步骤如下：
+Go to **[Template Management]**, click **[New Template]**. Enter a name, select the desired honeypot services, add a description, and click **[Confirm]**.
 
-> ##### 进入【模版管理】页面，点击【新建模板】，输入模板名称，选择蜜罐服务，填写描述信息，点击【确定】保存
+![create_template](../images/image-20210914115931102.png)
 
-<img src="https://hfish.net/images/image-20210914115931102.png" alt="image-20210914115931102" style="zoom:33%;" />
+> **Step 2: Apply Template**
 
-> ##### 进入【节点管理】页面，展开具体节点，选择上面创建的蜜罐模板
+Go to **[Node Management]**, expand the specific node, and select the template you created.
 
-<img src="https://hfish.net/images/20210616173018.png" alt="image-20210616173015062" style="zoom: 33%;" />
+![apply_template](../images/20210616173018.png)
 
+> **Step 3: Check Status**
 
-> ##### 应用模板后，蜜罐服务状态会短暂显示为【启用】，此时蜜罐尚未部署完成，只有蜜罐服务状态变为【在线】才表示蜜罐服务正常工作
+After applying the template, the service status will briefly show as **[Enabled]**. This means the configuration is pushed but deployment varies.
+The service is only fully functional when the status turns to **[Online]** (Green).
 
-<img src="https://hfish.net/images/20210616173055.png" alt="image-20210616173053947" style="zoom: 33%;" />
+![status_online](../images/20210616173055.png)
 
-> #####  如果状态显示为【离线】，说明蜜罐服务没有正常启动，可将鼠标移动到问号上查看提示或请参考我们后面的【排错说明】
+> **Troubleshooting Offline Status**
 
-<img src="https://hfish.net/images/20210616173129.png" alt="image-20210616173128526" style="zoom: 33%;" />
+If the status shows **[Offline]** (Red), the service failed to start. Hover your mouse over the question mark icon to see the error message, or refer to the **[Troubleshooting]** section.
 
+![status_offline](../images/20210616173129.png)

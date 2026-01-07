@@ -27,3 +27,7 @@
 - Arbeite im "Silent-Mode". 
 - Status-Updates nur bei Beginn (Planung) und nach Abschluss des gesamten Workflows.
 - Sprache: Deutsch.
+# Documentation Standards
+- **Language**: English is the ONLY allowed language for documentation in `docs/`.
+- **Terminology**: Use consistent English terminology (e.g., "Honeypot", "Node", "Decoy", "Management Server") as established in the v3.3.5 translation audit.
+- **Prohibition**: Do NOT introduce Chinese characters or legacy terminology into `docs/`.

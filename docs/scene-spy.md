@@ -1,4 +1,3 @@
-#### 内部人员风险场景
+#### Insider Threat Detection
 
-![image-20231108193659551](https://hfish.net/images/image-20231108193659551.png)
-
+![insider_threat](../images/image-20231108193659551.png)

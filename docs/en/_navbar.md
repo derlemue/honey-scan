@@ -1,7 +1,0 @@
-- [homepage](https://hfish.net/#/en/)
-- [download](https://hfish.net/#/en/down)
-- [GitHub](https://github.com/hacklcx/HFish)
-- [Gitee](https://gitee.com/lauix/HFish)
-- Translations
-  - [:cn: 简体中文](/)
-  - [:uk: English](/en/)

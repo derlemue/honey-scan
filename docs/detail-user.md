@@ -1,12 +1,8 @@
+#### User Management
 
-#### 登录管理
+This page manages HFish accounts. Currently, two roles are supported:
 
-该页面用于展示和管理HFish蜜罐所有账户，目前登录管理支持创建2种角色的用户：
+1. **Admin**: Full access. Can perform all operations.
+2. **Operator (Viewer)**: Read-only access to Dashboard, Attack List, Scan Sensing, Attack Source, Account Assets, and Breach Sensing.
 
-```
-1、管理员：可以浏览任意页面，进行页面允许的任意操作；
-
-2、业务操作员：尽可以浏览首页、攻击列表、扫描感知、攻击来源、账号资产 、失陷感知六个页面；
-```
-
-![image-20210730161446961](https://hfish.net/images/20210730161448.png)
+![user_mgmt](../images/20210730161448.png)

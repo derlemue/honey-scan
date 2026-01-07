@@ -1,16 +1,15 @@
+#### Quick Preview
 
-#### 快速预览
-
-百闻不如一见，您可以随时登录HFish的Demo环境，浏览HFish的能力：
+Seeing is believing. You can log in to the HFish Demo environment at any time to see its capabilities:
 
 ```
-预览地址：https://demo.hfish.net:4433/web/
-用户：hfishguest
-密码：HFish2021
+Preview URL: https://demo.hfish.net:4433/web/
+User: hfishguest
+Password: HFish2021
 ```
 
-`特别注意：Demo环境提供的是普通用户，有些功能已被隐藏，如需完整体验，请自行安装体验：https://hfish.net/#/down`
+`Note: The demo environment uses a restricted guest account. Some potential high-risk features are hidden. For a full experience, please install it yourself: https://hfish.net/#/down`
 
-#### 联系我们
+#### Contact Us
 
-![joinus](/images/joinus.png)
+![joinus](/docs/images/joinus.png)

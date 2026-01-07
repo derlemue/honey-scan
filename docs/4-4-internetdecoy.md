@@ -1,85 +1,64 @@
+### What are Decoys?
 
-### 什么是诱饵
+Decoys (or Honey Tokens) are fake high-value files (e.g., VPN config, password lists, architectural diagrams) placed on real systems. Their purpose is to lure attackers away from real assets and into traps.
 
-诱饵泛指任意伪造的高价值文件（例如运维手册、邮件、配置文件等），用于引诱和转移攻击者视线，最终达到牵引攻击者离开真实的高价值资产并进入陷阱的目的。
+### Usage Scenarios
 
-### 蜜饵使用场景
+HFish Decoys add **Precise Breach Detection**. Each generated decoy file is **unique**. If an attacker steals a file from Host A and uses the credentials inside it to attack Host B (the honeypot), HFish knows exactly which decoy file was used, pinpointing the source of the leak (Host A).
 
-HFish的蜜饵在 **牵引** 攻击者的功能上增加了 **精确定位失陷** 能力，即每个蜜饵都是 **唯一的**，攻击者入侵用户主机后，如果盗取蜜饵文件中的数据并从任意主机发起攻击，防守者仍能知道失陷源头在哪里。
-
-举个例子：
-
+**Example:**
 ```
-攻击者侵入企业内部某台服务器，在其目录中找到一个payment_config.ini文件，文件中包含数据库主机IP地址和账号密码，
-攻击者为隐藏自己真实入侵路径，通过第三台主机访问数据库主机……
+1. Attacker breaches Server A.
+2. Finds 'payment_config.ini' (Decoy).
+3. Config contains fake DB credentials pointing to HFish.
+4. Attacker connects to HFish using these credentials.
+5. HFish alerts: "Decoy from Server A triggered".
 ```
 
-在以上场景中，payment_config.ini为蜜饵，所谓的数据库主机是另外一台位于安全区域的蜜罐，而攻击者得到的所谓账号密码也是虚假且唯一的，防守者可以根据其得到攻击者真实的横向移动路径。
+### Honey Baits vs Honey Markers
 
-由于蜜饵只是静态文件，所以蜜饵适合部署在任何主机和场景中，例如作为附件通过邮件发送（检测邮件是否被盗）、在攻防演练期间上传到百度网盘或github上混淆攻击者视线、压缩改名成backup.zip放置在Web目录下守株待兔等待攻击者扫描器上钩……
+- **Honey Baits (Static Files)**: Files containing fake info (IP, User, Pass). Can be placed anywhere (Web dir, Desktop, Shared Drive).
+- **Honey Markers (Active Docs)**: Special Excel/Word docs. When opened, they silently ping the HFish node.
+  *Note: Honey Markers require the target machine to have network connectivity to the HFish node.*
 
-### 蜜标使用场景
+### Configuration
 
-HFish的蜜标为excel或者word文件的格式，一个蜜标可以下发到多个主机。攻击者入侵用户主机后，只要尝试打开蜜标，那么蜜标就会给节点发出告警信息。我们最终可以在管理端看到整体的蜜标失陷告警。
+HFish provides **Customization**, **Distribution**, and **Alerting**.
 
-因此特别注意：`蜜标在多个机器部署的时候，蜜标部署位置一定要跟生成蜜标的节点是可联通的`
+#### 1. Decoy Customization
 
+Go to **[Breach Sensing]** -> **[Decoy Management]** to create new decoys.
 
-### HFish的诱饵模式
+![decoy_mgmt](../images/image-20220525224243205.png)
 
-HFish的诱饵模块由 **定制** 、**分发接口** 和 **告警信息** 三部分组成，
+![create_decoy](../images/image-20220525224216905.png)
 
-#### 诱饵定制
+**Variables:**
+- `$username$`: Defaults to 'root' if no dictionary is provided.
+- `$password$`: Auto-generated based on complexity rules.
+- `$honeypot$`: Auto-fills IP/Port of your HFish node.
 
-HFish提供完整的诱饵定制，您可以通过在「失陷感知」-「蜜饵管理」中定制新增您自己的诱饵
+**Preview:**
 
-<img src="http://img.threatbook.cn/hfish/image-20220525224243205.png" alt="image-20220525224243205" style="zoom: 33%;" />
+![decoy_preview](../images/2811635164463_.pic_hd.jpg)
 
-<img src="http://img.threatbook.cn/hfish/image-20220525224216905.png" alt="image-20220525224216905" style="zoom:33%;" />
+#### 2. Distribution
 
-在蜜饵内容中，$username$、$password$和$honeypot$分别代表账号、密码和蜜罐变量，以上为必填变量，必须进行引用，才能让蜜饵功能生效。
-三个变量，按照文件想呈现给攻击者的效果进行引用。
-$username$变量如果未填写账号字典，则默认用root作为所有蜜饵的账号名。
-$password$变量按照选取的位数，自动生成蜜饵的密码。
-$honeypot$变量按照蜜饵下拉节点的部署服务，自动生成IP和端口。
+The **Distribution Interface** runs on HFish Nodes (Default TCP/7878).
+Enable it in **[Node Management]**.
 
-<img src="https://hfish.net/images/2801635164451_.pic.jpg" alt=".2801635164451_.pic" height="400px" /></div>
+![dist_enable](../images/image-20211116213058329.png)
 
-点击预览，可以查看当前的蜜饵内容，在实际被下拉时的显示内容
+Once enabled, visit the distribution URL from the target machine (the machine you want to protect) to download a unique decoy.
 
-<img src="https://hfish.net/images/2811635164463_.pic_hd.jpg" alt="2811635164463_.pic_hd" height="400px" /></div>
+![download_decoy](../images/image-20220525224602527.png)
 
-点击确定，即可新增一条文件蜜饵。
+Run the generated command on the target business server to deploy the decoy.
 
-<img src="https://hfish.net/images/2821635164487_.pic_hd.jpg" alt="2821635164487_.pic_hd" style="zoom:50%;" /></div>
+#### 3. Alerts
 
+When an attacker accesses the bait URL (Honey Marker) or uses the bait credentials (Honey Bait) to log into a honeypot, HFish records it.
 
+![decoy_alert](../images/image-20211222095822939.png)
 
-#### 分发接口
-
-其中 **分发接口** 实际位于节点端，启用或禁用开关位于管理端的节点管理页面任意一个节点的详情页面中，默认监听TCP/7878端口，
-
-任何一台节点都可以作为节点分发服务器使用，如下图：
-
-<img src="https://hfish.net/images/image-20211116213058329.png" alt="image-20211116213058329" height="400px" />
-
-启用后，用户可以从需要部署蜜饵的主机上访问如下地址，得到一个唯一的蜜饵文件：
-
-<img src="http://img.threatbook.cn/hfish/image-20220525224602527.png" alt="image-20220525224602527" style="zoom:33%;" />
-
-复制该下发指令后，前往需进行布防的业务机器，执行即可。
-
-用户可以在【失陷感知】-【告警信息】页面查看到已经生成的蜜饵。
-
-
-
-#### 告警信息
-
-蜜饵部署完成后，已部署蜜饵的所有机器，以及攻击者被蜜饵迷惑访问蜜罐的网络地址和时间都可在该页面查看。
-
-<img src="https://hfish.net/images/image-20211222095756489.png" alt="image-20211222095756489" height="300px" /></div>
-
-
-如果攻击者根据已部署的蜜饵文件中的虚假信息尝试登陆，HFish将会记录并告警，并展示已失陷节点主机和失陷流程。
-
-<img src="https://hfish.net/images/image-20211222095822939.png" alt="image-20211222095822939" height="300px" /></div>
+The alert will show the **Source of Breach** (which machine the decoy was stolen from).

@@ -1,174 +1,62 @@
-**溯源功能支持版本：3.1.4**
+**Attribution Support Version: 3.1.4+**
 
-### 什么是溯源
+### What is Attribution?
 
-溯源，一般是在攻防中，用于挖掘攻击者身份，通过资产面，回溯等判断攻击者身份。
+Attribution (or Active Defense) in this context refers to identifying the attacker's identity (virtual or physical) through technical means during an interaction.
 
-在近几年攻防演练中，更加特指了解对方的身份信息。
+HFish provides defensive capabilities that, within legal and ethical boundaries, can collect information about the attacker when they scan, attack, or connect to specific honeypots.
 
-HFish作为蜜罐软件，提供被攻击时候的正常防卫需求。当攻击者扫描、攻击或者恶意连接HFish的蜜罐时，HFish提供包括但不限于：
-通过现有攻击工具漏洞，在合理范围内对攻击者进行信息提取、溯源等必要的攻击防御信息收集手段。
+### Can we attribute in a pure Intranet?
 
+**Business Perspective:**
+Attribution is less critical in an intranet because IP assignment (DHCP/CMDB) usually identifies the device/user immediately.
 
+**Technical Perspective:**
+HFish supports three methods.
+1. **MySQL Counter-measure**: Reads arbitrary files from the attacker's machine (mysql client).
+2. **Vendor VPN Counter-measure**: Can acquire WeChat info or screenshots from Windows machines (requires attacker to run a binary).
+3. **Web Honeypot Attribution**: (Internet only) Identifies source IP and potentially social media accounts via JSONP (historical vulnerability).
 
-### 纯内网部署，能否溯源
+### Implementation Principles
 
-**安全业务层面：**
+#### 1. MySQL Counter-measure (Intranet Support)
 
-内网没有太大的溯源意义，通过IP地址分配，dhcp查询，以运维手段可以很快了解到来源IP的所属用户。所以内网并没有非常大的意义
+Utilizes the `LOAD DATA LOCAL INFILE` feature/vulnerability in MySQL clients (typically < 8.0). When an attacker connects to the HFish MySQL honeypot using a vulnerable client, HFish can request to read a file from the attacker's machine.
 
-**溯源技术层面**：
+*Note:*
+- Requires the attacker to use a vulnerable command-line client or compatible tool.
+- You can configure the specific file path to read in Node Management.
 
-HFish共支持三种溯源手段。
+![mysql_config](http://img.threatbook.cn/hfish/image-20220807141822892.png)
 
-Mysql反制（支持内网，能够对攻击者机器做任意文件读取）
+#### 2. VPN Honeypot Counter-measure (Intranet Support)
 
-厂商vpn蜜罐反制（支持内网，能够获得windows机器登陆的微信号信息与桌面截图）
+This simulates a VPN login page that prompts the user to download a plugin/client. If the attacker downloads and runs it, it can capture system info.
 
-web型蜜罐溯源（不支持内网）这种溯源方式，在溯源时，会自动获取攻击者的出口IP进行标记。
+*Note: For testing, this data is local and not uploaded to the cloud.*
 
+#### 3. Web & Java Honeypot Attribution (Internet Only)
 
+These methods use techniques common in "JSONP Hijacking" or specific Java Deserialization chains to identify the attacker's environment or identities (if logged into specific Chinese social platforms).
 
-### HFish溯源实现原理与测试方法
+*Disclaimer: These features rely on specific browser or tool vulnerabilities and may be patched over time.*
 
-HFish共支持三种溯源手段。
+### Viewing Trace Information
 
-##### 1.Mysql反制（支持内网，能够对攻击者机器做任意文件读取）
+Go to **[Attack Source]** and click the **[Trace Info]** button on an IP.
 
-通过MySql客户端漏洞，当攻击者使用8.0以下的**Mysql客户端直连**HFish的Mysql蜜罐的时候。可以触发任意文件读取的能力，读取Mysql客户端所在机器上的任意一个文件。
+![trace_info](http://img.threatbook.cn/hfish/image-20220807123404778.png)
 
-注意：
+### Traceable Honeypot List
 
-1. 一定是Mysql客户端直连。不兼容诸如navicat这类工具。
+| Type | Service | Port | Description |
+| :--- | :--- | :--- | :--- |
+| MySQL Counter | MySQL | TCP/3306 | Arbitrary file read capable. |
+| VPN Counter | Sangfor VPN | TCP/9091 | Fake VPN portal + binary download. |
+| Java Counter | RMI Registry | TCP/1099 | Java Deserialization tracing. |
+| Web Trace | Synology NAS | TCP/9194 | Web tracing. |
+| Web Trace | Cisco VPN | TCP/9299 | Web tracing. |
+| Web Trace | Coremail | TCP/9094 | Web tracing. |
+| ... | ... | ... | Many other Web honeypots support basic tracing. |
 
-2. 在节点管理中，可以设置mysql任意文件读取的具体读取路径
-
-   ![image-20220807141822892](http://img.threatbook.cn/hfish/image-20220807141822892.png)
-
-##### 2.厂商vpn蜜罐反制（支持内网，能够获得windows机器登陆的微信号信息与桌面截图）
-
-通过蜜罐页面提供可下载二进制，攻击者下载执行后，会获取攻击者的微信与屏幕截图
-
-该部分记录的是连接IP，所以您在内网中测试，测试结果不会回传到云端共享，可放心测试。
-
-##### 测试步骤：
-
-a. 直接在HFish中添加深信服vpn蜜罐。
-
-b.下载蜜罐页面中的exe并运行
-
-c. 进入攻击来源，搜索IP或者直接点击溯源信息按钮。查看详情
-
-<img src="http://img.threatbook.cn/hfish/image-20220807123404778.png" alt="image-20220807123404778" style="zoom:50%;" />
-
-<img src="http://img.threatbook.cn/hfish/image-20220807124218394.png" alt="image-20220807124218394" style="zoom:50%;" />
-
-#### 
-
-##### 3.web型蜜罐溯源（不支持内网溯源）
-
-HFish所有的web页面蜜罐，包括自定义蜜罐，都可以在该情况下进行溯源。
-
-对扫描器、webshell管理器、java反序列化反制。该部分反制数据会显示攻击者的出口IP。
-
-可以拿到包括**机器架构，微信账号、QQ账号、QQ音乐账号、百度云账号，浏览器浏览记录、history、whoami**等信息
-
-⚠️注意：处于对产品技术保密的原因。我们不会公开可以对扫描器、webshell管理器能够进行溯源反制，也不会提供相关的应用教程。
-
-如果您确实有测试需求，请用您的企业邮箱，说明您的公司，身份，测试需求原因，邮件honeypot@threatbook.cn发送申请。我们只支持企业安全部门的测试申请与协助。
-
-
-
-##### 4 .Java 远程调用蜜罐溯源（不支持内网溯源）
-
-Java远程调用蜜罐是HFish内置的一种蜜罐服务。添加到节点上即可食用
-
-![image-20220807144001639](http://img.threatbook.cn/hfish/image-20220807144001639.png)
-
-当攻击者使用java反序列化工具对你的Java远程调用蜜罐进行攻击时，由于该蜜罐内置了Java反序列化工具的漏洞利用方式。
-
-因此可以拿到包括**机器架构，微信账号、QQ账号、QQ音乐账号、百度云账号，浏览器浏览记录、history、whoami**等信息
-
-⚠️注意：处于对产品技术保密的原因。我们不会提供相关的应用教程。
-
-如果您确实有测试需求，请用您的企业邮箱，说明您的公司，身份，测试需求原因，邮件honeypot@threatbook.cn发送申请。我们只支持企业安全部门的测试申请与协助。
-
-
-
-### 溯源信息查看
-
-进入攻击来源，搜索IP或者直接点击溯源信息按钮。查看详情
-
-<img src="http://img.threatbook.cn/hfish/image-20220807123404778.png" alt="image-20220807123404778" style="zoom:50%;" />
-
-<img src="http://img.threatbook.cn/hfish/image-20220807124218394.png" alt="image-20220807124218394" style="zoom:50%;" />
-
-#### 
-
-
-
-
-
-溯源蜜罐支持表单
-
-| 溯源类型        | 服务名称                       | 大类/具体服务 | 交互类型 | 默认监听端口 | 描述                                                         |
-| --------------- | ------------------------------ | ------------- | -------- | ------------ | ------------------------------------------------------------ |
-| Mysql反制       | Mysql蜜罐                      | 数据库服务    | 低交互   | TCP/3306     | 该蜜罐仿真了MySQL服务端，可用于记录探测和攻击行为，建议部署在内外网研发测试环境 |
-| 厂商VPN蜜罐反制 | 深信服VPN蜜罐                  | IT设备        | 低交互   | TCP/9091     | 提供虚假的深信服VPN后台登陆Web界面，常见于互联网场景，默认使用TCP/9091端口 |
-| Java反制        | Java远程调用蜜罐               | JAVA服务      | 低交互   | TCP/1099     | 该蜜罐仿真了JAVA远程调用服务，可用于内外网攻击感知，同时具备溯源能力。远程方法调用是用Java在JDK1.2中实现的服务，Java作为一种风靡一时的网络开发语言，有着非常大的应用面，同时也在市面屡见不鲜出现漏洞。因此，JAVA服务蜜罐对攻击者有极大诱惑力。 |
-| web型蜜罐溯源   | 群晖NAS蜜罐                    | IOT设备       | 低交互   | TCP/9194     | 该蜜罐仿真了群晖NAS的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网办公环境 |
-| web型蜜罐溯源   | CiscoVPN蜜罐                   | IT设备        | 低交互   | TCP/9299     | 提供虚假的思科VPN后台登录Web界面，常见于互联网场景，默认使用TCP/9299 |
-| web型蜜罐溯源   | 天融信防火墙蜜罐               | 安全设备      | 低交互   | TCP/9081     | 提供虚假的天融信安全设备后台登录Web界面，常见于互联网、内网场景，默认使用TCP/9081 |
-| web型蜜罐溯源   | 绿盟防火墙蜜罐                 | 安全设备      | 低交互   | TCP/9083     | 提供虚假的绿盟安全设备后台登录Web界面，常见于互联网、内网场景，默认使用TCP/9083 |
-| web型蜜罐溯源   | Dell打印机配置管理蜜罐         | IT设备        | 低交互   | TCP/9084     | 提供虚假的Dell打印机配置管理Web界面，常见于互联网场景，默认使用TCP/9084 |
-| web型蜜罐溯源   | IntelActiveManagement管理蜜罐  | IT设备        | 低交互   | TCP/9085     | 提供虚假的IntelActiveManagement后台管理Web界面，常见于互联网场景，默认使用TCP/9085 |
-| web型蜜罐溯源   | 深信服网页防篡改系统蜜罐       | 安全设备      | 低交互   | TCP/9298     | 该蜜罐仿真了深信服网页防篡改系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网安全管理区，默认使用TCP/9298 |
-| web型蜜罐溯源   | 科来网络全流量安全分析系统蜜罐 | 安全设备      | 低交互   | TCP/9296     | 该蜜罐仿真了科来网络全流量安全分析系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网安全管理区，默认使用TCP/9296 |
-| web型蜜罐溯源   | 中科网威安全控制系统蜜罐       | 安全设备      | 低交互   | TCP/9297     | 该蜜罐仿真了中科网威安全控制系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网安全管理区，默认使用TCP/9297 |
-| web型蜜罐溯源   | 火绒终端安全管理系统蜜罐       | 安全设备      | 低交互   | TCP/9295     | 该蜜罐仿真了火绒终端安全管理系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网vpn安全管理区，默认使用TCP/9295 |
-| web型蜜罐溯源   | jumpserver开源跳板机           | IT设备        | 低交互   | TCP/9304     | 该蜜罐仿真了Jumpserver开源跳板机的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署内外网、开发测试环境，默认使用TCP/9304 |
-| web型蜜罐溯源   | Aruba无线AP蜜罐                | IT设备        | 低交互   | TCP/9195     | 该蜜罐仿真了Aruba无线AP的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网办公环境 |
-| web型蜜罐溯源   | 智慧电力系统                   | 服务器环境    | 低交互   | TCP/9303     | 该蜜罐仿真了智慧电力系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署能源外网，服务器环境，默认使用TCP/9303 |
-| web型蜜罐溯源   | 疫情上报系统                   | 服务器环境    | 低交互   | TCP/9302     | 该蜜罐仿真了疫情上报系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署政府外网，服务器环境，默认使用TCP/9302 |
-| web型蜜罐溯源   | phpAdmin                       | 服务器环境    | 低交互   | TCP/9301     | 该蜜罐仿真了phpAdmin的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署公司内网、测试开发环境，默认使用TCP/9301 |
-| web型蜜罐溯源   | LDAP蜜罐                       | 运维系统      | 低交互   | TCP/389      | 该蜜罐仿真了虚拟化的LDAP协议，可用以记录账号暴力破解攻击。LDAP作为一个统一认证的解决方案，常用来存储企业员工的用户名和口令，是企业内非常重要的数据存储区域，对攻击者有极大诱惑力。 |
-| web型蜜罐溯源   | TP-LINK路由器蜜罐              | IT设备        | 低交互   | TCP/9197     | 该蜜罐仿真了TP-LINK路由器的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网办公环境 |
-| web型蜜罐溯源   | 锐捷交换机蜜罐                 | IT设备        | 低交互   | TCP/9196     | 该蜜罐仿真了锐捷交换机的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网办公环境 |
-| web型蜜罐溯源   | RouterOs                       | IT设备        | 低交互   | TCP/8291     | 该蜜罐仿真了RouterOS软性路由器的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在中小公司内网环境，默认使用TCP/8291 |
-| web型蜜罐溯源   | JspSpy蜜罐                     | 木马伪装      | 低交互   | TCP/9294     | 该蜜罐仿真了JspSpy的Web登陆界面，可用于记录攻击者密码和主观恶意行为，建议部署在内外网生产环境 |
-| web型蜜罐溯源   | Webmin蜜罐                     | 运维系统      | 低交互   | TCP/10000    | 该蜜罐仿真了Webmin的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网生产环境 |
-| web型蜜罐溯源   | Joomla蜜罐                     | CRM和OA系统   | 低交互   | TCP/8080     | 该蜜罐仿真了WebLogic的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网开发测试环境 |
-| web型蜜罐溯源   | 政务OA蜜罐                     | CRM和OA系统   | 低交互   | TCP/9098     | 该蜜罐仿真了某个虚假的政务OA系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网生产测试环境 |
-| web型蜜罐溯源   | 海康摄像头蜜罐                 | IOT设备       | 低交互   | TCP/9082     | 该蜜罐仿真了海康微视摄像头的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网办公研发测试环境 |
-| web型蜜罐溯源   | Confluence系统蜜罐             | CRM和OA系统   | 低交互   | TCP/9293     | 该蜜罐仿真了项目管理平台Confluence的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网运维环境 |
-| web型蜜罐溯源   | Jenkins蜜罐                    | 服务器环境    | 低交互   | TCP/8080     | 该蜜罐仿真了Jenkins的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网开发测试环境 |
-| web型蜜罐溯源   | Weblogic蜜罐                   | 服务器环境    | 低交互   | TCP/7001     | 该蜜罐仿真了WebLogic的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网开发测试环境 |
-| web型蜜罐溯源   | Jira系统蜜罐                   | CRM和OA系统   | 低交互   | TCP/9292     | 该蜜罐仿真了项目管理平台Jira的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网运维环境 |
-| web型蜜罐溯源   | 通达OA蜜罐                     | CRM和OA系统   | 低交互   | TCP/9099     | 该蜜罐仿真了通达OA的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内网办公环境 |
-| web型蜜罐溯源   | Exchange蜜罐                   | 邮件系统      | 低交互   | TCP/9095     | 该蜜罐仿真了微软Exchange邮件系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网生产测试环境 |
-| web型蜜罐溯源   | 齐治堡垒机蜜罐                 | 运维系统      | 低交互   | TCP/9193     | 该蜜罐仿真了齐治堡垒机的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网生产测试环境 |
-| web型蜜罐溯源   | WordPress蜜罐                  | CRM和OA系统   | 低交互   | TCP/9090     | 该蜜罐仿真了WordPress的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网生产测试环境 |
-| web型蜜罐溯源   | IIS蜜罐                        | 服务器环境    | 低交互   | TCP/9199     | 该蜜罐仿真了微软IIS默认主页，可用于记录探测和攻击行为，建议部署在外网生产环境 |
-| web型蜜罐溯源   | Zabbix监控系统蜜罐             | 运维系统      | 低交互   | TCP/9192     | 该蜜罐仿真了网络监控平台Zabbix的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网运维环境 |
-| web型蜜罐溯源   | Tomcat蜜罐                     | 服务器环境    | 低交互   | TCP/9198     | 该蜜罐仿真了Tomcat默认主页，可用于记录账号暴力破解和攻击行为，建议部署在外网生产环境 |
-| web型蜜罐溯源   | ESXi系统蜜罐                   | 运维系统      | 低交互   | TCP/9190     | 该蜜罐仿真了虚拟化管理平台ESXi的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网运维环境 |
-| web型蜜罐溯源   | H3C路由器蜜罐                  | IT设备        | 低交互   | TCP/9092     | 该蜜罐仿真了H3C路由器的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网研发测试环境 |
-| web型蜜罐溯源   | GitLab蜜罐                     | 服务器环境    | 低交互   | TCP/9093     | 该蜜罐仿真了GitLab代码仓库的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网生产测试环境 |
-| web型蜜罐溯源   | Websphere蜜罐                  | 服务器环境    | 低交互   | TCP/9080     | 该蜜罐仿真了IBMWebSphere的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在外网生产环境 |
-| web型蜜罐溯源   | Nginx蜜罐                      | 服务器环境    | 低交互   | TCP/9291     | 该蜜罐仿真了Nginx默认主页，可用于记录探测和攻击行为，建议部署在外网生产环境 |
-| web型蜜罐溯源   | Nagios监控系统蜜罐             | 运维系统      | 低交互   | TCP/9191     | 该蜜罐仿真了网络监控平台Nagios的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网运维环境 |
-| web型蜜罐溯源   | Coremail蜜罐                   | 邮件系统      | 低交互   | TCP/9094     | 该蜜罐仿真了Coremail邮件系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网生产测试环境 |
-| web型蜜罐溯源   | 通用OA系统蜜罐                 | CRM和OA系统   | 低交互   | TCP/9096     | 该蜜罐仿真了某个通用的OA系统的Web登陆界面，可用于记录账号暴力破解和攻击行为，建议部署在内外网生产测试环境 |
-
-**写在最后**：
-
-朋友们，理智看待溯源功能
-
-不会是有一个人访问你的蜜罐页面，我们就可以控制它的权限。
-
-HFish在对方有恶意与攻击行为的时候，才会通过当前掌握到的攻击工具/其他工具漏洞触发溯源反制。
-
-最后，我们应该是极少数的，公开详细解读自己溯源功能原理的厂商，各位且行且珍惜....
-
-
-
+*Note: The effectiveness of tracing depends heavily on the attacker's tools and environment.*

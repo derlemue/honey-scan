@@ -1,45 +1,38 @@
-#### 快速部署
+#### Quick Deployment
 
-HFish采用B/S架构，系统由管理端和节点端组成，管理端用来生成和管理节点端，并接收、分析和展示节点端回传的数据，节点端接受管理端的控制并负责构建蜜罐服务。
+HFish adopts a B/S architecture, consisting of a **Management Server** (Server) and **Nodes** (Client). The Management Server generates and manages nodes, and receives, analyzes, and displays data returned by them. The Nodes receive control instructions from the Management Server and are responsible for hosting the honeypot services.
 
+> **Supported Architecture**
 
-> ##### HFish支持架构列表 ##### 
+| Component | Windows | Linux x86 |
+| :--- | :--- | :--- |
+| **Management Server** | Supported (64-bit) | Supported (64-bit) |
+| **Node (Client)** | Supported (64-bit/32-bit) | Supported (64-bit/32-bit) |
 
-|                           | Windows            | Linux X86          |
-| ----------------- | ----------------- | ----------------- |
-| 管理端（Server)  | 支持64位            | 支持64位            |
-| 节点端（Client） | 支持64位和32位 | 支持64为和32位 |
+> **Intranet Deployment Requirements**
 
+Honeypots deployed within an intranet generally have lower performance requirements. Based on past testing, we recommend the following configurations:
 
-> ##### HFish部署在内网所需配置 ##### 
+| | Management Server | Node |
+| :--- | :--- | :--- |
+| **Recommended** | 2 Core, 4GB RAM, 200GB Disk | 1 Core, 2GB RAM, 50GB Disk |
+| **Minimum** | 1 Core, 2GB RAM, 100GB Disk | 1 Core, 1GB RAM, 50GB Disk |
 
-部署在内网的蜜罐对性能要求较低，针对过往测试情况，我们给出两个配置。
+`Note: Log storage usage is highly dependent on the number of attacks. It is recommended to configure the Management Server with at least 200GB of disk space.`
 
-|               | 管理端         | 节点端       |
-| --------- | ------------ | ----------- |
-| 建议配置 | 2核4g200G | 1核2g50G |
-| 最低配置 | 1核2g100G | 1核1g50G |
+> **Internet/Extranet Deployment Requirements (MySQL Required)**
 
-`注意：日志磁盘占用情况受攻击数量影响很大，建议管理端配置200G以上硬盘空间。`
+Honeypots deployed on the public internet are exposed to significantly more attacks and traffic, thus requiring higher performance. **You must replace the default SQLite database with MySQL.**
 
+| | Management Server | Node |
+| :--- | :--- | :--- |
+| **Recommended** | 4 Core, 8GB RAM, 200GB Disk | 1 Core, 2GB RAM, 50GB Disk |
+| **Minimum** | 2 Core, 4GB RAM, 100GB Disk | 1 Core, 1GB RAM, 50GB Disk |
 
-> ##### HFish部署在外网所需配置（必须更换MySQL数据库） ##### 
+`Note: Log storage usage is highly dependent on the number of attacks. It is recommended to configure the Management Server with at least 200GB of disk space.`
 
-部署在公网的蜜罐因遭受更多攻击，因此会有更大性能需求。
+> **Permission Requirements**
 
-|               | 管理端         | 节点端       |
-| --------- | ------------- | ----------- |
-| 建议配置 | 4核8g200G | 1核2g50G |
-| 最低配置 | 2核4g100G | 1核1g50G |
-
-`注意：日志磁盘占用情况受攻击数量影响较大，建议管理端配置200G以上硬盘空间。`
-
-
-
-> ##### HFish部署权限要求 ##### 
-
-1、如果使用官网推荐的install.sh脚本安装，必须具备root权限，安装目录会位于opt目录下；
-
-2、如果下载安装包手动安装，在默认使用SQLite数据库情况下，管理端的部署和使用不需要root权限，但如果后续需要替换SQLite改为MySQL数据，则MySQL安装和配置需要root权限；
-
-3、节点端安装和运行无需root权限，但是由于操作系统限制，非root权限运行的节点无法监听低于TCP/1024的端口；
+1. **Official Install Script**: If you use the official `install.sh` script, **root privileges are required**. The installation will be placed in the `/opt` directory.
+2. **Manual Installation**: If you manually download and run the package with the default SQLite database, root privileges are **not required** for the Management Server. However, if you switch to MySQL, installing and configuring MySQL will require root privileges.
+3. **Node Permissions**: Nodes do not strictly require root privileges to run. However, due to OS limitations, **non-root users cannot bind to ports below TCP/1024**.

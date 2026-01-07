@@ -4,12 +4,12 @@
 
 # HFish <sup class="version">3.3.5</sup>
 
-# 安全、简单、有效的蜜罐平台 <sup class="version">永久免费</sup>
+# Secure, Simple, Effective Honeypot Platform <sup class="version">Forever Free</sup>
 
-[Linux下载](https://hfish.net/#/2-2-linux)
-[Windows下载](https://hfish.net/#/2-3-windows)
-[Docker下载](https://hfish.net/#/2-1-docker)
-[快速了解](https://hfish.net/#/README)
+[Linux Download](2-2-linux.md)
+[Windows Download](2-3-windows.md)
+[Docker Download](2-1-docker.md)
+[Quick Start](README.md)
 
-<!-- 背景图片 -->
+<!-- Background Image -->
 ![background](https://hfish.net/images/background.jpg)

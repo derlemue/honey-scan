@@ -1,124 +1,37 @@
-#### 卸载HFish
+#### Uninstall HFish
 
-### 卸载Linux管理端
+### Uninstall Linux Server
 
-> ##### 删除计划任务进程 ##### 
+1. **Remove Crontab Task**:
+   `crontab -e` and remove lines containing `hfish`.
 
-```
-# 打开计划任务，删除带有hfish字样的行
-root@HFish~# crontab -e
-```
+2. **Kill Processes**:
+   ```bash
+   ps ax | grep ./hfish
+   kill -9 [PID]
+   ```
 
-> ##### 结束管理端进程
+3. **Delete Directory**:
+   `rm -rf /opt/hfish`
 
-```
-# 结束hfish和hfish-server的进程
-root@HFish~# ps ax | grep ./hfish | grep -v grep
-8435 ?        Sl    97:59 ./hfish
-8436 ?        Sl    97:59 ./hfish-server
+4. **Clean Global Configs**:
+   `rm -rf /usr/share/hfish`
 
+5. **Clean Database** (If using local MySQL):
+   `DROP DATABASE hfish;`
 
-root@HFish:~# kill -9 8435
-root@HFish:~# kill -9 8436
-```
+6. **Revert SSH/Firewall**:
+   - Check `/etc/ssh/sshd_config` for AllowUsers changes.
+   - Remove opened firewall ports.
 
-> ##### 删除文件夹
+### Uninstall Linux Node
 
-```
-# 使用install.sh安装的HFish会被部署到/opt/hfish目标，将整个删除即可
-root@HFish~# rm -rf /opt/hfish
-```
+1. **Remove Crontab**: Remove `hfish` lines.
+2. **Kill Process**: Kill `client`.
+3. **Delete Directory**: Remove the installation folder.
 
-> ##### 清理所有配置（如果后续还要安装，建议不要删除，否则下次使用需要完全重新配置）
+### Uninstall Windows
 
-```
-# 使用install.sh安装的HFish会在/usr/share/hfish下建立全局变量
-root@HFish~# rm -rf /usr/share/hfish
-```
-
-> ##### 删除MySQL数据库配置（SQLite可忽略）
-
-```
-# 删除HFish数据库
-root@HFish:~# mysql -h127.0.0.1 -uroot -p
-Enter password:*******（默认密码详见config.ini配置文件）
-mysql> DROP DATABASE hfish;
-
-# 停止MySQL服务
-root@HFish:~# systemctl stop mysqld
-root@HFish:~# systemctl disable mysqld
-```
-
-> ##### 还原SSH和Firewall配置
-
-```
-# 清除SSH config内对于访问来源的限制
-root@HFish~# vi /etc/ssh/sshd_config
-注释掉以 AllowUsers root@ 开头的行
-
-# 重启SSH服务
-root@HFish~# systemctl restart sshd
-
-# 清除Firewall服务的规则（请根据实际情况删除！）
-root@HFish~# firewall-cmd --permanent --list-all | grep ports | head -n 1 | \
-cut -d: -f2 | tr ' ' '\n' | xargs -I {} firewall-cmd --permanent --remove-port={}
-
-# 重启Firewall服务
-root@HFish~# systemctl restart firewalld
-```
-
-### 卸载Linux节点
-
-> ##### 删除计划任务
-
-```
-# 打开计划任务，删除带有hfish字样的行
-root@HFish~# crontab -e
-```
-
-> ##### 结束client进程
-
-```
-root@HFish~# ps ax | grep ./client | grep -v grep
-8435 ?        Sl    97:59 ./client
-
-root@HFish:~# kill -9 8435
-```
-
-> ##### 删除client文件夹
-
-文件夹路径为按照自己的安装路径，client端没有全局配置，删除安装文件夹即可
-
-
-### 卸载Windows管理端
-
-> ##### 删除计划任务进程HFish管理端
-
-<img src="https://hfish.net/images/image-20211206115017049.png" alt="image-20211206115017049" style="zoom: 33%;" />
-
-<img src="https://hfish.net/images/image-20211206115035865.png" alt="image-20211206115035865" style="zoom:33%;" />
-
-> ##### 结束hfish进程
-
-打开任务管理器，结束hfish和hfish-server的进程
-
-
-> ##### 删除管理端文件夹
-
-
-
-### 卸载Windows节点
-
-> ##### 关闭计划任务 HFishClient
-
-<img src="https://hfish.net/images/image-20211206115017049.png" alt="image-20211206115017049" style="zoom: 33%;" />
-
-> ##### 结束client进程
-
-打开任务管理器，结束hfish和client的进程
-
-
-> ##### 删除client文件夹
-
-文件夹路径为按照自己的安装路径，client端没有全局配置，删除安装文件夹即可
-
+1. **Stop Tasks**: Remove HFish from Task Scheduler.
+2. **Kill Processes**: Stop `hfish.exe` / `client.exe` in Task Manager.
+3. **Delete Directory**: Delete the HFish folder.

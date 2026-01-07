@@ -1,3 +1,3 @@
-#### 外网情报生产场景
+#### Threat Intelligence Production
 
-![image-202311081253176](https://hfish.net/images/202311081253176.png)
+![threat_intel](../images/202311081253176.png)

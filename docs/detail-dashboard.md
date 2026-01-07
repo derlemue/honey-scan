@@ -1,30 +1,29 @@
-#### 首页
+#### Dashboard
 
-HFish在【首页】中对攻击数据进行可视化处理，希望能够协助对攻击态势的分析和统计。
+The Dashboard provides visualization of attack data to assist in situational analysis and statistics.
 
-数据首页包括以下几部分
+It consists of the following sections:
 
-#### 系统运行状态
+#### System Status
 
-针对HFish系统的运行状况，HFish对节点状态和蜜罐状态提供了可视化查看能力.
+Visualizes the health of Nodes and Honeypots.
 
-针对管理端的运行情况，我们提供了状态栏进行查看
+![system_status](../images/image-20210914160036385.png)
 
-<img src="https://hfish.net/images/image-20210914160036385.png" alt="image-20210914160036385" style="zoom:67%;" />
+#### Threat Chain
 
+Based on the Cyber Kill Chain model, HFish categorizes threats into five stages to better visualize the attack lifecycle:
+**Scan -> Attack -> Login Attempt -> High-Risk Login -> Compromise**
 
+![threat_chain](../images/image-20210914160703477.png)
 
-#### 威胁链条
+#### Attack Trends
 
-参考Kill Chain，HFish在攻击者的攻击链路，从不同的威胁等级进行区分，绘制了HFish蜜罐的攻击链路图。从扫描/攻击/登陆尝试/高危登陆尝试和失陷这五个角度进行区分，进行更好的威胁发现。
+Visual analysis of:
+- **Attack IP Distribution**: Where attacks are coming from.
+- **Service Trends**: Which honeypots are targeted most.
+- **Node Trends**: Which nodes are under attack.
 
-![image-20210914160703477](https://hfish.net/images/image-20210914160703477.png)
+![attack_trend_1](../images/image-20210914160836213.png)
 
-
-#### 被攻击趋势
-
-从攻击IP的分布趋势、蜜罐服务的被攻击趋势以及部署节点的被攻击趋势，三个部分进行可视化分析展示，更好了解自己的威胁来源。迅速做出对策和反应。
-
-<img src="https://hfish.net/images/image-20210914160836213.png" alt="image-20210914160836213" style="zoom:50%;" />
-
-<img src="https://hfish.net/images/image-20210914160912912.png" alt="image-20210914160912912" style="zoom:50%;" />
+![attack_trend_2](../images/image-20210914160912912.png)

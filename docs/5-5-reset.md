@@ -1,11 +1,10 @@
+### Password Reset Tool
 
-### 密码重置
+*This content is covered in the [Forgot Password](5-6-passwd.md) section.*
 
-  登录管理端主机，在管理端进程同目录会看到tools可执行程序，该程序可以重置指定用户的密码。
-  
-  > 重置admin用户的密码
-  
-  ```
-  root@HFish~# ./tools resetpwd admin
-  reset admin password success.
-  ```
+Use `./tools -mode resetpwd admin` to reset the admin password.
+
+```bash
+root@HFish~# ./tools resetpwd admin
+reset admin password success.
+```

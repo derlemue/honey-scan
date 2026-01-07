@@ -1,24 +1,24 @@
+#### Attack List
 
-#### 攻击列表
+This page allows you to view, aggregate, search, analyze, and export attack data captured by HFish.
 
-该页面用于展示、聚合、搜索、分析和导出HFish蜜罐捕获攻击数据的页面。
+![attack_list](../images/20210730142413.png)
 
-![image-20210730142404498](https://hfish.net/images/20210730142413.png)
+**Aggregation:**
+HFish automatically aggregates repeated attacks from the same source IP against the same honeypot within a short period to reduce noise.
 
-攻击列表本身有一定的聚合能力，会把一段时间内，针对同一IP、同一蜜罐的同一攻击者行为聚合在一起。
+**Displayed Data:**
+1. **Target Honeypot**: Which service was attacked.
+2. **Count**: Number of attacks in this event.
+3. **Target Node**: Which node received the attack.
+4. **Source IP & Location**: Attacker's IP and Geo-location.
+5. **Threat Intelligence**: Tags (if any) from threat intel sources.
+6. **Last Attack Time**: Timestamp of the most recent activity in this event.
+7. **Start Time**: Timestamp of the first activity in this event.
+8. **Data Length**: Size of the payload.
+9. **Details**: Full packet content or interaction logs.
 
-本页面展示的攻击数据有：
-```
-1、被攻击蜜罐名称
-2、被攻击数量
-3、被攻击节点名称
-4、攻击来源IP和地理位置
-5、威胁情报
-6、最后一次攻击时间
-7、攻击时间
-8、攻击数据长度
-9、攻击详情
-```
-
-用户还可以按照攻击来源IP地址、蜜罐场景、蜜罐类型、被攻击节点名称、数据长度、攻击来源地理位置名称、情报标签和是否标记进行搜索，支持按照攻击时间或数量排序，支持导出所有攻击数据或导出某个聚合事件到CSV文件。
-
+**Features:**
+- **Search**: Filter by IP, Scenario, Honeypot Type, Node, Time, Geography, Tags, etc.
+- **Sort**: By Time or Count.
+- **Export**: Export all data or specific events to CSV.

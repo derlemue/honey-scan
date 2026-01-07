@@ -1,14 +1,16 @@
-#### 云环境风险感知场景
+#### Cloud Environment Risk Awareness
 
-而通过在云端部署蜜罐产品，应用蜜罐 **吸引部分攻击**，保护真实业务，并且企业防守者可以通过蜜罐感知到 **云上威胁的强度和方式**，不至于对安全现状一无所知，最后通过 **蜜罐产品的API** 和 **本地态势感知或检测设备** 打通，实现防守者通过一个平台 **统一管理**。
+By deploying honeypots in the cloud, you **attract attacks** away from real business assets. Defenders can perceive the **intensity and methods of cloud threats**, avoiding blindness to the security landscape. Finally, through the **HFish API** and integrations with **SIEM/SOC**, defenders can achieve **unified management**.
 
-> ##### 痛点
-由于云环境特殊性，云上 **匮乏** 流量检测类安全产品，此外企业防守者需要频繁切换查看本地安全设备的告警与云端有限安全设备的告警。
+> **Pain Points**
 
-> ##### 推荐部署位置
-注册一个迷惑性子域名或使用某个废弃的子域名，通过搭建蜜罐感知攻击强度和攻击行为。
+Due to the nature of cloud environments, there is a **scarcity** of traffic-based security products. Furthermore, defenders often have to toggle frequently between local security device alerts and limited cloud alerts.
 
-> ##### 部署注意事项：
+> **Recommended Deployment**
 
-1. 该场景会捕捉到 **大量真实攻击行为** ，建议在部署前将蜜罐加入网络检测设备白名单中避免误报；
-2. 个别行业需要考虑监管单位扫描通报情况，建议在部署前建表报备蜜罐地址；
+Register a deceptive subdomain or use an abandoned subdomain. Deploy a honeypot to sense attack intensity and behaviors.
+
+> **Deployment Notes**
+
+1. **White-listing**: This scenario will capture a **massive amount of real attack traffic**. Suggest adding the honeypot IP to your network detection equipment's whitelist to avoid false alarms.
+2. **Compliance**: Some industries require reporting internet-facing assets to regulators. Ensure you register the honeypot address if required.

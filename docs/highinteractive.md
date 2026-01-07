@@ -1,51 +1,47 @@
-### 高交互蜜罐
+### High-Interaction Honeypots
 
-当前，HFish提供两种高交互蜜罐，包括**高交互SSH蜜罐**和**高交互Telnet**蜜罐。
+HFish currently provides two types of high-interaction honeypots: **High-Interaction SSH** and **High-Interaction Telnet**.
 
-#### 高交互蜜罐测试登录账号
+#### Test Accounts
 
 ```
-root/123456
+root / 123456
 ```
 
-`这里是其中一个可登录账号，用作自测。其他可用于登录的账号密码HFish当前不公开，并在云服务后台定期更新。`
+*This is one of the enabled accounts for self-testing. Other accounts are managed dynamically by the HFish cloud service.*
 
-#### 高交互蜜罐原理
+#### How it Works
 
-HFish高交互蜜罐部署在云服务器，由HFish团队做统一运维，在云上，我们部署了多台服务器，通过nginx负载均衡，处理本地到云端的攻击流量转发。
+HFish High-Interaction Honeypots are deployed on our cloud infrastructure and managed by the HFish team. We use a cluster of servers with Nginx load balancing to handle traffic forwarded from your local nodes to the cloud.
 
-<img src="https://hfish.net/images/image-20220105214958606.png" alt="image-20220105214958606" style="zoom:33%;" />
+![cloud_architecture](../images/image-20220105214958606.png)
 
-在高交互蜜罐中，**攻击者与用户本地发生的流量交互都会被转发到云端蜜网，所有的威胁行为都在云端蜜网发生**。
+In this model, **all traffic between the attacker and your local node is forwarded to the cloud honeynet**. The actual threat behavior happens in the cloud, ensuring the safety of your local environment while capturing high-fidelity interaction data.
 
-<img src="https://hfish.net/images/image-20220105220938586.png" alt="image-20220105220938586" style="zoom:40%;" />
+![traffic_flow](../images/image-20220105220938586.png)
 
+#### Usage
 
+Cloud High-Interaction Honeypots are available in the Service Management list by default. To use them:
 
-#### 使用高交互蜜罐
+1. **Verify Network Connectivity**:
+   - Nodes must be able to reach `zoo.hfish.net`.
+   - The Management Server must be able to reach `zoo.hfish.net` and `api.hfish.net`.
 
-当前，云端高交互蜜罐默认配置在服务管理中，使用需要
+2. **Add Service**:
+   Simply add the High-Interaction SSH or Telnet service to your node configuration.
 
-**节点可联通zoo.hfish.net**
+![add_service](../images/image-20220105221346398.png)
 
-**管理端可联通zoo.hfish.net、api.hfish.net**
+#### Viewing Data
 
-确认网络联通后，直接在节点中添加高交互蜜罐服务即可。
+The HFish Management Server polls `api.hfish.net` every 5 minutes to download interaction data derived from these high-interaction honeypots.
 
-<img src="https://hfish.net/images/image-20220105221346398.png" alt="image-20220105221346398" style="zoom: 28%;" />
+Data includes:
+- Login attempts.
+- Success/Failure status.
+- Commands executed after successful login.
 
+If samples (malware) are captured during the session, they will be listed in the download section.
 
-
-#### 高交互蜜罐数据查阅
-
-HFish管理端每五分钟向api.hfish.net发起高交互蜜罐请求。在这个过程内的攻击数据将被下拉。
-
-数据中，我们可以看到
-
-- 攻击者进行的登陆行为
-- 此次登陆为成功还是失败，
-- 登录成功后执行了那些命令
-
-如果在聚合的攻击中存在样本，样本将展示在关联信息下载中。
-
-<img src="https://hfish.net/images/image-20220105221536927.png" alt="image-20220105221536927" style="zoom:50%;" />
+![interaction_data](../images/image-20220105221536927.png)

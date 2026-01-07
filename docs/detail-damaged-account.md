@@ -1,22 +1,16 @@
+#### Account Assets
 
-#### 账号资产
+This page collects all username/password combinations used by attackers. It is a critical tool for monitoring compromised credentials.
 
-该页面用于收集所有被用来攻击的账号密码，通过配置可对企业失陷账号进行有效监控。
+![account_assets](../images/20210812135309.png)
 
-<img src="https://hfish.net/images/20210812135309.png" alt="image-20210506152344041" style="zoom:50%;" />
+> **Advanced Monitoring Policy**
 
-> 通过设定高级监测策略，辅助企业进行失陷账号监控，建议输入企业邮箱、企业域名、员工姓名等信息，随时监控泄漏
+You can configure policies to alert you when specific high-value accounts (e.g., employee emails, domain admin accounts) are used by attackers.
 
-1、点击界面右上角【高级监测策略】
+1. Click **[Advanced Monitoring Policy]** (Top Right).
+2. Import a CSV file following the template rules.
+   *Ensure you strictly follow the template format.*
+3. Matches will be highlighted in the list to help security personnel quickly identify leaks.
 
-<img src="https://hfish.net/images/20210812135318.png" alt="image-20210401150526485" style="zoom: 50%;" />
-
-2、按照规则要求，导入csv文件。
-
-`注意！务必按照提示规则进行写入`
-
-<img src="https://hfish.net/images/20210812135326.png" alt="image-20210506153037454" style="zoom:33%;" />
-
-3、可查看到所有匹配高级监测策略的数据（带颜色），帮助安全人员精准排查泄漏账号。
-
-<img src="https://hfish.net/images/20210812135333.png" alt="image-20210506153041469" style="zoom:50%;" />
+![advanced_policy](../images/20210812135333.png)

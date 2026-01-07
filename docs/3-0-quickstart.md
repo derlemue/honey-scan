@@ -1,21 +1,23 @@
-#### 快速使用
+#### Quick Start
 
-如果时间有限，当用户部署完HFish管理端后，只需要了解并操作以下三步就可以进行蜜罐观测。
+After deploying the HFish Management Server, you only need to understand and perform the following three steps to start observing threats.
 
-> ##### 添加/删除节点
+> **1. Add/Delete Nodes**
 
-安装HFish管理端后，在管理端所在机器上会默认建立节点感知攻击，该节点被命名为【内置节点】。
+After installing the Management Server, a default node named **"Built-in Node"** is automatically created on the server itself to sense attacks.
 
-用户也可以在其他机器上部署新的节点，以增加观测范围。
+You can also deploy new nodes on other machines to expand your observation range.
 
-> ##### 添加/删除蜜罐
+> **2. Add/Delete Honeypots**
 
-蜜罐、节点和管理端的关系类似于总部、零售店和货物的关系，总部（管理端）负责管理零售店（一个或多个节点端），并提供货物（一个或多个蜜罐服务），零售店（一个或多个节点端）负责将总部（管理端）推送的货物（一个或多个蜜罐服务）上架并提供具体服务。
+The relationship between Honeypots, Nodes, and the Management Server is like Headquarters, Retail Stores, and Goods.
+- **Headquarters (Management Server)**: Manages stores and supplies goods.
+- **Retail Stores (Nodes)**: Receive goods (honeypot services) from HQ and put them on shelves (deploy services) for customers (attackers).
 
-节点负责主动和管理端沟通，用户通过管理端Web界面配置后，节点根据指令在主机上构建具体蜜罐服务。
+Nodes actively communicate with the Management Server. Once you configure a honeypot via the Web Interface, the Node receives the instruction and builds the specific service on the host.
 
-一个节点最多可以同时构建10个蜜罐服务。
+*A single node can run up to 10 honeypot services simultaneously.*
 
-> ##### 查看攻击详情
+> **3. View Attack Details**
 
-HFish有四个不同的页面提供攻击详情，分别为：攻击列表、扫描感知、攻击来源、账号资产
+HFish provides four different views to analyze attack details: **Attack List**, **Scan Sensing**, **Attack Source**, and **Account Assets**.

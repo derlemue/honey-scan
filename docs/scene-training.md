@@ -1,14 +1,14 @@
-#### 员工安全意识培训场景
+#### Security Awareness Training
 
-> ##### 痛点
-在企业安全工作中，员工 **安全意识问题** 不应被忽略，而对于攻击者，搜集员工信箱批量发送钓鱼或木马病毒链接成本极低，只要有一个受害者即可突破企业安全防线。
+> **Pain Points**
 
-> ##### 推荐部署位置
-使用开源的钓鱼邮件工具和 **Web蜜罐自定义能力**，可以快速、低成本的组装 **企业安全意识培训平台**。
+In enterprise security, **employee security awareness** cannot be ignored. For attackers, collecting employee emails and sending bulk phishing links or malware costs very little. Compromising just one victim can breach the enterprise defense line.
 
-> ##### 部署注意事项：
+> **Recommended Deployment**
 
-1. 该场景会捕捉到 **大量真实攻击行为** ，建议在部署前将蜜罐加入网络检测设备白名单中避免误报；
-2. 个别行业需要考虑监管单位扫描通报情况，建议在部署前建表报备蜜罐地址；
+Use open-source phishing tools combined with **HFish Custom Web Honeypots** to quickly and cheaply build an **Enterprise Security Awareness Training Platform**.
 
-  
+> **Deployment Notes**
+
+1. **White-listing**: This scenario will capture a **massive amount of real attack traffic**. Suggest adding the honeypot IP to your network detection equipment's whitelist to avoid false alarms.
+2. **Compliance**: Some industries require reporting internet-facing assets to regulators. Ensure you register the honeypot address if required.

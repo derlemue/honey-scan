@@ -1,14 +1,13 @@
-#### 版本升级
+#### Upgrade Guide
 
-HFish v2.7.0（含）及后续版本支持Web页面自动升级，如果版本低于v2.7.0，请卸载重新部署。
+HFish v2.7.0 and later support automatic web-based upgrades. If your version is older than v2.7.0, please uninstall and redeploy.
 
-> ##### 联网情况 #####
+> **Online Upgrade**
 
-HFish v2.7.0（含）及后续版本中，HFish会自动检测到升级包，用户点击右上角火箭，点击「确认升级」，即可完成升级。
+For v2.7.0+, HFish automatically detects updates. Click the **Rocket Icon** in the top right corner, then click **[Confirm Upgrade]**.
 
-> ##### 非联网情况 #####
+> **Offline Upgrade**
 
-HFish v2.7.0（含）及后续版本中，用户点击右上角火箭，点击「上传安装包」，点击「确认升级」，即可完成升级。
+For v2.7.0+, click the **Rocket Icon**, select **[Upload Package]**, upload the upgrade package, and click **[Confirm Upgrade]**.
 
-<img src="https://hfish.net/images/image-20220118114818278.png" alt="image-20220118114818278" style="zoom:50%;" />
-
+![upgrade_ui](../images/image-20220118114818278.png)

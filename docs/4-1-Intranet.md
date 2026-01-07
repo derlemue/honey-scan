@@ -1,51 +1,45 @@
-#### 内网失陷感知场景
+#### Intranet Breach Detection
 
-根据HFish团队走访，内网失陷感知场景是目前商业用户反馈最实用、最常用的场景，相对于部署在互联网，HFish部署在内网可以精确感知内部失陷主机横移扫描行为，风险等级更高，处置闭环更强。
+According to HFish team research, Intranet Breach Detection is the most practical and commonly used scenario reported by commercial users. Compared to internet deployment, local intranet deployment allows for precise detection of lateral movement and scanning behaviors from compromised internal hosts. This provides higher fidelity alerts and enables stronger closed-loop responses.
 
-![image-202311081253175](https://hfish.net/images/202311081253175.png)
+![intranet_scenario](../images/202311081253175.png)
 
+> **Pain Points**
 
-> ##### 痛点
+Internal office networks and servers are vulnerable due to various factors: unsecured USB devices, illegal software downloads, client vulnerabilities, stolen VPN credentials, or malicious insiders. Once inside, attackers or worms move laterally with abandon. The challenge is: **How to timely detect these critical security events already happening within the intranet?**
 
-由于设备外带、USB设备接入、员工下载非法软件、客户端漏洞、VPN账号失窃、恶意员工等众多原因导致内部办公或内部服务器失陷，攻击者和蠕虫木马在内网肆无忌惮的横向移动，如何及时感知已经在内网发生的以上紧急安全事件。
+> **Recommended Deployment**
 
+![deployment_diagram](../images/20210616174930.png)
 
-> ##### 推荐部署位置
+This is the **most common** use case for honeypots in enterprise environments. It focuses on **agile and accurate** detection of compromised hosts, ransomware, and malicious behaviors.
 
-![image-20210611130733084](https://hfish.net/images/20210616174930.png)
+**1. Office Network Scenario**
+Honeypots are deployed in the office network zone to **detect compromised workstations, ransomware scanning, or insider probing**.
+*Template Recommendation*: Listen on TCP/135, TCP/139, TCP/445, and TCP/3389.
 
-该场景是蜜罐在企业环境 **最常见** 的使用方法，用来捕捉内网已经失陷、勒索软件和恶意行为，重点在于 **敏捷准确**，具体可细分为 **内部办公场景** 和 **内部服务器场景**，
+**2. Server Zone Scenario**
+Honeypots are deployed in the server zone to **detect server compromise and lateral movement**.
+*Template Recommendation*: Simulate Web, MySQL, Redis, Elasticsearch, SSH, Telnet services.
 
-**内部办公场景**：蜜罐被部署在企业内部办公网区，用于 **感知内网失陷主机、勒索软件扫描或恶意员工内网刺探行为** ，常见模板可设置为监听TCP/135、TCP/139、TCP/445和TCP/3389等服务。
+> **Deployment Notes**
 
-**内部服务器场景**：蜜罐被部署在企业内部服务器区，用于 **感知内网失陷和横向移动**，常见模板可以设置为模拟Web、MySQL、Redis、Elasticsearch、SSH、Telnet等服务。
+1. **Density**: Higher coverage is better. We recommend deploying at least two nodes per subnet (one at the start and one at the end of the IP range).
+2. **Network**: VLANs don't fundamentally matter, as long as an attacker scanning the subnet from a compromised machine is likely to hit a node.
+3. **Firewall**: Ensure the honeypot service ports are open and accessible to potential attackers within the network.
 
+> **Key Monitoring Pages**
 
-> ##### 部署注意事项
+1. **[Attack List](detail-attack.md)**
+   View all attacks against the honeypots.
 
-1. 节点部署数量：建议节点的覆盖程度密集更好，在每个网段内建议有两个节点，在网段头和网段尾部署。
-2. 节点部署网络要求：节点部署与vlan无关，只要评估攻击者控制任何一台内网的机器后进行内网扫描时大概率会触碰到节点即可。
-3. 节点防火墙要求：开放蜜罐服务所占用的端口，这些端口应能被攻击者访问到。
+2. **[Scan Sensing](4-2-scan.md)**
+   When enabled, HFish observes connections to *any* port on the node host.
+   *Recommendation*: Strongly recommended if the node is a dedicated machine (running only HFish).
+   *Note*: If the node shares a server with business apps, this may generate massive false positives. Use specific "TCP Port Listening Honeypots" instead.
 
+3. **[Breach Sensing](detail-decoy.md)**
+   This leverages **Honey Tokens (Decoys)** to passively detect host compromise. You can generate decoys here and monitor their usage.
 
-> ##### 可能需要经常关注的页面
-
-1. [**攻击列表** ](detail-attack)
-
-查看所有蜜罐被攻击的情况。
-
-2. [**扫描感知** ](4-2-scan)
-
-启用扫描感知后，HFish可以观测到该节点主机上任意端口的被访问记录，如果内网部署在纯净机器上（即全新机器只部署HFish节点），强烈推荐启用该功能。
-
-如果只想针对特定端口进行监听，请使用「TCP端口监听蜜罐」；
-
-`注意：如果HFish节点和正常业务共用一台服务器，该功能也会记录正常业务连接导致海量误报；`
-
-3. [**失陷感知**](detail-decoy)
-
-该页面是利用已经播撒的蜜饵实现**被动对业务主机失陷的感知**，用户可以在该页面生成蜜饵，并观测蜜饵被触碰状态。
-
-4. [**告警配置**](detail-alarm)
-
-对于蜜罐捕获到的信息，跟据不同的安全运营流程，可能需要第一时间通知其它安全设备或相关安全运营人员。
+4. **[Alert Configuration](detail-alarm.md)**
+   Configure real-time notifications to security operation centers or personnel when high-fidelity alerts occur.

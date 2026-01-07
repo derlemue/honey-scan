@@ -1,63 +1,57 @@
-#### 主动联网要求
+#### Active Internet Access Requirements
 
-> ##### 安全声明 ##### 
+> **Security Note**
 
-HFish使用100% Golang语言开发，本地采用低交互蜜罐，本地模拟的所有网络服务都是由HFish构架的虚假服务，攻击者看似可以登录进入MySQL、Redis等蜜罐服务，但实际上那是完全用Golang开发的MySQL、Redis部分能力，用于迷惑攻击者。
+HFish is developed 100% in Golang. It uses low-interaction honeypots locally. All network services are simulated by HFish. While it may appear that an attacker can log into MySQL, Redis, or other services, they are actually interacting with a Golang simulation designed to confuse and trap them.
 
-用户完全不需要担心HFish模拟服务被击穿的风险。
+**You do not need to worry about the HFish simulated services being compromised.**
 
+> **Outbound Connections (Management Server)**
 
-> ##### HFish管理端主动访问如下网络域名 ##### 
+HFish supports both IPv4 and IPv6 and can operate in a completely isolated internal network. However, to maximize threat detection, integrate with cloud honeynets, consume threat intelligence, and perform auto-upgrades, **we strongly recommend allowing the Management Server to access specific internet domains.**
 
-HFish支持IPv4和IPv6网络环境，可以在完全隔离互联网的内部网络工作，但为了最大限度感知真实威胁、对接云端高交互情报、对接消费云端威胁情报和自动化升级，强烈建议客户允许HFish管理端主动访问有限互联网地址，管理端**永远不会**主动访问节点，管理端仅负责生成一个配置，等待节点每60秒尝试连接管理端拉取。
+**The Management Server will NEVER actively initiate connections to Nodes.** It generates a configuration, and Nodes attempt to connect to the Management Server every 60 seconds to pull it.
 
-为兼顾安全性和服务可用性，建议用户设置ACL仅允许HFish管理端主动访问如下网络域名、地址和端口：
+For a balance of security and functionality, we recommend configuring ACLs to allow the HFish Management Server to access only the following:
 
+| IP / Domain | Protocol / Port | Purpose |
+| :--- | :--- | :--- |
+| `106.75.31.212`, `106.75.71.108`<br>`api.hfish.net` | TCP/443 | **(Recommended)** Upgrades and attack data synchronization. |
+| `106.75.5.50`, `106.75.15.34`<br>`zoo.hfish.net` | TCP/22222 (SSH)<br>TCP/22223 (Telnet) | **(Recommended)** Communication with Cloud High-Interaction Honeypots. |
+| `43.227.197.203`, `43.227.197.42`<br>`hfish.cn-bj.ufileos.com` | TCP/443 | Downloading installation/upgrade packages. |
+| `api.threatbook.cn` | TCP/443 | Threat Intelligence queries (Optional). |
+| `open.feishu.cn` | TCP/443 | Lark (Feishu) Alerts (Optional). |
+| `oapi.dingtalk.com` | TCP/443 | DingTalk Alerts (Optional). |
+| `qyapi.weixin.qq.com` | TCP/443 | WeCom Alerts (Optional). |
 
-| 开放IP                                                     | 对应开放域名                            | 协议/端口                                               | 访问目的                                         |
-| ---------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------- | ------------------------------------------------ |
-| 106.75.31.212、106.75.71.108                               | api.hfish.net（已经禁止ping） | TCP/443                                                 | 用于官网升级与攻击数据拉取，建议开启 |
-| 106.75.5.50、106.75.15.34                                  | zoo.hfish.net（已经禁止ping） | TCP/22222（高交互ssh端口）、TCP/22223（高交互Telnet端口) | 用于与云端高交互蜜罐通信，建议开启           |
-| 43.227.197.203、43.227.197.42                              | hfish.cn-bj.ufileos.com                 | TCP/443                                                 | 用于分发安装和升级包                             |
-| 106.75.36.224、123.59.51.113、123.59.72.253、106.75.36.226 | api.threatbook.cn                       | TCP/443                                                 | 用于威胁情报查询，如果未启用该功能，无需开放     |
-| （无法罗列，建议按域名开通）                 | open.feishu.cn                          | TCP/443                                                 | 用于飞书告警功能，如果未使用该功能，无需开放     |
-| （无法罗列，建议按域名开通）                 | oapi.dingtalk.com                       | TCP/443                                                 | 用于钉钉告警功能，如果未使用该功能，无需开放     |
-| （无法罗列，建议按域名开通）                 | qyapi.weixin.qq.com                     | TCP/443                                                 | 用于企业微信告警功能，如果未使用该功能，无需开放 |
+`Notes:`
+1. For security, **do not** expose the Management Server's Web Interface (TCP/4433) to the public internet.
+2. If using Email Alerts, allow access to your SMTP server.
+3. HFish supports sending Syslog to up to 5 destinations; ensure network connectivity to your SIEM/Log servers.
 
-```
-注意：
-1. 基于安全考虑，不建议用户将HFish管理端Web管理端口TCP/4433暴露在互联网；
-2. 如果使用邮件通知，请开启相应邮件服务器的访问权限；
-3. HFish支持最多 5 路syslog日志发送，便于与安全设备联动，请根据实际情况开放权限；
-```
+> **Outbound Connections (Nodes)**
 
-> ##### HFish客户端主动访问如下网络域名 ##### 
+**HFish Nodes do not actively access any external addresses other than the Management Server.**
 
-HFish客户端不会主动访问除管理端外任何地址。
+#### Security Configuration
 
+> **Management Server Security**
 
-#### 安全配置
+The Management Server should be deployed in a **Secure Zone**. The Web and SSH ports should only be accessible to authorized security personnel and management devices.
 
-> ##### 管理端安全要求 ##### 
+- **TCP/4433 (Web)**: Default management port (HTTPS). Can be changed in `config.ini`, though not recommended.
+- **TCP/4434 (Node Comm)**: Used for communication between Nodes and the Server. **This port cannot be changed** and must be accessible by all Nodes.
 
-管理端应部署在安全区，只向少部分有网络管理权限和安全分析能力工作的人员和设备开放Web和SSH端口。
+`Security Rules:`
+- **TCP/4433** and **TCP/22** should "ONLY" be accessible by management devices in the Secure Zone.
+- **TCP/4434** must be accessible by **all Honeypot Nodes**.
 
-管理端用于配置管理的Web页面开启了HTTPS，默认访问端口为TCP/4433，虽然官方不推荐，但是用户可以在config.ini中自行修改Web管理端口和登录URL。
+> **Node Security**
 
-此外，管理端还会开放TCP/4434用于节点和管理端进行通讯，该端口不可改变，且必须保证该端口可被所有节点联通。
+Honeypot nodes inherently face attackers. We recommend the following:
 
-```
-注意：
-- TCP/4433端口和TCP/22端口 “只能”被安全区的管理设备访问；
-- TCP/4434端口“必须能”被蜜罐节点访问;
-```
-
-> ##### 节点端安全要求 ##### 
-
-蜜罐节点直接面对攻击者，建议遵循以下安全配置：
-
-1. 如果用户同时有外网和内部需求，强烈建议用户分别在外网和内网部署完全独立的两套管理端和节点端；
-2. 如果有节点需要能被外网访问，建议把节点和管理端部署在DMZ区；
-3. 外网节点除了能访问管理端的TCP/4434端口外，不能有权限访问内网中的任何资产；
-4. 内网节点除了开放蜜罐服务相应端口外，其它任何端口都不应该在网络中能被用户访问到；
-5. 考虑安全区设备有维护节点主机的需求，可以向有限的设备开放SSH端口；
+1. **Isolation**: If you need both Intranet and Internet sensing, we **strongly recommend** deploying two independent HFish instances (separate Management Servers and Nodes) for complete isolation.
+2. **DMZ**: If a node must be accessible from the internet, deploy both the Node and Management Server in a DMZ.
+3. **Outbound restrictions**: Internet-facing nodes should **only** be allowed to access the Management Server's **TCP/4434**. They should have **NO** access to internal assets.
+4. **Inbound restrictions**: Internal nodes should only expose the specific honeypot service ports. No other ports should be accessible.
+5. **Maintenance**: Limit SSH access to nodes to a strictly defined set of maintenance hosts.

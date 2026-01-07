@@ -1,23 +1,22 @@
-#### 数据库选择
+#### Database Selection
 
-除非性能极度紧张或环境所限，否则HFish官方**强烈建议使用MySQL/MariaDB数据库！**
+Unless you have severe resource constraints or specific environmental limitations, **we strongly recommend using MySQL or MariaDB.**
 
-经过实战测评，MySQL/MariaDB数据库可以适应目前绝大多数场景，其数据处理和并发兼容能力都要优于SQLite。
+Based on extensive testing, MySQL/MariaDB enables HFish to handle the majority of production scenarios, offering superior data processing capabilities and concurrency support compared to SQLite.
 
-> ##### 关于SQLite ##### 
+> **About SQLite**
 
-出于开箱即用考虑，HFish系统默认使用的SQLite数据库，自带的已经初始化好的db具体路径为/usr/share/db/hfish.db
+For an out-of-the-box experience, HFish uses SQLite by default. The pre-initialized database is located at `/usr/share/db/hfish.db`.
 
-SQLite数据库仅适用于功能预览、小规模内网环境失陷感知等有限场景。
+**SQLite is only suitable for feature previews or small-scale intranet deployments.**
 
-> ##### SQLite更换为MySQL/MariaDB数据库  ##### 
+> **Migrating from SQLite to MySQL/MariaDB**
 
-HFish提供两种更换数据库的机会：
+HFish provides two ways to use MySQL/MariaDB:
 
-1、在首次安装时，用户可以选择使用SQLite或MySQL/MariaDB数据库
+1. **Initial Install**: Choose MySQL/MariaDB during the first installation.
+2. **Post-Install Migration**: If you are already using SQLite, you can migrate to MySQL via the web interface. Log in as admin and navigate to the "Database Configuration" page to follow the migration guide.
 
-2、如果已经选择了SQLite，以管理员身份登录后，在「数据库配置」页面，根据指南可快速更换数据库
+![db_config](../images/image-20211116210129137.png)
 
-![image-20211116210129137](https://hfish.net/images/image-20211116210129137.png)
-
-`特别注意：HFish只支持SQLite向MySQL/MariaDB数据库迁移，不支持反向迁移`
+`Note: HFish only supports migrating from SQLite to MySQL/MariaDB. Reverse migration is not supported.`

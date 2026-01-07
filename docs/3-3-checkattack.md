@@ -1,24 +1,21 @@
-#### 查看攻击详情
+#### View Attack Details
 
-当前，HFish提供四个不同的页面进行**攻击详查看**，分别为：**攻击列表**、**扫描感知**、**攻击来源**、**账号资产**
+HFish provides four pages to view **Attack Details**: **Attack List**, **Scan Sensing**, **Attack Source**, and **Account Assets**.
 
-<img src="https://hfish.net/images/image-20210902143712779.png" alt="image-20210902143712779" style="zoom: 33%;" />
+![attack_overview](../images/image-20210902143712779.png)
 
-四种功能分别代表四种不同的攻击数据场景
+These four functions correspond to different data scenarios:
 
-|                     | 功能简介                               | 功能原理                                                     |
-| ------------- | -------------------------------------- | ------------------------------------------------------------ |
-| **攻击列表** | 收集所有对蜜罐的攻击          | 节点部署蜜罐后，攻击者对蜜罐的**所有攻击信息**都会被收录到「攻击列表」中。 |
-| **扫描感知** | 收集节点主机网卡的所有连接信息     | 节点生成之后，HFish会**记录对节点所有网卡的连接**，包括来访IP，连接IP和端口。 |
-| **攻击来源** | 收集了所有连接和攻击节点的IP信息       | **所有**尝试连接和攻击节点的**IP信息**都被记录在攻击来源中，如果蜜罐溯源和反制成功，信息也会被记录其中。 |
-| **账号资产** | 收集了所有攻击者爆破蜜罐使用的账号密码 | HFish会**记录**攻击者对所有蜜罐进行**暴力破解时使用的账号密码**，进行统一展示，用户还可**自定义监控词汇**，如员工姓名、公司名称等，一旦与攻击者使用的账号重合，可高亮显示并告警。 |
+| Feature | Description | Principle |
+| :--- | :--- | :--- |
+| **Attack List** | Collects all interactions with honeypots. | Once a node deploys a honeypot, **all interaction/attack information** against it is recorded here. |
+| **Scan Sensing** | Collects connections to the node's network interfaces. | HFish records **all connection attempts** to the node's NICs, including source IP, destination IP, and port, even for non-honeypot ports. |
+| **Attack Source** | Aggregates IP information. | **All IPs** that connected to or attacked a node are aggregated here. If tracing/attribution is successful, that data is also recorded. |
+| **Account Assets** | Collects credentials used in brute-force attacks. | HFish records the **username and password** used by attackers during brute-force attempts. You can set **Custom Monitoring Words** (e.g., employee names, company name) to highlight and alert on specific credential usage. |
 
-详细介绍可查看：
+For detailed information, please see:
 
-[攻击列表](4-1-attack)
-
-[扫描感知](4-2-scan)
-
-[攻击来源](5-1-source)
-
-[账号资产](5-2-asset)
+- [Attack List](detail-attack.md)
+- [Scan Sensing](4-2-scan.md)
+- [Attack Source](detail-attack-source.md)
+- [Account Assets](detail-damaged-account.md)

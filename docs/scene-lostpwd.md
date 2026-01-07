@@ -1,13 +1,14 @@
-#### 员工账号密码遗失感知场景
+#### Account Credential Loss Awareness
 
-> ##### 痛点
-员工账号密码资产遗失对于大多数企业来说都是 **致命隐患**，如何感知此类威胁一直是当下安全团队一个空白。
+> **Pain Points**
 
-> ##### 推荐部署位置
-企业可将常见的对外服务例如vpn.company.com或hr.company.com **替换成蜜罐**，通过监控试图登录的账号判断是否为 **内部员工账号**，并实时通知安全团队和该员工，敦促其尽快修改密码。
+The loss of employee account/password assets is a **fatal hidden danger** for most enterprises. Sensing such threats has effectively been a blind spot for security teams.
 
-> ##### 部署注意事项：
+> **Recommended Deployment**
 
-1. 该场景会捕捉到 **大量真实攻击行为** ，建议在部署前将蜜罐加入网络检测设备白名单中避免误报；
-2. 个别行业需要考虑监管单位扫描通报情况，建议在部署前建表报备蜜罐地址；
+Deploy a honeypot that mimics common external services, such as `vpn.company.com` or `hr.company.com` (using deceptive domains). By monitoring login attempts, you can identify if **internal employee credentials** are being tested/used. HFish can notify the security team and the employee immediately to change their password.
 
+> **Deployment Notes**
+
+1. **White-listing**: This scenario will capture a **massive amount of real attack traffic**. Suggest adding the honeypot IP to your network detection equipment's whitelist to avoid false alarms.
+2. **Compliance**: Some industries require reporting internet-facing assets to regulators. Ensure you register the honeypot address if required.

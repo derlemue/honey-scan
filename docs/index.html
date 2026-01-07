@@ -40,22 +40,23 @@
             height: 100%;
             width: 100%;
         }
+
         .homepage_con nav {
             color: #fff;
         }
-        
+
         .homepage_con nav ul ul {
             color: #34495e
         }
-        
+
         .app-nav li ul a {
             width: 86px;
         }
-        
+
         nav {
             color: #34495e;
         }
-        
+
         .sticky nav {
             color: #34495e;
         }
@@ -78,7 +79,7 @@
     <div id="app"></div>
     <script>
         var homePageClass = ' homepage_con'
-        function homePageHandle () {
+        function homePageHandle() {
             var isHomePage = window.location.hash === '#/' || window.location.hash === '#/en/'
             var bodyEl = document.body
             var className = bodyEl.className
@@ -100,19 +101,16 @@
     <script>
         window.$docsify = {
             name: 'HFish',
-            nameLink: {
-                '/en/': '/#/en/',
-                '/': '/',
-            },
+            // nameLink: {
+            //     '/en/': '/#/en/',
+            //     '/': '/',
+            // },
             loadSidebar: true,
             loadNavbar: true,
             mergeNavbar: true,
             auto2top: true,
             subMaxLevel: 3,
-            coverpage: {
-                '/en/': '_coverpage.md',
-                '/': '_coverpage.md',
-            },
+            coverpage: true,
             relativePath: true,
             themeColor: '#e93636',
             sidebarDisplayLevel: 0, // set sidebar display level
@@ -123,15 +121,9 @@
             },
             search: {
                 paths: 'auto',
-                maxAge: 26400000, // 过期时间，单位毫秒，默认一天
-                placeholder: {
-                    '/en/': 'Please enter your search',
-                    '/': '请输入搜索内容'
-                },
-                noData: {
-                    '/': '找不到结果',
-                    '/en/': 'No Results'
-                },
+                maxAge: 26400000, // Expiration time, default one day
+                placeholder: 'Type to search',
+                noData: 'No Results!',
                 depth: 2
             },
             tabs: {
@@ -142,18 +134,9 @@
                 tabHeadings: true       // default
             },
             copyCode: {
-                buttonText: {
-                    '/en/': 'Copy',
-                    '/': '复制',
-                },
-                errorText:  {
-                    '/en/': 'Error',
-                    '/': '失败',
-                },
-                successText: {
-                    '/en/': 'Success',
-                    '/': '成功',
-                }
+                buttonText: 'Copy',
+                errorText: 'Error',
+                successText: 'Success'
             }
             // repo: 'https://github.com/hacklcx/HFish',
         }

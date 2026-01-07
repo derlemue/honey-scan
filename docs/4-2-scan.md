@@ -1,38 +1,22 @@
-#### 扫描感知
+#### Scan Sensing
 
-该页面用于展示HFish蜜罐节点被TCP、UDP和ICMP三种协议的全端口扫描探测行为。
+This page displays TCP, UDP, and ICMP scan attempts detected by HFish Nodes.
 
-![image-20210730154355445](https://hfish.net/images/20210730154357.png)
+![scan_sensing](../images/20210730154357.png)
 
-即使节点相关端口没有开放，HFish仍能记录下扫描行为，此外，HFish还会记录节点主机本身外联行为。
+Even if a port is closed, HFish can record the scan attempt.
 
-目前扫描感知列表内能够展示的信息如下：
+**Recorded Data:**
+- Scanner IP
+- Threat Intelligence
+- Target Node & Port
+- Scan Type (SYN, Connect, etc.)
 
-```
-1、扫描IP
-2、威胁情报
-3、被扫描节点
-4、被扫描IP
-5、扫描类型
-6、被扫描端口
-7、节点位置
-8、扫描开始时间
-9、扫描持续时间
-```
+> **Note for Windows Nodes**: Requires **WinPcap** for full scan sensing functionality.
+[Download WinPcap 4.1.3](https://www.winpcap.org/install/bin/WinPcap_4_1_3.exe)
 
-`注意：Windows节点的扫描感知依赖WinPcap，需要手动进行下载安装！`
+#### Common False Positives
 
-WinPcap官方链接：https://www.winpcap.org/install/bin/WinPcap_4_1_3.exe
+Since HFish Nodes monitor all traffic, if you deploy a node on a laptop or machine performing regular business tasks, you may see "self-generated" alerts (e.g., visiting websites triggering port 445 checks etc.).
 
-
-#### 扫描感知异常
-
-HFish通过节点端构造“蜜罐服务”，因此，**部署节点的机器不建议运行任何正常业务**，但很多用户往往会将**正常业务使用的笔记本、虚拟机作为节点机器**。
-
-这种情况下，扫描数据常常会记录下用户软件访问网络的信息，利用Windows用户中，HFish经常检测到TCP/445端口的被访问或访问情况。
-
-此外，有很多用户反馈，将蜜罐节点部署在外网数日早上到海量扫描攻击，导致HFish页面响应慢，如果对扫描探测不敏感，可以选择点击页面左上角开关暂时关闭扫描感知功能。
-
-如果您的扫描感知出现了其他问题，欢迎加入官方交流微信群反馈。
-
-![image-20220729162931543](http://img.threatbook.cn/hfish/image-20220729162931543.png)
+**Recommendation**: Deploy nodes on dedicated servers or idle VMs.

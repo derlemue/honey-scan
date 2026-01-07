@@ -1,7 +1,8 @@
-#### 节点升级失败原因：
+#### Node Upgrade Failure Types
 
-1、如果部署多个节点，同时升级对管理端带宽有要求，一般情况都是带宽不够影响， 建议按每个节点1M给管理端分配带宽
+1. **Bandwidth Issues**: If upgrading multiple nodes simultaneously, ensure the Management Server has sufficient bandwidth (Recommend 1Mbps allocated per node) or upgrade in batches.
 
-2、如果带宽足够，可以看下节点日志，在安装目录的logs目录下   client.log 文件，加用户群提供下报错
+2. **Log Check**: If bandwidth is sufficient, check the node logs.
+   Location: `logs/client.log` in the installation directory.
 
-![image-20220729162931543](http://img.threatbook.cn/hfish/image-20220729162931543.png)
+![node_error](http://img.threatbook.cn/hfish/image-20220729162931543.png)

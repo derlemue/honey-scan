@@ -1,17 +1,15 @@
-#### 场景介绍
+#### Application Scenarios
 
-> ##### 内网环境 #####
+> **Intranet Environment**
 
-1. 内网办公/内部服务器失陷检测场景
-2. 内部人员风险
+1. Intranet Office / Internal Server Breach Detection
+2. Insider Threat Risk
 
+> **Internet / Extranet Environment**
 
-> ##### 外网环境 #####
-
-1. 外网威胁感知场景
-2. 外网情报生产场景
-3. 外网溯源反制场景
-4. 云环境风险感知场景
-5. 员工账号密码遗失感知场景
-6. 员工安全意识培训场景
-
+1. Internet Threat Awareness
+2. Threat Intelligence Production
+3. Attacker Attribution & Countermeasures
+4. Cloud Environment Risk Awareness
+5. Employee Account Credential Loss
+6. Security Awareness Training

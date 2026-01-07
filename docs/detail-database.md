@@ -1,17 +1,19 @@
+#### Database Configuration
 
-#### 数据库配置
+Manage database connection and data retention.
 
-该页面用于更换数据库和清理历史数据。
+> **Database Management**
 
-#### 数据库管理
+HFish uses **SQLite** by default (suitable for intranet/low-traffic). For complex or high-traffic environments, we recommend **MySQL**.
 
-HFish默认使用SQLite数据库，该轻量级数据库可用于内网告警信息不多的环境，如果用户环境比较复杂，建议使用MySQL数据库。
+You can switch from SQLite to MySQL on this page.
+- Enter MySQL Host, Port, Username, Password.
+- **Data Migration**: Existing data will be automatically copied to MySQL during the switch.
 
-该页面提供更换数据库功能，用户只需按照要求填写数据库网络地址、端口、用户名和密码即可完成从SQLite切换到指定的MySQL数据库，切换过程不会丢失数据，老数据会自动复制到MySQL数据库。
+*Note: Migration is one-way (SQLite -> MySQL).*
 
-`注意：仅提供SQLite切换到MySQL数据库，不提供反向切换功能。`
+> **Data Cleaning**
 
-
-#### 数据清理
-
-由于历史数据过多可能拖慢HFish响应，用户可以自行选择清理“全部的数据”或“7天前的数据”，点击后需要验证当前使用者身份，清理攻击数据不会影响系统运行，也不会影响节点、模板和蜜罐服务。
+Manually clean up historical data to improve performance.
+- Clean **All Data**.
+- Clean **Data older than 7 days**.

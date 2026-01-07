@@ -1,21 +1,25 @@
-#### 账号失陷监控
+#### Account Asset Monitoring
 
-> 【威胁实体】-【账号资产】页面收集了所有被用来攻击的账号密码，通过配置可对企业失陷账号进行有效监控
+> **Overview**
 
-<img src="https://hfish.net/images/20210812135309.png" alt="image-20210506152344041" style="zoom:50%;" />
+The **[Threat Entity] - [Account Assets]** page collects all username/password combinations used by attackers against your honeypots.
 
-> 通过设定高级监测策略，辅助企业进行失陷账号监控，建议输入企业邮箱、企业域名、员工姓名等信息，随时监控泄漏
+![account_asset](../images/20210812135309.png)
 
-1、点击界面右上角【高级监测策略】
+> **Advanced Monitoring Policies**
 
-<img src="https://hfish.net/images/20210812135318.png" alt="image-20210401150526485" style="zoom: 50%;" />
+You can configure policies to monitor for compromised internal accounts. We recommend adding company emails, domains, and key employee names.
 
-2、按照规则要求，导入csv文件。
+1. Click **[Advanced Monitoring Policy]** in the top right corner.
 
-`注意！务必按照提示规则进行写入`
+![policy_btn](../images/20210812135318.png)
 
-<img src="https://hfish.net/images/20210812135326.png" alt="image-20210506153037454" style="zoom:33%;" />
+2. Import a CSV file following the provided template/rules.
 
-3、可查看到所有匹配高级监测策略的数据（带颜色），帮助安全人员精准排查泄漏账号。
+*Note: Follow the strict formatting rules in the template.*
 
-<img src="https://hfish.net/images/20210812135333.png" alt="image-20210506153041469" style="zoom:50%;" />
+![import_csv](../images/20210812135326.png)
+
+3. Matches will be highlighted, enabling security personnel to quickly identify leaked or compromised credentials.
+
+![matched_data](../images/20210812135333.png)

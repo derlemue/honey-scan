@@ -1,35 +1,26 @@
-#### 蜜罐市场
+#### Honeypot Market
 
-HFish作为一款免费产品，一直受到大家的关照，实在是太感谢各位啦！
+HFish is a free product, and we thank the community for its support!
 
-<img src="http://img.threatbook.cn/hfish/image-20220509130343927.png" alt="image-20220509130343927" style="zoom:33%;" />
+![market_intro](http://img.threatbook.cn/hfish/image-20220509130343927.png)
 
-我们开发自定义功能以后，很多社区热心用户贡献的自定义蜜罐，**HFish团队已经审核过以下自定义蜜罐代码安全性，大家可以安心下载使用。**
+We have verified the security of the following community-contributed custom honeypots.
 
+> **How to Use**
 
-> ##### 使用方法
+Go to **[Service Management]** -> **[Upload Service]** to upload these packages.
 
-进入【服务管理】-上传蜜罐，将安装包上传即可。
+| Custom Honeypot | Description | Contributor | Download | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| Baota Panel | Simulates Baota Panel Login | Royalnet | [Download](https://hfish.cn-bj.ufileos.com/service-baota.zip) | Not Indexed |
+| Huorong Security | Simulates Huorong Security Login | Storyteller | Included in 3.1.4 | Indexed |
+| Sangfor Tamper Proof | Simulates Sangfor Anti-Tamper | Storyteller | Included in 3.1.4 | Indexed |
+| ... | ... | ... | ... | ... |
 
-上传后，即可在「模版管理」和「节点管理」中添加此服务
+> **Contribute**
 
+Contact HFish team to contribute your custom honeypots!
 
-| 自定义蜜罐               | 描述                                                         | 捐赠者   | 自定义蜜罐下载地址                                           | 收录状态    |
-| ------------------------ | ------------------------------------------------------------ | -------- | ------------------------------------------------------------ | ----------- |
-| 宝塔系统蜜罐             | 仿真宝塔管理系统的Web登陆界面 | Royalnet | [点击下载](https://hfish.cn-bj.ufileos.com/service-baota.zip) | 尚未收录    |
-| 火绒终端安全管理系统蜜罐 | 仿真火绒终端安全管理系统的Web登陆界面 | 说书人   | 3.1.4已收录                                                  | 3.1.4已收录 |
-| 深信服网页防篡改系统蜜罐 | 仿真深信服网页防篡改系统的Web登陆界面 | 说书人   | 3.1.4已收录                                                  | 3.1.4已收录 |
-| 中科网威安全控制系统蜜罐 | 仿真中科网威安全控制系统的Web登陆界面 | 说书人   | 3.1.4已收录                                                  | 3.1.4已收录 |
-| CiscoVPN蜜罐             | 提供虚假的思科VPN后台登录Web界面 | 说书人   | 3.1.4已收录                                                  | 3.1.4已收录 |
+![joinus](../images/joinus.png)
 
-
-
-> ##### 蜜罐贡献渠道
-
-联系HFish工作人员提供安装包，我们将添加到此页文档中～
-
-![joinus](/images/joinus.png)
-
-
-`如有任何版权问题，请邮件honeypot@threatbook.cn，我们会在工作日24小时内回复相关问题。`
-
+For copyright issues, please contact `honeypot@threatbook.cn`.

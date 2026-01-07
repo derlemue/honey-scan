@@ -1,117 +1,114 @@
-#### Docker下载部署
+#### Docker Deployment
 
-Docker是我们推荐的部署方式之一，当前的版本拥有以下特性：
+Docker is one of our recommended deployment methods. The current version offers the following features:
 
-1. 自动升级：每小时请求最新镜像进行升级，升级不会丢失数据。
-2. 数据持久化：在宿主机/usr/share/hfish目录下建立data目录用于存放攻击数据，建立logs目录用于存放日志。
+1. **Automatic Upgrade**: Checks for the latest image every hour to upgrade without data loss.
+2. **Data Persistence**: Creates a `data` directory under `/usr/share/hfish` on the host to store attack data, and a `logs` directory for logs.
 
-`注意：当前Docker版本使用host模式启动，如果您不希望Docker的管理端开放除TCP/4433和TCP/4434以外的端口，可暂停管理端内置默认节点。`
+`Note: The current Docker version runs in host mode. If you do not want the Management Server to expose ports other than TCP/4433 and TCP/4434, you can stop the built-in default node on the Management Server.`
 
+#### Default Installation
 
+> **Step 1: Verify Docker is installed and running**
 
-#### Docker默认安装说明
-
-> ##### 确认主机中已安装并启动Docker #####
-
-```
+```bash
 docker version
 ```
 
-> ##### 运行HFish（框内全部复制，粘贴，执行即可） ##### 
+> **Step 2: Run HFish** (Copy and paste the entire block)
 
-```
+```bash
 docker run -itd --name hfish \
 -v /usr/share/hfish:/usr/share/hfish \
 --network host \
---privileged=true \
+--privileged=true \
 threatbook/hfish-server:latest
 ```
-正常情况下返回如下内容：
-<img src="https://hfish.net/images/4351638188574_.pic_hd.jpg" alt="4351638188574_.pic_hd" style="zoom:50%;" />
 
+Expected output:
+![docker_run_success](../images/4351638188574_.pic_hd.jpg)
 
+> **Step 3: Configure Automatic Upgrades** (Copy and paste the entire block)
 
-> ##### 配置为后续自动升级（框内全部复制，粘贴，执行即可） ##### 
-
-```
+```bash
 docker run -d    \
  --name watchtower \
  --restart unless-stopped \
   -v /var/run/docker.sock:/var/run/docker.sock  \
   --label=com.centurylinklabs.watchtower.enable=false \
---privileged=true \
+--privileged=true \
   containrrr/watchtower  \
   --cleanup  \
   hfish \
   --interval 3600
 ```
 
-正常情况下返回如下内容：
+Expected output:
+![watchtower_run_success](../images/4381638189986_.pic_hd.jpg)
 
-![4381638189986_.pic_hd](https://hfish.net/images/4381638189986_.pic_hd.jpg)
-
-
-
->  ##### 登陆HFish  ##### 
+> **Step 4: Login to HFish**
 
 ```
-登陆地址：https://[server]:4433/web/
-初始用户名：admin
-初始密码：HFish2021
+URL: https://[server_ip]:4433/web/
+Default User: admin
+Default Password: HFish2021
 ```
 
+#### Docker Upgrade Troubleshooting
 
-#### Docker升级失败情况
+If you have configured a Docker image proxy, Watchtower might fail. You can manually upgrade:
 
-如果已经配置了Docker镜像代理，有可能会导致watchower无法生效，手动执行：
-
-```
-docker pull threatbook/hfish-server:3.3.5  
-docker tag threatbook/hfish-server:3.3.5  threatbook/hfish-server:latest  
-docker rm -f hfish  
+```bash
+docker pull threatbook/hfish-server:latest
+docker stop hfish
+docker rm hfish
 docker run -itd --name hfish \
 -v /usr/share/hfish:/usr/share/hfish \
 --network host \
---privileged=true \
+--privileged=true \
 threatbook/hfish-server:latest
 ```
 
+#### Manual Docker Upgrade (Without Auto-Upgrade)
 
-#### 未配置自动升级，Docker单次手动升级
+If you haven't configured auto-upgrade, you can perform a one-time manual upgrade:
 
-> ##### 配置watchover（框内全部复制，粘贴，执行即可）
+> **Step 1: Run Watchtower Once**
 
-```
+```bash
 docker run -d    \
  --name watchtower \
  --restart unless-stopped \
   -v /var/run/docker.sock:/var/run/docker.sock  \
   --label=com.centurylinklabs.watchtower.enable=false \
---privileged=true \
+--privileged=true \
   containrrr/watchtower  \
   --cleanup  \
   hfish \
   --interval 10
 ```
 
-> ##### 等待升级成功后，登录Web管理页面，确认升级完成
+> **Step 2: Verify Upgrade**
+Log in to the web interface to check the version.
 
-> ##### 取消watchover自动升级
+> **Step 3: Stop Watchtower**
 
-```
+```bash
 docker stop watchtower
 ```
 
-完成watchover配置后，后续如果还需手动升级，只需要执行 docker start watchtower 和 docker stop watchtower 即可，不需要反复配置watchover。
+After the initial configuration, you can simply run `docker start watchtower` to upgrade and `docker stop watchtower` to stop it.
 
+#### Modifying Persistence Configuration
 
+To modify the configuration:
 
-#### Docker修改持久化配置并重启
+> **Step 1: Edit `config.toml`**
 
-> ##### 在/usr/share/hfish/config.toml下面修改配置
+Edit the file at `/usr/share/hfish/config.toml`.
 
-> ##### 重启docker容器
+> **Step 2: Restart Container**
 
-```
+```bash
 docker restart hfish
 ```

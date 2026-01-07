@@ -1,16 +1,14 @@
-#### 外网威胁感知场景
+#### Internet Threat Awareness
 
-> ##### 痛点
+> **Pain Points**
 
-大量业务上云，传统防火墙、IDS、IPS、NDR无法上云或上云后功能受限，最终导致安全感知能力极度弱化。开源情报质量差，大量无效告警，半自动化处置无法落地。
+As businesses move to the cloud, traditional hardware firewalls, IDS, IPS, and NDR solutions often cannot follow or have limited functionality, leading to a severe weakening of security visibility. Open-source threat intelligence is often poor quality with high noise, making semi-automated handling impossible.
 
-> ##### 推荐部署位置
+> **Recommended Deployment**
 
-该场景一般是将节点部署在互联网区，用来感知互联网来自自动化蠕虫、竞争对手和境外的 **真实威胁**，甚至发现针对客户的 **0day攻击**，通过和具有情报生产能力的 **情报平台** 对接，可以稳定准确的**生产私有威胁情报**。
+Deploy nodes in the Internet zone to sense **real threats** from automated worms, competitors, and overseas attackers. It can even detect **0-day attacks** targeting your organization. By integrating with **Threat Intelligence Platforms**, you can stably and accurately **generate private threat intelligence**.
 
+> **Deployment Notes**
 
-> ##### 部署注意事项：
-
-1. 该场景会捕捉到 **大量真实攻击行为** ，建议在部署前将蜜罐加入网络检测设备白名单中避免误报；
-2. 个别行业需要考虑监管单位扫描通报情况，建议在部署前建表报备蜜罐地址；
-
+1. **White-listing**: This scenario will capture a **massive amount of real attack traffic**. Suggest adding the honeypot IP to your network detection equipment's whitelist to avoid false alarms.
+2. **Compliance**: Some industries require reporting internet-facing assets to regulators. Ensure you register the honeypot address if required.

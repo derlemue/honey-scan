@@ -1,7 +1,7 @@
-#### 攻击来源
+#### Attack Source
 
-该页面用于通过汇聚本地蜜罐感知、云端情报、用户自定义情报和溯源反制获得的信息来刻画攻击者画像，成为企业的私有情报库。
+This page aggregates information from local honeypot data, cloud threat intelligence, custom intelligence, and attribution results to build a profile of the attacker. It serves as your private threat intelligence library.
 
-![image-20210506150145273](https://hfish.net/images/20210812135238.png)
+![attack_source](../images/20210812135238.png)
 
-`注意：该页面已计划将于下个版本进行调整。`
+*Note: This page is scheduled for optimization in future versions.*

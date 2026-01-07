@@ -1,24 +1,15 @@
+#### Advanced Usage Scenarios
 
-#### 进阶应用
+This chapter introduces advanced usage scenarios.
 
-该章节介绍几种HFish进阶用法，为避免浪费用户时间，以下内容可能需要用户了解专项背景信息：
+**Prerequisites:**
 
-```
-1、使用自定义Web蜜罐，需要对前端有一定了解；
+1. **Custom Web Honeypots**: Requires basic frontend knowledge (HTML/JS).
+2. **Account Monitoring**: Requires knowledge of organization's digital assets.
+3. **Decoys**: Requires basic Linux/Windows system knowledge.
+4. **Attribution**: Requires understanding of honeypot triggers.
+5. **Uninstall**: Requires system administration knowledge.
 
-2、使用HFish监控企业是否有账号外泄，可收集企业邮箱后缀、员工姓名等信息，并基于该信息进行实时监控。
+For other scenarios, join our official discussion group.
 
-3、挥洒蜜饵诱骗攻击者，需要对Linux或Windows和业务配置文件有一定了解；
-
-4、需要了解所有蜜罐触发方式和触发状态，需要部分技术知识；
-
-5、希望卸载HFish，需要部分Linux或Windows技术知识；
-
-6、当前进阶应用分为四个不同的模块，对应不同使用需求
-```
-
-
-其他场景和进阶使用需求，可以加入官方微信群讨论：
-
-![joinus](/images/joinus.png)
-
+![joinus](../images/joinus.png)

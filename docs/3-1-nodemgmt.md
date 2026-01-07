@@ -1,38 +1,41 @@
-#### 添加/删除节点
+#### Manage Nodes
 
-#### 内置节点
+#### Built-in Node
 
-安装HFish管理端后，在管理端所在机器上会默认建立节点感知攻击，该节点被命名为【内置节点】。
+After installing the HFish Management Server, a default node is automatically created on the server to detect attacks. This node is named **Built-in Node**.
 
-该节点将默认开启部分服务，包括FTP、SSH、Telnet、Zabbix监控系统、Nginx蜜罐、MySQL蜜罐、Redis蜜罐、HTTP代理蜜罐、ElasticSearch蜜罐和通用TCP端口监听。
+This node enables several services by default, including FTP, SSH, Telnet, Zabbix Monitor, Nginx, MySQL, Redis, HTTP Proxy, ElasticSearch, and generic TCP listeners.
 
-`注意：该节点不能被删除，但可以暂停。`
+`Note: The Built-in Node cannot be deleted, but it can be paused.`
 
-<img src="https://hfish.net/images/image-20210902210912371.png" alt="image-20210902210912371" style="zoom:50%;" />
+![builtin_node](../images/image-20210902210912371.png)
 
+#### Add New Node
 
-#### 新增节点
+> **Step 1: Go to [Node Management] page and click [Add Node]**
 
-> ##### 进入【节点管理】页面，点击【增加节点】
+![add_node](../images/image-20210902172749029.png)
 
-<img src="https://hfish.net/images/image-20210902172749029.png" alt="image-20210902172749029" style="zoom:33%;" />
+> **Step 2: Select the installation package and callback address**
 
-> ##### 根据节点设备类型选择对应的安装包和回连地址
+Choose the package corresponding to your node's operating system.
 
-<img src="https://hfish.net/images/image-20210902172832815.png" alt="image-20210902172832815" style="zoom:33%;" />
+![select_os](../images/image-20210902172832815.png)
 
-> ##### 回连地址设置
+> **Step 3: Configure Callback Address**
 
-HFish会自动获取当前服务器IP地址，但是例如在云环境，有时候获取的是内网地址，用户需要确保该回连地址和端口确实可以被所有节点联通。
+HFish automatically detects the current server IP. However, in cloud environments or complex networks, this might be an internal IP. **You must ensure the configured callback address (IP and Port) is accessible by all nodes.**
 
-<img src="https://hfish.net/images/image-20210902172916191.png" alt="image-20210902172916191" style="zoom:33%;" />
+![callback_addr](../images/image-20210902172916191.png)
 
-> ##### 在节点机器执行命令语句或安装包，即可成功部署节点。
+> **Step 4: Execute Command**
 
+Copy the generated command or download the installer and run it on the node machine to complete the deployment.
 
+#### Delete Node
 
-#### 删除节点
+> **Go to [Node Management], find the node, and click [Delete].**
 
-> ##### 进入【节点管理】页面，在节点列表中找到要删除的节点，点击该节点右侧【删除】，HFish需要二次验证您的管理员身份，输入admin密码后，节点将被删除。
+HFish requires a secondary confirmation (Admin password) to prevent accidental deletions.
 
-节点被删除后，节点端进程会自动退出，但程序会保留在原有路径，需要手动二次删除，管理端上已收集的关于该节点的所有攻击数据不会丢失，仍然能查看。
+Once deleted, the node process will automatically exit. However, the program files will remain in the installation directory and must be manually removed if desired. All historical attack data collected from this node will be retained and remains viewable in the Management Server.

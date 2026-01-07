@@ -1,74 +1,59 @@
+#### Custom Web Honeypot
 
-#### 自定义Web蜜罐
+> **Download Template**
 
-> Web蜜罐样例
+Download the official HFish Custom Web Honeypot template:
+[https://hfish.net/service-demo.zip](https://hfish.net/service-demo.zip)
 
-从以下地址下载HFish官方提供的自定义Web蜜罐模板
+Unzip to get the `index.html` file.
 
-https://hfish.net/service-demo.zip  
+> **index.html Analysis**
 
-解压后获得index.html文件。  
+- `<form>`: Defines how the login form submits data. See "Creating a New Login Page" below.
+- `<script>`: Defines the JSONP calls (used for attacker attribution).
 
+> **portrait.min.js Analysis**
 
-> index.html文件中的代码功能
+This file utilizes JSONP to attempt to identify the attacker. If the attacker is logged into certain social platforms, this script attempts to retrieve their account info.
 
-&lt;form&gt;中的代码明确了页面上账密表单的提交方式，具体利用方式参考下文“制作全新的登陆页面”
-&lt;script&gt;中的代码明确了调用jsonp的方式
+*Note: This relies on specific browser behaviors (like Chrome < v80) and may trigger antivirus alerts. You can remove the reference to `portrait.min.js` in `index.html` if you do not want this aggressive attribution feature.*
 
+HFish community welcomes contributions of new vulnerability utilization code for attribution.
 
-> portrait.min.js 文件中的代码功能
+#### Creating a New Login Page
 
-该文件是jsonp溯源功能的利用代码，攻击者在已登录其他社交平台的情况下，成功利用会让蜜罐获得部分社交平台的账号信息。
+You can create a completely custom login page (e.g., mimicking your company's OA system) by modifying the form elements of any HTML page.
 
-本代码因为利用了Chrome内核浏览器v80版本之前的漏洞，具有一定的时效性，随着攻击者更新自己的浏览器，利用代码可能失效，并有可能让攻击者在访问该页面时触发其杀毒软件报警。
+Open `index.html` and modify the form elements as shown:
 
-您可以选择删除index.html中引用portrait.min.js的部分代码，或者自行优化portrait.min.js代码，补全更多反制方法。
+![form_elements](../images/20210728213641.png)
 
-HFish社区非常期待用户贡献漏洞利用代码。
+#### Packaging and Uploading
 
+> **Create Zip Package**
 
+Package all static files (index.html, js, css, images) into a zip file named `service-xxx.zip`.
+- Must start with `service-`.
+- Must be `.zip` format.
+- Cannot contain "web" or "root" in the custom name part.
 
-#### 制作全新的登陆页面
+![zip_package](../images/20210728213740.png)
 
-用户还可以自己制作一个全新的登陆页面，通过替换表单元素实现“定制开发”
+> **Upload Package**
 
-使用编辑器打开主页文件index.html，按照下面图片的提示修改表单元素。
+Go to **[Service Management]** -> **[Custom Service]** and upload your zip file.
 
+![upload_package](../images/20210728213815.png)
 
-![蜜罐web页面表格元素](https://hfish.net/images/20210728213641.png)
+> **Configure Service**
 
+Once uploaded, you can add this new service to any node or template.
 
+![config_service](../images/20210728213852.png)
 
-#### 打包并上传到蜜罐的管理后台
+#### Troubleshooting: "not found index.html"
 
-> 制作自定义蜜罐压缩包
+This usually happens if the zip file has a nested directory structure (e.g., `service-oa.zip/service-oa/index.html`).
+**Ensure `index.html` is at the root of the zip file.** Select all files inside your folder and zip them directly.
 
-把所有的静态文件文件打包名为“service-xxx.zip”文件，包括index.html 、portrait.js 以及其他所有格式的静态文件和文件夹。
-
-`注意：文件命名为规范格式前缀 **必须** 为“service-”虽然用户可以修改“xxx”为适当的名字，但不能使用“web”和“root”字样，且压缩包 **必须** 为.zip格式。`
-
-![image-20210508222121613](https://hfish.net/images/20210728213740.png)
-
-
-
-> 上传自定义蜜罐压缩包
-
-![image-20210508213915879](https://hfish.net/images/20210728213815.png)
-
-
-
-> 配置新增服务页面
-
-![image-20210508221316072](https://hfish.net/images/20210728213852.png)
-
-如果一切正常，用户已经可以在【节点管理】和【模板管理】页面中使用该自定义蜜罐了。
-
-
-
-#### 特别注意：如果上传服务包，遇到not found index.html的报错
-
-这种情况，往往是因为所有机器的默认压缩是二层嵌套。
-
-可直接到资源包文件夹，选择全部文件后，直接右键压缩。再将压缩包上传即可
-
-![image-20220806141310886](http://img.threatbook.cn/hfish/image-20220806141310886.png)
+![zip_fix](../images/20220806141310886.png)

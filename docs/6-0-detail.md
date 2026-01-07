@@ -1,5 +1,3 @@
+#### Functional Details
 
-#### 详细功能说明
-
-该章节按照HFish菜单栏顺序逐页介绍具体功能点。
-
+This chapter introduces specific functions page by page, following the order of the HFish menu.
