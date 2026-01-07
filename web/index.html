@@ -1561,6 +1561,10 @@
         }, 30000);
 
         // === MAP PAGE CLOUD INTELLIGENCE INJECTOR ===
+        // DISABLED: This script breaks the original Local/Cloud Intelligence panels
+        // The React application manages these panels internally and overwrites manual DOM injections
+        // Keeping the code for future reference but not executing it
+        /*
         const injectMapCloudIntelligence = async () => {
             try {
                 // Only run on map page
@@ -1710,6 +1714,7 @@
         if (location.pathname.includes('/index') || location.hash.includes('index')) {
             setTimeout(injectMapCloudIntelligence, 2000); // Wait for page to load
         }
+        */
 
     </script>
 
