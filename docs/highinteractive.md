@@ -4,7 +4,7 @@ HFish currently provides two types of high-interaction honeypots: **High-Interac
 
 #### Test Accounts
 
-```
+```bash
 root / 123456
 ```
 

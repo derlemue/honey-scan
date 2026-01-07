@@ -7,7 +7,7 @@ Decoys (or Honey Tokens) are fake high-value files (e.g., VPN config, password l
 HFish Decoys add **Precise Breach Detection**. Each generated decoy file is **unique**. If an attacker steals a file from Host A and uses the credentials inside it to attack Host B (the honeypot), HFish knows exactly which decoy file was used, pinpointing the source of the leak (Host A).
 
 **Example:**
-```
+```text
 1. Attacker breaches Server A.
 2. Finds 'payment_config.ini' (Decoy).
 3. Config contains fake DB credentials pointing to HFish.

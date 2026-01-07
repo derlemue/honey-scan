@@ -25,7 +25,7 @@ bash <(curl -sS -L https://hfish.net/webinstall.sh)
 
 > **Step 3: Login**
 
-```
+```bash
 URL: https://[server_ip]:4433/web/
 Default User: admin
 Default Password: HFish2021
@@ -75,7 +75,7 @@ sudo ./install.sh
 
 > **Step 6: Login**
 
-```
+```bash
 URL: https://[server_ip]:4433/web/
 Default User: admin
 Default Password: HFish2021

@@ -18,7 +18,7 @@ Unzip the package. Run `install.bat` located in the `HFish-Windows-amd64` direct
 
 > **Step 4: Login**
 
-```
+```bash
 URL: https://[server_ip]:4433/web/
 Default User: admin
 Default Password: HFish2021

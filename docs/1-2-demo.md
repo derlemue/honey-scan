@@ -2,7 +2,7 @@
 
 Seeing is believing. You can log in to the HFish Demo environment at any time to see its capabilities:
 
-```
+```bash
 Preview URL: https://demo.hfish.net:4433/web/
 User: hfishguest
 Password: HFish2021

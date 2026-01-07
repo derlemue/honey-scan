@@ -48,7 +48,7 @@ Expected output:
 
 > **Step 4: Login to HFish**
 
-```
+```bash
 URL: https://[server_ip]:4433/web/
 Default User: admin
 Default Password: HFish2021
