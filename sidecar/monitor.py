@@ -228,7 +228,7 @@ def update_threat_feed():
                         "location": f"{threat_data['location'].get('country_name', country)} {threat_data['location'].get('city', '')}",
                         "type": threat_data['judgments'][0] if threat_data['judgments'] else "Scanner",
                         "risk": threat_data['severity'].capitalize(),
-                        "time": str(row.get('create_time', 'Just now'))
+                        "time": str(row.get('create_time', ''))[5:16] if 'create_time' in row else "Just now"
                     })
                 else:
                      suspicious_cs.append({
@@ -236,7 +236,7 @@ def update_threat_feed():
                         "location": country,
                         "type": "Port Scanner",
                         "risk": "Medium",
-                        "time": str(row.get('create_time', 'Just now'))
+                        "time": str(row.get('create_time', ''))[5:16] if 'create_time' in row else "Just now"
                     })
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
