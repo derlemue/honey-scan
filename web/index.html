@@ -1561,11 +1561,19 @@
 
                 // Helper: Clear "No data" placeholders
                 const clearNoData = (box) => {
-                    const placeholders = Array.from(box.querySelectorAll('span')).filter(s => s.innerText.includes('identify specific reasons'));
+                    // Target specific HFish empty wrap classes or any element containing "No data"
+                    const emptyWraps = box.querySelectorAll('[class*="emptyWrap"]');
+                    emptyWraps.forEach(w => w.style.setProperty('display', 'none', 'important'));
+
+                    const placeholders = Array.from(box.querySelectorAll('span, p, div')).filter(el =>
+                        el.innerText.includes('identify specific reasons') || el.innerText === 'No data'
+                    );
                     placeholders.forEach(p => {
-                        // Find the container that holds the text and hide/clear it
-                        const container = p.parentElement;
-                        if (container) container.style.display = 'none';
+                        p.style.setProperty('display', 'none', 'important');
+                        // Also try to hide parent if it looks like a wrapper
+                        if (p.parentElement && p.parentElement.children.length < 3) {
+                            p.parentElement.style.setProperty('display', 'none', 'important');
+                        }
                     });
                 };
 
