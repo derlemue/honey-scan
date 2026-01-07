@@ -19,7 +19,7 @@ HFish Breach Sensing consists of **Decoy Customization**, **Distribution Interfa
 
 Customize your own baits in **[Breach Sensing]** -> **[Decoy Management]**.
 
-![decoy_custom](../images/image-20211116212624793.png)
+![decoy_custom](images/image-20211116212624793.png)
 
 **Variables:**
 - `$username$`: Account name (defaults to 'root' if empty).
@@ -28,14 +28,14 @@ Customize your own baits in **[Breach Sensing]** -> **[Decoy Management]**.
 
 **Preview:**
 
-![preview](../images/2811635164463_.pic_hd.jpg)
+![preview](images/2811635164463_.pic_hd.jpg)
 
 ##### 2. Distribution Interface
 
 Runs on HFish Nodes (Default TCP/7878).
 Enable it in **[Node Management]**.
 
-![distribution](../images/image-20211116213058329.png)
+![distribution](images/image-20211116213058329.png)
 
 Download command:
 `http://[Node_IP]:7878/api/v1/payload/[Token]`
@@ -50,4 +50,4 @@ When the decoy is touched or used:
 
 The alert will clearly show the **Source of Breach**.
 
-![alert_example](../images/image-20211116213801346.png)
+![alert_example](images/image-20211116213801346.png)

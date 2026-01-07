@@ -2,7 +2,7 @@
 
 According to HFish team research, Intranet Breach Detection is the most practical and commonly used scenario reported by commercial users. Compared to internet deployment, local intranet deployment allows for precise detection of lateral movement and scanning behaviors from compromised internal hosts. This provides higher fidelity alerts and enables stronger closed-loop responses.
 
-![intranet_scenario](../images/202311081253175.png)
+![intranet_scenario](images/202311081253175.png)
 
 > **Pain Points**
 
@@ -10,7 +10,7 @@ Internal office networks and servers are vulnerable due to various factors: unse
 
 > **Recommended Deployment**
 
-![deployment_diagram](../images/20210616174930.png)
+![deployment_diagram](images/20210616174930.png)
 
 This is the **most common** use case for honeypots in enterprise environments. It focuses on **agile and accurate** detection of compromised hosts, ransomware, and malicious behaviors.
 

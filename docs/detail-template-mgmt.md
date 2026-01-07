@@ -6,13 +6,13 @@ Templates allow you to define a standard set of up to **10 honeypot services** t
 
 Custom name, description, and select services.
 
-![create_template](../images/20210616170818.png)
+![create_template](images/20210616170818.png)
 
 > **Adjust Protocol**
 
 For Web, Network Device, Security Device, and IoT services, you can toggle between **HTTP** and **HTTPS** to better match your environment.
 
-![adjust_protocol](../images/20210812135158.png)
+![adjust_protocol](images/20210812135158.png)
 
 > **Apply Template**
 

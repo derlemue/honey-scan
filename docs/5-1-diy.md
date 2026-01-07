@@ -26,7 +26,7 @@ You can create a completely custom login page (e.g., mimicking your company's OA
 
 Open `index.html` and modify the form elements as shown:
 
-![form_elements](../images/20210728213641.png)
+![form_elements](images/20210728213641.png)
 
 #### Packaging and Uploading
 
@@ -37,23 +37,23 @@ Package all static files (index.html, js, css, images) into a zip file named `se
 - Must be `.zip` format.
 - Cannot contain "web" or "root" in the custom name part.
 
-![zip_package](../images/20210728213740.png)
+![zip_package](images/20210728213740.png)
 
 > **Upload Package**
 
 Go to **[Service Management]** -> **[Custom Service]** and upload your zip file.
 
-![upload_package](../images/20210728213815.png)
+![upload_package](images/20210728213815.png)
 
 > **Configure Service**
 
 Once uploaded, you can add this new service to any node or template.
 
-![config_service](../images/20210728213852.png)
+![config_service](images/20210728213852.png)
 
 #### Troubleshooting: "not found index.html"
 
 This usually happens if the zip file has a nested directory structure (e.g., `service-oa.zip/service-oa/index.html`).
 **Ensure `index.html` is at the root of the zip file.** Select all files inside your folder and zip them directly.
 
-![zip_fix](../images/20220806141310886.png)
+![zip_fix](images/20220806141310886.png)

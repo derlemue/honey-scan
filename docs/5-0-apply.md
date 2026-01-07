@@ -12,4 +12,4 @@ This chapter introduces advanced usage scenarios.
 
 For other scenarios, join our official discussion group.
 
-![joinus](../images/joinus.png)
+![joinus](images/joinus.png)

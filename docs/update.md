@@ -10,4 +10,4 @@ For v2.7.0+, HFish automatically detects updates. Click the **Rocket Icon** in t
 
 For v2.7.0+, click the **Rocket Icon**, select **[Upload Package]**, upload the upgrade package, and click **[Confirm Upgrade]**.
 
-![upgrade_ui](../images/image-20220118114818278.png)
+![upgrade_ui](images/image-20220118114818278.png)

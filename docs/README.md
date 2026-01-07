@@ -6,7 +6,7 @@ HFish is a free, community-driven honeypot platform designed for enterprise secu
 
 HFish is developed by **ThreatBook (Beijing Weibu Online Technology Co., Ltd)**.
 
-![joinus](../images/joinus.png)
+![joinus](images/joinus.png)
 
 HFish supports over 90 types of honeypot services, including basic network services, OA systems, CRM systems, NAS, Web servers, IT ops platforms, security products, wireless APs, switches/routers, email systems, and IoT devices.
 
@@ -48,7 +48,7 @@ In HFish, the **Management Server** is responsible for **data analysis and visua
 
 **Module Relationship Diagram:**
 
-![architecture](../images/20210616174908.png)
+![architecture](images/20210616174908.png)
 
 #### Our Story
 

@@ -21,6 +21,6 @@ Go to **[Service Management]** -> **[Upload Service]** to upload these packages.
 
 Contact HFish team to contribute your custom honeypots!
 
-![joinus](../images/joinus.png)
+![joinus](images/joinus.png)
 
 For copyright issues, please contact `honeypot@threatbook.cn`.

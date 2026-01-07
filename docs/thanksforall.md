@@ -19,4 +19,4 @@ Project Address: [https://github.com/hacklcx/HFish](https://github.com/hacklcx/H
 
 Join our WeChat Group:
 
-![joinus](../images/joinus.png)
+![joinus](images/joinus.png)

@@ -2,7 +2,7 @@
 
 HFish provides four pages to view **Attack Details**: **Attack List**, **Scan Sensing**, **Attack Source**, and **Account Assets**.
 
-![attack_overview](../images/image-20210902143712779.png)
+![attack_overview](images/image-20210902143712779.png)
 
 These four functions correspond to different data scenarios:
 

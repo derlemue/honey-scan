@@ -3,7 +3,7 @@
 1. Click **[Add Node]**.
 2. Select the **Opearting System** for your node.
 
-![add_node](../images/20210616171500.png)
+![add_node](images/20210616171500.png)
 
 **Deployment Options:**
 
@@ -14,7 +14,7 @@
 - **Windows**:
   1. **Binary Download**: Download, upload to node, and run.
 
-![node_deploy_linux](../images/20210616172029.png)
+![node_deploy_linux](images/20210616172029.png)
 
 ### Select Service Template
 
@@ -22,14 +22,14 @@
 
 *Recommendation for Windows Users: Temporarily disable antivirus software if it interferes with installation.*
 
-![select_template](../images/20210616173018.png)
+![select_template](images/20210616173018.png)
 
 > **Status Transitions:**
 > 1. **Enabled**: Configuration pushed.
 > 2. **Online**: Service successfully started.
 > 3. **Offline**: Service failed to start. Check logs or troubleshooting guide.
 
-![status_enabled](../images/20210616173055.png)
+![status_enabled](images/20210616173055.png)
 
 ### Host Breach Detection (Decoy Injection)
 
@@ -37,7 +37,7 @@ This feature deploys "Honey Baits" (Decoys) onto the node host itself. These are
 
 When the command is run on the host, it generates a unique "backup file" containing fake credentials. If an attacker finds this file and tries to use the credentials, HFish detects the breach.
 
-![breach_detection](../images/20210812135104.png)
+![breach_detection](images/20210812135104.png)
 
 ### Delete Node
 

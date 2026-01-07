@@ -26,7 +26,7 @@ Default Password: HFish2021
 *Note: You must include the `/web/` path in the URL.*
 
 Successful installation will show the default node in the "Node Management" page:
-![node_mgmt](../images/image-20210914113134975.png)
+![node_mgmt](images/image-20210914113134975.png)
 
 #### Important Notes
 

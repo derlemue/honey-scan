@@ -17,6 +17,6 @@ HFish provides two ways to use MySQL/MariaDB:
 1. **Initial Install**: Choose MySQL/MariaDB during the first installation.
 2. **Post-Install Migration**: If you are already using SQLite, you can migrate to MySQL via the web interface. Log in as admin and navigate to the "Database Configuration" page to follow the migration guide.
 
-![db_config](../images/image-20211116210129137.png)
+![db_config](images/image-20211116210129137.png)
 
 `Note: HFish only supports migrating from SQLite to MySQL/MariaDB. Reverse migration is not supported.`

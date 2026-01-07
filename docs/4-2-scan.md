@@ -2,7 +2,7 @@
 
 This page displays TCP, UDP, and ICMP scan attempts detected by HFish Nodes.
 
-![scan_sensing](../images/20210730154357.png)
+![scan_sensing](images/20210730154357.png)
 
 Even if a port is closed, HFish can record the scan attempt.
 

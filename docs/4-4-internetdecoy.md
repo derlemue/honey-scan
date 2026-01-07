@@ -29,9 +29,9 @@ HFish provides **Customization**, **Distribution**, and **Alerting**.
 
 Go to **[Breach Sensing]** -> **[Decoy Management]** to create new decoys.
 
-![decoy_mgmt](../images/image-20220525224243205.png)
+![decoy_mgmt](images/image-20220525224243205.png)
 
-![create_decoy](../images/image-20220525224216905.png)
+![create_decoy](images/image-20220525224216905.png)
 
 **Variables:**
 - `$username$`: Defaults to 'root' if no dictionary is provided.
@@ -40,18 +40,18 @@ Go to **[Breach Sensing]** -> **[Decoy Management]** to create new decoys.
 
 **Preview:**
 
-![decoy_preview](../images/2811635164463_.pic_hd.jpg)
+![decoy_preview](images/2811635164463_.pic_hd.jpg)
 
 #### 2. Distribution
 
 The **Distribution Interface** runs on HFish Nodes (Default TCP/7878).
 Enable it in **[Node Management]**.
 
-![dist_enable](../images/image-20211116213058329.png)
+![dist_enable](images/image-20211116213058329.png)
 
 Once enabled, visit the distribution URL from the target machine (the machine you want to protect) to download a unique decoy.
 
-![download_decoy](../images/image-20220525224602527.png)
+![download_decoy](images/image-20220525224602527.png)
 
 Run the generated command on the target business server to deploy the decoy.
 
@@ -59,6 +59,6 @@ Run the generated command on the target business server to deploy the decoy.
 
 When an attacker accesses the bait URL (Honey Marker) or uses the bait credentials (Honey Bait) to log into a honeypot, HFish records it.
 
-![decoy_alert](../images/image-20211222095822939.png)
+![decoy_alert](images/image-20211222095822939.png)
 
 The alert will show the **Source of Breach** (which machine the decoy was stolen from).

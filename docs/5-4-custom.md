@@ -8,7 +8,7 @@ The "Custom Honeypot" feature in HFish is primarily an **interface to receive da
 
 Go to the HFish Management Page for the Custom Honeypot service. View the configuration to find the `apikey`.
 
-![api_key](../images/image-20221031222131166.png)
+![api_key](images/image-20221031222131166.png)
 
 > **2. Report Data**
 
@@ -22,8 +22,8 @@ Use the API Key to POST data to the HFish Management Server.
 
 **Example:**
 
-![post_example](../images/image-20211027205827645.png)
+![post_example](images/image-20211027205827645.png)
 
 **Result in Dashboard:**
 
-![result](../images/image-20211027205939646.png)
+![result](images/image-20211027205939646.png)

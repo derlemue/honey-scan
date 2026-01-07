@@ -23,4 +23,4 @@ Context: Join our community for discussions.
 
 #### Contact Us
 
-![joinus](../images/joinus.png)
+![joinus](images/joinus.png)

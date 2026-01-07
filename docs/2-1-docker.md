@@ -26,7 +26,7 @@ threatbook/hfish-server:latest
 ```
 
 Expected output:
-![docker_run_success](../images/4351638188574_.pic_hd.jpg)
+![docker_run_success](images/4351638188574_.pic_hd.jpg)
 
 > **Step 3: Configure Automatic Upgrades** (Copy and paste the entire block)
 
@@ -44,7 +44,7 @@ docker run -d    \
 ```
 
 Expected output:
-![watchtower_run_success](../images/4381638189986_.pic_hd.jpg)
+![watchtower_run_success](images/4381638189986_.pic_hd.jpg)
 
 > **Step 4: Login to HFish**
 

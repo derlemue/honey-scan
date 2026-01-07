@@ -8,13 +8,13 @@ For every IP captured by honeypots, HFish generates an **IP Profile** for deeper
 
 Click the **[Details]** button in the [Attack Source] page to view the IP Profile.
 
-![ip_profile](../images/image-20220526111406301.png)
+![ip_profile](images/image-20220526111406301.png)
 
 > **Threat Level**
 
 Combines cloud intelligence and local detection counts to provide an intuitive Threat Level.
 
-![threat_level](../images/image-20220526111541932.png)
+![threat_level](images/image-20220526111541932.png)
 
 > **Community Data**
 
@@ -27,8 +27,8 @@ Aggregates **Attribution Intelligence** and **Device Information** from the enti
 3. **Heatmap**: Is it automated (script) or manual? Time patterns?
 4. **Local Attack Chain**: View the full history of this IP against your nodes (up to 30 days history displayed).
 
-![heatmap](../images/image-20220526112040812.png)
+![heatmap](images/image-20220526112040812.png)
 
-![attack_chain](../images/image-20220526112130356.png)
+![attack_chain](images/image-20220526112130356.png)
 
 *If you believe an IP is wrongly tagged as malicious (e.g., your own test IP), please contact honeypot@threatbook.cn.*

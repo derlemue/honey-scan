@@ -1,3 +1,3 @@
 #### Attacker Attribution & Countermeasures
 
-![attribution](../images/202311081253181.png)
+![attribution](images/202311081253181.png)

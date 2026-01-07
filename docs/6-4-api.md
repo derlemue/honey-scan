@@ -6,7 +6,7 @@ Supported Actions:
 2. **Get Attack Details**
 3. **Get Compromised Credentials (Brute-force)**
 
-![api_page](../images/20210730173725.png)
+![api_page](images/20210730173725.png)
 
 ### API Usage Examples
 

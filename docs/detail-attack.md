@@ -2,7 +2,7 @@
 
 This page allows you to view, aggregate, search, analyze, and export attack data captured by HFish.
 
-![attack_list](../images/20210730142413.png)
+![attack_list](images/20210730142413.png)
 
 **Aggregation:**
 HFish automatically aggregates repeated attacks from the same source IP against the same honeypot within a short period to reduce noise.
