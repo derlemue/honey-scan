@@ -119,6 +119,21 @@ services:
       - ./web/assets:/var/www/html/assets:ro
       - ./scripts:/var/www/html/scripts:ro
 
+  proxy:
+    image: nginx:alpine
+    container_name: hfish-proxy
+    restart: unless-stopped
+    ports:
+      - "4433:443"
+    volumes:
+      - ./config/proxy_ssl.conf:/etc/nginx/conf.d/default.conf
+      - ./config/entrypoint_proxy.sh:/docker-entrypoint.d/40-generate-certs.sh
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - hfish
+      - feed
+
 volumes:
   hfish_data:
   db_data:
