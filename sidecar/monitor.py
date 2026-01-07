@@ -205,7 +205,7 @@ def update_threat_feed():
     suspicious_cs = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 50"
+        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 200"
         logger.info(f"Executing Query: {query}")
         cursor.execute(query)
         rows = cursor.fetchall()
