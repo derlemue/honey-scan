@@ -1563,9 +1563,8 @@
                 }
 
                 /* FORCE CARDS TO EXPAND */
-                .index-cssmodule__rightCol-2h2WM .index-cssmodule__card-21Wx-,
-                div[class*="rightCol"] .el-card,
-                div[class*="rightCol"] div[class*="card"] {
+                div[class*="card"],
+                .el-card {
                     display: flex !important;
                     flex-direction: column !important;
                     flex: 1 1 auto !important; /* Grow to fill space */
@@ -1577,21 +1576,21 @@
                 }
 
                 /* CARD CONTENT EXPANSION */
-                .index-cssmodule__rightCol-2h2WM .index-cssmodule__card-21Wx- .index-cssmodule__content-2Wz2o,
-                div[class*="rightCol"] .el-card__body {
+                div[class*="content"],
+                .el-card__body {
                     flex: 1 1 auto !important;
                     display: flex !important;
                     flex-direction: column !important;
                     height: 100% !important;
                     min-height: 0 !important;
                     overflow: hidden !important; /* Container handles overflow */
-                    padding: 0 !important; /* We control padding in list */
+                    padding: 0 !important;
                 }
 
                 /* HIDE HFISH PLACEHOLDERS AGGRESSIVELY via CSS */
                 .HS_HIDDEN,
-                .index-cssmodule__emptyWrap-2wZ2k,
-                div[class*="emptyWrap"] {
+                div[class*="emptyWrap"],
+                div[class*="noData"] {
                     display: none !important;
                     visibility: hidden !important;
                     height: 0 !important;
@@ -1619,7 +1618,7 @@
                 ensureLayoutStyles();
 
                 const rightCol = document.querySelector('.index-cssmodule__rightCol-2h2WM') ||
-                    Array.from(document.querySelectorAll('[class*="leftCol"]')).find(el => el.getBoundingClientRect().left > 500);
+                    Array.from(document.querySelectorAll('[class*="rightCol"]')).find(el => el.getBoundingClientRect().left > 500);
                 if (!rightCol) return;
 
                 // 1. Clean up headers
@@ -1641,9 +1640,13 @@
                 const threatData = cachedThreatData;
                 if (!threatData) return;
 
-                const cards = Array.from(rightCol.querySelectorAll('.index-cssmodule__card-21Wx-'));
-                const hackerBox = cards.find(c => !c.classList.contains('index-cssmodule__doubtfulCsCard-2RIFX'));
-                const csBox = cards.find(c => c.classList.contains('index-cssmodule__doubtfulCsCard-2RIFX'));
+                const cards = Array.from(rightCol.querySelectorAll('div[class*="card"]'));
+                if (cards.length < 2) return;
+
+                // Identify boxes implicitly if specific classes fail
+                // specific class: index-cssmodule__doubtfulCsCard-2RIFX
+                const csBox = cards.find(c => c.className.includes('doubtfulCsCard')) || cards[1];
+                const hackerBox = cards.find(c => !c.className.includes('doubtfulCsCard') && c !== csBox) || cards[0];
 
                 if (!hackerBox || !csBox) return;
 
@@ -1658,15 +1661,14 @@
 
                         // Check for bad text
                         if (el.childNodes.length === 1 && el.childNodes[0].nodeType === 3) {
-                            const text = el.innerText;
-                            if (text === 'No data' || text.includes('identify specific reasons')) {
+                            const text = el.innerText.trim().toLowerCase();
+                            if (text === 'no data' || text.includes('identify specific reasons')) {
                                 el.classList.add('HS_HIDDEN'); // Hide via global CSS
-                                // Force inline just in case
-                                el.style.display = 'none';
+                                el.style.setProperty('display', 'none', 'important');
                             }
                         }
                         // Check for empty wrapper classes
-                        if (el.className && typeof el.className === 'string' && el.className.includes('emptyWrap')) {
+                        if (el.className && typeof el.className === 'string' && (el.className.includes('emptyWrap') || el.className.includes('noData'))) {
                             el.classList.add('HS_HIDDEN');
                         }
                     }
