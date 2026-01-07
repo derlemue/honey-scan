@@ -55,21 +55,7 @@
 
             // === VISUAL DEBUG BANNER ===
             window.addEventListener('DOMContentLoaded', () => {
-                try {
-                    const debugBanner = document.createElement('div');
-                    debugBanner.id = 'ci-debug-banner';
-                    debugBanner.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:5px 15px;z-index:999999;font-family:monospace;font-size:14px;border-bottom-left-radius:8px;border-bottom-right-radius:8px;border:1px solid #444;border-top:none;display:flex;gap:15px;align-items:center;";
-                    debugBanner.innerHTML = `
-                        <span id="db-status" style="font-weight:bold;color:#a855f7">INIT</span>
-                        <span id="db-network" style="color:#666">Net: ???</span>
-                        <span id="db-error" style="color:#ef4444;display:none"></span>
-                        <span id="db-retry" style="color:#fbbf24;display:none">Retries: 0</span>
-                    `;
-                    document.body.appendChild(debugBanner);
-                    console.log("[Cloud Intelligence] Debug banner injected.");
-                } catch (e) {
-                    console.error("[Cloud Intelligence] Failed to inject banner:", e);
-                }
+                // Debug banner removed
             });
 
             let retryCount = 0;
@@ -1787,6 +1773,44 @@
                     console.warn('[HoneyScan] No threat data available');
                     return;
                 }
+
+                // DEBUG: Inspect DOM structure
+                console.log('[HoneyScan] === DOM INSPECTION ===');
+                console.log('[HoneyScan] All div elements:', document.querySelectorAll('div').length);
+                console.log('[HoneyScan] Elements with "card":', document.querySelectorAll('[class*="card"]').length);
+                console.log('[HoneyScan] Elements with "el-":', document.querySelectorAll('[class*="el-"]').length);
+
+                // Try different selectors
+                const selectors = [
+                    '.el-card__body',
+                    '.el-card-body',
+                    '[class*="card"][class*="body"]',
+                    '.card-body',
+                    'div[class*="body"]'
+                ];
+
+                for (const selector of selectors) {
+                    const found = document.querySelectorAll(selector);
+                    console.log(`[HoneyScan] Selector "${selector}": ${found.length} elements`);
+                    if (found.length > 0) {
+                        console.log(`[HoneyScan] First match classes:`, found[0].className);
+                    }
+                }
+
+                // Look for elements containing "No data" or specific text
+                const allDivs = Array.from(document.querySelectorAll('div'));
+                const noDataDivs = allDivs.filter(div => {
+                    const text = div.textContent || '';
+                    return text.includes('No data') || text.includes('Trying to identify');
+                });
+                console.log(`[HoneyScan] Divs with "No data" text: ${noDataDivs.length}`);
+                if (noDataDivs.length > 0) {
+                    noDataDivs.forEach((div, i) => {
+                        console.log(`[HoneyScan] No-data div ${i}:`, div.className, div.getBoundingClientRect());
+                    });
+                }
+
+                return; // TEMPORARY: Stop here for debugging
 
                 // NEW APPROACH: Find all el-card__body elements on the right side
                 const allCardBodies = Array.from(document.querySelectorAll('.el-card__body'));
