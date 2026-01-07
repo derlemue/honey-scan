@@ -1551,61 +1551,92 @@
             const style = document.createElement('style');
             style.id = 'hs-layout-styles';
             style.innerHTML = `
-                /* FORCE RIGHT COLUMN FLEX LAYOUT */
+                /* V5 COLUMN TAKEOVER STYLES */
+                
+                /* Target Right Column */
                 .index-cssmodule__rightCol-2h2WM, 
                 div[class*="rightCol"] {
                     display: flex !important;
                     flex-direction: column !important;
-                    gap: 20px !important;
-                    justify-content: flex-start !important;
                     height: calc(100vh - 120px) !important;
                     min-height: 0 !important;
                 }
 
-                /* FORCE CARDS TO EXPAND & BE RELATIVE FOR OVERLAY */
-                div[class*="card"],
-                .el-card {
-                    display: flex !important;
-                    flex-direction: column !important;
-                    flex: 1 1 auto !important;
-                    min-height: 0 !important;
-                    height: auto !important;
-                    margin-bottom: 0 !important;
-                    visibility: visible !important;
-                    position: relative !important; /* CRITICAL FOR OVERLAY */
+                /* HIDE ALL ORIGINAL REACT CHILDREN */
+                .index-cssmodule__rightCol-2h2WM > *:not(.hs-custom-dashboard), 
+                div[class*="rightCol"] > *:not(.hs-custom-dashboard) {
+                    display: none !important;
+                    visibility: hidden !important;
+                    height: 0 !important;
+                    overflow: hidden !important;
                 }
 
-                /* HIDE ORIGINAL CONTENT VISUALLY (Optional safety net) */
-                div[class*="content"],
-                .el-card__body {
-                    flex: 1 1 auto !important;
+                /* CUSTOM DASHBOARD CONTAINER */
+                .hs-custom-dashboard {
                     display: flex !important;
                     flex-direction: column !important;
                     height: 100% !important;
-                    min-height: 0 !important;
-                    overflow: hidden !important;
-                    padding: 0 !important;
+                    gap: 20px !important;
+                    font-family: 'Outfit', sans-serif !important;
                 }
 
-                /* OVERLAY CONTAINER */
-                .hs-intelligence-overlay {
-                    position: absolute !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                    z-index: 99 !important;
-                    background-color: #050e21 !important; /* Match theme background to mask underlying content */
+                /* CUSTOM CARD STYLE */
+                .hs-custom-card {
+                    background-image: linear-gradient(180deg, rgba(8, 20, 41, 0.9) 0%, rgba(4, 12, 28, 0.95) 100%) !important;
+                    border: 1px solid rgba(49, 112, 167, 0.3) !important;
+                    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3) !important;
+                    border-radius: 4px !important;
                     display: flex !important;
                     flex-direction: column !important;
+                    flex: 1 1 50% !important; /* Split 50/50 */
+                    min-height: 0 !important;
                     overflow: hidden !important;
+                    position: relative !important;
+                }
+
+                /* CUSTOM HEADER */
+                .hs-custom-header {
+                    padding: 8px 15px !important;
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                    background: url('/img/title_bg.png') no-repeat center left !important; /* Try to mimic original if possible, or just solid */
+                    background-size: cover;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+                    display: flex;
+                    align-items: center;
+                    height: 32px;
+                }
+                .hs-custom-header::before {
+                    content: '';
+                    display: inline-block;
+                    width: 3px;
+                    height: 14px;
+                    background: #00d2ff;
+                    margin-right: 8px;
+                }
+
+                /* CUSTOM BODY */
+                .hs-custom-body {
+                    flex: 1 !important;
+                    overflow-y: auto !important;
+                    padding: 10px !important;
+                    scrollbar-width: thin;
+                    scrollbar-color: #2c5282 #0a1929;
                 }
 
                 /* STATUS HEADER */
                 .hs-cloud-status-brief {
-                    flex-shrink: 0 !important;
-                    background: rgba(0,0,0,0.2);
-                    padding: 5px 10px;
+                    padding: 8px 15px;
+                    background: rgba(0, 50, 100, 0.2);
+                    border: 1px solid rgba(0, 150, 255, 0.2);
+                    border-radius: 4px;
+                    margin-bottom: 10px;
+                    color: #fff;
+                    font-size: 12px;
+                    display: flex;
+                    justify-content: space-between;
+                    flex-shrink: 0;
                 }
             `;
             document.head.appendChild(style);
@@ -1625,15 +1656,7 @@
                     Array.from(document.querySelectorAll('[class*="rightCol"]')).find(el => el.getBoundingClientRect().left > 500);
                 if (!rightCol) return;
 
-                // 1. Clean up headers
-                rightCol.querySelectorAll('[class*="titleWrap"]').forEach(el => {
-                    el.style.setProperty('position', 'relative', 'important');
-                    el.style.setProperty('top', '0', 'important');
-                    el.style.setProperty('margin-top', '0', 'important');
-                    el.style.setProperty('margin-bottom', '10px', 'important');
-                });
-
-                // 2. Fetch Data (Optimized)
+                // 1. Fetch Data
                 if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 30000)) {
                     const data = await window.getThreatData();
                     if (data) {
@@ -1644,81 +1667,69 @@
                 const threatData = cachedThreatData;
                 if (!threatData) return;
 
-                const cards = Array.from(rightCol.querySelectorAll('div[class*="card"]'));
-                if (cards.length < 2) return;
+                // 2. CHECK FOR CUSTOM DASHBOARD
+                let customDashboard = rightCol.querySelector('.hs-custom-dashboard');
+                if (!customDashboard) {
+                    customDashboard = document.createElement('div');
+                    customDashboard.className = 'hs-custom-dashboard';
 
-                const csBox = cards.find(c => c.className.includes('doubtfulCsCard')) || cards[1];
-                const hackerBox = cards.find(c => !c.className.includes('doubtfulCsCard') && c !== csBox) || cards[0];
-
-                if (!hackerBox || !csBox) return;
-
-                // 3. Content Injection via Overlay
-                const processBox = (box, dataList, type) => {
-                    // Create or Get Overlay
-                    let overlay = box.querySelector('.hs-intelligence-overlay');
-                    if (!overlay) {
-                        overlay = document.createElement('div');
-                        overlay.className = 'hs-intelligence-overlay';
-                        // Move any existing title/header into the overlay? 
-                        // Actually, we want to KEEP the title bar if it's outside. 
-                        // Usually titles are above content.
-                        box.appendChild(overlay);
-                    }
-
-                    // Check if our list exists IN THE OVERLAY
-                    let list = overlay.querySelector('.hs-intelligence-list');
-                    if (!list) {
-                        list = document.createElement('div');
-                        list.className = 'hs-intelligence-list';
-                        list.style.cssText = 'flex: 1; overflow-y: auto; padding: 10px; font-family: Outfit, sans-serif; min-height: 0; color: white;';
-                        overlay.appendChild(list);
-                    }
-
+                    // Create Structure
+                    customDashboard.innerHTML = `
+                        <div class="hs-cloud-status-brief"></div>
+                        <div class="hs-custom-card" id="hs-hackers-card">
+                            <div class="hs-custom-header">Recent active hackers</div>
+                            <div class="hs-custom-body"></div>
+                        </div>
+                        <div class="hs-custom-card" id="hs-cs-card">
+                            <div class="hs-custom-header">The recent suspicious CS</div>
+                            <div class="hs-custom-body"></div>
+                        </div>
+                    `;
+                    rightCol.appendChild(customDashboard);
                 }
 
-                // Only update innerHTML if empty or version changed
-                if (list.childElementCount === 0 || list.dataset.ver !== getTsSignature()) {
-                    const rows = dataList.map(item => {
+                // 3. UPDATE DATA
+                const updateList = (cardId, items, type) => {
+                    const card = customDashboard.querySelector(cardId);
+                    if (!card) return;
+                    const body = card.querySelector('.hs-custom-body');
+
+                    // Only update if signature changed
+                    const currentSig = getTsSignature();
+                    if (body.dataset.ver === currentSig && body.childElementCount > 0) return;
+
+                    const rows = items.map(item => {
                         if (type === 'hacker') {
                             return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
-                                            <span style="color:#ff4d4f; font-weight:bold; width: 90px;">${item.ip}</span>
-                                            <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.location}</span>
-                                            <span style="color:#4a5568; width: 50px; text-align:right;">${item.time.split(' ')[1] || item.time}</span>
-                                        </div>`;
+                                        <span style="color:#ff4d4f; font-weight:bold; width: 90px;">${item.ip}</span>
+                                        <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.location}</span>
+                                        <span style="color:#4a5568; width: 50px; text-align:right;">${item.time.split(' ')[1] || item.time}</span>
+                                    </div>`;
                         } else {
                             return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
-                                            <span style="color:#faad14; font-weight:bold; width: 90px;">${item.ip}</span>
-                                            <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.type}</span>
-                                            <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 4px; border-radius:2px; font-size:10px;">${item.risk}</span>
-                                        </div>`;
+                                        <span style="color:#faad14; font-weight:bold; width: 90px;">${item.ip}</span>
+                                        <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.type}</span>
+                                        <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 4px; border-radius:2px; font-size:10px;">${item.risk}</span>
+                                    </div>`;
                         }
                     }).join('');
-                    list.innerHTML = rows;
-                    list.dataset.ver = getTsSignature();
-                }
-            };
 
-            // Helper to version data
-            const getTsSignature = () => Math.floor((cachedThreatData.timestamp || 0) / 10000).toString();
+                    body.innerHTML = rows;
+                    body.dataset.ver = currentSig;
+                };
 
-            processBox(hackerBox, (threatData.hackers || []).slice(0, 20), 'hacker');
-            processBox(csBox, (threatData.cs || []).slice(0, 20), 'cs');
+                updateList('#hs-hackers-card', (threatData.hackers || []).slice(0, 20), 'hacker');
+                updateList('#hs-cs-card', (threatData.cs || []).slice(0, 20), 'cs');
 
-            // Status Bar
-            let statusHeader = document.querySelector('.hs-cloud-status-brief');
-            if (!statusHeader) {
-                statusHeader = document.createElement('div');
-                statusHeader.className = 'hs-cloud-status-brief';
-                statusHeader.style.cssText = 'padding:10px 15px; background:rgba(0,10,30,0.4); border-left:3px solid #1890ff; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; color:#fff; flex-shrink: 0;';
-                rightCol.prepend(statusHeader);
+                // Update Status
+                const statusBrief = customDashboard.querySelector('.hs-cloud-status-brief');
+                const hCount = (threatData.hackers || []).length;
+                const cCount = (threatData.cs || []).length;
+                statusBrief.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
+
+            } catch (e) {
+                // Silent catch
             }
-            const hCount = (threatData.hackers || []).length;
-            const cCount = (threatData.cs || []).length;
-            statusHeader.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
-
-        } catch (e) {
-            // Silent catch to prevent console flooding
-        }
         };
 
         // 4. AGGRESSIVE LOOP (The "Enforcer")
