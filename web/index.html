@@ -1578,7 +1578,7 @@
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
         // Global State for Pagination
-        window.hsTableState = window.hsTableState || { page: 1, limit: 35 };
+        window.hsTableState = window.hsTableState || { page: 1, limit: 33 };
         window.hsThreatData = window.hsThreatData || [];
 
         // Shared Render Function
@@ -1609,8 +1609,30 @@
             if (window.hsTableState.page < 1) window.hsTableState.page = 1;
 
             // Update Pagination UI
+            // Update Pagination UI
+            // 1. Try Custom Footer (Legacy/fallback)
             const info = document.getElementById('hs-page-info');
             if (info) info.innerText = `${window.hsTableState.page}/${totalPages}`;
+
+            // 2. Try Native Header Integration
+            // We need to find the specific card again or pass it in. 
+            // Since we found 'body' earlier, we can traverse up to the card.
+            if (card) {
+                const pageInfo = card.querySelector('[class*="page-info"]');
+                const pageTotal = card.querySelector('[class*="page-total"]');
+
+                // Native structure is usually: <span>1</span> <span class="total">/1</span>
+                // We want to update it to: <span>1</span> <span class="total">/5</span>
+                // Or just replace the text content if structure allows.
+
+                if (pageInfo && pageInfo.firstChild) {
+                    // The first child is usually the current page text node
+                    pageInfo.firstChild.textContent = window.hsTableState.page;
+                }
+                if (pageTotal) {
+                    pageTotal.innerText = '/' + totalPages;
+                }
+            }
 
             // Slice Data
             const start = (window.hsTableState.page - 1) * limit;
@@ -1751,54 +1773,83 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <!-- PAGINATION FOOTER -->
-                            <div style="flex-shrink: 0; padding: 5px 10px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-size: 11px; color: #94a3b8;">
-                                <div style="cursor: pointer; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); user-select: none;" onclick="window.hsChangePage(-1)">&lt;</div>
-                                <div id="hs-page-info">1/5</div>
-                                <div style="cursor: pointer; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); user-select: none;" onclick="window.hsChangePage(1)">&gt;</div>
                             </div>
+                            <!-- PAGINATION FOOTER REMOVED - Using Native Header Controls -->
                         </div>`;
 
-                    // Pagination Control Function (Global)
-                    window.hsChangePage = (delta) => {
-                        const s = window.hsTableState;
-                        const total = Math.ceil(window.hsThreatData.length / s.limit);
-                        let next = s.page + delta;
-                        if (next < 1) next = total; // Wrap around (optional, or clamp: next = 1)
-                        if (next > total) next = 1; // Wrap around
+                    // INTEGRATE WITH NATIVE HEADER CONTROLS
+                    // Find the pagination wrapper in the card header
+                    const pagination = card.querySelector('[class*="pagenation"]'); // Note: 'pagenation' typo in HFish class
+                    if (pagination) {
+                        const leftBtn = pagination.querySelector('[class*="left"]');
+                        const rightBtn = pagination.querySelector('[class*="right"]');
 
-                        s.page = next;
-                        window.renderThreatTable();
-                    };
+                        // Helper to replace with clone to strip listeners and add ours
+                        const replaceBtn = (btn, delta) => {
+                            if (!btn) return;
+                            // Check if already hooked (avoid infinite cloning)
+                            if (btn.dataset.hsHooked === 'true') return;
 
-                    // Keyboard Navigation
-                    const handleKey = (e) => {
-                        if (!document.getElementById('hs-page-info')) return; // Only if widget exists
-                        if (e.key === 'ArrowLeft') window.hsChangePage(-1);
-                        if (e.key === 'ArrowRight') window.hsChangePage(1);
-                    };
+                            const newBtn = btn.cloneNode(true);
+                            btn.parentNode.replaceChild(newBtn, btn);
+                            newBtn.dataset.hsHooked = 'true';
 
-                    // Attach to window and parent (if possible)
-                    window.addEventListener('keydown', handleKey);
-                    try {
-                        if (window.parent && window.parent !== window) {
-                            window.parent.addEventListener('keydown', handleKey);
-                        }
-                    } catch (e) { /* Cross-origin block expected */ }
+                            newBtn.style.cursor = 'pointer';
+                            newBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                window.hsChangePage(delta);
+                            };
+                        };
 
-                    // Initial Render
-                    window.hsThreatData = threats;
-                    window.renderThreatTable();
+                        replaceBtn(leftBtn, -1);
+                        replaceBtn(rightBtn, 1);
+                    }
 
-                    // SET GLOBAL FLAG - prevents re-injection even if React re-renders
-                    dashboardInjected = true;
-                    console.log('[HoneyScan] Dashboard threat table injected (' + threats.length + ' threats)');
                 } catch (e) {
-                    console.error('[HoneyScan] Failed to inject table:', e);
+                    console.error('[HoneyScan] Error injecting table or hooks:', e);
                 }
+
+                // Pagination Control Function (Global)
+                window.hsChangePage = (delta) => {
+                    const s = window.hsTableState;
+                    const total = Math.ceil(window.hsThreatData.length / s.limit);
+                    let next = s.page + delta;
+                    if (next < 1) next = total; // Wrap around (optional, or clamp: next = 1)
+                    if (next > total) next = 1; // Wrap around
+
+                    s.page = next;
+                    window.renderThreatTable();
+                };
+
+                // Keyboard Navigation
+                const handleKey = (e) => {
+                    if (!document.getElementById('hs-page-info')) return; // Only if widget exists
+                    if (e.key === 'ArrowLeft') window.hsChangePage(-1);
+                    if (e.key === 'ArrowRight') window.hsChangePage(1);
+                };
+
+                // Attach to window and parent (if possible)
+                window.addEventListener('keydown', handleKey);
+                try {
+                    if (window.parent && window.parent !== window) {
+                        window.parent.addEventListener('keydown', handleKey);
+                    }
+                } catch (e) { /* Cross-origin block expected */ }
+
+                // Initial Render
+                window.hsThreatData = threats;
+                window.renderThreatTable();
+
+                // SET GLOBAL FLAG - prevents re-injection even if React re-renders
+                dashboardInjected = true;
+                console.log('[HoneyScan] Dashboard threat table injected (' + threats.length + ' threats)');
             } catch (e) {
-                console.error('[HoneyScan] Dashboard injection error:', e);
+                console.error('[HoneyScan] Failed to inject table:', e);
             }
+        } catch (e) {
+            console.error('[HoneyScan] Dashboard injection error:', e);
+        }
         };
 
         // === ROBUST LAYOUT SCALER ===
