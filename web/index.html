@@ -1592,31 +1592,32 @@
 
                 /* CUSTOM HEADER */
                 .hs-custom-header {
-                    padding: 8px 15px !important;
+                    padding: 0 15px !important;
                     font-size: 14px !important;
                     font-weight: 600 !important;
                     color: #fff !important;
-                    background: url('/img/title_bg.png') no-repeat center left !important; /* Try to mimic original if possible, or just solid */
-                    background-size: cover;
+                    /* Fallback Gradient if image missing */
+                    background: linear-gradient(90deg, rgba(0, 70, 140, 0.4) 0%, rgba(0,0,0,0) 100%) !important;
                     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
                     display: flex;
                     align-items: center;
-                    height: 32px;
+                    height: 38px !important; /* Slightly taller */
                 }
                 .hs-custom-header::before {
                     content: '';
                     display: inline-block;
-                    width: 3px;
-                    height: 14px;
+                    width: 4px;
+                    height: 16px;
                     background: #00d2ff;
-                    margin-right: 8px;
+                    margin-right: 10px;
+                    box-shadow: 0 0 8px #00d2ff;
                 }
 
                 /* CUSTOM BODY */
                 .hs-custom-body {
                     flex: 1 !important;
                     overflow-y: auto !important;
-                    padding: 10px !important;
+                    padding: 10px 15px !important;
                     scrollbar-width: thin;
                     scrollbar-color: #2c5282 #0a1929;
                 }
@@ -1624,15 +1625,17 @@
                 /* STATUS HEADER */
                 .hs-cloud-status-brief {
                     padding: 8px 15px;
-                    background: rgba(0, 50, 100, 0.2);
-                    border: 1px solid rgba(0, 150, 255, 0.2);
+                    background: rgba(0, 50, 100, 0.3);
+                    border: 1px solid rgba(0, 150, 255, 0.3);
                     border-radius: 4px;
                     margin-bottom: 10px;
                     color: #fff;
-                    font-size: 12px;
+                    font-size: 13px;
                     display: flex;
                     justify-content: space-between;
                     flex-shrink: 0;
+                    backdrop-filter: blur(4px);
+                    box-shadow: inset 0 0 10px rgba(0, 150, 255, 0.1);
                 }
                 /* V7 XPATH HUNTER STYLES */
                 
@@ -1661,12 +1664,11 @@
 
         const injectCloudIntelligence = async () => {
             try {
-                // V9 DEBUG LOG
-                console.log('%c HoneyScan V9 Anti-Gravity Loaded ', 'background: #222; color: #bada55; font-size:12px;');
+                // V10 DEBUG LOG
+                console.log('%c HoneyScan V10 Polished Loaded ', 'background: #000; color: #00d2ff; font-weight:bold;');
 
                 // Path check soft-enforced
                 if (!(location.pathname.includes('/index') || location.hash.includes('index'))) {
-                    // Check if we accidentally left it open
                     const overlay = document.getElementById('hs-fixed-overlay');
                     if (overlay) overlay.style.display = 'none';
                     return;
@@ -1729,15 +1731,30 @@
                 overlay.style.top = topPos + 'px';
                 overlay.style.height = `calc(100vh - ${topPos}px - 20px)`;
 
-                // 3. FETCH DATA
-                if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 30000)) {
-                    const data = await window.getThreatData();
-                    if (data) {
-                        cachedThreatData = data;
-                        cachedThreatData.timestamp = Date.now();
+                // 3. ROBUST FETCH
+                const fetchThreatDataLocal = async () => {
+                    // Try global function
+                    if (typeof window.getThreatData === 'function') {
+                        try {
+                            const d = await window.getThreatData();
+                            if (d && (d.hackers || d.cs)) return d;
+                        } catch (e) { }
                     }
+                    // Try direct fetch (Fallback)
+                    try {
+                        const r = await fetch('/assets/live_threats.json');
+                        if (r.ok) return await r.json();
+                    } catch (e) { }
+                    return null;
+                };
+
+                if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 10000)) {
+                    cachedThreatData = await fetchThreatDataLocal();
+                    if (cachedThreatData) cachedThreatData.timestamp = Date.now();
                 }
                 const threatData = cachedThreatData;
+
+                // If still no data, we might show a 'Connecting...' state or similar, but for now just return
                 if (!threatData) return;
 
                 // 4. UPDATE DATA
@@ -1751,16 +1768,16 @@
 
                     const rows = items.map(item => {
                         if (type === 'hacker') {
-                            return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
-                                        <span style="color:#ff4d4f; font-weight:bold; width: 90px;">${item.ip}</span>
+                            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
+                                        <span style="color:#ff4d4f; font-weight:bold; width: 100px;">${item.ip}</span>
                                         <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.location}</span>
-                                        <span style="color:#4a5568; width: 50px; text-align:right;">${item.time.split(' ')[1] || item.time}</span>
+                                        <span style="color:#4a5568; width: 60px; text-align:right;">${item.time.split(' ')[1] || item.time}</span>
                                     </div>`;
                         } else {
-                            return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
-                                        <span style="color:#faad14; font-weight:bold; width: 90px;">${item.ip}</span>
+                            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
+                                        <span style="color:#faad14; font-weight:bold; width: 100px;">${item.ip}</span>
                                         <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.type}</span>
-                                        <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 4px; border-radius:2px; font-size:10px;">${item.risk}</span>
+                                        <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 6px; border-radius:2px; font-size:11px;">${item.risk}</span>
                                     </div>`;
                         }
                     }).join('');
@@ -1776,7 +1793,7 @@
                 const statusBrief = overlay.querySelector('.hs-cloud-status-brief');
                 const hCount = (threatData.hackers || []).length;
                 const cCount = (threatData.cs || []).length;
-                statusBrief.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
+                statusBrief.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b> &bull; ${hCount + cCount} Events</span> <span><i style="color:#00d2ff">●</i> Updating</span>`;
 
             } catch (e) {
                 // Debug Log
