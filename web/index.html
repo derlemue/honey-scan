@@ -1484,7 +1484,23 @@
             return map[loc] || loc;
         };
 
-        // 1. Dashboard Injector (Original/Robust)
+        // 1. Data Fetcher
+        window.getThreatData = async () => {
+            try {
+                const response = await fetch('/live_threats.json');
+                if (!response.ok) throw new Error('Failed to fetch threat data');
+                return await response.json();
+            } catch (error) {
+                console.error(HS_LOG_PREFIX + "Data Fetch Error:", error);
+                // Fallback to local assets if root fails
+                try {
+                    const fallback = await fetch('/assets/live_threats.json');
+                    return await fallback.json();
+                } catch (e) { return null; }
+            }
+        };
+
+        // 2. Dashboard Injector
         const injectDashboardThreats = async () => {
             try {
                 const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
@@ -1496,10 +1512,7 @@
                 let body = card.querySelector('.el-card__body') || card.lastElementChild;
                 if (!body || body.getAttribute('data-hs-injected') === 'true') return;
 
-                const res = await fetch('/assets/live_threats.json?t=' + Date.now());
-                if (!res.ok) return;
-                const json = await res.json();
-                const threats = json.cs || [];
+                const threats = (await window.getThreatData())?.cs || [];
                 if (threats.length === 0) return;
 
                 let rowHtml = threats.map(t => {
@@ -1531,19 +1544,32 @@
             } catch (e) { console.error(HS_LOG_PREFIX + "Dashboard Error:", e); }
         };
 
-        // 2. Map Intelligence Injector (Right-side boxes)
+        // 3. Map Intelligence Injector (Right-side boxes)
         const injectCloudIntelligence = async () => {
             try {
                 if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return;
 
-                const rightCol = document.querySelector('.index-cssmodule__rightCol-2h2WM');
+                const rightCol = document.querySelector('.index-cssmodule__rightCol-2h2WM') ||
+                    Array.from(document.querySelectorAll('[class*="leftCol"]')).find(el => el.getBoundingClientRect().left > 500);
                 if (!rightCol) return;
 
-                // stable container layout
+                // STABLE FLEX LAYOUT (Full Height Fix)
+                // We assume the parent container is constrained. If not, we force a reasonable min-height.
                 rightCol.style.display = 'flex';
                 rightCol.style.flexDirection = 'column';
-                rightCol.style.gap = '15px';
-                rightCol.style.justifyContent = 'flex-start';
+                rightCol.style.gap = '20px'; // Increased gap for better separation
+                rightCol.style.justifyContent = 'flex-start'; // Align top, let children grow
+                rightCol.style.height = '100%'; // Attempt to fill parent title
+                // In some cases, the framework might clip it, so we ensure it overrides existing inline styles
+                rightCol.style.setProperty('height', 'calc(100vh - 120px)', 'important'); // Fallback to viewport height minus header padding
+
+                // Fix overlap: remove negative top positioning from headers
+                rightCol.querySelectorAll('[class*="titleWrap"]').forEach(el => {
+                    el.style.setProperty('position', 'relative', 'important');
+                    el.style.setProperty('top', '0', 'important');
+                    el.style.setProperty('margin-top', '0', 'important');
+                    el.style.setProperty('margin-bottom', '10px', 'important');
+                });
 
                 const threatData = await window.getThreatData();
                 if (!threatData) return;
@@ -1554,11 +1580,25 @@
 
                 if (!hackerBox || !csBox) return;
 
-                // Force visibility and set min-height to prevent layout "slip"
+                // FLEX CHILDREN (Expand to fill space)
                 [hackerBox, csBox].forEach(box => {
-                    box.style.setProperty('display', 'block', 'important');
+                    box.style.setProperty('display', 'flex', 'important');
+                    box.style.setProperty('flex-direction', 'column', 'important');
+                    box.style.setProperty('flex', '1', 'important'); // Key: Grow to fill 50% each (minus gap)
                     box.style.setProperty('visibility', 'visible', 'important');
-                    box.style.minHeight = '180px';
+                    box.style.minHeight = '0'; // Allow flex shrinking if needed, prevents overflow
+                    box.style.height = 'auto'; // Remove fixed heights
+                    box.style.marginBottom = '0';
+
+                    // Allow the content area of the card to grow
+                    const cardContent = box.querySelector('.index-cssmodule__content-2Wz2o') || box.lastElementChild;
+                    if (cardContent) {
+                        cardContent.style.flex = '1';
+                        cardContent.style.display = 'flex';
+                        cardContent.style.flexDirection = 'column';
+                        cardContent.style.height = '100%';
+                        cardContent.style.minHeight = '0';
+                    }
                 });
 
                 // Helper: Clear HFish placeholders
@@ -1575,8 +1615,12 @@
                 if (!hackerList) {
                     hackerList = document.createElement('div');
                     hackerList.className = 'hs-intelligence-list';
-                    hackerList.style.cssText = 'max-height:160px; overflow-y:auto; padding:10px; font-family: Outfit, sans-serif;';
-                    hackerBox.appendChild(hackerList);
+                    // FLEX LIST: Fill the card content, scroll internally
+                    hackerList.style.cssText = 'flex: 1; overflow-y: auto; padding: 10px; font-family: Outfit, sans-serif; min-height: 0;';
+
+                    // Append to the correct content container if possible, else direct to box
+                    const target = hackerBox.querySelector('.index-cssmodule__content-2Wz2o') || hackerBox;
+                    target.appendChild(hackerList);
                 }
                 const hackers = (threatData.hackers || []).slice(0, 20);
                 hackerList.innerHTML = hackers.map(h => `
@@ -1593,8 +1637,11 @@
                 if (!csList) {
                     csList = document.createElement('div');
                     csList.className = 'hs-intelligence-list';
-                    csList.style.cssText = 'max-height:160px; overflow-y:auto; padding:10px; font-family: Outfit, sans-serif;';
-                    csBox.appendChild(csList);
+                    // FLEX LIST: Fill the card content, scroll internally
+                    csList.style.cssText = 'flex: 1; overflow-y: auto; padding: 10px; font-family: Outfit, sans-serif; min-height: 0;';
+
+                    const target = csBox.querySelector('.index-cssmodule__content-2Wz2o') || csBox;
+                    target.appendChild(csList);
                 }
                 const cs = (threatData.cs || []).slice(0, 20);
                 csList.innerHTML = cs.map(c => `
@@ -1605,19 +1652,19 @@
                     </div>
                 `).join('');
 
-                // Status Bar
+                // Status Bar (keep as is, but ensure it doesn't break flex)
                 let statusHeader = document.querySelector('.hs-cloud-status-brief');
                 if (!statusHeader) {
                     statusHeader = document.createElement('div');
                     statusHeader.className = 'hs-cloud-status-brief';
-                    statusHeader.style.cssText = 'padding:10px 15px; background:rgba(0,10,30,0.4); border-left:3px solid #1890ff; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; color:#fff;';
+                    statusHeader.style.cssText = 'padding:10px 15px; background:rgba(0,10,30,0.4); border-left:3px solid #1890ff; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; color:#fff; flex-shrink: 0;'; // Prevent shrinking
                     rightCol.prepend(statusHeader);
                 }
                 statusHeader.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hackers.length} | Total: ${hackers.length + cs.length}</span>`;
             } catch (e) { console.error("[HoneyScan] UI Error:", e); }
         };
 
-        // 3. GLOBAL POLLER
+        // 4. GLOBAL POLLER
         setInterval(() => {
             if (location.href.includes('/dashboard')) injectDashboardThreats();
             if (location.href.includes('/index')) injectCloudIntelligence();
