@@ -119,16 +119,17 @@ def get_geolocation():
 
 def check_cloud_connectivity():
     try:
-        base_url = os.getenv("THREATBOOK_API_BASE_URL", "https://api.threatbook.io/v3")
-        url = f"{base_url}/scene/ip_reputation"
+        # Check against Community API with a known safe IP
+        url = "https://api.threatbook.io/v1/community/ip"
+        params = {"apikey": THREATBOOK_API_KEY, "resource": "8.8.8.8"}
         try:
-             resp = requests.get(url, timeout=10)
-             if resp.status_code in [200, 400, 401, 403, 404]: 
-                 logger.info(f"Cloud Intelligence Connectivity: OK ({base_url})")
+             resp = requests.post(url, data=params, timeout=10)
+             if resp.status_code == 200: 
+                 logger.info(f"Cloud Intelligence Connectivity: OK ({url})")
              else:
                  logger.warning(f"Cloud Intelligence Connectivity: HTTP {resp.status_code}")
         except Exception as e:
-             logger.error(f"Cloud Intelligence Connectivity: FAILED ({base_url}) - {e}")
+             logger.error(f"Cloud Intelligence Connectivity: FAILED ({url}) - {e}")
     except Exception as e:
         logger.error(f"Cloud Intelligence Connectivity: Critical Error - {e}")
 
@@ -162,18 +163,33 @@ def update_node_location():
 
 def query_threatbook_ip(ip):
     if not THREATBOOK_API_KEY: return None
-    url = f"{THREATBOOK_API_BASE_URL}/scene/ip_reputation"
-    params = {"apikey": THREATBOOK_API_KEY, "resource": ip, "lang": "en"}
+    # Use the verified Community API endpoint
+    url = "https://api.threatbook.io/v1/community/ip"
+    # Parameters for POST request
+    params = {"apikey": THREATBOOK_API_KEY, "resource": ip}
+    
     try:
-        resp = requests.get(url, params=params, timeout=5)
+        # Change to POST request
+        resp = requests.post(url, data=params, timeout=5)
         if resp.status_code == 200:
             data = resp.json()
-            if data.get("response_code") == 0:
-                result = data.get("data", {}).get(ip, {})
+            if data.get("response_code") == 200:
+                result = data.get("data", {})
+                
+                # Extract severity/risk - Community API doesn't have explicit severity field
+                # Infer from judgments: if judgments exist -> High/Critical depending on type?
+                # For now, default to Medium if judgments exist, Low/Info if not.
+                judgments = result.get("summary", {}).get("judgments", [])
+                severity = "medium" if judgments else "low"
+                
+                # Check for specific critical judgments if needed
+                if any(j.lower() in ['c2', 'malware', 'botnet', 'zombie'] for j in judgments):
+                    severity = "critical"
+                
                 return {
-                    "severity": result.get("severity", "low"),
-                    "judgments": result.get("judgments", []),
-                    "scene": result.get("scene", "Unknown"),
+                    "severity": severity,
+                    "judgments": judgments,
+                    "scene": "Unknown", # Community API doesn't provide scene context clearly
                     "carrier": result.get("basic", {}).get("carrier", "Unknown"),
                     "location": result.get("basic", {}).get("location", {})
                 }
