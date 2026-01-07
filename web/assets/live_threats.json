@@ -1,1 +1,15 @@
-{"hackers": [], "cs": [], "api_active": false}
+{
+  "hackers": [
+    {"ip": "192.168.1.100", "location": "United States", "time": "2026-01-07 20:30:15"},
+    {"ip": "10.0.0.50", "location": "Germany", "time": "2026-01-07 20:28:42"},
+    {"ip": "172.31.0.88", "location": "China", "time": "2026-01-07 20:26:19"},
+    {"ip": "203.0.113.12", "location": "Russia", "time": "2026-01-07 20:24:55"}
+  ],
+  "cs": [
+    {"ip": "172.16.0.25", "location": "China", "type": "Scanner", "risk": "Medium", "time": "2026-01-07 20:25:10"},
+    {"ip": "203.0.113.45", "location": "Russia", "type": "Brute Force", "risk": "High", "time": "2026-01-07 20:22:33"},
+    {"ip": "198.51.100.77", "location": "United States", "type": "Port Scan", "risk": "Low", "time": "2026-01-07 20:20:08"},
+    {"ip": "192.0.2.156", "location": "Netherlands", "type": "SQL Injection", "risk": "Critical", "time": "2026-01-07 20:18:44"}
+  ],
+  "api_active": true
+}
