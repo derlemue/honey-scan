@@ -1953,8 +1953,9 @@
             // Run checks throttled
             if (now < 60000 || frameCount % 20 === 0) {
                 ensureLayoutStyles(); // CRITICAL: ACTIVATE STYLES
-                if (location.href.includes('/dashboard')) injectDashboardThreats();
-                // Map injection still disabled - needs complete rewrite
+                // ALL INJECTION PERMANENTLY DISABLED - causes dashboard crash
+                // Dashboard will show original HFish data
+                // if (location.href.includes('/dashboard')) injectDashboardThreats();
                 // if (location.href.includes('/index')) injectCloudIntelligence();
             }
             requestAnimationFrame(persistenceLoop);
