@@ -1554,23 +1554,20 @@
                 /* V7 XPATH HUNTER STYLES */
                 
                 /* Target Discovered Column via ID */
-                #hs-target-column {
+                /* V8 FIXED OVERLAY STYLES */
+                
+                #hs-fixed-overlay {
+                    position: fixed !important;
+                    z-index: 99999 !important;
+                    background: #040c1c !important; /* Deep dark background to mask original */
                     display: flex !important;
                     flex-direction: column !important;
-                    height: calc(100vh - 120px) !important;
-                    min-height: 0 !important;
-                    background: transparent !important;
+                    gap: 20px !important;
+                    padding-bottom: 20px !important;
+                    box-sizing: border-box !important;
                 }
 
-                /* HIDE ALL ORIGINAL REACT CHILDREN */
-                #hs-target-column > *:not(.hs-custom-dashboard) {
-                    display: none !important;
-                    visibility: hidden !important;
-                    height: 0 !important;
-                    overflow: hidden !important;
-                }
-
-                /* CUSTOM DASHBOARD CONTAINER */
+                /* CUSTOM DASHBOARD CONTAINER (Inside Overlay) */
                 .hs-custom-dashboard {
                     display: flex !important;
                     flex-direction: column !important;
@@ -1583,7 +1580,7 @@
                 .hs-custom-card {
                     background-image: linear-gradient(180deg, rgba(8, 20, 41, 0.9) 0%, rgba(4, 12, 28, 0.95) 100%) !important;
                     border: 1px solid rgba(49, 112, 167, 0.3) !important;
-                    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3) !important;
+                    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5) !important;
                     border-radius: 4px !important;
                     display: flex !important;
                     flex-direction: column !important;
@@ -1637,6 +1634,24 @@
                     justify-content: space-between;
                     flex-shrink: 0;
                 }
+                /* V7 XPATH HUNTER STYLES */
+                
+                /* Target Discovered Column via ID */
+                #hs-target-column {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    height: calc(100vh - 120px) !important;
+                    min-height: 0 !important;
+                    background: transparent !important;
+                }
+
+                /* HIDE ALL ORIGINAL REACT CHILDREN */
+                #hs-target-column > *:not(.hs-custom-dashboard) {
+                    display: none !important;
+                    visibility: hidden !important;
+                    height: 0 !important;
+                    overflow: hidden !important;
+                }
             `;
             document.head.appendChild(style);
         };
@@ -1646,50 +1661,82 @@
 
         const injectCloudIntelligence = async () => {
             try {
-                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return;
+                // Only run on dashboard
+                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) {
+                    const overlay = document.getElementById('hs-fixed-overlay');
+                    if (overlay) overlay.style.display = 'none';
+                    return;
+                }
 
                 // 0. Ensure CSS Rules exist
                 ensureLayoutStyles();
 
-                // 1. LOCATE TARGET COLUMN (The "XPath Hunter")
-                let rightCol = document.getElementById('hs-target-column');
-                if (!rightCol) {
-                    // Use XPath to find text node containing "Recent active hackers"
-                    // checking text nodes specifically to match exact string
-                    const xpath = "//*[contains(text(),'Recent active hackers')]";
-                    const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-                    const foundNode = result.singleNodeValue;
+                // 1. ANCHOR SEARCH (Find where the column *should* be)
+                // We assume there is some original structure we can latch onto for X coordinates.
+                // If not, we fallback to hardcoded % logic.
+                let anchorRect = null;
 
-                    if (foundNode) {
-                        // Traverse up to find the main container
-                        // Header -> Card -> Column
-                        let parent = foundNode.closest('div'); // Start with div wrapper
-
-                        // Walk up 10 levels max to find the column (something with tall height)
-                        for (let i = 0; i < 10; i++) {
-                            if (!parent) break;
-                            const h = parent.getBoundingClientRect().height;
-                            const w = parent.getBoundingClientRect().width;
-
-                            // Heuristic: Column is tall (>50vh) and reasonably wide (>15vw) but not full width
-                            if (h > window.innerHeight * 0.5 && w > window.innerWidth * 0.1 && w < window.innerWidth * 0.4) {
-                                rightCol = parent;
-                                rightCol.id = 'hs-target-column'; // TAG IT
-
-                                // *** THE DOM WIPE ***
-                                // Destroy React's hold on this column
-                                rightCol.innerHTML = '';
-                                console.log("[HoneyScan] Target Column Captured & Wiped");
-                                break;
-                            }
-                            parent = parent.parentElement;
+                // Try to find the "Recent active hackers" header to localize right column
+                const allDivs = document.querySelectorAll('div, span, h4, h5, section');
+                for (let el of allDivs) {
+                    if (el.innerText && el.innerText.includes('Recent active hackers')) {
+                        const card = el.closest('[class*="card"]') || el.parentElement?.parentElement;
+                        if (card) {
+                            // The column is the parent of the card
+                            const col = card.parentElement;
+                            if (col) anchorRect = col.getBoundingClientRect();
                         }
+                        break;
                     }
                 }
 
-                if (!rightCol) return;
+                // Fallback: Use window dimensions if we can't find specific element (likely because we overlaid it!)
+                // But wait, if we overlaid it, we don't need to re-find it constantly unless window resized.
+                if (!anchorRect) {
+                    // Hard fallback: Right 25% of screen
+                    anchorRect = {
+                        left: window.innerWidth * 0.73, // approx
+                        width: window.innerWidth * 0.26,
+                        top: 100 // Header height approx
+                    };
+                }
 
-                // 2. Fetch Data
+                // 2. CREATE / UPDATE OVERLAY
+                let overlay = document.getElementById('hs-fixed-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'hs-fixed-overlay';
+                    document.body.appendChild(overlay); // Append to BODY, outside React root
+
+                    // Initial Layout
+                    overlay.innerHTML = `
+                         <div class="hs-custom-dashboard">
+                            <div class="hs-cloud-status-brief"></div>
+                            <div class="hs-custom-card" id="hs-hackers-card">
+                                <div class="hs-custom-header">Recent active hackers</div>
+                                <div class="hs-custom-body"></div>
+                            </div>
+                            <div class="hs-custom-card" id="hs-cs-card">
+                                <div class="hs-custom-header">The recent suspicious CS</div>
+                                <div class="hs-custom-body"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Sync Geometry (The "Fixed" part)
+                // We force it to match the horizontal position of the anchor, but override Vertical to fill screen
+                overlay.style.display = 'flex';
+                overlay.style.left = anchorRect.left + 'px';
+                overlay.style.width = anchorRect.width + 'px';
+                // Top should be below the main header. Let's say 100px or detected top.
+                const topPos = anchorRect.top > 60 ? anchorRect.top : 100;
+                overlay.style.top = topPos + 'px';
+                // Force height to bottom of screen minus padding
+                overlay.style.height = `calc(100vh - ${topPos}px - 20px)`;
+
+
+                // 3. FETCH DATA
                 if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 30000)) {
                     const data = await window.getThreatData();
                     if (data) {
@@ -1700,30 +1747,10 @@
                 const threatData = cachedThreatData;
                 if (!threatData) return;
 
-                // 3. CHECK FOR CUSTOM DASHBOARD
-                let customDashboard = rightCol.querySelector('.hs-custom-dashboard');
-                if (!customDashboard) {
-                    customDashboard = document.createElement('div');
-                    customDashboard.className = 'hs-custom-dashboard';
 
-                    // Create Structure
-                    customDashboard.innerHTML = `
-                        <div class="hs-cloud-status-brief"></div>
-                        <div class="hs-custom-card" id="hs-hackers-card">
-                            <div class="hs-custom-header">Recent active hackers</div>
-                            <div class="hs-custom-body"></div>
-                        </div>
-                        <div class="hs-custom-card" id="hs-cs-card">
-                            <div class="hs-custom-header">The recent suspicious CS</div>
-                            <div class="hs-custom-body"></div>
-                        </div>
-                    `;
-                    rightCol.appendChild(customDashboard);
-                }
-
-                // 4. UPDATE DATA
+                // 4. UPDATE DATA (Standard logic)
                 const updateList = (cardId, items, type) => {
-                    const card = customDashboard.querySelector(cardId);
+                    const card = overlay.querySelector(cardId);
                     if (!card) return;
                     const body = card.querySelector('.hs-custom-body');
 
@@ -1755,7 +1782,7 @@
                 updateList('#hs-cs-card', (threatData.cs || []).slice(0, 20), 'cs');
 
                 // Update Status
-                const statusBrief = customDashboard.querySelector('.hs-cloud-status-brief');
+                const statusBrief = overlay.querySelector('.hs-cloud-status-brief');
                 const hCount = (threatData.hackers || []).length;
                 const cCount = (threatData.cs || []).length;
                 statusBrief.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
