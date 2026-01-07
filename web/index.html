@@ -1475,625 +1475,134 @@
             } catch (e) { console.error("Layout/Flag Fix Error:", e); }
         };
 
-        // === CLOUD THREAT INTELLIGENCE INJECTOR ===
-        let hasInjectedThreats = false; // Debounce
-
-        const injectCloudThreats = async () => {
-            try {
-                // 1. Find the Widget by Title
-                const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
-                const widgetHeader = headers.find(el => el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud');
-
-                if (!widgetHeader) return;
-
-                // 2. Find Container (usually parent's sibling or parent's parent)
-                // HFish structure: Header -> Body. Usually siblings in a flex column.
-                // We look for the "No data" placeholder to replace.
-                let container = widgetHeader.closest('.el-card__header');
-                let body = null;
-
-                if (container) {
-                    body = container.nextElementSibling; // el-card__body
-                } else {
-                    // Fallback: iterate parents
-                    let p = widgetHeader.parentElement;
-                    while (p && !p.classList.contains('el-card')) {
-                        p = p.parentElement;
-                    }
-                    if (p) body = p.querySelector('.el-card__body');
-                }
-
-                if (!body) return;
-
-                // 3. AGGRESSIVE CHECK: Is our data already there?
-                // If we see our custom attribute, we stop to verify if update is needed (or just stop)
-                if (body.getAttribute('data-honeyscan-injected') === 'true') return;
-
-                // 4. Fetch Data (Only if not already done recently)
-                // We use a timestamp to prevent aggressive caching but not spam
-                if (hasInjectedThreats) return;
-
-                const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000)); // Cache for 1 min
-                if (!response.ok) return;
-
-                const json = await response.json();
-                const threats = json.cs || [];
-
-                if (threats.length === 0) return;
-
-                // 5. Build HTML Table
-                // Matching HFish Dashboard Style (Dark, minimal)
-                let html = `
-                    <div style="width:100%; height: 100%; overflow-y: auto; padding: 10px;">
-                        <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px;">
-                            <thead>
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">
-                                    <th style="padding: 8px; color: rgba(255,255,255,0.6);">IP / Location</th>
-                                    <th style="padding: 8px; color: rgba(255,255,255,0.6);">Type</th>
-                                    <th style="padding: 8px; color: rgba(255,255,255,0.6);">Risk</th>
-                                    <th style="padding: 8px; color: rgba(255,255,255,0.6);">Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-
-                threats.forEach(t => {
-                    // Risk Color mapping
-                    let riskColor = '#4ade80'; // Low/Green
-                    if (t.risk === 'Medium') riskColor = '#facc15'; // Yellow
-                    if (t.risk === 'High') riskColor = '#fb923c'; // Orange
-                    if (t.risk === 'Critical') riskColor = '#ef4444'; // Red
-
-                    html += `
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
-                            <td style="padding: 8px;">
-                                <div style="font-weight: bold; color: #e2e8f0;">${t.ip}</div>
-                                <div style="font-size: 10px; color: rgba(255,255,255,0.5);">${t.location}</div>
-                            </td>
-                            <td style="padding: 8px; color: #94a3b8;">${t.type || 'Scanner'}</td>
-                            <td style="padding: 8px;">
-                                <span style="background: ${riskColor}20; color: ${riskColor}; padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid ${riskColor}40;">
-                                    ${t.risk}
-                                </span>
-                            </td>
-                            <td style="padding: 8px; color: rgba(255,255,255,0.4);">${t.time}</td>
-                        </tr>
-                    `;
-                });
-
-                html += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-
-                // 6. Force Inject
-                body.innerHTML = html;
-                body.setAttribute('data-honeyscan-injected', 'true');
-                hasInjectedThreats = true;
-                console.log("[HoneyScan] Injected Cloud Intelligence Data (" + threats.length + " items)");
-
-            } catch (e) {
-                console.error("Cloud Threat Injection Error:", e);
-            }
+        // === CLOUD THREAT INTELLIGENCE SYSTEM ===
+        const HS_LOG_PREFIX = "[HoneyScan] ";
+        const translateLocation = (loc) => {
+            const map = {
+                '美国': 'United States', '加拿大': 'Canada', '中国': 'China', '俄罗斯': 'Russia',
+                '德国': 'Germany', '英国': 'United Kingdom', '法国': 'France', '荷兰': 'Netherlands'
+            };
+            return map[loc] || loc;
         };
 
-        const injectCloudThreatsRobust = async () => {
+        // 1. Dashboard Injector (Original/Robust)
+        const injectDashboardThreats = async () => {
             try {
-                const logPrefix = "[HoneyScan Cloud Injector] ";
+                const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
+                const widgetHeader = headers.find(el => el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud');
+                if (!widgetHeader) return;
 
-                // 1. Find Data Wrapper (HFish CSS Modules are messy)
-                const allLeafs = Array.from(document.querySelectorAll('span, div, h3, h4, p'));
-                const headerEl = allLeafs.find(el => el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud');
-
-                if (!headerEl) return;
-
-                // 2. Find the Card Container
-                let card = null;
-                let p = headerEl.parentElement;
-                while (p && p !== document.body) {
-                    if (p.className && (p.className.includes('card-wrapper') || p.className.includes('el-card'))) {
-                        card = p;
-                        break;
-                    }
-                    p = p.parentElement;
-                }
-
-                // Fallback
-                if (!card && headerEl.parentElement && headerEl.parentElement.parentElement) {
-                    card = headerEl.parentElement.parentElement;
-                }
-
+                let card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
                 if (!card) return;
+                let body = card.querySelector('.el-card__body') || card.lastElementChild;
+                if (!body || body.getAttribute('data-hs-injected') === 'true') return;
 
-                // 3. Find body to inject into
-                let body = card.lastElementChild;
-                if (!body) return;
-
-                // 4. Fetch Data (allow refresh by removing one-time flag)
-                const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000));
-                if (!response.ok) return;
-                const json = await response.json();
+                const res = await fetch('/assets/live_threats.json?t=' + Date.now());
+                if (!res.ok) return;
+                const json = await res.json();
                 const threats = json.cs || [];
                 if (threats.length === 0) return;
 
-                // Helper: Translate Location
-                const translateLocation = (loc) => {
-                    const map = {
-                        '美国': 'United States', '加拿大': 'Canada', '中国': 'China', '俄罗斯': 'Russia',
-                        '德国': 'Germany', '英国': 'United Kingdom', '法国': 'France', '荷兰': 'Netherlands',
-                        '巴西': 'Brazil', '印度': 'India', '日本': 'Japan', '韩国': 'South Korea',
-                        '阿根廷': 'Argentina', '新加坡': 'Singapore', '澳大利亚': 'Australia',
-                        '越南': 'Vietnam', '泰国': 'Thailand', '印度尼西亚': 'Indonesia',
-                        '台湾': 'Taiwan', '香港': 'Hong Kong', '乌克兰': 'Ukraine', '波兰': 'Poland',
-                        '意大利': 'Italy', '西班牙': 'Spain', '瑞典': 'Sweden', '挪威': 'Norway',
-                        '芬兰': 'Finland', '丹麦': 'Denmark', '瑞士': 'Switzerland', '奥地利': 'Austria',
-                        '比利时': 'Belgium', '爱尔兰': 'Ireland', '墨西哥': 'Mexico', '土耳其': 'Turkey',
-                        '伊朗': 'Iran', '以色列': 'Israel', '沙特阿拉伯': 'Saudi Arabia', '南非': 'South Africa'
-                    };
-                    return map[loc] || loc;
-                };
-
-                // 5. Build Content
-                let rowHtml = '';
-                threats.forEach(t => {
+                let rowHtml = threats.map(t => {
                     let c = '#4ade80'; if (t.risk === 'Medium') c = '#facc15'; if (t.risk === 'High') c = '#fb923c'; if (t.risk === 'Critical') c = '#ef4444';
-
-                    const displayLoc = translateLocation(t.location);
-
-                    rowHtml += `
+                    return `
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="padding: 8px;">
-                                <div style="font-weight: bold; color: #e2e8f0; font-family: monospace;">${t.ip}</div>
-                            </td>
-                            <td style="padding: 8px; color: #94a3b8;">${displayLoc}</td>
+                            <td style="padding: 8px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace;">${t.ip}</div></td>
+                            <td style="padding: 8px; color: #94a3b8;">${translateLocation(t.location)}</td>
                             <td style="padding: 8px; color: #94a3b8;">${t.type || 'Scanner'}</td>
                             <td style="padding: 8px;"><span style="color:${c};background:${c}20;padding:2px 6px;border-radius:4px;font-size:11px;border:1px solid ${c}40;">${t.risk}</span></td>
                             <td style="padding: 8px; color: rgba(255,255,255,0.4);">${t.time}</td>
-                        </tr>
-                   `;
-                });
+                        </tr>`;
+                }).join('');
 
-                const tableHtml = `
-                    <div style="width:100%; height:100%; overflow-y:auto; padding:0; background: #1e293b; border-radius: 4px;">
+                body.innerHTML = `
+                    <div style="width:100%; height:100%; overflow-y:auto; background: #1e293b; border-radius: 4px;">
                         <table style="width:100%; border-collapse:collapse; color:#fff; font-size:12px;">
                             <thead style="background: rgba(0,0,0,0.2); position: sticky; top: 0;">
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.1);text-align:left;">
-                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">IP Address</th>
-                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">Location</th>
-                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">Type</th>
-                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">Risk</th>
-                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">Time</th>
+                                    <th style="padding:8px;">IP Address</th><th style="padding:8px;">Location</th>
+                                    <th style="padding:8px;">Type</th><th style="padding:8px;">Risk</th><th style="padding:8px;">Time</th>
                                 </tr>
                             </thead>
                             <tbody>${rowHtml}</tbody>
                         </table>
-                        <div style="padding: 5px 10px; text-align: right; font-size: 10px; color: rgba(255,255,255,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
-                            Source: Live Threat API • ${threats.length} threats
-                        </div>
-                    </div>
-                `;
-
-                // 6. Inject
-                body.innerHTML = tableHtml;
-                body.style.padding = '0';
-                body.setAttribute('data-honeyscan-injected', 'true');
-                console.log(logPrefix + "Injected " + threats.length + " threats with styling.");
-
-            } catch (e) {
-                console.error(e);
-            }
+                    </div>`;
+                body.setAttribute('data-hs-injected', 'true');
+                console.log(HS_LOG_PREFIX + "Dashboard threat intelligence injected.");
+            } catch (e) { console.error(HS_LOG_PREFIX + "Dashboard Error:", e); }
         };
 
-        // Auto-refresh support: Re-run injection every 30 seconds
-        setInterval(() => {
-            if (location.pathname.includes('/dashboard')) {
-                injectCloudThreatsRobust();
-            }
-        }, 30000);
-
-        // === MAP PAGE CLOUD INTELLIGENCE INJECTOR - SAFER VERSION ===
-        // Safer version with individual try-catch blocks for each DOM manipulation
-        const injectMapCloudIntelligence = async () => {
-            const logPrefix = "[HoneyScan Map Injector] ";
-
+        // 2. Map Overlay Injector (CSS module aware)
+        const injectMapOverlay = async () => {
             try {
-                // Only run on map page
-                if (!location.pathname.includes('/index') && !location.hash.includes('index')) return;
+                if (document.getElementById('honeyscan-cloud-overlay')) return;
 
-                console.log(logPrefix + "Starting injection...");
+                // Use the exact class found by browser subagent
+                const targetCard = document.querySelector('.index-cssmodule__infoCard-1QvOp');
+                if (!targetCard) return;
 
-                // Fetch Data
-                const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000));
-                if (!response.ok) {
-                    console.log(logPrefix + "Failed to fetch live_threats.json");
-                    return;
-                }
-                const json = await response.json();
+                console.log(HS_LOG_PREFIX + "Target map card found. Injecting overlay...");
+                const rect = targetCard.getBoundingClientRect();
 
+                const res = await fetch('/assets/live_threats.json?t=' + Date.now());
+                if (!res.ok) return;
+                const json = await res.json();
                 const hackers = json.hackers || [];
                 const cs = json.cs || [];
 
-                console.log(logPrefix + `Data loaded: ${hackers.length} hackers, ${cs.length} CS`);
-
-                if (hackers.length === 0 && cs.length === 0) {
-                    console.log(logPrefix + "No data to inject");
-                    return;
-                }
-
-                // Helper: Translate Location
-                const translateLocation = (loc) => {
-                    const map = {
-                        '美国': 'United States', '加拿大': 'Canada', '中国': 'China', '俄罗斯': 'Russia',
-                        '德国': 'Germany', '英国': 'United Kingdom', '法国': 'France', '荷兰': 'Netherlands',
-                        '巴西': 'Brazil', '印度': 'India', '日本': 'Japan', '韩国': 'South Korea',
-                        '阿根廷': 'Argentina', '新加坡': 'Singapore', '澳大利亚': 'Australia',
-                        '越南': 'Vietnam', '泰国': 'Thailand', '印度尼西亚': 'Indonesia',
-                        '台湾': 'Taiwan', '香港': 'Hong Kong', '乌克兰': 'Ukraine', '波兰': 'Poland',
-                        '意大利': 'Italy', '西班牙': 'Spain', '瑞典': 'Sweden', '挪威': 'Norway',
-                        '芬兰': 'Finland', '丹麦': 'Denmark', '瑞士': 'Switzerland', '奥地利': 'Austria',
-                        '比利时': 'Belgium', '爱尔兰': 'Ireland', '墨西哥': 'Mexico', '土耳其': 'Turkey',
-                        '伊朗': 'Iran', '以色列': 'Israel', '沙特阿拉伯': 'Saudi Arabia', '南非': 'South Africa'
-                    };
-                    return map[loc] || loc;
-                };
-
-                // SECTION 1: Update Daily/Total stats (safest - just text)
-                try {
-                    const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
-                    const cloudIntelHeader = allElements.find(el => el.textContent && el.textContent.includes('Cloud intelligence'));
-
-                    if (cloudIntelHeader) {
-                        const parent = cloudIntelHeader.closest('div[class*="card"]') || cloudIntelHeader.parentElement;
-                        if (parent) {
-                            const dailyEl = Array.from(parent.querySelectorAll('*')).find(el => el.textContent && el.textContent.includes('Daily'));
-                            const totalEl = Array.from(parent.querySelectorAll('*')).find(el => el.textContent && el.textContent.includes('Total'));
-
-                            if (dailyEl) {
-                                const dailyCount = cs.length;
-                                const newText = dailyEl.textContent.replace(/Daily\s*--/, `Daily ${dailyCount}`).replace(/Daily\s*\d+/, `Daily ${dailyCount}`);
-                                if (dailyEl.textContent !== newText) {
-                                    dailyEl.textContent = newText;
-                                    console.log(logPrefix + `✅ Updated Daily: ${dailyCount}`);
-                                }
-                            }
-                            if (totalEl) {
-                                const totalCount = hackers.length;
-                                const newText = totalEl.textContent.replace(/Total\s*--/, `Total ${totalCount}`).replace(/Total\s*\d+/, `Total ${totalCount}`);
-                                if (totalEl.textContent !== newText) {
-                                    totalEl.textContent = newText;
-                                    console.log(logPrefix + `✅ Updated Total: ${totalCount}`);
-                                }
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error(logPrefix + "Error updating Daily/Total:", e);
-                }
-
-                // SECTION 2: Inject Recent active hackers
-                try {
-                    const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
-                    const hackersHeader = allElements.find(el => el.textContent && el.textContent.trim() === 'Recent active hackers');
-
-                    if (hackersHeader && hackers.length > 0) {
-                        let container = hackersHeader.parentElement;
-                        let attempts = 0;
-                        while (container && !container.querySelector('ul, div[class*="list"]') && attempts < 10) {
-                            container = container.parentElement;
-                            if (container === document.body) break;
-                            attempts++;
-                        }
-
-                        if (container) {
-                            const listContainer = container.querySelector('ul, div[class*="list"]') || container.querySelector('div');
-
-                            if (listContainer && !listContainer.getAttribute('data-honeyscan-hackers')) {
-                                let hackersHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;" data-honeyscan-hackers="true">';
-                                hackers.slice(0, 10).forEach(h => {
-                                    const loc = translateLocation(h.location);
-                                    hackersHtml += `
-                                        <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                                            <span style="font-family: monospace; color: #4ade80; font-size: 12px;">${h.ip}</span>
-                                            <span style="color: #94a3b8; font-size: 11px;">${loc}</span>
-                                        </li>
-                                    `;
-                                });
-                                hackersHtml += '</ul>';
-
-                                listContainer.innerHTML = hackersHtml;
-                                console.log(logPrefix + `✅ Injected ${Math.min(10, hackers.length)} recent hackers`);
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error(logPrefix + "Error injecting hackers:", e);
-                }
-
-                // SECTION 3: Inject The recent suspicious CS
-                try {
-                    const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
-                    const csHeader = allElements.find(el => el.textContent && el.textContent.trim() === 'The recent suspicious CS');
-
-                    if (csHeader && cs.length > 0) {
-                        let container = csHeader.parentElement;
-                        let attempts = 0;
-                        while (container && !container.querySelector('ul, div[class*="list"]') && attempts < 10) {
-                            container = container.parentElement;
-                            if (container === document.body) break;
-                            attempts++;
-                        }
-
-                        if (container) {
-                            const listContainer = container.querySelector('ul, div[class*="list"]') || container.querySelector('div');
-
-                            if (listContainer && !listContainer.getAttribute('data-honeyscan-cs')) {
-                                let csHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;" data-honeyscan-cs="true">';
-                                cs.slice(0, 10).forEach(c => {
-                                    const loc = translateLocation(c.location);
-                                    let riskColor = '#4ade80';
-                                    if (c.risk === 'Medium') riskColor = '#facc15';
-                                    if (c.risk === 'High') riskColor = '#fb923c';
-                                    if (c.risk === 'Critical') riskColor = '#ef4444';
-
-                                    csHtml += `
-                                        <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                                            <div style="flex: 1;">
-                                                <div style="font-family: monospace; color: #e2e8f0; font-size: 12px;">${c.ip}</div>
-                                                <div style="color: #94a3b8; font-size: 10px;">${loc} • ${c.type}</div>
-                                            </div>
-                                            <span style="color: ${riskColor}; background: ${riskColor}20; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid ${riskColor}40;">${c.risk}</span>
-                                        </li>
-                                    `;
-                                });
-                                csHtml += '</ul>';
-
-                                listContainer.innerHTML = csHtml;
-                                console.log(logPrefix + `✅ Injected ${Math.min(10, cs.length)} suspicious CS`);
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error(logPrefix + "Error injecting CS:", e);
-                }
-
-            } catch (e) {
-                console.error(logPrefix + "Fatal error:", e);
-            }
-        };
-
-        // MutationObserver to fight React's DOM overwrites
-        // TEMPORARILY DISABLED FOR DEBUGGING
-        /*
-        if (location.pathname.includes('/index') || location.hash.includes('index')) {
-            const observer = new MutationObserver((mutations) => {
-                // Re-inject if React removes our data
-                const needsReinjection = mutations.some(mutation => {
-                    return Array.from(mutation.removedNodes).some(node => {
-                        return node.getAttribute && (
-                            node.getAttribute('data-honeyscan-hackers') === 'true' ||
-                            node.getAttribute('data-honeyscan-cs') === 'true'
-                        );
-                    });
-                });
-
-                if (needsReinjection) {
-                    console.log("[HoneyScan Map Injector] React removed our data, re-injecting...");
-                    setTimeout(injectMapCloudIntelligence, 100);
-                }
-            });
-
-            // Start observing after page loads
-            setTimeout(() => {
-                observer.observe(document.body, {
-                    childList: true,
-                    subtree: true
-                });
-                console.log("[HoneyScan Map Injector] MutationObserver started");
-            }, 2000);
-        }
-        */
-
-        // === MAP PAGE CLOUD INTELLIGENCE: CSS OVERLAY APPROACH ===
-        // React doesn't make API calls for Cloud Intelligence (confirmed via logging)
-        // DOM manipulation causes crashes
-        // Solution: Create a CSS overlay that sits ON TOP of the empty Cloud Intelligence section
-
-        const injectMapCloudIntelligenceOverlay = async () => {
-            try {
-                // Only run on map page
-                if (!location.pathname.includes('/index') && !location.hash.includes('index')) return;
-
-                const logPrefix = "[HoneyScan Map Overlay] ";
-                console.log(logPrefix + "Starting overlay injection...");
-
-                // Fetch Data
-                const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000));
-                if (!response.ok) {
-                    console.log(logPrefix + "Failed to fetch live_threats.json");
-                    return;
-                }
-                const json = await response.json();
-
-                const hackers = json.hackers || [];
-                const cs = json.cs || [];
-
-                if (hackers.length === 0 && cs.length === 0) {
-                    console.log(logPrefix + "No data to display");
-                    return;
-                }
-
-                // Helper: Translate Location
-                const translateLocation = (loc) => {
-                    const map = {
-                        '美国': 'United States', '加拿大': 'Canada', '中国': 'China', '俄罗斯': 'Russia',
-                        '德国': 'Germany', '英国': 'United Kingdom', '法国': 'France', '荷兰': 'Netherlands',
-                        '巴西': 'Brazil', '印度': 'India', '日本': 'Japan', '韩国': 'South Korea'
-                    };
-                    return map[loc] || loc;
-                };
-
-                // Check if overlay already exists
-                if (document.getElementById('honeyscan-cloud-overlay')) {
-                    console.log(logPrefix + "Overlay already exists, skipping");
-                    return;
-                }
-
-                console.log(logPrefix + "Searching for Cloud Intelligence section...");
-                // Find Cloud Intelligence section (without touching it!)
-                const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
-                // Try looser matching
-                const cloudIntelHeader = allElements.find(el => {
-                    const text = (el.textContent || '').toLowerCase();
-                    return text.includes('cloud') && text.includes('intelligence');
-                });
-
-                let targetRect = null;
-
-                if (cloudIntelHeader) {
-                    console.log(logPrefix + "Found header:", cloudIntelHeader);
-                    // Get the parent card
-                    const card = cloudIntelHeader.closest('div[class*="card"]') || cloudIntelHeader.parentElement.parentElement;
-                    if (card) {
-                        targetRect = card.getBoundingClientRect();
-                        console.log(logPrefix + "Target rect found:", targetRect);
-                    } else {
-                        console.log(logPrefix + "Card container not found, using header rect");
-                        targetRect = cloudIntelHeader.getBoundingClientRect();
-                    }
-                } else {
-                    console.log(logPrefix + "Cloud Intelligence section NOT found. Creating DEBUG overlay in top-right.");
-                    targetRect = { top: 100, left: 100, width: 300, height: 200 };
-                }
-
-                // Create overlay div
                 const overlay = document.createElement('div');
                 overlay.id = 'honeyscan-cloud-overlay';
-
-                // DEBUG STYLE: Red border to make it visible even if misalignment
                 overlay.style.cssText = `
-                    position: fixed;
-                    top: ${targetRect.top}px;
-                    left: ${targetRect.left}px;
-                    width: ${targetRect.width || 300}px;
-                    height: ${targetRect.height || 300}px;
-                    background: rgba(15, 23, 42, 0.98);
-                    z-index: 99999;
-                    padding: 20px;
-                    overflow-y: auto;
-                    pointer-events: auto;
-                    box-sizing: border-box;
-                    border: 2px solid #ef4444; 
-                    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                    position: fixed; top: ${rect.top}px; left: ${rect.left}px;
+                    width: ${rect.width}px; height: 350px;
+                    background: #111827; z-index: 10000; padding: 20px;
+                    overflow-y: auto; border: 1px solid #334155;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-radius: 4px;
                 `;
 
-                // Build overlay content
                 overlay.innerHTML = `
-                    <div style="color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-                        <div style="background: #ef4444; color: white; padding: 2px 5px; font-size: 10px; margin-bottom: 5px;">DEBUG MODE</div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                            <h3 style="margin: 0; font-size: 16px; color: #60a5fa;">Cloud Intelligence</h3>
-                            <div style="display: flex; gap: 20px; font-size: 14px;">
-                                <div><span style="color: #94a3b8;">Daily:</span> <span style="color: #4ade80; font-weight: bold;">${cs.length}</span></div>
-                                <div><span style="color: #94a3b8;">Total:</span> <span style="color: #4ade80; font-weight: bold;">${hackers.length}</span></div>
+                    <div style="color: #f8fafc; font-family: sans-serif;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+                            <h3 style="margin: 0; font-size: 14px; color: #60a5fa;">Cloud Intelligence</h3>
+                            <div style="font-size: 12px; color: #94a3b8;">
+                                <span>Daily: ${cs.length}</span> | <span>Total: ${hackers.length}</span>
                             </div>
                         </div>
-
-                        <div style="margin-bottom: 20px;">
-                            <h4 style="font-size: 13px; color: #94a3b8; margin: 0 0 10px 0;">Recent active hackers</h4>
-                            <div style="max-height: 150px; overflow-y: auto;">
-                                ${hackers.slice(0, 10).map(h => `
-                                    <div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;">
-                                        <span style="font-family: monospace; color: #4ade80; font-size: 11px;">${h.ip}</span>
-                                        <span style="color: #94a3b8; font-size: 10px;">${translateLocation(h.location)}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="font-size: 11px; color: #64748b; text-transform: uppercase;">Recent hackers</h4>
+                            ${hackers.slice(0, 10).map(h => `
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                    <span style="font-family: monospace; color: #4ade80;">${h.ip}</span>
+                                    <span style="color: #94a3b8;">${translateLocation(h.location)}</span>
+                                </div>
+                            `).join('')}
                         </div>
-
                         <div>
-                            <h4 style="font-size: 13px; color: #94a3b8; margin: 0 0 10px 0;">The recent suspicious CS</h4>
-                            <div style="max-height: 150px; overflow-y: auto;">
-                                ${cs.slice(0, 10).map(c => {
-                    let riskColor = '#4ade80';
-                    if (c.risk === 'Medium') riskColor = '#facc15';
-                    if (c.risk === 'High') riskColor = '#fb923c';
-                    if (c.risk === 'Critical') riskColor = '#ef4444';
-
-                    return `
-                                        <div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                                            <div style="flex: 1;">
-                                                <div style="font-family: monospace; color: #e2e8f0; font-size: 11px;">${c.ip}</div>
-                                                <div style="color: #94a3b8; font-size: 9px;">${translateLocation(c.location)} • ${c.type}</div>
-                                            </div>
-                                            <span style="color: ${riskColor}; background: ${riskColor}20; padding: 2px 6px; border-radius: 4px; font-size: 9px; border: 1px solid ${riskColor}40;">${c.risk}</span>
-                                        </div>
-                                    `;
-                }).join('')}
-                            </div>
-                        </div>
-
-                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 10px; color: #64748b; text-align: center;">
-                            HoneyScan Live Intelligence • ${hackers.length + cs.length} threats
+                            <h4 style="font-size: 11px; color: #64748b; text-transform: uppercase;">Suspicious CS</h4>
+                            ${cs.slice(0, 10).map(c => `
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                    <span style="font-family: monospace;">${c.ip}</span>
+                                    <span style="color: #facc15;">${c.risk}</span>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 `;
-
-                // Append overlay to BODY, not to the card
-                // This way we don't touch React's DOM at all
                 document.body.appendChild(overlay);
-
-                console.log(logPrefix + "✅ Overlay injected successfully");
-
-            } catch (e) {
-                console.error("[HoneyScan Map Overlay] Error:", e);
-            }
+                console.log(HS_LOG_PREFIX + "Map overlay active.");
+            } catch (e) { console.error(HS_LOG_PREFIX + "Map Error:", e); }
         };
 
-        // Wait for React to load, then inject overlay
-        if (location.pathname.includes('/index') || location.hash.includes('index')) {
-            // NUCLEAR DEBUG
-            document.title = "⚠️ DEBUG MODE ACTIVE ⚠️";
-            console.log("[HoneyScan Map Overlay] Initializing React detector...");
+        // 3. GLOBAL POLLER (Resilient entry point)
+        setInterval(() => {
+            if (location.href.includes('/dashboard')) injectDashboardThreats();
+            if (location.href.includes('/index')) injectMapOverlay();
+        }, 2000);
 
-            let attempts = 0;
-            const maxAttempts = 20; // 10 seconds (20 * 500ms)
-
-            const waitForReact = () => {
-                attempts++;
-                const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
-                // Use looser matching logic matching the injector function
-                const cloudIntelHeader = allElements.find(el => {
-                    const text = (el.textContent || '').toLowerCase();
-                    return text.includes('cloud') && text.includes('intelligence');
-                });
-
-                if (cloudIntelHeader) {
-                    console.log("[HoneyScan Map Overlay] React loaded (header found), injecting overlay...");
-                    setTimeout(injectMapCloudIntelligenceOverlay, 500);
-                } else {
-                    console.log(`[HoneyScan Map Overlay] Attempt ${attempts}/${maxAttempts}: Header not found yet...`);
-
-                    if (attempts >= maxAttempts) {
-                        console.warn("[HoneyScan Map Overlay] Timeout waiting for React header. FORCING debug injection.");
-                        // Force injection even if header not found (will use fallback position)
-                        setTimeout(injectMapCloudIntelligenceOverlay, 500);
-                    } else {
-                        setTimeout(waitForReact, 500);
-                    }
-                }
-            };
-
-            setTimeout(waitForReact, 1000);
-        }
-
-        setTimeout(waitForReact, 1000);
-        }
-
-    </script>
-
+        console.log(HS_LOG_PREFIX + "Unified System V6 started.");
     </script>
 </body>
 
 </html>
+
 ```
