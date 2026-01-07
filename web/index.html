@@ -1544,27 +1544,85 @@
             } catch (e) { console.error(HS_LOG_PREFIX + "Dashboard Error:", e); }
         };
 
+        // === ROBUST LAYOUT SCALER ===
+        // Injects CSS rules to force flex layout, persisting across React re-renders
+        const ensureLayoutStyles = () => {
+            if (document.getElementById('hs-layout-styles')) return;
+            const style = document.createElement('style');
+            style.id = 'hs-layout-styles';
+            style.innerHTML = `
+                /* FORCE RIGHT COLUMN FLEX LAYOUT */
+                .index-cssmodule__rightCol-2h2WM, 
+                div[class*="rightCol"] {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 20px !important;
+                    justify-content: flex-start !important;
+                    height: calc(100vh - 120px) !important; /* Full vertical height */
+                    min-height: 0 !important;
+                }
+
+                /* FORCE CARDS TO EXPAND */
+                .index-cssmodule__rightCol-2h2WM .index-cssmodule__card-21Wx-,
+                div[class*="rightCol"] .el-card,
+                div[class*="rightCol"] div[class*="card"] {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    flex: 1 1 auto !important; /* Grow to fill space */
+                    min-height: 0 !important; /* Allow shrinking for scroll */
+                    height: auto !important;
+                    margin-bottom: 0 !important;
+                    visibility: visible !important;
+                    position: relative !important; /* Context for absolute children if needed */
+                }
+
+                /* CARD CONTENT EXPANSION */
+                .index-cssmodule__rightCol-2h2WM .index-cssmodule__card-21Wx- .index-cssmodule__content-2Wz2o,
+                div[class*="rightCol"] .el-card__body {
+                    flex: 1 1 auto !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    height: 100% !important;
+                    min-height: 0 !important;
+                    overflow: hidden !important; /* Container handles overflow */
+                    padding: 0 !important; /* We control padding in list */
+                }
+
+                /* HIDE HFISH PLACEHOLDERS AGGRESSIVELY via CSS */
+                .HS_HIDDEN,
+                .index-cssmodule__emptyWrap-2wZ2k,
+                div[class*="emptyWrap"] {
+                    display: none !important;
+                    visibility: hidden !important;
+                    height: 0 !important;
+                    width: 0 !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                }
+
+                /* STATUS HEADER */
+                .hs-cloud-status-brief {
+                    flex-shrink: 0 !important;
+                }
+            `;
+            document.head.appendChild(style);
+        };
+
         // 3. Map Intelligence Injector (Right-side boxes)
+        let cachedThreatData = null;
+
         const injectCloudIntelligence = async () => {
             try {
                 if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return;
+
+                // 0. Ensure CSS Rules exist
+                ensureLayoutStyles();
 
                 const rightCol = document.querySelector('.index-cssmodule__rightCol-2h2WM') ||
                     Array.from(document.querySelectorAll('[class*="leftCol"]')).find(el => el.getBoundingClientRect().left > 500);
                 if (!rightCol) return;
 
-                // STABLE FLEX LAYOUT (Full Height Fix)
-                // We assume the parent container is constrained. If not, we force a reasonable min-height.
-                rightCol.style.display = 'flex';
-                rightCol.style.flexDirection = 'column';
-                rightCol.style.gap = '20px'; // Increased gap for better separation
-                rightCol.style.justifyContent = 'flex-start'; // Align top, let children grow
-                rightCol.style.height = '100%'; // Attempt to fill parent title
-                // In some cases, the framework might clip it, so we ensure it overrides existing inline styles
-                rightCol.style.setProperty('height', 'calc(100vh - 120px)', 'important'); // Fallback to viewport height minus header padding
-
-                // Fix overlap: remove negative top positioning from headers
-                // 1. Clean up headers (layout fix)
+                // 1. Clean up headers
                 rightCol.querySelectorAll('[class*="titleWrap"]').forEach(el => {
                     el.style.setProperty('position', 'relative', 'important');
                     el.style.setProperty('top', '0', 'important');
@@ -1572,7 +1630,7 @@
                     el.style.setProperty('margin-bottom', '10px', 'important');
                 });
 
-                // 2. Fetch Data (Optimized: Cache)
+                // 2. Fetch Data (Optimized)
                 if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 30000)) {
                     const data = await window.getThreatData();
                     if (data) {
@@ -1589,15 +1647,29 @@
 
                 if (!hackerBox || !csBox) return;
 
-                // 3. Content Injection Logic
-                const renderBox = (box, dataList, type) => {
-                    // Hide native empty states
-                    box.querySelectorAll('[class*="emptyWrap"]').forEach(w => w.style.display = 'none');
-                    Array.from(box.querySelectorAll('span, p, div')).forEach(el => {
-                        if (el.innerText === 'No data' || el.innerText.includes('identify specific reasons')) {
-                            el.style.setProperty('display', 'none', 'important');
+                // 3. Content Injection & Persistence Check
+                const processBox = (box, dataList, type) => {
+                    // SEARCH AND DESTROY: Find any element containing "No data" and kill it
+                    // This is the "Nuclear Option" against React re-renders
+                    const allElements = box.querySelectorAll('*');
+                    for (let el of allElements) {
+                        // Skip our own list
+                        if (el.classList.contains('hs-intelligence-list') || el.closest('.hs-intelligence-list')) continue;
+
+                        // Check for bad text
+                        if (el.childNodes.length === 1 && el.childNodes[0].nodeType === 3) {
+                            const text = el.innerText;
+                            if (text === 'No data' || text.includes('identify specific reasons')) {
+                                el.classList.add('HS_HIDDEN'); // Hide via global CSS
+                                // Force inline just in case
+                                el.style.display = 'none';
+                            }
                         }
-                    });
+                        // Check for empty wrapper classes
+                        if (el.className && typeof el.className === 'string' && el.className.includes('emptyWrap')) {
+                            el.classList.add('HS_HIDDEN');
+                        }
+                    }
 
                     // Check if our list exists
                     let list = box.querySelector('.hs-intelligence-list');
@@ -1611,7 +1683,7 @@
                         target.appendChild(list);
                     }
 
-                    // Only update innerHTML if empty to save DOM ops (or if data changed - simplified here)
+                    // Only update innerHTML if empty or version changed
                     if (list.childElementCount === 0 || list.dataset.ver !== getTsSignature()) {
                         const rows = dataList.map(item => {
                             if (type === 'hacker') {
@@ -1636,8 +1708,8 @@
                 // Helper to version data
                 const getTsSignature = () => Math.floor((cachedThreatData.timestamp || 0) / 10000).toString();
 
-                renderBox(hackerBox, (threatData.hackers || []).slice(0, 20), 'hacker');
-                renderBox(csBox, (threatData.cs || []).slice(0, 20), 'cs');
+                processBox(hackerBox, (threatData.hackers || []).slice(0, 20), 'hacker');
+                processBox(csBox, (threatData.cs || []).slice(0, 20), 'cs');
 
                 // Status Bar
                 let statusHeader = document.querySelector('.hs-cloud-status-brief');
@@ -1651,33 +1723,31 @@
                 const cCount = (threatData.cs || []).length;
                 statusHeader.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
 
-                // 4. Mutation Observer (The "Healer")
-                // If React wipes our work, we put it back immediately.
-                if (!isObserverActive) {
-                    const observer = new MutationObserver(() => {
-                        // Debounce slightly or just run
-                        // We check if our lists are gone
-                        if (!rightCol.querySelector('.hs-intelligence-list')) {
-                            console.log("[HoneyScan] UI Repair: Re-injecting...");
-                            injectCloudIntelligence();
-                        }
-                    });
-                    observer.observe(rightCol, { childList: true, subtree: true });
-                    isObserverActive = true;
-                    console.log("[HoneyScan] MutationObserver attached to Right Column");
-                }
-
-            } catch (e) { console.error("[HoneyScan] UI Error:", e); }
+            } catch (e) {
+                // Silent catch to prevent console flooding
+            }
         };
 
-        // 4. GLOBAL POLLER
-        // Run frequently to catch initial load, then Observer takes over for stability
-        setInterval(() => {
-            if (location.href.includes('/dashboard')) injectDashboardThreats();
-            if (location.href.includes('/index')) injectCloudIntelligence();
-        }, 500); // 500ms check
+        // 4. AGGRESSIVE LOOP (The "Enforcer")
+        // Uses requestAnimationFrame for high-performance checking without blocking UI
+        let frameCount = 0;
+        const persistenceLoop = () => {
+            frameCount++;
 
-        console.log("[HoneyScan] Resilient Intelligence Layer V8 Active");
+            // Run checks every frame for the first 5 seconds (rapid healing)
+            // Then throttle to every 20 frames (~300ms) to save battery
+            const now = performance.now();
+            if (now < 60000 || frameCount % 20 === 0) {
+                if (location.href.includes('/dashboard')) injectDashboardThreats();
+                if (location.href.includes('/index')) injectCloudIntelligence();
+            }
+            requestAnimationFrame(persistenceLoop);
+        };
+
+        // Start loop
+        requestAnimationFrame(persistenceLoop);
+
+        console.log("[HoneyScan] Resilient Intelligence Layer V9 (Enforcer) Active");
     </script>
 </body>
 
