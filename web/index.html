@@ -1797,14 +1797,21 @@
 
                 // PRECISE INJECTION: Find headers and inject into next sibling
                 const injectByHeader = (headerText, data, type) => {
-                    // Find all text nodes
-                    const allElements = Array.from(document.querySelectorAll('*'));
+                    // Find all text nodes - be more flexible with matching
+                    const allElements = Array.from(document.querySelectorAll('div, span, h3, h4, h5, p'));
                     const header = allElements.find(el => {
-                        const text = el.textContent?.trim();
-                        return text === headerText || text?.includes(headerText);
+                        const text = (el.textContent || '').trim().toLowerCase();
+                        const search = headerText.toLowerCase();
+                        // Match if text contains the search string
+                        return text.includes(search) || text === search;
                     });
 
-                    if (!header) return false;
+                    if (!header) {
+                        console.warn(`[HoneyScan] Header not found: "${headerText}"`);
+                        return false;
+                    }
+
+                    console.log(`[HoneyScan] Found header: "${headerText}"`, header);
 
                     // Find the content container - it should be a sibling or child of parent
                     let targetContainer = null;
@@ -1825,7 +1832,12 @@
                         }
                     }
 
-                    if (!targetContainer) return false;
+                    if (!targetContainer) {
+                        console.warn(`[HoneyScan] Container not found for: "${headerText}"`);
+                        return false;
+                    }
+
+                    console.log(`[HoneyScan] Target container:`, targetContainer, `Size: ${targetContainer.clientWidth}x${targetContainer.clientHeight}`);
 
                     // SAFETY: Don't inject if container is suspiciously large
                     if (targetContainer.clientHeight > 500 || targetContainer.clientWidth > window.innerWidth * 0.8) {
@@ -1842,6 +1854,7 @@
                     targetContainer.style.textAlign = 'left';
                     targetContainer.style.display = 'block';
 
+                    console.log(`[HoneyScan] ✓ Injected ${data.length} items into "${headerText}"`);
                     return true;
                 };
 
