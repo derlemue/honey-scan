@@ -102,7 +102,7 @@ services:
       - mariadb
 
   feed:
-    image: nginx:alpine
+    image: php:8.2-apache
     container_name: hfish-feed
     restart: unless-stopped
     dns:
@@ -113,11 +113,10 @@ services:
     ports:
       - "8888:80"
     volumes:
-      - ./config/feed_nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./feed:/usr/share/nginx/html
-      - ./scans:/usr/share/nginx/html/scans:ro
-      - ./web/assets:/usr/share/nginx/html/assets:ro
-      - ./scripts:/usr/share/nginx/html/scripts:ro
+      - ./feed:/var/www/html/feed
+      - ./scans:/var/www/html/feed/scans:ro
+      - ./web/assets:/var/www/html/feed/assets:ro
+      - ./scripts:/var/www/html/feed/scripts:ro
 
 volumes:
   hfish_data:
