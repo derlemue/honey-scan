@@ -1,14 +1,1 @@
-{
-  "hackers": [
-    { "ip": "192.168.1.101", "location": "United States", "time": "2026-01-07 19:40:01" },
-    { "ip": "10.0.0.5", "location": "Germany", "time": "2026-01-07 19:42:15" },
-    { "ip": "172.16.0.23", "location": "China", "time": "2026-01-07 19:45:30" },
-    { "ip": "8.8.8.8", "location": "Russia", "time": "2026-01-07 19:48:10" },
-    { "ip": "1.1.1.1", "location": "France", "time": "2026-01-07 19:50:00" }
-  ],
-  "cs": [
-    { "ip": "192.168.1.200", "type": "SSH Brute Force", "risk": "High" },
-    { "ip": "10.0.0.99", "type": "SQL Injection", "risk": "Critical" },
-    { "ip": "172.16.0.55", "type": "XSS Attack", "risk": "Medium" }
-  ]
-}
+{"hackers": [], "cs": [], "api_active": false}
