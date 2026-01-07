@@ -113,6 +113,12 @@ services:
     ports:
       - "8888:80"
     volumes:
+      # Support path stripping (Proxy requests /)
+      - ./feed:/var/www/html
+      - ./scans:/var/www/html/scans:ro
+      - ./web/assets:/var/www/html/assets:ro
+      - ./scripts:/var/www/html/scripts:ro
+      # Support path preservation (Proxy requests /feed/)
       - ./feed:/var/www/html/feed
       - ./scans:/var/www/html/feed/scans:ro
       - ./web/assets:/var/www/html/feed/assets:ro
