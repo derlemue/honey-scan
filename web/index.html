@@ -1561,23 +1561,53 @@
         // 2. Dashboard Injector
         const injectDashboardThreats = async () => {
             try {
+                // Safety check: only run on dashboard page
+                if (!location.href.includes('/dashboard')) return;
+
+                // Find the widget header with multiple safety checks
                 const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
-                const widgetHeader = headers.find(el => el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud');
+                const widgetHeader = headers.find(el => {
+                    try {
+                        return el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud';
+                    } catch (e) {
+                        return false;
+                    }
+                });
+
                 if (!widgetHeader) return;
 
-                let card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
+                // Find card with safety checks
+                let card = null;
+                try {
+                    card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
+                } catch (e) {
+                    return;
+                }
+
                 if (!card) return;
-                let body = card.querySelector('.el-card__body') || card.lastElementChild;
+
+                // Find body with safety checks
+                let body = null;
+                try {
+                    body = card.querySelector('.el-card__body') || card.lastElementChild;
+                } catch (e) {
+                    return;
+                }
+
                 if (!body || body.getAttribute('data-hs-injected') === 'true') return;
 
-                // Fetch threat data with fallback
+                // Fetch threat data with comprehensive error handling
                 let threats = [];
                 try {
                     if (typeof window.getThreatData === 'function') {
                         const data = await window.getThreatData();
-                        threats = data?.cs || [];
+                        if (data && Array.isArray(data.cs)) {
+                            threats = data.cs;
+                        }
                     }
-                } catch (e) { }
+                } catch (e) {
+                    console.warn('[HoneyScan] getThreatData failed:', e);
+                }
 
                 // Fallback to JSON file if no data
                 if (threats.length === 0) {
@@ -1585,40 +1615,67 @@
                         const r = await fetch('/assets/live_threats.json');
                         if (r.ok) {
                             const data = await r.json();
-                            threats = data?.cs || [];
+                            if (data && Array.isArray(data.cs)) {
+                                threats = data.cs;
+                            }
                         }
-                    } catch (e) { }
+                    } catch (e) {
+                        console.warn('[HoneyScan] Fetch live_threats.json failed:', e);
+                    }
                 }
 
                 if (threats.length === 0) return;
 
+                // Generate table rows with safety checks
                 let rowHtml = threats.map(t => {
-                    let c = '#4ade80'; if (t.risk === 'Medium') c = '#facc15'; if (t.risk === 'High') c = '#fb923c'; if (t.risk === 'Critical') c = '#ef4444';
-                    return `
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="padding: 8px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace;">${t.ip}</div></td>
-                            <td style="padding: 8px; color: #94a3b8;">${translateLocation(t.location)}</td>
-                            <td style="padding: 8px; color: #94a3b8;">${t.type || 'Scanner'}</td>
-                            <td style="padding: 8px;"><span style="color:${c};background:${c}20;padding:2px 6px;border-radius:4px;font-size:11px;border:1px solid ${c}40;">${t.risk}</span></td>
-                            <td style="padding: 8px; color: rgba(255,255,255,0.4);">${t.time}</td>
-                        </tr>`;
-                }).join('');
+                    try {
+                        let c = '#4ade80';
+                        if (t.risk === 'Medium') c = '#facc15';
+                        if (t.risk === 'High') c = '#fb923c';
+                        if (t.risk === 'Critical') c = '#ef4444';
 
-                body.innerHTML = `
-                    <div style="width:100%; height:100%; overflow-y:auto; background: #1e293b; border-radius: 4px;">
-                        <table style="width:100%; border-collapse:collapse; color:#fff; font-size:12px;">
-                            <thead style="background: rgba(0,0,0,0.2); position: sticky; top: 0;">
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.1);text-align:left;">
-                                    <th style="padding:8px;">IP Address</th><th style="padding:8px;">Location</th>
-                                    <th style="padding:8px;">Type</th><th style="padding:8px;">Risk</th><th style="padding:8px;">Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>${rowHtml}</tbody>
-                        </table>
-                    </div>`;
-                body.setAttribute('data-hs-injected', 'true');
-                console.log(HS_LOG_PREFIX + "Dashboard threat intelligence injected.");
-            } catch (e) { console.error(HS_LOG_PREFIX + "Dashboard Error:", e); }
+                        const ip = t.ip || 'N/A';
+                        const location = translateLocation(t.location || 'Unknown');
+                        const type = t.type || 'Scanner';
+                        const risk = t.risk || 'Low';
+                        const time = t.time || '';
+
+                        return `
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 8px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace;">${ip}</div></td>
+                                <td style="padding: 8px; color: #94a3b8;">${location}</td>
+                                <td style="padding: 8px; color: #94a3b8;">${type}</td>
+                                <td style="padding: 8px;"><span style="color:${c};background:${c}20;padding:2px 6px;border-radius:4px;font-size:11px;border:1px solid ${c}40;">${risk}</span></td>
+                                <td style="padding: 8px; color: rgba(255,255,255,0.4);">${time}</td>
+                            </tr>`;
+                    } catch (e) {
+                        console.warn('[HoneyScan] Error rendering threat row:', e);
+                        return '';
+                    }
+                }).filter(row => row !== '').join('');
+
+                // Inject with safety check
+                try {
+                    body.innerHTML = `
+                        <div style="width:100%; height:100%; overflow-y:auto; background: #1e293b; border-radius: 4px;">
+                            <table style="width:100%; border-collapse:collapse; color:#fff; font-size:12px;">
+                                <thead style="background: rgba(0,0,0,0.2); position: sticky; top: 0;">
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);text-align:left;">
+                                        <th style="padding:8px;">IP Address</th><th style="padding:8px;">Location</th>
+                                        <th style="padding:8px;">Type</th><th style="padding:8px;">Risk</th><th style="padding:8px;">Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rowHtml}</tbody>
+                            </table>
+                        </div>`;
+                    body.setAttribute('data-hs-injected', 'true');
+                    console.log('[HoneyScan] Dashboard threat intelligence injected');
+                } catch (e) {
+                    console.error('[HoneyScan] Failed to inject HTML:', e);
+                }
+            } catch (e) {
+                console.error('[HoneyScan] Dashboard injection error:', e);
+            }
         };
 
         // === ROBUST LAYOUT SCALER ===
@@ -1896,8 +1953,8 @@
             // Run checks throttled
             if (now < 60000 || frameCount % 20 === 0) {
                 ensureLayoutStyles(); // CRITICAL: ACTIVATE STYLES
-                // ALL INJECTION DISABLED TO ISOLATE CRASH
-                // if (location.href.includes('/dashboard')) injectDashboardThreats();
+                if (location.href.includes('/dashboard')) injectDashboardThreats();
+                // Map injection still disabled - needs complete rewrite
                 // if (location.href.includes('/index')) injectCloudIntelligence();
             }
             requestAnimationFrame(persistenceLoop);
