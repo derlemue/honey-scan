@@ -1561,6 +1561,73 @@
         // 2. Dashboard Injector
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
+        // Global State for Pagination
+        window.hsTableState = window.hsTableState || { page: 1, limit: 36 };
+        window.hsThreatData = window.hsThreatData || [];
+
+        // Shared Render Function
+        window.renderThreatTable = () => {
+            // Find tbody - robust search
+            // We can't cache tbody easily because React might re-render the container
+            // So we find it again
+            const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
+            const widgetHeader = headers.find(el => {
+                try { return el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud'; } catch (e) { return false; }
+            });
+            if (!widgetHeader) return;
+            let card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
+            if (!card) return;
+            let body = card.querySelector('.el-card__body') || card.lastElementChild;
+            if (!body) return;
+            // Ensure overflow hidden
+            body.style.overflow = 'hidden';
+            const tbody = body.querySelector('tbody');
+            if (!tbody) return;
+
+            const { page, limit } = window.hsTableState;
+            const threats = window.hsThreatData;
+            const totalPages = Math.max(1, Math.ceil(threats.length / limit));
+
+            // Clamp page
+            if (window.hsTableState.page > totalPages) window.hsTableState.page = totalPages;
+            if (window.hsTableState.page < 1) window.hsTableState.page = 1;
+
+            // Update Pagination UI
+            const info = document.getElementById('hs-page-info');
+            if (info) info.innerText = `${window.hsTableState.page}/${totalPages}`;
+
+            // Slice Data
+            const start = (window.hsTableState.page - 1) * limit;
+            const pagedData = threats.slice(start, start + limit);
+
+            // Generate HTML
+            const rowHtml = pagedData.map(t => {
+                try {
+                    let riskColor = '#4ade80'; // Low
+                    if (t.risk === 'Medium') riskColor = '#facc15';
+                    if (t.risk === 'High') riskColor = '#fb923c';
+                    if (t.risk === 'Critical') riskColor = '#ef4444';
+
+                    const ip = t.ip || 'N/A';
+                    const location = translateLocation(t.location || 'Unknown');
+                    const type = t.type || 'Scanner';
+                    const risk = t.risk || 'Low';
+                    const time = t.time || '';
+
+                    return `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 8px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace; font-size: 11px;">${ip}</div></td>
+                            <td style="padding: 8px; color: #94a3b8; font-size: 11px;">${location}</td>
+                            <td style="padding: 8px; color: #94a3b8; font-size: 11px;">${type}</td>
+                            <td style="padding: 8px;"><span style="color:${riskColor};background:${riskColor}20;padding:2px 6px;border-radius:4px;font-size:10px;border:1px solid ${riskColor}40;">${risk}</span></td>
+                            <td style="padding: 8px; color: rgba(255,255,255,0.4); font-size: 11px;">${time}</td>
+                        </tr>`;
+                } catch (e) { return ''; }
+            }).join('');
+
+            tbody.innerHTML = rowHtml;
+        };
+
         const injectDashboardThreats = async () => {
             try {
                 // CRITICAL: Check global flag FIRST to prevent re-injection
@@ -1618,32 +1685,12 @@
 
                 if (threats.length === 0) return;
 
-                // Generate table rows - show ALL threats (sidecar limits to latest)
-                const rowHtml = threats.map(t => {
-                    try {
-                        let riskColor = '#4ade80'; // Low
-                        if (t.risk === 'Medium') riskColor = '#facc15';
-                        if (t.risk === 'High') riskColor = '#fb923c';
-                        if (t.risk === 'Critical') riskColor = '#ef4444';
+                if (threats.length === 0) return;
 
-                        const ip = t.ip || 'N/A';
-                        const location = translateLocation(t.location || 'Unknown');
-                        const type = t.type || 'Scanner';
-                        const risk = t.risk || 'Low';
-                        const time = t.time || '';
+                // NO rendering of rowHtml here anymore. 
+                // We delegate to window.renderThreatTable() later.
+                const rowHtml = '';
 
-                        return `
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 8px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace; font-size: 11px;">${ip}</div></td>
-                                <td style="padding: 8px; color: #94a3b8; font-size: 11px;">${location}</td>
-                                <td style="padding: 8px; color: #94a3b8; font-size: 11px;">${type}</td>
-                                <td style="padding: 8px;"><span style="color:${riskColor};background:${riskColor}20;padding:2px 6px;border-radius:4px;font-size:10px;border:1px solid ${riskColor}40;">${risk}</span></td>
-                                <td style="padding: 8px; color: rgba(255,255,255,0.4); font-size: 11px;">${time}</td>
-                            </tr>`;
-                    } catch (e) {
-                        return '';
-                    }
-                }).filter(row => row !== '').join('');
 
                 // Inject table with FULL HEIGHT styling
                 try {
@@ -1680,6 +1727,10 @@
                                 </table>
                             </div>
                         </div>`;
+
+                    // Initial Render
+                    window.hsThreatData = threats;
+                    window.renderThreatTable();
 
                     // SET GLOBAL FLAG - prevents re-injection even if React re-renders
                     dashboardInjected = true;
@@ -1956,6 +2007,7 @@
                 console.error('[HoneyScan] Cloud Intelligence Error:', e);
             }
         };
+        injectCloudIntelligence(); // Initial render call
 
 
         // 4. AGGRESSIVE LOOP (The "Enforcer")
@@ -2048,54 +2100,28 @@
                             let body = card.querySelector('.el-card__body') || card.lastElementChild;
                             if (!body) return;
 
-                            // Find the tbody element
-                            const tbody = body.querySelector('tbody');
-                            if (!tbody) return;
-
                             // Fetch fresh data
                             fetch('/assets/live_threats.json?t=' + Date.now())
                                 .then(r => r.json())
                                 .then(data => {
                                     if (!data || !Array.isArray(data.cs)) return;
 
-                                    const threats = data.cs;
-                                    const rowHtml = threats.map(t => {
-                                        try {
-                                            let riskColor = '#4ade80';
-                                            if (t.risk === 'Medium') riskColor = '#facc15';
-                                            if (t.risk === 'High') riskColor = '#fb923c';
-                                            if (t.risk === 'Critical') riskColor = '#ef4444';
+                                    // Update Global Data and Re-render
+                                    window.hsThreatData = data.cs;
 
-                                            const ip = t.ip || 'N/A';
-                                            const location = translateLocation(t.location || 'Unknown');
-                                            const type = t.type || 'Scanner';
-                                            const risk = t.risk || 'Low';
-                                            const time = t.time || '';
-
-                                            return `
-                                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                                    <td style="padding: 8px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace; font-size: 11px;">${ip}</div></td>
-                                                    <td style="padding: 8px; color: #94a3b8; font-size: 11px;">${location}</td>
-                                                    <td style="padding: 8px; color: #94a3b8; font-size: 11px;">${type}</td>
-                                                    <td style="padding: 8px;"><span style="color:${riskColor};background:${riskColor}20;padding:2px 6px;border-radius:4px;font-size:10px;border:1px solid ${riskColor}40;">${risk}</span></td>
-                                                    <td style="padding: 8px; color: rgba(255,255,255,0.4); font-size: 11px;">${time}</td>
-                                                </tr>`;
-                                        } catch (e) {
-                                            return '';
-                                        }
-                                    }).filter(row => row !== '').join('');
-
-                                    // Update tbody content (preserves scroll position)
-                                    tbody.innerHTML = rowHtml;
-                                    console.log('[HoneyScan] Auto-refreshed threat table (' + threats.length + ' threats)');
+                                    if (typeof window.renderThreatTable === 'function') {
+                                        window.renderThreatTable();
+                                    }
                                 })
                                 .catch(e => console.warn('[HoneyScan] Auto-refresh failed:', e));
+
                         }
                     } catch (e) {
-                        console.error('[HoneyScan] Auto-refresh error:', e);
+                        console.warn('[HoneyScan] Auto-refresh loop error:', e);
                     }
-                }, 30000); // Refresh every 30 seconds
+                }, 30000); // 30 seconds
             }
+            // End Dashboard Injection Logic
         })();
 
         console.log("[HoneyScan] Resilient Intelligence Layer V9 (Enforcer) Active");
