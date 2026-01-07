@@ -1668,10 +1668,10 @@
 
                 if (!body) return;
 
-                // Fetch threat data from live_threats.json (updated by sidecar)
+                // Fetch threat data
                 let threats = [];
                 try {
-                    const r = await fetch('/assets/live_threats.json?t=' + Date.now()); // Cache bust
+                    const r = await fetch('/assets/live_threats.json?t=' + Date.now());
                     if (r.ok) {
                         const data = await r.json();
                         if (data && Array.isArray(data.cs)) {
@@ -1679,23 +1679,29 @@
                         }
                     }
                 } catch (e) {
-                    console.warn('[HoneyScan] Failed to fetch live_threats.json:', e);
-                    return; // Don't inject if no data
+                    console.error('[HoneyScan] Failed to fetch live_threats.json for dashboard:', e);
                 }
 
                 if (threats.length === 0) return;
 
-                if (threats.length === 0) return;
-
-                // NO rendering of rowHtml here anymore. 
+                // NO rendering of rowHtml here anymore.
                 // We delegate to window.renderThreatTable() later.
                 const rowHtml = '';
-
 
                 // Inject table with FULL HEIGHT styling
                 try {
                     // DON'T modify card height - let it keep its original size
+                    // But ensure body doesn't scroll and hides overflow
+                    body.style.height = '100%'; // FORCE height to match parent
+                    body.style.maxHeight = '100%';
+                    body.style.overflow = 'hidden'; // Hide scrollbar, use pagination
+                    body.style.display = 'flex';
+                    body.style.flexDirection = 'column';
+                    body.setAttribute('data-hs-injected', 'true');
+
                     // Only modify body to make it fill the card's available space WITHOUT overflowing
+                    // The previous block already set flex, flexDirection, etc.
+                    // This part ensures the inner structure also respects the flex layout.
                     if (body) {
                         body.style.flex = '1';
                         body.style.display = 'flex';
