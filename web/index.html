@@ -1567,41 +1567,61 @@
                     box-sizing: border-box !important;
                 }
 
-                /* CUSTOM DASHBOARD CONTAINER (Inside Overlay) */
+                /* CUSTOM DASHBOARD CONTAINER (Transparent, just layout) */
                 .hs-custom-dashboard {
                     display: flex !important;
                     flex-direction: column !important;
                     height: 100% !important;
-                    gap: 20px !important;
-                    font-family: 'Outfit', sans-serif !important;
+                    gap: 20px !important; /* THE GAP */
+                    pointer-events: auto !important;
+                    background: transparent !important; /* No single box background */
+                    box-shadow: none !important;
+                    border: none !important;
                 }
 
-                /* CUSTOM CARD STYLE */
+                /* DISTINCT TECH CARDS */
                 .hs-custom-card {
-                    background-image: linear-gradient(180deg, rgba(8, 20, 41, 0.9) 0%, rgba(4, 12, 28, 0.95) 100%) !important;
-                    border: 1px solid rgba(49, 112, 167, 0.3) !important;
-                    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5) !important;
-                    border-radius: 4px !important;
+                    flex: 1 !important;
                     display: flex !important;
                     flex-direction: column !important;
-                    flex: 1 1 50% !important; /* Split 50/50 */
-                    min-height: 0 !important;
+                    background: rgba(12, 24, 45, 0.95) !important; /* Deep Blue Background */
+                    border: 1px solid rgba(0, 180, 255, 0.3) !important; /* Tech Border */
+                    box-shadow: inset 0 0 15px rgba(0, 180, 255, 0.1), 0 0 10px rgba(0,0,0,0.5) !important;
+                    position: relative;
                     overflow: hidden !important;
-                    position: relative !important;
+                }
+
+                /* CYAN BRACKET ACCENTS (Tech Feel) */
+                .hs-custom-card::before, .hs-custom-card::after {
+                    content: '';
+                    position: absolute;
+                    width: 10px;
+                    height: 10px;
+                    border: 2px solid #00d2ff;
+                    transition: all 0.3s;
+                    z-index: 2;
+                }
+                .hs-custom-card::before {
+                    top: -1px; left: -1px;
+                    border-right: none; border-bottom: none;
+                }
+                .hs-custom-card::after {
+                    bottom: -1px; right: -1px;
+                    border-left: none; border-top: none;
                 }
 
                 /* CUSTOM HEADER */
                 .hs-custom-header {
                     padding: 0 15px !important;
-                    font-size: 14px !important;
+                    font-size: 15px !important;
                     font-weight: 600 !important;
                     color: #fff !important;
-                    /* Fallback Gradient if image missing */
-                    background: linear-gradient(90deg, rgba(0, 70, 140, 0.4) 0%, rgba(0,0,0,0) 100%) !important;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+                    background: rgba(0, 150, 255, 0.1) !important;
+                    border-bottom: 1px solid rgba(0, 200, 255, 0.2) !important;
                     display: flex;
                     align-items: center;
-                    height: 38px !important; /* Slightly taller */
+                    height: 40px !important;
+                    flex-shrink: 0;
                 }
                 .hs-custom-header::before {
                     content: '';
@@ -1609,7 +1629,7 @@
                     width: 4px;
                     height: 16px;
                     background: #00d2ff;
-                    margin-right: 10px;
+                    margin-right: 12px;
                     box-shadow: 0 0 8px #00d2ff;
                 }
 
@@ -1622,21 +1642,8 @@
                     scrollbar-color: #2c5282 #0a1929;
                 }
 
-                /* STATUS HEADER - More compact */
-                .hs-cloud-status-brief {
-                    padding: 6px 15px;
-                    background: rgba(0, 50, 100, 0.3);
-                    border: 1px solid rgba(0, 150, 255, 0.3);
-                    border-radius: 4px;
-                    margin-bottom: 15px; /* More space */
-                    color: #fff;
-                    font-size: 12px;
-                    display: flex;
-                    justify-content: space-between;
-                    flex-shrink: 0;
-                    backdrop-filter: blur(4px);
-                    box-shadow: inset 0 0 10px rgba(0, 150, 255, 0.1);
-                }
+                /* STATUS HIDDEN (User didn't ask for it in V13, cleaning up to match screenshots) */
+                .hs-cloud-status-brief { display: none !important; }
                 /* V7 XPATH HUNTER STYLES */
                 
                 /* Target Discovered Column via ID */
@@ -1664,32 +1671,15 @@
 
         const injectCloudIntelligence = async () => {
             try {
-                // V11 STRICT VISIBILITY LOGIC
-                const isScreenContext = () => {
-                    // 1. Must satisfy URL requirement
-                    if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return false;
-                    // 2. Must NOT have Admin Sidebar (The "Leak" Fix)
-                    if (document.querySelector('.el-menu') || document.querySelector('.el-aside')) return false;
-                    // 3. Must NOT be white theme (heuristic)
-                    const bg = window.getComputedStyle(document.body).backgroundColor;
-                    // If background is white-ish (high luminance), it's wrong context
-                    // (Assuming dark mode is #000 or similar)
-                    if (bg === 'rgb(255, 255, 255)') return false;
+                // V13 DEBUG LOG
+                console.log('%c HoneyScan V13 Design Match Loaded ', 'background: #000; color: #00d2ff; font-weight:bold;');
 
-                    return true;
-                };
-
-                const overlay = document.getElementById('hs-fixed-overlay');
-
-                if (!isScreenContext()) {
+                // Path check soft-enforced
+                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) {
+                    const overlay = document.getElementById('hs-fixed-overlay');
                     if (overlay) overlay.style.display = 'none';
                     return;
                 }
-
-                // If we are here, we SHOULD show it.
-                if (overlay) overlay.style.display = 'flex';
-
-                console.log('%c HoneyScan V11 Strict & Tuned ', 'background: #000; color: #00d2ff; font-weight:bold;');
 
                 // 0. Ensure CSS Rules exist
                 ensureLayoutStyles();
@@ -1724,9 +1714,9 @@
                     currentOverlay.id = 'hs-fixed-overlay';
                     document.body.appendChild(currentOverlay);
 
+                    // V13 Structure: No Status Brief, Just Two Cards
                     currentOverlay.innerHTML = `
                          <div class="hs-custom-dashboard">
-                            <div class="hs-cloud-status-brief"></div>
                             <div class="hs-custom-card" id="hs-hackers-card">
                                 <div class="hs-custom-header">Recent active hackers</div>
                                 <div class="hs-custom-body"></div>
@@ -1739,17 +1729,17 @@
                     `;
                 }
 
-                // Sync Geometry - LAYOUT TUNING (V12)
+                // Sync Geometry - LAYOUT TUNING (V13)
                 currentOverlay.style.display = 'flex';
                 currentOverlay.style.left = anchorRect.left + 'px';
                 currentOverlay.style.width = anchorRect.width + 'px';
 
-                // Top Tuning (V12):
-                // User wants "Original Box" size, which was likely more centered/compact.
-                // We'll fix it to ~12% top and 80vh height to ensure it doesn't touch bottom.
-                const topPos = window.innerHeight * 0.12;
+                // Top Tuning (V13): Match Left Column Top
+                // Typically ~10-12% top.
+                const topPos = window.innerHeight * 0.13;
                 currentOverlay.style.top = topPos + 'px';
-                currentOverlay.style.height = '78vh'; // Fixed height, safe from bottom
+                // Height: 80% to leave gap at bottom
+                currentOverlay.style.height = '80vh';
 
                 // 3. ROBUST FETCH
                 const fetchThreatDataLocal = async () => {
@@ -1808,14 +1798,8 @@
                 updateList('#hs-hackers-card', (threatData.hackers || []).slice(0, 20), 'hacker');
                 updateList('#hs-cs-card', (threatData.cs || []).slice(0, 20), 'cs');
 
-                // Update Status
-                const statusBrief = currentOverlay.querySelector('.hs-cloud-status-brief');
-                const hCount = (threatData.hackers || []).length;
-                const cCount = (threatData.cs || []).length;
-                statusBrief.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b> &bull; ${hCount + cCount} Events</span> <span><i style="color:#00d2ff">●</i> Updating</span>`;
-
             } catch (e) {
-                console.error(e);
+                console.log(e);
             }
         };
 
@@ -1831,11 +1815,15 @@
             if (now < 60000 || frameCount % 20 === 0) {
                 if (location.href.includes('/dashboard')) injectDashboardThreats();
 
-                // V12 FIX: Explicit Cleanup on Loop
-                if (location.href.includes('/index') || location.hash.includes('index')) {
+                // V13 STRICT KILL-SWITCH (Anti-Leak)
+                const bodyText = document.body.innerText || "";
+                const isDashboardDetected = bodyText.includes("Node status") || bodyText.includes("Attack trend") || document.querySelector('.el-breadcrumb');
+                const isMonitorUrl = location.href.includes('/index') || location.hash.includes('index');
+
+                if (isMonitorUrl && !isDashboardDetected) {
                     injectCloudIntelligence();
                 } else {
-                    // If we are NOT on index, we MUST hide the overlay immediately
+                    // If we are NOT on index OR we see Dashboard elements, FORCE HIDE
                     const ov = document.getElementById('hs-fixed-overlay');
                     if (ov) ov.style.display = 'none';
                 }
