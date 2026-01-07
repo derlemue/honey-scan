@@ -1811,37 +1811,28 @@
 
             // Run checks every frame for the first 5 seconds (rapid healing)
             // Then throttle to every 20 frames (~300ms) to save battery
-            const now = performance.now();
-            if (now < 60000 || frameCount % 20 === 0) {
-                if (location.href.includes('/dashboard')) injectDashboardThreats();
+            requestAnimationFrame(persistenceLoop);
+        };
 
-                // V13 STRICT KILL-SWITCH (Anti-Leak)
-                const bodyText = document.body.innerText || "";
-                const isDashboardDetected = bodyText.includes("Node status") || bodyText.includes("Attack trend") || document.querySelector('.el-breadcrumb');
-                const isMonitorUrl = location.href.includes('/index') || location.hash.includes('index');
+        // V14 HARD KILL: Global Event Interceptors for SPA Navigation
+        (function () {
+            // 1. Click Interceptor (Immediate "Close" reaction)
+            window.addEventListener('click', (e) => {
+                const target = e.target;
+                const text = target.innerText || "";
 
-                if (isMonitorUrl && !isDashboardDetected) {
-                    injectCloudIntelligence();
-                } else {
-                    // If we are NOT on index OR we see Dashboard elements, FORCE HIDE
-                    const ov = document.getElementById('hs-fixed-overlay');
-                    if (ov) ov.style.display = 'none';
-
-                    // Double check in 50ms (in case navigation fails or takes time)
-                    setTimeout(() => {
-                        if (!location.href.includes('/index') && !location.hash.includes('index')) {
-                            if (overlay) overlay.style.display = 'none';
-                        }
-                    }, 50);
+                // Heuristic: If user clicks "Close", "Back", or "Dashboard" (in menu)
+                if (text.includes('Close') || text.includes('Setting') || target.closest('.el-menu-item')) {
+                    const overlay = document.getElementById('hs-fixed-overlay');
+                    if (overlay) overlay.style.display = 'none';
                 }
-            }, true); // Capture phase to run before other handlers
+            }, true);
 
-            // 2. History API Patch (SPA Router Hook)
+            // 2. History API Patch
             const patchHistory = (method) => {
                 const original = history[method];
                 return function (...args) {
                     const result = original.apply(this, args);
-                    // Trigger check immediately
                     const overlay = document.getElementById('hs-fixed-overlay');
                     if (overlay && (!location.href.includes('/index') && !location.hash.includes('index'))) {
                         overlay.style.display = 'none';
