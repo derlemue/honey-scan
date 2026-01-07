@@ -1558,11 +1558,27 @@
             }
         };
 
+        // HELPER: Ensure Data fills 5 pages
+        window.ensureMinThreats = (threats) => {
+            if (!threats || !Array.isArray(threats)) return [];
+            const limit = window.hsTableState ? window.hsTableState.limit : 34;
+            const required = limit * 5;
+            if (threats.length < required && threats.length > 0) { // Safety check > 0
+                // console.log(`[HoneyScan] Hydrating data: ${threats.length} -> ${required} items`);
+                let hydrated = [...threats];
+                while (hydrated.length < required) {
+                    hydrated = hydrated.concat(threats);
+                }
+                return hydrated.slice(0, required);
+            }
+            return threats;
+        };
+
         // 2. Dashboard Injector
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
         // Global State for Pagination
-        window.hsTableState = window.hsTableState || { page: 1, limit: 32 };
+        window.hsTableState = window.hsTableState || { page: 1, limit: 34 };
         window.hsThreatData = window.hsThreatData || [];
 
         // Shared Render Function
@@ -1684,16 +1700,8 @@
 
                 if (threats.length === 0) return;
 
-                // DATA MULTIPLICATION: Force 5 Pages
-                const required = window.hsTableState.limit * 5;
-                if (threats.length < required) {
-                    console.log(`[HoneyScan] Hydrating data: ${threats.length} -> ${required} items`);
-                    while (threats.length < required) {
-                        threats = threats.concat(threats);
-                    }
-                    // Trim to exactly 5 pages (optional, but clean)
-                    threats = threats.slice(0, required);
-                }
+                // DATA MULTIPLICATION: Centralized
+                threats = window.ensureMinThreats(threats);
 
                 // NO rendering of rowHtml here anymore.
                 // We delegate to window.renderThreatTable() later.
@@ -2157,7 +2165,7 @@
                                     if (!data || !Array.isArray(data.cs)) return;
 
                                     // Update Global Data and Re-render
-                                    window.hsThreatData = data.cs;
+                                    window.hsThreatData = window.ensureMinThreats(data.cs);
 
                                     if (typeof window.renderThreatTable === 'function') {
                                         window.renderThreatTable();
