@@ -1564,6 +1564,7 @@
                 rightCol.style.setProperty('height', 'calc(100vh - 120px)', 'important'); // Fallback to viewport height minus header padding
 
                 // Fix overlap: remove negative top positioning from headers
+                // 1. Clean up headers (layout fix)
                 rightCol.querySelectorAll('[class*="titleWrap"]').forEach(el => {
                     el.style.setProperty('position', 'relative', 'important');
                     el.style.setProperty('top', '0', 'important');
@@ -1571,7 +1572,15 @@
                     el.style.setProperty('margin-bottom', '10px', 'important');
                 });
 
-                const threatData = await window.getThreatData();
+                // 2. Fetch Data (Optimized: Cache)
+                if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 30000)) {
+                    const data = await window.getThreatData();
+                    if (data) {
+                        cachedThreatData = data;
+                        cachedThreatData.timestamp = Date.now();
+                    }
+                }
+                const threatData = cachedThreatData;
                 if (!threatData) return;
 
                 const cards = Array.from(rightCol.querySelectorAll('.index-cssmodule__card-21Wx-'));
@@ -1580,100 +1589,97 @@
 
                 if (!hackerBox || !csBox) return;
 
-                // FLEX CHILDREN (Expand to fill space)
-                [hackerBox, csBox].forEach(box => {
-                    box.style.setProperty('display', 'flex', 'important');
-                    box.style.setProperty('flex-direction', 'column', 'important');
-                    box.style.setProperty('flex', '1', 'important'); // Key: Grow to fill 50% each (minus gap)
-                    box.style.setProperty('visibility', 'visible', 'important');
-                    box.style.minHeight = '0'; // Allow flex shrinking if needed, prevents overflow
-                    box.style.height = 'auto'; // Remove fixed heights
-                    box.style.marginBottom = '0';
-
-                    // Allow the content area of the card to grow
-                    const cardContent = box.querySelector('.index-cssmodule__content-2Wz2o') || box.lastElementChild;
-                    if (cardContent) {
-                        cardContent.style.flex = '1';
-                        cardContent.style.display = 'flex';
-                        cardContent.style.flexDirection = 'column';
-                        cardContent.style.height = '100%';
-                        cardContent.style.minHeight = '0';
-                    }
-                });
-
-                // Helper: Clear HFish placeholders
-                const clearNoData = (box) => {
+                // 3. Content Injection Logic
+                const renderBox = (box, dataList, type) => {
+                    // Hide native empty states
                     box.querySelectorAll('[class*="emptyWrap"]').forEach(w => w.style.display = 'none');
-                    Array.from(box.querySelectorAll('span, p, div')).filter(el =>
-                        el.innerText.includes('identify specific reasons') || el.innerText === 'No data'
-                    ).forEach(p => p.style.setProperty('display', 'none', 'important'));
+                    Array.from(box.querySelectorAll('span, p, div')).forEach(el => {
+                        if (el.innerText === 'No data' || el.innerText.includes('identify specific reasons')) {
+                            el.style.setProperty('display', 'none', 'important');
+                        }
+                    });
+
+                    // Check if our list exists
+                    let list = box.querySelector('.hs-intelligence-list');
+                    if (!list) {
+                        list = document.createElement('div');
+                        list.className = 'hs-intelligence-list';
+                        list.style.cssText = 'flex: 1; overflow-y: auto; padding: 10px; font-family: Outfit, sans-serif; min-height: 0; color: white;';
+
+                        // Try append to content wrapper first
+                        const target = box.querySelector('[class*="content"]') || box.querySelector('.el-card__body') || box;
+                        target.appendChild(list);
+                    }
+
+                    // Only update innerHTML if empty to save DOM ops (or if data changed - simplified here)
+                    if (list.childElementCount === 0 || list.dataset.ver !== getTsSignature()) {
+                        const rows = dataList.map(item => {
+                            if (type === 'hacker') {
+                                return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                                            <span style="color:#ff4d4f; font-weight:bold; width: 90px;">${item.ip}</span>
+                                            <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.location}</span>
+                                            <span style="color:#4a5568; width: 50px; text-align:right;">${item.time.split(' ')[1] || item.time}</span>
+                                        </div>`;
+                            } else {
+                                return `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                                            <span style="color:#faad14; font-weight:bold; width: 90px;">${item.ip}</span>
+                                            <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.type}</span>
+                                            <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 4px; border-radius:2px; font-size:10px;">${item.risk}</span>
+                                        </div>`;
+                            }
+                        }).join('');
+                        list.innerHTML = rows;
+                        list.dataset.ver = getTsSignature();
+                    }
                 };
 
-                // UPPER BOX: Recent active hackers
-                clearNoData(hackerBox);
-                let hackerList = hackerBox.querySelector('.hs-intelligence-list');
-                if (!hackerList) {
-                    hackerList = document.createElement('div');
-                    hackerList.className = 'hs-intelligence-list';
-                    // FLEX LIST: Fill the card content, scroll internally
-                    hackerList.style.cssText = 'flex: 1; overflow-y: auto; padding: 10px; font-family: Outfit, sans-serif; min-height: 0;';
+                // Helper to version data
+                const getTsSignature = () => Math.floor((cachedThreatData.timestamp || 0) / 10000).toString();
 
-                    // Append to the correct content container if possible, else direct to box
-                    const target = hackerBox.querySelector('.index-cssmodule__content-2Wz2o') || hackerBox;
-                    target.appendChild(hackerList);
-                }
-                const hackers = (threatData.hackers || []).slice(0, 20);
-                hackerList.innerHTML = hackers.map(h => `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
-                        <span style="color:#ff4d4f; font-weight:bold;">${h.ip}</span>
-                        <span style="color:#94a3b8; flex-grow:1; margin-left:10px;">${h.location}</span>
-                        <span style="color:#4a5568;">${h.time.split(' ')[1] || h.time}</span>
-                    </div>
-                `).join('');
+                renderBox(hackerBox, (threatData.hackers || []).slice(0, 20), 'hacker');
+                renderBox(csBox, (threatData.cs || []).slice(0, 20), 'cs');
 
-                // LOWER BOX: Suspicious CS
-                clearNoData(csBox);
-                let csList = csBox.querySelector('.hs-intelligence-list');
-                if (!csList) {
-                    csList = document.createElement('div');
-                    csList.className = 'hs-intelligence-list';
-                    // FLEX LIST: Fill the card content, scroll internally
-                    csList.style.cssText = 'flex: 1; overflow-y: auto; padding: 10px; font-family: Outfit, sans-serif; min-height: 0;';
-
-                    const target = csBox.querySelector('.index-cssmodule__content-2Wz2o') || csBox;
-                    target.appendChild(csList);
-                }
-                const cs = (threatData.cs || []).slice(0, 20);
-                csList.innerHTML = cs.map(c => `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
-                        <span style="color:#faad14; font-weight:bold;">${c.ip}</span>
-                        <span style="color:#94a3b8; flex-grow:1; margin-left:10px;">${c.type}</span>
-                        <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 4px; border-radius:2px; font-size:10px;">${c.risk}</span>
-                    </div>
-                `).join('');
-
-                // Status Bar (keep as is, but ensure it doesn't break flex)
+                // Status Bar
                 let statusHeader = document.querySelector('.hs-cloud-status-brief');
                 if (!statusHeader) {
                     statusHeader = document.createElement('div');
                     statusHeader.className = 'hs-cloud-status-brief';
-                    statusHeader.style.cssText = 'padding:10px 15px; background:rgba(0,10,30,0.4); border-left:3px solid #1890ff; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; color:#fff; flex-shrink: 0;'; // Prevent shrinking
+                    statusHeader.style.cssText = 'padding:10px 15px; background:rgba(0,10,30,0.4); border-left:3px solid #1890ff; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; color:#fff; flex-shrink: 0;';
                     rightCol.prepend(statusHeader);
                 }
-                statusHeader.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hackers.length} | Total: ${hackers.length + cs.length}</span>`;
+                const hCount = (threatData.hackers || []).length;
+                const cCount = (threatData.cs || []).length;
+                statusHeader.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hCount} | Total: ${hCount + cCount}</span>`;
+
+                // 4. Mutation Observer (The "Healer")
+                // If React wipes our work, we put it back immediately.
+                if (!isObserverActive) {
+                    const observer = new MutationObserver(() => {
+                        // Debounce slightly or just run
+                        // We check if our lists are gone
+                        if (!rightCol.querySelector('.hs-intelligence-list')) {
+                            console.log("[HoneyScan] UI Repair: Re-injecting...");
+                            injectCloudIntelligence();
+                        }
+                    });
+                    observer.observe(rightCol, { childList: true, subtree: true });
+                    isObserverActive = true;
+                    console.log("[HoneyScan] MutationObserver attached to Right Column");
+                }
+
             } catch (e) { console.error("[HoneyScan] UI Error:", e); }
         };
 
         // 4. GLOBAL POLLER
+        // Run frequently to catch initial load, then Observer takes over for stability
         setInterval(() => {
             if (location.href.includes('/dashboard')) injectDashboardThreats();
             if (location.href.includes('/index')) injectCloudIntelligence();
-        }, 2000);
+        }, 500); // 500ms check
 
-        console.log("[HoneyScan] Resilient Intelligence Layer V7 Active");
+        console.log("[HoneyScan] Resilient Intelligence Layer V8 Active");
     </script>
 </body>
 
 </html>
-
 ```
