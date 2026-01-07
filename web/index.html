@@ -1936,8 +1936,13 @@
                     dot.style.background = 'purple'; // Purple = Crash
                     dot.title = "Error: " + e.message;
                     // Attempt to put error on screen for user debugging
+                    // Remove old error if exists
+                    const oldErr = document.getElementById('hs-error-display');
+                    if (oldErr) oldErr.remove();
+
                     const errDiv = document.createElement('div');
-                    errDiv.style.cssText = "position:fixed; top:10px; left:10px; background:rgba(0,0,0,0.9); color:#ff4d4f; padding:15px; border:1px solid red; z-index:999999; pointer-events:none; font-family:monospace; font-size:14px; max-width:80%; word-wrap:break-word;";
+                    errDiv.id = 'hs-error-display';
+                    errDiv.style.cssText = "position:fixed; top:40px; left:10px; background:rgba(0,0,0,0.95); color:#ff4d4f; padding:12px 15px; border:2px solid #ff4d4f; border-radius:4px; z-index:999999; pointer-events:none; font-family:monospace; font-size:12px; max-width:400px; word-wrap:break-word; box-shadow:0 0 20px rgba(255,77,79,0.5);";
                     errDiv.innerHTML = "<strong>CRASH at " + debugStep + ":</strong><br>" + e.message;
                     document.body.appendChild(errDiv);
                     // setTimeout(() => errDiv.remove(), 10000); // Keep it longer or forever
