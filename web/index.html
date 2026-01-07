@@ -1372,9 +1372,9 @@
 
                 if (!body) return;
 
-                // 3. Check if empty or has "No data"
-                const noData = body.querySelector('div[class*="no-data"]') || body.innerText.includes('No data');
-                if (!noData && body.querySelector('table')) return; // Already has data (maybe native?)
+                // 3. AGGRESSIVE CHECK: Is our data already there?
+                // If we see our custom attribute, we stop to verify if update is needed (or just stop)
+                if (body.getAttribute('data-honeyscan-injected') === 'true') return;
 
                 // 4. Fetch Data (Only if not already done recently)
                 // We use a timestamp to prevent aggressive caching but not spam
@@ -1434,8 +1434,9 @@
                     </div>
                 `;
 
-                // 6. Inject
+                // 6. Force Inject
                 body.innerHTML = html;
+                body.setAttribute('data-honeyscan-injected', 'true');
                 hasInjectedThreats = true;
                 console.log("[HoneyScan] Injected Cloud Intelligence Data (" + threats.length + " items)");
 
