@@ -53,6 +53,19 @@
         (function () {
             console.log("[Cloud Intelligence] Installing fetch interceptor...");
 
+            // === VISUAL DEBUG STATUS INDICATOR ===
+            // Red: Init/Error | Purple: Fetching | Blue: Success
+            const debugDot = document.createElement('div');
+            debugDot.id = 'ci-status-dot';
+            debugDot.style.cssText = "position:fixed;bottom:20px;right:20px;width:15px;height:15px;background:red;border-radius:50%;z-index:999999;border:2px solid white;box-shadow:0 0 4px #000;pointer-events:auto;cursor:pointer;transition:background 0.3s;";
+            document.body.appendChild(debugDot);
+            let lastError = '';
+            debugDot.onclick = () => alert(lastError || 'No errors logged.');
+            const setStatus = (c, msg) => {
+                debugDot.style.background = c;
+                if (msg) { lastError = msg; console.log("[Status]", msg); }
+            };
+
             const originalFetch = window.fetch;
             let threatDataCache = null;
             let lastFetchTime = 0;
@@ -83,7 +96,11 @@
                 }
 
                 try {
+                    setStatus('purple', 'Fetching...'); // Fetching
                     const response = await originalFetch('/assets/live_threats.json?t=' + Math.floor(now / 60000));
+                    if (!response.ok) throw new Error("HTTP " + response.status);
+
+                    setStatus('orange', 'Parsing JSON...'); // JSON Parsing
                     const data = await response.json();
 
                     // Transform data to match HFish format
@@ -107,9 +124,11 @@
                     threatDataCache = { hackers, cs, api_active: data.api_active };
                     lastFetchTime = now;
                     console.log("[Cloud Intelligence] Loaded threat data:", threatDataCache);
+                    setStatus('#00ff00', 'Success: ' + data.hackers.length + ' hackers'); // Green for Success
                     return threatDataCache;
                 } catch (e) {
                     console.error("[Cloud Intelligence] Failed to load threat data:", e);
+                    setStatus('red', 'Error: ' + e.message); // Error
                     return { hackers: [], cs: [], api_active: false };
                 }
             };
@@ -1715,7 +1734,7 @@
 
                 if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 10000)) {
                     cachedThreatData = await fetchThreatDataLocal();
-                    if (cachedThreatData) cachedThreatData.timestamp = Date.Now();
+                    if (cachedThreatData) cachedThreatData.timestamp = Date.now();
                 }
                 const threatData = cachedThreatData;
                 if (!threatData) {
