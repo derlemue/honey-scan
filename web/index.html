@@ -1748,175 +1748,279 @@
         let cachedThreatData = null;
 
         const injectCloudIntelligence = async () => {
-            // TEMPORARY DISABLE: Preventing full-page overlay issue
-            // Cloud Intelligence injection disabled until proper container targeting is implemented
-            return;
+            try {
+                // V20: PRECISE HEADER-BASED TARGETING
+                // Only inject if we're on the index/map page
+                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return;
 
-            // 3. DEFENSIVE HELPER (Prevent Crash)
-            const getTsSignature = () => {
-                return Math.floor(Date.now() / 2000).toString(); // Update every 2s
-            };
-
-            // 4. FETCH DATA
-            const fetchThreatDataLocal = async () => {
-                if (typeof window.getThreatData === 'function') {
+                // Fetch threat data
+                let threatData = cachedThreatData;
+                if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 10000)) {
                     try {
-                        const d = await window.getThreatData();
-                        if (d && (d.hackers || d.cs)) return d;
+                        const r = await fetch('/assets/live_threats.json');
+                        if (r.ok) {
+                            cachedThreatData = await r.json();
+                            cachedThreatData.timestamp = Date.now();
+                            threatData = cachedThreatData;
+                        }
                     } catch (e) { }
                 }
-                try {
-                    const r = await fetch('/assets/live_threats.json');
-                    if (r.ok) return await r.json();
-                } catch (e) { }
-                return null;
-            };
+                if (!threatData) return;
 
-            debugStep = 'fetch_cache_check';
-            if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 10000)) {
-                debugStep = 'fetching_data';
-                cachedThreatData = await fetchThreatDataLocal();
-                if (cachedThreatData) cachedThreatData.timestamp = Date.now();
-            }
-            debugStep = 'data_validate';
-            const threatData = cachedThreatData;
-            if (!threatData) {
-                setDot('orange'); // Data fetch warning
-                return;
-            }
+                // Helper: Generate HTML Rows
+                const generateRows = (items, type) => {
+                    if (!Array.isArray(items)) return '';
+                    return items.map(item => {
+                        if (!item) return '';
+                        const ip = item.ip || 'N/A';
+                        const location = item.location || 'Unknown';
+                        const time = item.time || 'N/A';
+                        const type_val = item.type || 'Unknown';
+                        const risk = item.risk || 'Low';
 
-            const generateRows = (items, type) => {
-                // Safety check for items
-                if (!Array.isArray(items)) return '';
-                return items.map(item => {
-                    if (!item) return ''; // Skip null items
-                    // Defensive defaults
-                    const ip = item.ip || 'N/A';
-                    const location = item.location || 'Unknown';
-                    const time = item.time || 'N/A';
-                    const type_val = item.type || 'Unknown';
-                    const risk = item.risk || 'Low';
-
-                    if (type === 'hacker') {
-                        const timeDisplay = time.includes(' ') ? time.split(' ')[1] : time;
-                        return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
+                        if (type === 'hacker') {
+                            const timeDisplay = time.includes(' ') ? time.split(' ')[1] : time;
+                            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
                                         <span style="color:#ff4d4f; font-weight:bold; width: 100px;">${ip}</span>
                                         <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${location}</span>
                                         <span style="color:#4a5568; width: 60px; text-align:right;">${timeDisplay}</span>
                                     </div>`;
-                    } else {
-                        return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
+                        } else {
+                            return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
                                         <span style="color:#faad14; font-weight:bold; width: 100px;">${ip}</span>
                                         <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${type_val}</span>
                                         <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 6px; border-radius:2px; font-size:11px;">${risk}</span>
                                     </div>`;
+                        }
+                    }).join('');
+                };
+
+                // PRECISE INJECTION: Find headers and inject into next sibling
+                const injectByHeader = (headerText, data, type) => {
+                    // Find all text nodes
+                    const allElements = Array.from(document.querySelectorAll('*'));
+                    const header = allElements.find(el => {
+                        const text = el.textContent?.trim();
+                        return text === headerText || text?.includes(headerText);
+                    });
+
+                    if (!header) return false;
+
+                    // Find the content container - it should be a sibling or child of parent
+                    let targetContainer = null;
+                    const parent = header.parentElement;
+
+                    if (parent) {
+                        // Look for next sibling that's a div
+                        for (let sibling of parent.children) {
+                            if (sibling !== header && sibling.tagName === 'DIV') {
+                                targetContainer = sibling;
+                                break;
+                            }
+                        }
+
+                        // If not found, try parent's next sibling
+                        if (!targetContainer && parent.nextElementSibling) {
+                            targetContainer = parent.nextElementSibling;
+                        }
                     }
-                }).join('');
-            };
 
-            const injectIntoContainer = (container, data, type) => {
-                const currentSig = getTsSignature();
-                if (container.dataset.ver === currentSig) return; // Already updated
+                    if (!targetContainer) return false;
 
-                container.innerHTML = `
+                    // SAFETY: Don't inject if container is suspiciously large
+                    if (targetContainer.clientHeight > 500 || targetContainer.clientWidth > window.innerWidth * 0.8) {
+                        console.warn('[HoneyScan] Container too large, skipping');
+                        return false;
+                    }
+
+                    // Inject content
+                    targetContainer.innerHTML = `
                         <div style="height:100%; overflow-y:auto; padding:10px; scrollbar-width:thin;">
                             ${generateRows(data, type)}
                         </div>
                     `;
-                container.dataset.ver = currentSig;
-                container.style.textAlign = 'left';
-                container.style.display = 'block';
-            };
+                    targetContainer.style.textAlign = 'left';
+                    targetContainer.style.display = 'block';
 
-            // STRATEGY A: FUZZY "NO DATA" HUNTER
-            debugStep = 'strategy_a_start';
-            let success = false;
+                    return true;
+                };
+
+                // Try to inject
+                const h1 = injectByHeader('Recent active hackers', (threatData.hackers || []).slice(0, 20), 'hacker');
+                const h2 = injectByHeader('The recent suspicious CS', (threatData.cs || []).slice(0, 20), 'cs');
+
+                console.log('[HoneyScan] Cloud Intelligence:', h1 ? '✓ Hackers' : '✗ Hackers', h2 ? '✓ CS' : '✗ CS');
+
+            } catch (e) {
+                console.error('[HoneyScan] Cloud Intelligence Error:', e);
+            }
+        };
+
+        // 3. DEFENSIVE HELPER (Prevent Crash)
+        const getTsSignature = () => {
+            return Math.floor(Date.now() / 2000).toString(); // Update every 2s
+        };
+
+        // 4. FETCH DATA
+        const fetchThreatDataLocal = async () => {
+            if (typeof window.getThreatData === 'function') {
+                try {
+                    const d = await window.getThreatData();
+                    if (d && (d.hackers || d.cs)) return d;
+                } catch (e) { }
+            }
             try {
-                // Search for any element with text roughly matching "specific reasons"
-                // This covers "Trying to identify specific reasons", case variations, etc.
-                const allElements = Array.from(document.querySelectorAll('span, div, p'));
-                const emptyStateNodes = allElements.filter(el => {
-                    const txt = (el.innerText || "").toLowerCase();
-                    return txt.includes('specific reasons');
-                });
+                const r = await fetch('/assets/live_threats.json');
+                if (r.ok) return await r.json();
+            } catch (e) { }
+            return null;
+        };
 
-                if (emptyStateNodes.length >= 2) {
-                    // Assume 0=Top, 1=Bottom. 
-                    const getBodyContainer = (node) => {
-                        let parent = node.parentElement;
-                        // Walk up max 3 levels (reduced from 5) and be more selective
-                        for (let i = 0; i < 3; i++) {
-                            if (!parent) break;
-                            // STOP if we hit body or main app container
-                            if (parent.tagName === 'BODY' || parent.id === 'app' || parent.id === 'root') break;
-                            // Look for el-card__body specifically
-                            if (parent.classList.contains('el-card__body')) return parent;
-                            // Or a reasonably sized container (not too big)
-                            if (parent.clientHeight > 100 && parent.clientHeight < 600) return parent;
-                            parent = parent.parentElement;
-                        }
-                        return node.parentElement; // Fallback to immediate parent
-                    };
+        debugStep = 'fetch_cache_check';
+        if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 10000)) {
+            debugStep = 'fetching_data';
+            cachedThreatData = await fetchThreatDataLocal();
+            if (cachedThreatData) cachedThreatData.timestamp = Date.now();
+        }
+        debugStep = 'data_validate';
+        const threatData = cachedThreatData;
+        if (!threatData) {
+            setDot('orange'); // Data fetch warning
+            return;
+        }
 
-                    const hackersContainer = getBodyContainer(emptyStateNodes[0]);
-                    const csContainer = getBodyContainer(emptyStateNodes[1]);
+        const generateRows = (items, type) => {
+            // Safety check for items
+            if (!Array.isArray(items)) return '';
+            return items.map(item => {
+                if (!item) return ''; // Skip null items
+                // Defensive defaults
+                const ip = item.ip || 'N/A';
+                const location = item.location || 'Unknown';
+                const time = item.time || 'N/A';
+                const type_val = item.type || 'Unknown';
+                const risk = item.risk || 'Low';
 
-                    if (hackersContainer && csContainer) {
-                        debugStep = 'strategy_a_inject';
-                        // SAFETY: Don't inject if container is too large (likely body/main)
-                        if (hackersContainer.clientHeight > 800 || csContainer.clientHeight > 800) {
-                            console.warn('[HoneyScan] Container too large, skipping Strategy A');
-                        } else {
-                            if (hackersContainer.classList) hackersContainer.classList.add('hs-custom-card');
-                            if (csContainer.classList) csContainer.classList.add('hs-custom-card');
-                            injectIntoContainer(hackersContainer, (threatData.hackers || []).slice(0, 20), 'hacker');
-                            injectIntoContainer(csContainer, (threatData.cs || []).slice(0, 20), 'cs');
-                            success = true;
-                        }
+                if (type === 'hacker') {
+                    const timeDisplay = time.includes(' ') ? time.split(' ')[1] : time;
+                    return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
+                                        <span style="color:#ff4d4f; font-weight:bold; width: 100px;">${ip}</span>
+                                        <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${location}</span>
+                                        <span style="color:#4a5568; width: 60px; text-align:right;">${timeDisplay}</span>
+                                    </div>`;
+                } else {
+                    return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
+                                        <span style="color:#faad14; font-weight:bold; width: 100px;">${ip}</span>
+                                        <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${type_val}</span>
+                                        <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 6px; border-radius:2px; font-size:11px;">${risk}</span>
+                                    </div>`;
+                }
+            }).join('');
+        };
+
+        const injectIntoContainer = (container, data, type) => {
+            const currentSig = getTsSignature();
+            if (container.dataset.ver === currentSig) return; // Already updated
+
+            container.innerHTML = `
+                        <div style="height:100%; overflow-y:auto; padding:10px; scrollbar-width:thin;">
+                            ${generateRows(data, type)}
+                        </div>
+                    `;
+            container.dataset.ver = currentSig;
+            container.style.textAlign = 'left';
+            container.style.display = 'block';
+        };
+
+        // STRATEGY A: FUZZY "NO DATA" HUNTER
+        debugStep = 'strategy_a_start';
+        let success = false;
+        try {
+            // Search for any element with text roughly matching "specific reasons"
+            // This covers "Trying to identify specific reasons", case variations, etc.
+            const allElements = Array.from(document.querySelectorAll('span, div, p'));
+            const emptyStateNodes = allElements.filter(el => {
+                const txt = (el.innerText || "").toLowerCase();
+                return txt.includes('specific reasons');
+            });
+
+            if (emptyStateNodes.length >= 2) {
+                // Assume 0=Top, 1=Bottom. 
+                const getBodyContainer = (node) => {
+                    let parent = node.parentElement;
+                    // Walk up max 3 levels (reduced from 5) and be more selective
+                    for (let i = 0; i < 3; i++) {
+                        if (!parent) break;
+                        // STOP if we hit body or main app container
+                        if (parent.tagName === 'BODY' || parent.id === 'app' || parent.id === 'root') break;
+                        // Look for el-card__body specifically
+                        if (parent.classList.contains('el-card__body')) return parent;
+                        // Or a reasonably sized container (not too big)
+                        if (parent.clientHeight > 100 && parent.clientHeight < 600) return parent;
+                        parent = parent.parentElement;
+                    }
+                    return node.parentElement; // Fallback to immediate parent
+                };
+
+                const hackersContainer = getBodyContainer(emptyStateNodes[0]);
+                const csContainer = getBodyContainer(emptyStateNodes[1]);
+
+                if (hackersContainer && csContainer) {
+                    debugStep = 'strategy_a_inject';
+                    // SAFETY: Don't inject if container is too large (likely body/main)
+                    if (hackersContainer.clientHeight > 800 || csContainer.clientHeight > 800) {
+                        console.warn('[HoneyScan] Container too large, skipping Strategy A');
+                    } else {
+                        if (hackersContainer.classList) hackersContainer.classList.add('hs-custom-card');
+                        if (csContainer.classList) csContainer.classList.add('hs-custom-card');
+                        injectIntoContainer(hackersContainer, (threatData.hackers || []).slice(0, 20), 'hacker');
+                        injectIntoContainer(csContainer, (threatData.cs || []).slice(0, 20), 'cs');
+                        success = true;
                     }
                 }
-            } catch (errA) {
-                console.error("Strategy A Fail", errA);
             }
+        } catch (errA) {
+            console.error("Strategy A Fail", errA);
+        }
 
-            // STRATEGY B: HEADER HUNTER (Fallback)
-            debugStep = 'strategy_b_start';
-            if (!success) {
-                try {
-                    // Try to find by Header Text "Recent active hackers"
-                    const injectByHeader = (headerText, data, type) => {
-                        const headers = Array.from(document.querySelectorAll('div, span, h4, h5, .title'));
-                        const header = headers.find(el => el.innerText && el.innerText.includes(headerText));
-                        if (!header) return false;
+        // STRATEGY B: HEADER HUNTER (Fallback)
+        debugStep = 'strategy_b_start';
+        if (!success) {
+            try {
+                // Try to find by Header Text "Recent active hackers"
+                const injectByHeader = (headerText, data, type) => {
+                    const headers = Array.from(document.querySelectorAll('div, span, h4, h5, .title'));
+                    const header = headers.find(el => el.innerText && el.innerText.includes(headerText));
+                    if (!header) return false;
 
-                        const card = header.closest('[class*="card"]') || header.parentElement?.parentElement;
-                        if (!card) return false;
+                    const card = header.closest('[class*="card"]') || header.parentElement?.parentElement;
+                    if (!card) return false;
 
-                        let body = Array.from(card.children).find(child => child !== header && child !== header.parentElement && child.tagName === 'DIV');
-                        if (!body) body = card.querySelector('.el-card__body') || card.lastElementChild;
+                    let body = Array.from(card.children).find(child => child !== header && child !== header.parentElement && child.tagName === 'DIV');
+                    if (!body) body = card.querySelector('.el-card__body') || card.lastElementChild;
 
-                        if (body) {
-                            let targetCard = card;
-                            // If card is the direct parent, use it. If body is distinct, ensure parent card has class.
-                            if (targetCard && targetCard.classList && !targetCard.classList.contains('hs-custom-card')) {
-                                targetCard.classList.add('hs-custom-card');
-                            }
-
-                            injectIntoContainer(body, data, type);
-                            return true;
+                    if (body) {
+                        let targetCard = card;
+                        // If card is the direct parent, use it. If body is distinct, ensure parent card has class.
+                        if (targetCard && targetCard.classList && !targetCard.classList.contains('hs-custom-card')) {
+                            targetCard.classList.add('hs-custom-card');
                         }
-                        return false;
-                    };
-                    const hSuccess = injectByHeader('Recent active hackers', (threatData.hackers || []).slice(0, 20), 'hacker');
-                    const cSuccess = injectByHeader('suspicious CS', (threatData.cs || []).slice(0, 20), 'cs');
-                    if (hSuccess || cSuccess) success = true;
-                } catch (errB) {
-                    console.error("Strategy B Fail", errB);
-                }
-            }
 
-            // STATUS UPDATE
-            setDot(success ? '#00d2ff' : 'red'); // Blue = Success, Red = Fail
+                        injectIntoContainer(body, data, type);
+                        return true;
+                    }
+                    return false;
+                };
+                const hSuccess = injectByHeader('Recent active hackers', (threatData.hackers || []).slice(0, 20), 'hacker');
+                const cSuccess = injectByHeader('suspicious CS', (threatData.cs || []).slice(0, 20), 'cs');
+                if (hSuccess || cSuccess) success = true;
+            } catch (errB) {
+                console.error("Strategy B Fail", errB);
+            }
+        }
+
+        // STATUS UPDATE
+        setDot(success ? '#00d2ff' : 'red'); // Blue = Success, Red = Fail
 
         } catch (e) {
             console.error("[HoneyScan] Injection Error:", e);
