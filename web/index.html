@@ -1671,17 +1671,17 @@
 
         const injectCloudIntelligence = async () => {
             try {
-                // V16 NATIVE INJECTION (No Overlay)
-                // We find the existing headers and inject directly into the existing boxes.
+                // V17: THE "NO DATA" HUNTER
+                // Strategy: Find the "Trying to identify specific reasons" text and replace it.
 
-                // 1. CLEANUP OLD OVERLAY (If exists)
+                // 1. CLEANUP OLD OVERLAY
                 const oldOverlay = document.getElementById('hs-fixed-overlay');
                 if (oldOverlay) oldOverlay.remove();
 
                 // 2. PATH CHECK
                 if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return;
 
-                // 3. ROBUST DATA FETCH
+                // 3. FETCH DATA
                 const fetchThreatDataLocal = async () => {
                     if (typeof window.getThreatData === 'function') {
                         try {
@@ -1703,35 +1703,14 @@
                 const threatData = cachedThreatData;
                 if (!threatData) return;
 
-                // 4. FIND TARGETS & INJECT
-                const injectIntoBox = (headerText, data, type) => {
-                    // Find Header
-                    const allDivs = Array.from(document.querySelectorAll('div, span, h4, h5, .title'));
-                    const header = allDivs.find(el => el.innerText && el.innerText.includes(headerText));
+                // 4. FIND TARGETS (The "No Data" Placeholders)
+                // We search for elements containing the specific empty-state text.
+                const allElements = Array.from(document.querySelectorAll('span, div, p'));
+                const emptyStateNodes = allElements.filter(el => el.innerText && el.innerText.includes('Trying to identify specific reasons'));
 
-                    if (!header) return;
-
-                    // Find Container (Parent of header, or Grandparent)
-                    // The structure is likely: Card -> Header + Body
-                    const card = header.closest('[class*="card"]') || header.parentElement?.parentElement;
-                    if (!card) return;
-
-                    // Find Body (Sibling of Header or child of Card)
-                    // We look for a container that is NOT the header and has some height
-                    let body = Array.from(card.children).find(child => child !== header && child !== header.parentElement && child.tagName === 'DIV');
-
-                    // Fallbacks for finding the body
-                    if (!body) body = card.querySelector('.el-card__body');
-                    if (!body) body = card.lastElementChild;
-
-                    if (!body) return;
-
-                    // Version Check
-                    const currentSig = getTsSignature();
-                    if (body.dataset.ver === currentSig && body.childElementCount > 0) return;
-
-                    // Generate HTML
-                    const rows = data.map(item => {
+                // Helper to generate rows
+                const generateRows = (items, type) => {
+                    return items.map(item => {
                         if (type === 'hacker') {
                             return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
                                         <span style="color:#ff4d4f; font-weight:bold; width: 100px;">${item.ip}</span>
@@ -1746,24 +1725,68 @@
                                     </div>`;
                         }
                     }).join('');
-
-                    // Inject
-                    // We need to ensure we don't wipe the header if it's in the same container
-                    // But usually body is separate. 
-                    // We'll create a scrollable wrapper to be safe.
-                    body.innerHTML = `
-                        <div style="height:100%; overflow-y:auto; padding:10px; scrollbar-width:thin;">
-                            ${rows}
-                        </div>
-                    `;
-                    body.dataset.ver = currentSig;
                 };
 
-                injectIntoBox('Recent active hackers', (threatData.hackers || []).slice(0, 20), 'hacker');
-                injectIntoBox('suspicious CS', (threatData.cs || []).slice(0, 20), 'cs');
+                const injectIntoContainer = (container, data, type) => {
+                    const currentSig = getTsSignature();
+                    // If we already injected our version, skip
+                    // We check if the container has our data-ver AND doesn't have the "no data" text anymore
+                    if (container.dataset.ver === currentSig) return;
+
+                    // Inject
+                    container.innerHTML = `
+                        <div style="height:100%; overflow-y:auto; padding:10px; scrollbar-width:thin;">
+                            ${generateRows(data, type)}
+                        </div>
+                    `;
+                    container.dataset.ver = currentSig;
+                    // Reset alignment just in case
+                    container.style.textAlign = 'left';
+                    container.style.display = 'block';
+                };
+
+                // STRATEGY A: We found the "No Data" nodes matches
+                if (emptyStateNodes.length >= 2) {
+                    // 0 is Top (Hackers), 1 is Bottom (CS) - usually reverse in DOM order? No, top down.
+                    // Let's assume document order: Top first.
+
+                    // We need the PARENT of the text node to be the container we replace.
+                    // Usually the text is inside a wrapper inside the body.
+                    // Let's go up until we hit a reasonable container (height > 50).
+                    const getBodyContainer = (node) => {
+                        let parent = node.parentElement;
+                        while (parent && parent.clientHeight < 50 && parent.tagName !== 'BODY') {
+                            parent = parent.parentElement;
+                        }
+                        return parent;
+                    };
+
+                    const hackersContainer = getBodyContainer(emptyStateNodes[0]);
+                    const csContainer = getBodyContainer(emptyStateNodes[1]);
+
+                    if (hackersContainer) injectIntoContainer(hackersContainer, (threatData.hackers || []).slice(0, 20), 'hacker');
+                    if (csContainer) injectIntoContainer(csContainer, (threatData.cs || []).slice(0, 20), 'cs');
+                }
+                // STRATEGY B: Fallback to Header Search (Previous Logic) if specific text not found
+                // (Maybe user has data but it's just not our data?)
+                else {
+                    const injectByHeader = (headerText, data, type) => {
+                        const allDivs = Array.from(document.querySelectorAll('div, span, h4, h5, .title'));
+                        const header = allDivs.find(el => el.innerText && el.innerText.includes(headerText));
+                        if (!header) return;
+                        const card = header.closest('[class*="card"]') || header.parentElement?.parentElement;
+                        if (!card) return;
+                        let body = Array.from(card.children).find(child => child !== header && child !== header.parentElement && child.tagName === 'DIV');
+                        if (!body) body = card.querySelector('.el-card__body');
+                        if (!body) body = card.lastElementChild;
+                        if (body) injectIntoContainer(body, data, type);
+                    };
+                    injectByHeader('Recent active hackers', (threatData.hackers || []).slice(0, 20), 'hacker');
+                    injectByHeader('suspicious CS', (threatData.cs || []).slice(0, 20), 'cs');
+                }
 
             } catch (e) {
-                // Silent catch to prevent console spam
+                // Silent catch
             }
         };
 
