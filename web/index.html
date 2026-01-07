@@ -1583,12 +1583,31 @@
                 const widgetHeader = headers.find(el => el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud');
                 if (!widgetHeader) return;
 
-                let card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
+                let card = card.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
                 if (!card) return;
                 let body = card.querySelector('.el-card__body') || card.lastElementChild;
                 if (!body || body.getAttribute('data-hs-injected') === 'true') return;
 
-                const threats = (await window.getThreatData())?.cs || [];
+                // Fetch threat data with fallback
+                let threats = [];
+                try {
+                    if (typeof window.getThreatData === 'function') {
+                        const data = await window.getThreatData();
+                        threats = data?.cs || [];
+                    }
+                } catch (e) { }
+
+                // Fallback to JSON file if no data
+                if (threats.length === 0) {
+                    try {
+                        const r = await fetch('/assets/live_threats.json');
+                        if (r.ok) {
+                            const data = await r.json();
+                            threats = data?.cs || [];
+                        }
+                    } catch (e) { }
+                }
+
                 if (threats.length === 0) return;
 
                 let rowHtml = threats.map(t => {
