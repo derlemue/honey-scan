@@ -1687,144 +1687,39 @@
             }
         }, 30000);
 
-        // === MAP PAGE CLOUD INTELLIGENCE INJECTOR WITH MUTATION OBSERVER ===
-        // Enhanced version that fights React's DOM overwrites using MutationObserver
+        // === MAP PAGE CLOUD INTELLIGENCE INJECTOR - SAFE VERSION ===
+        // Ultra-safe version that only logs data without DOM manipulation
         const injectMapCloudIntelligence = async () => {
             try {
                 // Only run on map page
                 if (!location.pathname.includes('/index') && !location.hash.includes('index')) return;
 
-                const logPrefix = "[HoneyScan Map Injector] ";
+                const logPrefix = "[HoneyScan Map Injector SAFE] ";
+                console.log(logPrefix + "Starting injection...");
 
                 // Fetch Data
                 const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000));
-                if (!response.ok) return;
+                if (!response.ok) {
+                    console.log(logPrefix + "Failed to fetch live_threats.json");
+                    return;
+                }
                 const json = await response.json();
 
                 const hackers = json.hackers || [];
                 const cs = json.cs || [];
 
-                if (hackers.length === 0 && cs.length === 0) return;
+                console.log(logPrefix + `Data loaded: ${hackers.length} hackers, ${cs.length} CS`);
 
-                // Helper: Translate Location
-                const translateLocation = (loc) => {
-                    const map = {
-                        '美国': 'United States', '加拿大': 'Canada', '中国': 'China', '俄罗斯': 'Russia',
-                        '德国': 'Germany', '英国': 'United Kingdom', '法国': 'France', '荷兰': 'Netherlands',
-                        '巴西': 'Brazil', '印度': 'India', '日本': 'Japan', '韩国': 'South Korea',
-                        '阿根廷': 'Argentina', '新加坡': 'Singapore', '澳大利亚': 'Australia',
-                        '越南': 'Vietnam', '泰国': 'Thailand', '印度尼西亚': 'Indonesia',
-                        '台湾': 'Taiwan', '香港': 'Hong Kong', '乌克兰': 'Ukraine', '波兰': 'Poland',
-                        '意大利': 'Italy', '西班牙': 'Spain', '瑞典': 'Sweden', '挪威': 'Norway',
-                        '芬兰': 'Finland', '丹麦': 'Denmark', '瑞士': 'Switzerland', '奥地利': 'Austria',
-                        '比利时': 'Belgium', '爱尔兰': 'Ireland', '墨西哥': 'Mexico', '土耳其': 'Turkey',
-                        '伊朗': 'Iran', '以色列': 'Israel', '沙特阿拉伯': 'Saudi Arabia', '南非': 'South Africa'
-                    };
-                    return map[loc] || loc;
-                };
-
-                // Find Cloud Intelligence section
-                const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
-
-                // Update "Daily" and "Total" stats in Cloud intelligence header
-                const cloudIntelHeader = allElements.find(el => el.textContent && el.textContent.includes('Cloud intelligence'));
-                if (cloudIntelHeader) {
-                    const parent = cloudIntelHeader.closest('div[class*="card"]') || cloudIntelHeader.parentElement;
-                    if (parent) {
-                        // Find Daily and Total elements
-                        const dailyEl = Array.from(parent.querySelectorAll('*')).find(el => el.textContent && el.textContent.includes('Daily'));
-                        const totalEl = Array.from(parent.querySelectorAll('*')).find(el => el.textContent && el.textContent.includes('Total'));
-
-                        if (dailyEl) {
-                            const dailyCount = cs.length;
-                            const newText = dailyEl.textContent.replace(/Daily\s*--/, `Daily ${dailyCount}`).replace(/Daily\s*\d+/, `Daily ${dailyCount}`);
-                            if (dailyEl.textContent !== newText) {
-                                dailyEl.textContent = newText;
-                                console.log(logPrefix + `Updated Daily: ${dailyCount}`);
-                            }
-                        }
-                        if (totalEl) {
-                            const totalCount = hackers.length;
-                            const newText = totalEl.textContent.replace(/Total\s*--/, `Total ${totalCount}`).replace(/Total\s*\d+/, `Total ${totalCount}`);
-                            if (totalEl.textContent !== newText) {
-                                totalEl.textContent = newText;
-                                console.log(logPrefix + `Updated Total: ${totalCount}`);
-                            }
-                        }
-                    }
+                if (hackers.length === 0 && cs.length === 0) {
+                    console.log(logPrefix + "No data to inject");
+                    return;
                 }
 
-                // Inject "Recent active hackers"
-                const hackersHeader = allElements.find(el => el.textContent && el.textContent.trim() === 'Recent active hackers');
-                if (hackersHeader && hackers.length > 0) {
-                    let container = hackersHeader.parentElement;
-                    while (container && !container.querySelector('ul, div[class*="list"]')) {
-                        container = container.parentElement;
-                        if (container === document.body) break;
-                    }
-
-                    if (container) {
-                        const listContainer = container.querySelector('ul, div[class*="list"]') || container.querySelector('div');
-
-                        if (listContainer && !listContainer.getAttribute('data-honeyscan-hackers')) {
-                            // Build hacker list (show first 10)
-                            let hackersHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;" data-honeyscan-hackers="true">';
-                            hackers.slice(0, 10).forEach(h => {
-                                const loc = translateLocation(h.location);
-                                hackersHtml += `
-                                    <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                                        <span style="font-family: monospace; color: #4ade80; font-size: 12px;">${h.ip}</span>
-                                        <span style="color: #94a3b8; font-size: 11px;">${loc}</span>
-                                    </li>
-                                `;
-                            });
-                            hackersHtml += '</ul>';
-
-                            listContainer.innerHTML = hackersHtml;
-                            console.log(logPrefix + "Injected " + Math.min(10, hackers.length) + " recent hackers");
-                        }
-                    }
-                }
-
-                // Inject "The recent suspicious CS"
-                const csHeader = allElements.find(el => el.textContent && el.textContent.trim() === 'The recent suspicious CS');
-                if (csHeader && cs.length > 0) {
-                    let container = csHeader.parentElement;
-                    while (container && !container.querySelector('ul, div[class*="list"]')) {
-                        container = container.parentElement;
-                        if (container === document.body) break;
-                    }
-
-                    if (container) {
-                        const listContainer = container.querySelector('ul, div[class*="list"]') || container.querySelector('div');
-
-                        if (listContainer && !listContainer.getAttribute('data-honeyscan-cs')) {
-                            // Build CS list (show first 10)
-                            let csHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;" data-honeyscan-cs="true">';
-                            cs.slice(0, 10).forEach(c => {
-                                const loc = translateLocation(c.location);
-                                let riskColor = '#4ade80';
-                                if (c.risk === 'Medium') riskColor = '#facc15';
-                                if (c.risk === 'High') riskColor = '#fb923c';
-                                if (c.risk === 'Critical') riskColor = '#ef4444';
-
-                                csHtml += `
-                                    <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                                        <div style="flex: 1;">
-                                            <div style="font-family: monospace; color: #e2e8f0; font-size: 12px;">${c.ip}</div>
-                                            <div style="color: #94a3b8; font-size: 10px;">${loc} • ${c.type}</div>
-                                        </div>
-                                        <span style="color: ${riskColor}; background: ${riskColor}20; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid ${riskColor}40;">${c.risk}</span>
-                                    </li>
-                                `;
-                            });
-                            csHtml += '</ul>';
-
-                            listContainer.innerHTML = csHtml;
-                            console.log(logPrefix + "Injected " + Math.min(10, cs.length) + " suspicious CS");
-                        }
-                    }
-                }
+                // Just log the data, don't manipulate DOM yet
+                console.log(logPrefix + "✅ Successfully loaded threat data");
+                console.log(logPrefix + `Daily count would be: ${cs.length}`);
+                console.log(logPrefix + `Total count would be: ${hackers.length}`);
+                console.log(logPrefix + "DOM manipulation disabled for safety");
 
             } catch (e) {
                 console.error("[HoneyScan Map Injector] Error:", e);
