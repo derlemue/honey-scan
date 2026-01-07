@@ -1299,8 +1299,7 @@
             patchBrandingAggressive();
             // patchDataIssues(); // DISABLED FOR DEBUGGING
             // fixLayoutAndFlags(); // DISABLED FOR DEBUGGING
-            // injectCloudThreats(); 
-            injectCloudThreatsRobust();
+            // injectCloudIntelligence(); 
         };
 
         // Start Loop (250ms is a good balance)
@@ -1532,71 +1531,112 @@
             } catch (e) { console.error(HS_LOG_PREFIX + "Dashboard Error:", e); }
         };
 
-        // 2. Map Overlay Injector (CSS module aware)
-        const injectMapOverlay = async () => {
+        // 2. Map Intelligence Injector (Right-side boxes)
+        const injectCloudIntelligence = async () => {
             try {
-                if (document.getElementById('honeyscan-cloud-overlay')) return;
+                // Selectors for HFish Map Page Boxes
+                const containerSelector = '.index-cssmodule__rightCol-2h2WM';
+                const hackerCardSelector = '.index-cssmodule__card-21Wx-:not(.index-cssmodule__doubtfulCsCard-2RIFX)';
+                const csCardSelector = '.index-cssmodule__doubtfulCsCard-2RIFX';
 
-                // Use the exact class found by browser subagent
-                const targetCard = document.querySelector('.index-cssmodule__infoCard-1QvOp');
-                if (!targetCard) return;
+                const rightCol = document.querySelector(containerSelector);
+                if (!rightCol) return;
 
-                console.log(HS_LOG_PREFIX + "Target map card found. Injecting overlay...");
-                const rect = targetCard.getBoundingClientRect();
+                const hackerBox = rightCol.querySelector(hackerCardSelector);
+                const csBox = rightCol.querySelector(csCardSelector);
+
+                if (!hackerBox || !csBox) return;
+
+                // Remove Floating Overlay if it exists (Cleanup)
+                const oldOverlay = document.getElementById('honeyscan-cloud-overlay');
+                if (oldOverlay) oldOverlay.remove();
 
                 const res = await fetch('/assets/live_threats.json?t=' + Date.now());
                 if (!res.ok) return;
                 const json = await res.json();
-                const hackers = json.hackers || [];
-                const cs = json.cs || [];
 
-                const overlay = document.createElement('div');
-                overlay.id = 'honeyscan-cloud-overlay';
-                overlay.style.cssText = `
-                    position: fixed; top: ${rect.top}px; left: ${rect.left}px;
-                    width: ${rect.width}px; height: 350px;
-                    background: #111827; z-index: 10000; padding: 20px;
-                    overflow-y: auto; border: 1px solid #334155;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-radius: 4px;
-                `;
+                // 20 items per request
+                const hackers = (json.hackers || []).slice(0, 20);
+                const cs = (json.cs || []).slice(0, 20);
 
-                overlay.innerHTML = `
-                    <div style="color: #f8fafc; font-family: sans-serif;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
-                            <h3 style="margin: 0; font-size: 14px; color: #60a5fa;">Cloud Intelligence</h3>
-                            <div style="font-size: 12px; color: #94a3b8;">
-                                <span>Daily: ${cs.length}</span> | <span>Total: ${hackers.length}</span>
+                // Helper: Clear "No data" placeholders
+                const clearNoData = (box) => {
+                    const placeholders = Array.from(box.querySelectorAll('span')).filter(s => s.innerText.includes('identify specific reasons'));
+                    placeholders.forEach(p => {
+                        // Find the container that holds the text and hide/clear it
+                        const container = p.parentElement;
+                        if (container) container.style.display = 'none';
+                    });
+                };
+
+                // Inject Recent Hackers
+                if (hackerBox && (hackerBox.getAttribute('data-hs-count') !== hackers.length.toString() || Date.now() % 30000 < 2000)) {
+                    clearNoData(hackerBox);
+
+                    // Create or update display list
+                    let list = hackerBox.querySelector('.hs-intelligence-list');
+                    if (!list) {
+                        list = document.createElement('div');
+                        list.className = 'hs-intelligence-list';
+                        list.style.cssText = 'height: 100%; overflow-y: auto; padding: 10px; font-size: 11px;';
+                        hackerBox.appendChild(list);
+                    }
+
+                    list.innerHTML = hackers.map(h => `
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <span style="color: #4ade80; font-family: monospace; font-weight: bold;">${h.ip}</span>
+                            <span style="color: #94a3b8;">${translateLocation(h.location)}</span>
+                        </div>
+                    `).join('');
+                    hackerBox.setAttribute('data-hs-count', hackers.length);
+                }
+
+                // Inject Suspicious CS
+                if (csBox && (csBox.getAttribute('data-hs-count') !== cs.length.toString() || Date.now() % 30000 < 2000)) {
+                    clearNoData(csBox);
+
+                    let list = csBox.querySelector('.hs-intelligence-list');
+                    if (!list) {
+                        list = document.createElement('div');
+                        list.className = 'hs-intelligence-list';
+                        list.style.cssText = 'height: 100%; overflow-y: auto; padding: 10px; font-size: 11px;';
+                        csBox.appendChild(list);
+                    }
+
+                    list.innerHTML = cs.map(c => {
+                        let color = '#facc15'; // Medium
+                        if (c.risk === 'High') color = '#fb923c';
+                        if (c.risk === 'Critical') color = '#ef4444';
+
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <span style="font-family: monospace; color: #e2e8f0;">${c.ip}</span>
+                                <span style="color: ${color}; font-weight: bold; font-size: 10px; background: ${color}20; padding: 1px 4px; border-radius: 3px;">${c.risk}</span>
                             </div>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <h4 style="font-size: 11px; color: #64748b; text-transform: uppercase;">Recent hackers</h4>
-                            ${hackers.slice(0, 10).map(h => `
-                                <div style="display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
-                                    <span style="font-family: monospace; color: #4ade80;">${h.ip}</span>
-                                    <span style="color: #94a3b8;">${translateLocation(h.location)}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div>
-                            <h4 style="font-size: 11px; color: #64748b; text-transform: uppercase;">Suspicious CS</h4>
-                            ${cs.slice(0, 10).map(c => `
-                                <div style="display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
-                                    <span style="font-family: monospace;">${c.ip}</span>
-                                    <span style="color: #facc15;">${c.risk}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(overlay);
-                console.log(HS_LOG_PREFIX + "Map overlay active.");
-            } catch (e) { console.error(HS_LOG_PREFIX + "Map Error:", e); }
+                        `;
+                    }).join('');
+                    csBox.setAttribute('data-hs-count', cs.length);
+                }
+
+                // Update Header Counts if visible
+                const dailyTotalLabel = document.querySelector('.hs-cloud-status-brief');
+                if (!dailyTotalLabel && rightCol) {
+                    const status = document.createElement('div');
+                    status.className = 'hs-cloud-status-brief';
+                    status.style.cssText = 'font-size: 10px; color: #64748b; padding: 5px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;';
+                    rightCol.insertBefore(status, rightCol.firstChild);
+                }
+                if (dailyTotalLabel) {
+                    dailyTotalLabel.innerHTML = `Cloud Status: <span style="color:#4ade80">Live</span> | Daily: ${cs.length} | Total: ${hackers.length}`;
+                }
+
+            } catch (e) { console.error(HS_LOG_PREFIX + "Map Intelligence Error:", e); }
         };
 
         // 3. GLOBAL POLLER (Resilient entry point)
         setInterval(() => {
             if (location.href.includes('/dashboard')) injectDashboardThreats();
-            if (location.href.includes('/index')) injectMapOverlay();
+            if (location.href.includes('/index')) injectCloudIntelligence();
         }, 2000);
 
         console.log(HS_LOG_PREFIX + "Unified System V6 started.");
