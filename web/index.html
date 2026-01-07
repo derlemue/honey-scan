@@ -1889,6 +1889,12 @@
         }
         */
 
+        // === MAP PAGE CLOUD INTELLIGENCE: DISABLED ===
+        // React on map page is too sensitive for DOM manipulation
+        // All attempts (direct injection, MutationObserver, React-aware timing) cause crashes
+        // Dashboard Cloud Intelligence works perfectly - keeping that implementation
+
+        /*
         // Auto-refresh for map page: Re-run injection every 30 seconds
         setInterval(() => {
             if (location.pathname.includes('/index') || location.hash.includes('index')) {
@@ -1901,11 +1907,11 @@
         if (location.pathname.includes('/index') || location.hash.includes('index')) {
             const waitForReact = () => {
                 const logPrefix = "[HoneyScan Map Injector] ";
-
+                
                 // Check if Cloud Intelligence section exists
                 const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
                 const cloudIntelHeader = allElements.find(el => el.textContent && el.textContent.includes('Cloud intelligence'));
-
+                
                 if (cloudIntelHeader) {
                     console.log(logPrefix + "React loaded, starting injection in 500ms...");
                     setTimeout(injectMapCloudIntelligence, 500);
@@ -1915,10 +1921,11 @@
                     setTimeout(waitForReact, 500);
                 }
             };
-
+            
             // Start checking after 1 second
             setTimeout(waitForReact, 1000);
         }
+        */
 
     </script>
 
