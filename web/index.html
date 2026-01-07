@@ -1551,7 +1551,7 @@
             const style = document.createElement('style');
             style.id = 'hs-layout-styles';
             style.innerHTML = `
-                /* V6 CONTENT-AWARE TAKEOVER STYLES */
+                /* V7 XPATH HUNTER STYLES */
                 
                 /* Target Discovered Column via ID */
                 #hs-target-column {
@@ -1559,6 +1559,7 @@
                     flex-direction: column !important;
                     height: calc(100vh - 120px) !important;
                     min-height: 0 !important;
+                    background: transparent !important;
                 }
 
                 /* HIDE ALL ORIGINAL REACT CHILDREN */
@@ -1650,40 +1651,40 @@
                 // 0. Ensure CSS Rules exist
                 ensureLayoutStyles();
 
-                // 1. LOCATE TARGET COLUMN (The "Bloodhound" Search)
-                // We search for the text "Recent active hackers" to find the correct container
+                // 1. LOCATE TARGET COLUMN (The "XPath Hunter")
                 let rightCol = document.getElementById('hs-target-column');
                 if (!rightCol) {
-                    // Heuristic search
-                    const allDivs = document.querySelectorAll('div, span, h4, h5');
-                    for (let el of allDivs) {
-                        if (el.innerText && el.innerText.includes('Recent active hackers')) {
-                            // Found the header! Now traverse up to find the main container (usually a flex column)
-                            // We look for a parent that has siblings (the other box) or is the column itself
-                            // Let's go up 3-4 levels and check rect
-                            let parent = el.closest('[class*="card"]'); // It's usually inside a card
-                            if (parent) {
-                                // The column is the parent of the card
-                                rightCol = parent.parentElement;
-                                if (rightCol) {
-                                    rightCol.id = 'hs-target-column'; // TAG IT
-                                    console.log("[HoneyScan] Target Column Discovered and Tagged");
-                                    break;
-                                }
+                    // Use XPath to find text node containing "Recent active hackers"
+                    // checking text nodes specifically to match exact string
+                    const xpath = "//*[contains(text(),'Recent active hackers')]";
+                    const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                    const foundNode = result.singleNodeValue;
+
+                    if (foundNode) {
+                        // Traverse up to find the main container
+                        // Header -> Card -> Column
+                        let parent = foundNode.closest('div'); // Start with div wrapper
+
+                        // Walk up 10 levels max to find the column (something with tall height)
+                        for (let i = 0; i < 10; i++) {
+                            if (!parent) break;
+                            const h = parent.getBoundingClientRect().height;
+                            const w = parent.getBoundingClientRect().width;
+
+                            // Heuristic: Column is tall (>50vh) and reasonably wide (>15vw) but not full width
+                            if (h > window.innerHeight * 0.5 && w > window.innerWidth * 0.1 && w < window.innerWidth * 0.4) {
+                                rightCol = parent;
+                                rightCol.id = 'hs-target-column'; // TAG IT
+
+                                // *** THE DOM WIPE ***
+                                // Destroy React's hold on this column
+                                rightCol.innerHTML = '';
+                                console.log("[HoneyScan] Target Column Captured & Wiped");
+                                break;
                             }
+                            parent = parent.parentElement;
                         }
                     }
-                }
-
-                // Fallback: If text search fails (e.g. language diff), try position
-                if (!rightCol) {
-                    const candidates = Array.from(document.querySelectorAll('div'));
-                    rightCol = candidates.find(el => {
-                        const r = el.getBoundingClientRect();
-                        // It should be on the right side (> 60% width) and tall
-                        return r.left > window.innerWidth * 0.6 && r.height > window.innerHeight * 0.5;
-                    });
-                    if (rightCol) rightCol.id = 'hs-target-column';
                 }
 
                 if (!rightCol) return;
