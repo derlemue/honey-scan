@@ -1826,17 +1826,48 @@
                     // If we are NOT on index OR we see Dashboard elements, FORCE HIDE
                     const ov = document.getElementById('hs-fixed-overlay');
                     if (ov) ov.style.display = 'none';
-                }
-            }
-            requestAnimationFrame(persistenceLoop);
-        };
 
-        // Start loop
-        requestAnimationFrame(persistenceLoop);
+                    // Double check in 50ms (in case navigation fails or takes time)
+                    setTimeout(() => {
+                        if (!location.href.includes('/index') && !location.hash.includes('index')) {
+                            if (overlay) overlay.style.display = 'none';
+                        }
+                    }, 50);
+                }
+            }, true); // Capture phase to run before other handlers
+
+            // 2. History API Patch (SPA Router Hook)
+            const patchHistory = (method) => {
+                const original = history[method];
+                return function (...args) {
+                    const result = original.apply(this, args);
+                    // Trigger check immediately
+                    const overlay = document.getElementById('hs-fixed-overlay');
+                    if (overlay && (!location.href.includes('/index') && !location.hash.includes('index'))) {
+                        overlay.style.display = 'none';
+                    }
+                    return result;
+                };
+            };
+            history.pushState = patchHistory('pushState');
+            history.replaceState = patchHistory('replaceState');
+
+            // 3. Navigation Events
+            window.addEventListener('popstate', () => {
+                const overlay = document.getElementById('hs-fixed-overlay');
+                if (overlay) overlay.style.display = 'none';
+            });
+            window.addEventListener('hashchange', () => {
+                const overlay = document.getElementById('hs-fixed-overlay');
+                if (overlay) overlay.style.display = 'none';
+            });
+
+            // Start the polling loop
+            requestAnimationFrame(persistenceLoop);
+        })();
 
         console.log("[HoneyScan] Resilient Intelligence Layer V9 (Enforcer) Active");
     </script>
 </body>
 
-</html>
 ```
