@@ -1865,13 +1865,18 @@
                         // Assume 0=Top, 1=Bottom. 
                         const getBodyContainer = (node) => {
                             let parent = node.parentElement;
-                            // Walk up max 5 levels or until body/card
-                            for (let i = 0; i < 5; i++) {
-                                if (!parent || parent.tagName === 'BODY' || parent.classList.contains('el-card__body')) break;
-                                if (parent.clientHeight > 50) return parent; // Good candidate
+                            // Walk up max 3 levels (reduced from 5) and be more selective
+                            for (let i = 0; i < 3; i++) {
+                                if (!parent) break;
+                                // STOP if we hit body or main app container
+                                if (parent.tagName === 'BODY' || parent.id === 'app' || parent.id === 'root') break;
+                                // Look for el-card__body specifically
+                                if (parent.classList.contains('el-card__body')) return parent;
+                                // Or a reasonably sized container (not too big)
+                                if (parent.clientHeight > 100 && parent.clientHeight < 600) return parent;
                                 parent = parent.parentElement;
                             }
-                            return parent || node.parentElement;
+                            return node.parentElement; // Fallback to immediate parent
                         };
 
                         const hackersContainer = getBodyContainer(emptyStateNodes[0]);
@@ -1879,11 +1884,16 @@
 
                         if (hackersContainer && csContainer) {
                             debugStep = 'strategy_a_inject';
-                            if (hackersContainer.classList) hackersContainer.classList.add('hs-custom-card');
-                            if (csContainer.classList) csContainer.classList.add('hs-custom-card');
-                            injectIntoContainer(hackersContainer, (threatData.hackers || []).slice(0, 20), 'hacker');
-                            injectIntoContainer(csContainer, (threatData.cs || []).slice(0, 20), 'cs');
-                            success = true;
+                            // SAFETY: Don't inject if container is too large (likely body/main)
+                            if (hackersContainer.clientHeight > 800 || csContainer.clientHeight > 800) {
+                                console.warn('[HoneyScan] Container too large, skipping Strategy A');
+                            } else {
+                                if (hackersContainer.classList) hackersContainer.classList.add('hs-custom-card');
+                                if (csContainer.classList) csContainer.classList.add('hs-custom-card');
+                                injectIntoContainer(hackersContainer, (threatData.hackers || []).slice(0, 20), 'hacker');
+                                injectIntoContainer(csContainer, (threatData.cs || []).slice(0, 20), 'cs');
+                                success = true;
+                            }
                         }
                     }
                 } catch (errA) {
