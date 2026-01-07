@@ -1890,19 +1890,35 @@
         */
 
         // Auto-refresh for map page: Re-run injection every 30 seconds
-        // COMPLETELY DISABLED FOR DEBUGGING
-        /*
         setInterval(() => {
             if (location.pathname.includes('/index') || location.hash.includes('index')) {
                 injectMapCloudIntelligence();
             }
         }, 30000);
 
-        // Initial run for map page
+        // REACT-AWARE INITIAL RUN
+        // Wait for React to render the Cloud Intelligence section before injecting
         if (location.pathname.includes('/index') || location.hash.includes('index')) {
-            setTimeout(injectMapCloudIntelligence, 2000); // Wait for page to load
+            const waitForReact = () => {
+                const logPrefix = "[HoneyScan Map Injector] ";
+
+                // Check if Cloud Intelligence section exists
+                const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
+                const cloudIntelHeader = allElements.find(el => el.textContent && el.textContent.includes('Cloud intelligence'));
+
+                if (cloudIntelHeader) {
+                    console.log(logPrefix + "React loaded, starting injection in 500ms...");
+                    setTimeout(injectMapCloudIntelligence, 500);
+                } else {
+                    // React not ready yet, check again in 500ms
+                    console.log(logPrefix + "Waiting for React to load Cloud Intelligence section...");
+                    setTimeout(waitForReact, 500);
+                }
+            };
+
+            // Start checking after 1 second
+            setTimeout(waitForReact, 1000);
         }
-        */
 
     </script>
 
