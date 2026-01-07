@@ -46,6 +46,133 @@
             }
         }
     </style>
+    <script>
+        // === CLOUD INTELLIGENCE FETCH INTERCEPTOR ===
+        // This must run BEFORE React loads to intercept API calls
+        // Intercepts HFish cloud intelligence API endpoints and returns our live_threats.json data
+        (function () {
+            console.log("[Cloud Intelligence] Installing fetch interceptor...");
+
+            const originalFetch = window.fetch;
+            let threatDataCache = null;
+            let lastFetchTime = 0;
+
+            // Helper: Translate Chinese location names to English
+            const translateLocation = (loc) => {
+                const map = {
+                    '美国': 'United States', '加拿大': 'Canada', '中国': 'China', '俄罗斯': 'Russia',
+                    '德国': 'Germany', '英国': 'United Kingdom', '法国': 'France', '荷兰': 'Netherlands',
+                    '巴西': 'Brazil', '印度': 'India', '日本': 'Japan', '韩国': 'South Korea',
+                    '阿根廷': 'Argentina', '新加坡': 'Singapore', '澳大利亚': 'Australia',
+                    '越南': 'Vietnam', '泰国': 'Thailand', '印度尼西亚': 'Indonesia',
+                    '台湾': 'Taiwan', '香港': 'Hong Kong', '乌克兰': 'Ukraine', '波兰': 'Poland',
+                    '意大利': 'Italy', '西班牙': 'Spain', '瑞典': 'Sweden', '挪威': 'Norway',
+                    '芬兰': 'Finland', '丹麦': 'Denmark', '瑞士': 'Switzerland', '奥地利': 'Austria',
+                    '比利时': 'Belgium', '爱尔兰': 'Ireland', '墨西哥': 'Mexico', '土耳其': 'Turkey',
+                    '伊朗': 'Iran', '以色列': 'Israel', '沙特阿拉伯': 'Saudi Arabia', '南非': 'South Africa'
+                };
+                return map[loc] || loc;
+            };
+
+            // Fetch and cache threat data
+            const getThreatData = async () => {
+                const now = Date.now();
+                // Cache for 30 seconds
+                if (threatDataCache && (now - lastFetchTime) < 30000) {
+                    return threatDataCache;
+                }
+
+                try {
+                    const response = await originalFetch('/assets/live_threats.json?t=' + Math.floor(now / 60000));
+                    const data = await response.json();
+
+                    // Transform data to match HFish format
+                    const hackers = (data.hackers || []).map(h => ({
+                        ip: h.ip,
+                        location: translateLocation(h.location),
+                        time: h.time,
+                        country: translateLocation(h.location),
+                        flag: h.flag
+                    }));
+
+                    const cs = (data.cs || []).map(c => ({
+                        ip: c.ip,
+                        location: translateLocation(c.location),
+                        type: c.type || 'Scanner',
+                        risk: c.risk || 'Medium',
+                        time: c.time || 'Just now',
+                        severity: c.risk || 'Medium'
+                    }));
+
+                    threatDataCache = { hackers, cs, api_active: data.api_active };
+                    lastFetchTime = now;
+                    console.log("[Cloud Intelligence] Loaded threat data:", threatDataCache);
+                    return threatDataCache;
+                } catch (e) {
+                    console.error("[Cloud Intelligence] Failed to load threat data:", e);
+                    return { hackers: [], cs: [], api_active: false };
+                }
+            };
+
+            // Intercept fetch
+            window.fetch = async function (...args) {
+                const url = args[0];
+
+                if (typeof url === 'string') {
+                    // Intercept cloud intelligence API endpoints
+                    if (url.includes('/api/web/latest_cs') || url.includes('latest_cs')) {
+                        console.log("[Cloud Intelligence] Intercepted latest_cs request");
+                        const data = await getThreatData();
+                        return new Response(JSON.stringify({
+                            response_code: 0,
+                            data: data.cs,
+                            verbose_msg: "Success"
+                        }), {
+                            status: 200,
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                    }
+
+                    if (url.includes('/api/web/hack_portrait') || url.includes('hack_portrait')) {
+                        console.log("[Cloud Intelligence] Intercepted hack_portrait request");
+                        const data = await getThreatData();
+                        return new Response(JSON.stringify({
+                            response_code: 0,
+                            data: data.hackers,
+                            verbose_msg: "Success"
+                        }), {
+                            status: 200,
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                    }
+
+                    // Also intercept any generic "cloud" or "community" endpoints
+                    if (url.includes('/api/web/cloud') || url.includes('/api/web/community')) {
+                        console.log("[Cloud Intelligence] Intercepted cloud/community request");
+                        const data = await getThreatData();
+                        return new Response(JSON.stringify({
+                            response_code: 0,
+                            data: {
+                                hackers: data.hackers,
+                                cs: data.cs,
+                                daily: data.cs.length,
+                                total: data.hackers.length
+                            },
+                            verbose_msg: "Success"
+                        }), {
+                            status: 200,
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                    }
+                }
+
+                // Pass through all other requests
+                return originalFetch(...args);
+            };
+
+            console.log("[Cloud Intelligence] Fetch interceptor installed successfully");
+        })();
+    </script>
     <style id="nativeLoginStyles">
         /* Native Login Page - Hidden by default, shown via JavaScript on /login route */
         #nativeLogin {
