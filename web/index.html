@@ -53,17 +53,40 @@
         (function () {
             console.log("[Cloud Intelligence] Installing fetch interceptor...");
 
-            // === VISUAL DEBUG STATUS INDICATOR ===
-            // Red: Init/Error | Purple: Fetching | Blue: Success
-            const debugDot = document.createElement('div');
-            debugDot.id = 'ci-status-dot';
-            debugDot.style.cssText = "position:fixed;bottom:20px;right:20px;width:15px;height:15px;background:red;border-radius:50%;z-index:999999;border:2px solid white;box-shadow:0 0 4px #000;pointer-events:auto;cursor:pointer;transition:background 0.3s;";
-            document.body.appendChild(debugDot);
-            let lastError = '';
-            debugDot.onclick = () => alert(lastError || 'No errors logged.');
+            // === VISUAL DEBUG BANNER ===
+            const debugBanner = document.createElement('div');
+            debugBanner.id = 'ci-debug-banner';
+            debugBanner.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:5px 15px;z-index:999999;font-family:monospace;font-size:14px;border-bottom-left-radius:8px;border-bottom-right-radius:8px;border:1px solid #444;border-top:none;display:flex;gap:15px;align-items:center;";
+            debugBanner.innerHTML = `
+                <span id="db-status" style="font-weight:bold;color:#a855f7">INIT</span>
+                <span id="db-network" style="color:#666">Net: ???</span>
+                <span id="db-error" style="color:#ef4444;display:none"></span>
+                <span id="db-retry" style="color:#fbbf24;display:none">Retries: 0</span>
+            `;
+            document.body.appendChild(debugBanner);
+
+            let retryCount = 0;
+            const updateBanner = (status, color, error = null, netStatus = null) => {
+                const sEl = document.getElementById('db-status');
+                const eEl = document.getElementById('db-error');
+                const nEl = document.getElementById('db-network');
+
+                sEl.textContent = status;
+                sEl.style.color = color;
+
+                if (error) {
+                    eEl.textContent = error;
+                    eEl.style.display = 'block';
+                } else {
+                    eEl.style.display = 'none';
+                }
+
+                if (netStatus) nEl.textContent = "Net: " + netStatus;
+            };
+
             const setStatus = (c, msg) => {
-                debugDot.style.background = c;
-                if (msg) { lastError = msg; console.log("[Status]", msg); }
+                // Legacy support if needed, mapped to banner
+                // c=red -> error, etc.
             };
 
             const originalFetch = window.fetch;
@@ -97,11 +120,20 @@
                 }
 
                 try {
-                    setStatus('purple', 'Fetching...'); // Fetching
+                    updateBanner('FETCHING...', '#a855f7'); // Purple
 
-                    // Create a timeout promise
+                    // Diagnostic: Check if we can even load a local asset
+                    const netCheck = new Promise(async (resolve) => {
+                        try {
+                            const r = await originalFetch('/assets/logo_bear.png', { method: 'HEAD' });
+                            resolve(r.ok ? 'OK' : 'FAIL');
+                        } catch (e) { resolve('ERR'); }
+                    });
+                    netCheck.then(status => updateBanner('FETCHING...', '#a855f7', null, status));
+
+                    // Create a timeout promise (10s)
                     const timeout = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error("Fetch Timeout (5s)")), 5000)
+                        setTimeout(() => reject(new Error("Fetch Timeout (10s)")), 10000)
                     );
 
                     // Race fetch against timeout
@@ -109,9 +141,10 @@
                         originalFetch('/assets/live_threats.json?t=' + now),
                         timeout
                     ]);
+
                     if (!response.ok) throw new Error("HTTP " + response.status);
 
-                    setStatus('orange', 'Parsing JSON...'); // JSON Parsing
+                    updateBanner('PARSING', '#fbbf24'); // Orange
                     const data = await response.json();
 
                     // Transform data to match HFish format
@@ -135,11 +168,15 @@
                     threatDataCache = { hackers, cs, api_active: data.api_active };
                     lastFetchTime = now;
                     console.log("[Cloud Intelligence] Loaded threat data:", threatDataCache);
-                    setStatus('#00ff00', 'Success: ' + data.hackers.length + ' hackers'); // Green for Success
+                    updateBanner('SUCCESS', '#22c55e'); // Green
                     return threatDataCache;
                 } catch (e) {
+                    retryCount++;
+                    document.getElementById('db-retry').style.display = 'block';
+                    document.getElementById('db-retry').textContent = `Retries: ${retryCount}`;
+
                     console.error("[Cloud Intelligence] Failed to load threat data:", e);
-                    setStatus('red', 'Error: ' + e.message); // Error
+                    updateBanner('ERROR', '#ef4444', e.message); // Red
                     return { hackers: [], cs: [], api_active: false };
                 }
             };
