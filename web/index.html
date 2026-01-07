@@ -1167,6 +1167,7 @@
             patchBrandingAggressive();
             // patchDataIssues(); // DISABLED FOR DEBUGGING
             // fixLayoutAndFlags(); // DISABLED FOR DEBUGGING
+            injectCloudThreats();
         };
 
         // Start Loop (250ms is a good balance)
@@ -1339,6 +1340,108 @@
                 });
 
             } catch (e) { console.error("Layout/Flag Fix Error:", e); }
+        };
+
+        // === CLOUD THREAT INTELLIGENCE INJECTOR ===
+        let hasInjectedThreats = false; // Debounce
+
+        const injectCloudThreats = async () => {
+            try {
+                // 1. Find the Widget by Title
+                const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
+                const widgetHeader = headers.find(el => el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud');
+
+                if (!widgetHeader) return;
+
+                // 2. Find Container (usually parent's sibling or parent's parent)
+                // HFish structure: Header -> Body. Usually siblings in a flex column.
+                // We look for the "No data" placeholder to replace.
+                let container = widgetHeader.closest('.el-card__header');
+                let body = null;
+
+                if (container) {
+                    body = container.nextElementSibling; // el-card__body
+                } else {
+                    // Fallback: iterate parents
+                    let p = widgetHeader.parentElement;
+                    while (p && !p.classList.contains('el-card')) {
+                        p = p.parentElement;
+                    }
+                    if (p) body = p.querySelector('.el-card__body');
+                }
+
+                if (!body) return;
+
+                // 3. Check if empty or has "No data"
+                const noData = body.querySelector('div[class*="no-data"]') || body.innerText.includes('No data');
+                if (!noData && body.querySelector('table')) return; // Already has data (maybe native?)
+
+                // 4. Fetch Data (Only if not already done recently)
+                // We use a timestamp to prevent aggressive caching but not spam
+                if (hasInjectedThreats) return;
+
+                const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000)); // Cache for 1 min
+                if (!response.ok) return;
+
+                const json = await response.json();
+                const threats = json.cs || [];
+
+                if (threats.length === 0) return;
+
+                // 5. Build HTML Table
+                // Matching HFish Dashboard Style (Dark, minimal)
+                let html = `
+                    <div style="width:100%; height: 100%; overflow-y: auto; padding: 10px;">
+                        <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">
+                                    <th style="padding: 8px; color: rgba(255,255,255,0.6);">IP / Location</th>
+                                    <th style="padding: 8px; color: rgba(255,255,255,0.6);">Type</th>
+                                    <th style="padding: 8px; color: rgba(255,255,255,0.6);">Risk</th>
+                                    <th style="padding: 8px; color: rgba(255,255,255,0.6);">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                threats.forEach(t => {
+                    // Risk Color mapping
+                    let riskColor = '#4ade80'; // Low/Green
+                    if (t.risk === 'Medium') riskColor = '#facc15'; // Yellow
+                    if (t.risk === 'High') riskColor = '#fb923c'; // Orange
+                    if (t.risk === 'Critical') riskColor = '#ef4444'; // Red
+
+                    html += `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
+                            <td style="padding: 8px;">
+                                <div style="font-weight: bold; color: #e2e8f0;">${t.ip}</div>
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.5);">${t.location}</div>
+                            </td>
+                            <td style="padding: 8px; color: #94a3b8;">${t.type || 'Scanner'}</td>
+                            <td style="padding: 8px;">
+                                <span style="background: ${riskColor}20; color: ${riskColor}; padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid ${riskColor}40;">
+                                    ${t.risk}
+                                </span>
+                            </td>
+                            <td style="padding: 8px; color: rgba(255,255,255,0.4);">${t.time}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // 6. Inject
+                body.innerHTML = html;
+                hasInjectedThreats = true;
+                console.log("[HoneyScan] Injected Cloud Intelligence Data (" + threats.length + " items)");
+
+            } catch (e) {
+                console.error("Cloud Threat Injection Error:", e);
+            }
         };
 
     </script>
