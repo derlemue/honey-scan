@@ -362,18 +362,78 @@ def fix_missing_severity():
     finally:
         if conn: conn.close()
 
-def restore_chinese_names():
+def translate_to_english():
+    """Translate Chinese location names to English"""
     conn = get_db_connection()
     if not conn: return
     try:
         cursor = conn.cursor()
         if DB_TYPE == "mysql":
-            translations = { "United States": "美国", "China": "中国", "Russia": "俄罗斯", "Germany": "德国", "Unknown": "未知" } # Abbreviated for stability
-            for en, cn in translations.items():
-                cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (cn, en))
-                cursor.execute("UPDATE ipaddress SET region = %s WHERE region = %s", (cn, en))
+            # Comprehensive Chinese to English translation dictionary
+            translations = {
+                "美国": "United States",
+                "中国": "China",
+                "俄罗斯": "Russia",
+                "德国": "Germany",
+                "英国": "United Kingdom",
+                "法国": "France",
+                "日本": "Japan",
+                "韩国": "South Korea",
+                "印度": "India",
+                "巴西": "Brazil",
+                "加拿大": "Canada",
+                "澳大利亚": "Australia",
+                "意大利": "Italy",
+                "西班牙": "Spain",
+                "荷兰": "Netherlands",
+                "瑞士": "Switzerland",
+                "瑞典": "Sweden",
+                "挪威": "Norway",
+                "丹麦": "Denmark",
+                "芬兰": "Finland",
+                "波兰": "Poland",
+                "土耳其": "Turkey",
+                "以色列": "Israel",
+                "沙特阿拉伯": "Saudi Arabia",
+                "阿联酋": "United Arab Emirates",
+                "新加坡": "Singapore",
+                "马来西亚": "Malaysia",
+                "泰国": "Thailand",
+                "越南": "Vietnam",
+                "印度尼西亚": "Indonesia",
+                "菲律宾": "Philippines",
+                "巴基斯坦": "Pakistan",
+                "孟加拉国": "Bangladesh",
+                "墨西哥": "Mexico",
+                "阿根廷": "Argentina",
+                "智利": "Chile",
+                "哥伦比亚": "Colombia",
+                "南非": "South Africa",
+                "埃及": "Egypt",
+                "尼日利亚": "Nigeria",
+                "肯尼亚": "Kenya",
+                "乌克兰": "Ukraine",
+                "罗马尼亚": "Romania",
+                "捷克": "Czech Republic",
+                "匈牙利": "Hungary",
+                "奥地利": "Austria",
+                "比利时": "Belgium",
+                "葡萄牙": "Portugal",
+                "希腊": "Greece",
+                "爱尔兰": "Ireland",
+                "新西兰": "New Zealand",
+                "香港": "Hong Kong",
+                "台湾": "Taiwan",
+                "未知": "Unknown"
+            }
+            for cn, en in translations.items():
+                cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (en, cn))
+                cursor.execute("UPDATE ipaddress SET region = %s WHERE region = %s", (en, cn))
+                cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip_country = %s", (en, cn))
             conn.commit()
-    except Exception as e: pass
+            logger.info("Translated Chinese location names to English")
+    except Exception as e:
+        logger.warning(f"Translation error: {e}")
     finally:
         if conn: conn.close()
 
@@ -401,7 +461,7 @@ def main():
                         executor.submit(scan_ip, ip)
                     update_banned_list(attackers)
                 fix_missing_severity()
-                restore_chinese_names()
+                translate_to_english()  # Translate Chinese to English
                 # update_index() removed
                 update_threat_feed()
                 if int(time.time()) % 600 < 15: update_node_location()
