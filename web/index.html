@@ -1400,10 +1400,17 @@
                     const href = useHref.getAttribute('xlink:href') || useHref.getAttribute('href');
                     if (!href || !href.includes('flagdefault')) return;
 
-                    const countrySpan = svg.nextElementSibling;
-                    if (!countrySpan || countrySpan.tagName !== 'SPAN') return;
+                    // Handle Text Node (CIDR view) or SPAN (Country view)
+                    let country = '';
+                    const nextNode = svg.nextSibling;
+                    if (nextNode && nextNode.nodeType === 3) { // Text node
+                        country = nextNode.textContent.trim();
+                    } else if (svg.nextElementSibling && svg.nextElementSibling.tagName === 'SPAN') {
+                        country = svg.nextElementSibling.innerText.trim();
+                    }
 
-                    const country = countrySpan.innerText.trim();
+                    if (!country) return;
+
                     const countryMap = {
                         'China': 'cn', 'United States': 'us', 'Germany': 'de', 'France': 'fr',
                         'Russia': 'ru', 'United Kingdom': 'gb', 'Netherlands': 'nl', 'Brazil': 'br',
@@ -1420,13 +1427,34 @@
                         'Great Britain': 'gb'
                     };
 
-                    const code = countryMap[country];
-                    if (code) {
-                        useHref.setAttribute('xlink:href', `#hfish-flag-${code}`);
+                    let countryCode = countryMap[country];
+
+                    // CLEANUP: If React put 'undefined' class, remove it
+                    if (svg.classList.contains('undefined')) {
                         svg.classList.remove('undefined');
-                        svg.classList.add(`flag-icon-${code}`);
-                        svg.dataset.flagPatched = 'true';
                     }
+
+                    if (countryCode) {
+                        // We have a match, patch it!
+                        const newClass = `flag-icon-${countryCode}`;
+                        if (!svg.classList.contains(newClass)) {
+                            // Remove old flag classes just in case
+                            svg.classList.forEach(c => {
+                                if (c.startsWith('flag-icon-') && c !== 'flag-icon') svg.classList.remove(c);
+                            });
+                            svg.classList.add(newClass);
+
+                            // Update use href if stuck on default
+                            const use = svg.querySelector('use');
+                            if (use) {
+                                use.setAttribute('xlink:href', `#flag-icon-${countryCode}`);
+                                use.setAttribute('href', `#flag-icon-${countryCode}`);
+                            }
+                        }
+                    }
+
+                    // Mark patched regardless of success to avoid re-running on same element endlessly
+                    svg.dataset.flagPatched = 'true';
                 });
 
 
