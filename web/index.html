@@ -1739,20 +1739,17 @@
                     `;
                 }
 
-                // Sync Geometry - LAYOUT TUNING (V11)
+                // Sync Geometry - LAYOUT TUNING (V12)
                 currentOverlay.style.display = 'flex';
                 currentOverlay.style.left = anchorRect.left + 'px';
                 currentOverlay.style.width = anchorRect.width + 'px';
 
-                // Top Tuning:
-                const topPos = anchorRect.top > 60 ? anchorRect.top : 80;
+                // Top Tuning (V12):
+                // User wants "Original Box" size, which was likely more centered/compact.
+                // We'll fix it to ~12% top and 80vh height to ensure it doesn't touch bottom.
+                const topPos = window.innerHeight * 0.12;
                 currentOverlay.style.top = topPos + 'px';
-
-                // Height Tuning: 
-                // Don't go to 0px. Match the likely bottom margin. 
-                // Left column looks like it has ~40px margin? 
-                // Let's enforce a 3.5% bottom gap to avoid "too big" look.
-                currentOverlay.style.height = `calc(100vh - ${topPos}px - 3.5%)`;
+                currentOverlay.style.height = '78vh'; // Fixed height, safe from bottom
 
                 // 3. ROBUST FETCH
                 const fetchThreatDataLocal = async () => {
@@ -1833,7 +1830,15 @@
             const now = performance.now();
             if (now < 60000 || frameCount % 20 === 0) {
                 if (location.href.includes('/dashboard')) injectDashboardThreats();
-                if (location.href.includes('/index')) injectCloudIntelligence();
+
+                // V12 FIX: Explicit Cleanup on Loop
+                if (location.href.includes('/index') || location.hash.includes('index')) {
+                    injectCloudIntelligence();
+                } else {
+                    // If we are NOT on index, we MUST hide the overlay immediately
+                    const ov = document.getElementById('hs-fixed-overlay');
+                    if (ov) ov.style.display = 'none';
+                }
             }
             requestAnimationFrame(persistenceLoop);
         };
