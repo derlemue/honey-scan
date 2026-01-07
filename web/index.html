@@ -1939,47 +1939,58 @@
                     return;
                 }
 
+                console.log(logPrefix + "Searching for Cloud Intelligence section...");
                 // Find Cloud Intelligence section (without touching it!)
                 const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
-                const cloudIntelHeader = allElements.find(el => el.textContent && el.textContent.includes('Cloud intelligence'));
+                // Try looser matching
+                const cloudIntelHeader = allElements.find(el => {
+                    const text = (el.textContent || '').toLowerCase();
+                    return text.includes('cloud') && text.includes('intelligence');
+                });
 
-                if (!cloudIntelHeader) {
-                    console.log(logPrefix + "Cloud Intelligence section not found yet");
-                    return;
+                let targetRect = null;
+
+                if (cloudIntelHeader) {
+                    console.log(logPrefix + "Found header:", cloudIntelHeader);
+                    // Get the parent card
+                    const card = cloudIntelHeader.closest('div[class*="card"]') || cloudIntelHeader.parentElement.parentElement;
+                    if (card) {
+                        targetRect = card.getBoundingClientRect();
+                        console.log(logPrefix + "Target rect found:", targetRect);
+                    } else {
+                        console.log(logPrefix + "Card container not found, using header rect");
+                        targetRect = cloudIntelHeader.getBoundingClientRect();
+                    }
+                } else {
+                    console.log(logPrefix + "Cloud Intelligence section NOT found. Creating DEBUG overlay in top-right.");
+                    targetRect = { top: 100, left: 100, width: 300, height: 200 };
                 }
 
-                // Get the parent card
-                const card = cloudIntelHeader.closest('div[class*="card"]');
-                if (!card) {
-                    console.log(logPrefix + "Card container not found");
-                    return;
-                }
-
-                // Get card's position and dimensions
-                const cardRect = card.getBoundingClientRect();
-                console.log(logPrefix + "Card position:", cardRect);
-
-                // Create overlay div that sits ON TOP of the card using FIXED positioning
-                // This way we DON'T touch React's DOM at all
+                // Create overlay div
                 const overlay = document.createElement('div');
                 overlay.id = 'honeyscan-cloud-overlay';
+
+                // DEBUG STYLE: Red border to make it visible even if misalignment
                 overlay.style.cssText = `
                     position: fixed;
-                    top: ${cardRect.top}px;
-                    left: ${cardRect.left}px;
-                    width: ${cardRect.width}px;
-                    height: ${cardRect.height}px;
+                    top: ${targetRect.top}px;
+                    left: ${targetRect.left}px;
+                    width: ${targetRect.width || 300}px;
+                    height: ${targetRect.height || 300}px;
                     background: rgba(15, 23, 42, 0.98);
-                    z-index: 9999;
+                    z-index: 99999;
                     padding: 20px;
                     overflow-y: auto;
                     pointer-events: auto;
                     box-sizing: border-box;
+                    border: 2px solid #ef4444; 
+                    box-shadow: 0 0 20px rgba(0,0,0,0.5);
                 `;
 
                 // Build overlay content
                 overlay.innerHTML = `
                     <div style="color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+                        <div style="background: #ef4444; color: white; padding: 2px 5px; font-size: 10px; margin-bottom: 5px;">DEBUG MODE</div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
                             <h3 style="margin: 0; font-size: 16px; color: #60a5fa;">Cloud Intelligence</h3>
                             <div style="display: flex; gap: 20px; font-size: 14px;">
