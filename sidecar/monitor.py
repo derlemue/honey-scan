@@ -206,8 +206,10 @@ def update_threat_feed():
     try:
         cursor = conn.cursor()
         query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 50"
+        logger.info(f"Executing Query: {query}")
         cursor.execute(query)
         rows = cursor.fetchall()
+        logger.info(f"Fetched {len(rows)} rows from DB")
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
