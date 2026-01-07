@@ -1534,120 +1534,96 @@
         // 2. Map Intelligence Injector (Right-side boxes)
         const injectCloudIntelligence = async () => {
             try {
-                // Selectors for HFish Map Page Boxes
-                const containerSelector = '.index-cssmodule__rightCol-2h2WM';
-                const hackerCardSelector = '.index-cssmodule__card-21Wx-:not(.index-cssmodule__doubtfulCsCard-2RIFX)';
-                const csCardSelector = '.index-cssmodule__doubtfulCsCard-2RIFX';
+                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return;
 
-                const rightCol = document.querySelector(containerSelector);
+                const rightCol = document.querySelector('.index-cssmodule__rightCol-2h2WM');
                 if (!rightCol) return;
 
-                const hackerBox = rightCol.querySelector(hackerCardSelector);
-                const csBox = rightCol.querySelector(csCardSelector);
+                // stable container layout
+                rightCol.style.display = 'flex';
+                rightCol.style.flexDirection = 'column';
+                rightCol.style.gap = '15px';
+                rightCol.style.justifyContent = 'flex-start';
+
+                const threatData = await window.getThreatData();
+                if (!threatData) return;
+
+                const cards = Array.from(rightCol.querySelectorAll('.index-cssmodule__card-21Wx-'));
+                const hackerBox = cards.find(c => !c.classList.contains('index-cssmodule__doubtfulCsCard-2RIFX'));
+                const csBox = cards.find(c => c.classList.contains('index-cssmodule__doubtfulCsCard-2RIFX'));
 
                 if (!hackerBox || !csBox) return;
 
-                // Remove Floating Overlay if it exists (Cleanup)
-                const oldOverlay = document.getElementById('honeyscan-cloud-overlay');
-                if (oldOverlay) oldOverlay.remove();
+                // Force visibility and set min-height to prevent layout "slip"
+                [hackerBox, csBox].forEach(box => {
+                    box.style.setProperty('display', 'block', 'important');
+                    box.style.setProperty('visibility', 'visible', 'important');
+                    box.style.minHeight = '180px';
+                });
 
-                const res = await fetch('/assets/live_threats.json?t=' + Date.now());
-                if (!res.ok) return;
-                const json = await res.json();
-
-                // 20 items per request
-                const hackers = (json.hackers || []).slice(0, 20);
-                const cs = (json.cs || []).slice(0, 20);
-
-                // Helper: Clear "No data" placeholders
+                // Helper: Clear HFish placeholders
                 const clearNoData = (box) => {
-                    // Target specific HFish empty wrap classes or any element containing "No data"
-                    const emptyWraps = box.querySelectorAll('[class*="emptyWrap"]');
-                    emptyWraps.forEach(w => w.style.setProperty('display', 'none', 'important'));
-
-                    const placeholders = Array.from(box.querySelectorAll('span, p, div')).filter(el =>
+                    box.querySelectorAll('[class*="emptyWrap"]').forEach(w => w.style.display = 'none');
+                    Array.from(box.querySelectorAll('span, p, div')).filter(el =>
                         el.innerText.includes('identify specific reasons') || el.innerText === 'No data'
-                    );
-                    placeholders.forEach(p => {
-                        p.style.setProperty('display', 'none', 'important');
-                        // Also try to hide parent if it looks like a wrapper
-                        if (p.parentElement && p.parentElement.children.length < 3) {
-                            p.parentElement.style.setProperty('display', 'none', 'important');
-                        }
-                    });
+                    ).forEach(p => p.style.setProperty('display', 'none', 'important'));
                 };
 
-                // Inject Recent Hackers
-                if (hackerBox && (hackerBox.getAttribute('data-hs-count') !== hackers.length.toString() || Date.now() % 30000 < 2000)) {
-                    clearNoData(hackerBox);
-
-                    // Create or update display list
-                    let list = hackerBox.querySelector('.hs-intelligence-list');
-                    if (!list) {
-                        list = document.createElement('div');
-                        list.className = 'hs-intelligence-list';
-                        list.style.cssText = 'height: 100%; overflow-y: auto; padding: 10px; font-size: 11px;';
-                        hackerBox.appendChild(list);
-                    }
-
-                    list.innerHTML = hackers.map(h => `
-                        <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <span style="color: #4ade80; font-family: monospace; font-weight: bold;">${h.ip}</span>
-                            <span style="color: #94a3b8;">${translateLocation(h.location)}</span>
-                        </div>
-                    `).join('');
-                    hackerBox.setAttribute('data-hs-count', hackers.length);
+                // UPPER BOX: Recent active hackers
+                clearNoData(hackerBox);
+                let hackerList = hackerBox.querySelector('.hs-intelligence-list');
+                if (!hackerList) {
+                    hackerList = document.createElement('div');
+                    hackerList.className = 'hs-intelligence-list';
+                    hackerList.style.cssText = 'max-height:160px; overflow-y:auto; padding:10px; font-family: Outfit, sans-serif;';
+                    hackerBox.appendChild(hackerList);
                 }
+                const hackers = (threatData.hackers || []).slice(0, 20);
+                hackerList.innerHTML = hackers.map(h => `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+                        <span style="color:#ff4d4f; font-weight:bold;">${h.ip}</span>
+                        <span style="color:#94a3b8; flex-grow:1; margin-left:10px;">${h.location}</span>
+                        <span style="color:#4a5568;">${h.time.split(' ')[1] || h.time}</span>
+                    </div>
+                `).join('');
 
-                // Inject Suspicious CS
-                if (csBox && (csBox.getAttribute('data-hs-count') !== cs.length.toString() || Date.now() % 30000 < 2000)) {
-                    clearNoData(csBox);
-
-                    let list = csBox.querySelector('.hs-intelligence-list');
-                    if (!list) {
-                        list = document.createElement('div');
-                        list.className = 'hs-intelligence-list';
-                        list.style.cssText = 'height: 100%; overflow-y: auto; padding: 10px; font-size: 11px;';
-                        csBox.appendChild(list);
-                    }
-
-                    list.innerHTML = cs.map(c => {
-                        let color = '#facc15'; // Medium
-                        if (c.risk === 'High') color = '#fb923c';
-                        if (c.risk === 'Critical') color = '#ef4444';
-
-                        return `
-                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <span style="font-family: monospace; color: #e2e8f0;">${c.ip}</span>
-                                <span style="color: ${color}; font-weight: bold; font-size: 10px; background: ${color}20; padding: 1px 4px; border-radius: 3px;">${c.risk}</span>
-                            </div>
-                        `;
-                    }).join('');
-                    csBox.setAttribute('data-hs-count', cs.length);
+                // LOWER BOX: Suspicious CS
+                clearNoData(csBox);
+                let csList = csBox.querySelector('.hs-intelligence-list');
+                if (!csList) {
+                    csList = document.createElement('div');
+                    csList.className = 'hs-intelligence-list';
+                    csList.style.cssText = 'max-height:160px; overflow-y:auto; padding:10px; font-family: Outfit, sans-serif;';
+                    csBox.appendChild(csList);
                 }
+                const cs = (threatData.cs || []).slice(0, 20);
+                csList.innerHTML = cs.map(c => `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+                        <span style="color:#faad14; font-weight:bold;">${c.ip}</span>
+                        <span style="color:#94a3b8; flex-grow:1; margin-left:10px;">${c.type}</span>
+                        <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 4px; border-radius:2px; font-size:10px;">${c.risk}</span>
+                    </div>
+                `).join('');
 
-                // Update Header Counts if visible
-                const dailyTotalLabel = document.querySelector('.hs-cloud-status-brief');
-                if (!dailyTotalLabel && rightCol) {
-                    const status = document.createElement('div');
-                    status.className = 'hs-cloud-status-brief';
-                    status.style.cssText = 'font-size: 10px; color: #64748b; padding: 5px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;';
-                    rightCol.insertBefore(status, rightCol.firstChild);
+                // Status Bar
+                let statusHeader = document.querySelector('.hs-cloud-status-brief');
+                if (!statusHeader) {
+                    statusHeader = document.createElement('div');
+                    statusHeader.className = 'hs-cloud-status-brief';
+                    statusHeader.style.cssText = 'padding:10px 15px; background:rgba(0,10,30,0.4); border-left:3px solid #1890ff; margin-bottom:10px; font-size:12px; display:flex; justify-content:space-between; color:#fff;';
+                    rightCol.prepend(statusHeader);
                 }
-                if (dailyTotalLabel) {
-                    dailyTotalLabel.innerHTML = `Cloud Status: <span style="color:#4ade80">Live</span> | Daily: ${cs.length} | Total: ${hackers.length}`;
-                }
-
-            } catch (e) { console.error(HS_LOG_PREFIX + "Map Intelligence Error:", e); }
+                statusHeader.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b></span> <span>Daily: ${hackers.length} | Total: ${hackers.length + cs.length}</span>`;
+            } catch (e) { console.error("[HoneyScan] UI Error:", e); }
         };
 
-        // 3. GLOBAL POLLER (Resilient entry point)
+        // 3. GLOBAL POLLER
         setInterval(() => {
             if (location.href.includes('/dashboard')) injectDashboardThreats();
             if (location.href.includes('/index')) injectCloudIntelligence();
         }, 2000);
 
-        console.log(HS_LOG_PREFIX + "Unified System V6 started.");
+        console.log("[HoneyScan] Resilient Intelligence Layer V7 Active");
     </script>
 </body>
 
