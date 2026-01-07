@@ -1806,23 +1806,30 @@
                     return;
                 }
 
-                // Helper: Generate HTML Rows
                 const generateRows = (items, type) => {
                     // Safety check for items
                     if (!Array.isArray(items)) return '';
                     return items.map(item => {
                         if (!item) return ''; // Skip null items
+                        // Defensive defaults
+                        const ip = item.ip || 'N/A';
+                        const location = item.location || 'Unknown';
+                        const time = item.time || 'N/A';
+                        const type_val = item.type || 'Unknown';
+                        const risk = item.risk || 'Low';
+
                         if (type === 'hacker') {
+                            const timeDisplay = time.includes(' ') ? time.split(' ')[1] : time;
                             return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
-                                        <span style="color:#ff4d4f; font-weight:bold; width: 100px;">${item.ip}</span>
-                                        <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.location}</span>
-                                        <span style="color:#4a5568; width: 60px; text-align:right;">${item.time.split(' ')[1] || item.time}</span>
+                                        <span style="color:#ff4d4f; font-weight:bold; width: 100px;">${ip}</span>
+                                        <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${location}</span>
+                                        <span style="color:#4a5568; width: 60px; text-align:right;">${timeDisplay}</span>
                                     </div>`;
                         } else {
                             return `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom:1px solid rgba(0, 210, 255, 0.1); padding-bottom:6px;">
-                                        <span style="color:#faad14; font-weight:bold; width: 100px;">${item.ip}</span>
-                                        <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.type}</span>
-                                        <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 6px; border-radius:2px; font-size:11px;">${item.risk}</span>
+                                        <span style="color:#faad14; font-weight:bold; width: 100px;">${ip}</span>
+                                        <span style="color:#94a3b8; flex:1; text-align:right; margin-right:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${type_val}</span>
+                                        <span style="color:#faad14; background:rgba(250,173,20,0.1); padding:0 6px; border-radius:2px; font-size:11px;">${risk}</span>
                                     </div>`;
                         }
                     }).join('');
