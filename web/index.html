@@ -1561,10 +1561,10 @@
         // 2. Dashboard Injector
         const injectDashboardThreats = async () => {
             try {
-                // Safety check: only run on dashboard page
+                // Safety: only run on dashboard
                 if (!location.href.includes('/dashboard')) return;
 
-                // Find the widget header with multiple safety checks
+                // Find widget header with timeout protection
                 const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
                 const widgetHeader = headers.find(el => {
                     try {
@@ -1576,7 +1576,7 @@
 
                 if (!widgetHeader) return;
 
-                // Find card with safety checks
+                // Find card container
                 let card = null;
                 try {
                     card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
@@ -1586,7 +1586,7 @@
 
                 if (!card) return;
 
-                // Find body with safety checks
+                // Find body element
                 let body = null;
                 try {
                     body = card.querySelector('.el-card__body') || card.lastElementChild;
@@ -1594,45 +1594,35 @@
                     return;
                 }
 
-                if (!body || body.getAttribute('data-hs-injected') === 'true') return;
+                if (!body) return;
 
-                // Fetch threat data with comprehensive error handling
+                // Check if already injected (prevent re-injection)
+                if (body.getAttribute('data-hs-injected') === 'true') return;
+
+                // Fetch threat data from live_threats.json (updated by sidecar)
                 let threats = [];
                 try {
-                    if (typeof window.getThreatData === 'function') {
-                        const data = await window.getThreatData();
+                    const r = await fetch('/assets/live_threats.json?t=' + Date.now()); // Cache bust
+                    if (r.ok) {
+                        const data = await r.json();
                         if (data && Array.isArray(data.cs)) {
                             threats = data.cs;
                         }
                     }
                 } catch (e) {
-                    console.warn('[HoneyScan] getThreatData failed:', e);
-                }
-
-                // Fallback to JSON file if no data
-                if (threats.length === 0) {
-                    try {
-                        const r = await fetch('/assets/live_threats.json');
-                        if (r.ok) {
-                            const data = await r.json();
-                            if (data && Array.isArray(data.cs)) {
-                                threats = data.cs;
-                            }
-                        }
-                    } catch (e) {
-                        console.warn('[HoneyScan] Fetch live_threats.json failed:', e);
-                    }
+                    console.warn('[HoneyScan] Failed to fetch live_threats.json:', e);
+                    return; // Don't inject if no data
                 }
 
                 if (threats.length === 0) return;
 
-                // Generate table rows with safety checks
-                let rowHtml = threats.map(t => {
+                // Generate table rows - show ALL threats (sidecar limits to latest)
+                const rowHtml = threats.map(t => {
                     try {
-                        let c = '#4ade80';
-                        if (t.risk === 'Medium') c = '#facc15';
-                        if (t.risk === 'High') c = '#fb923c';
-                        if (t.risk === 'Critical') c = '#ef4444';
+                        let riskColor = '#4ade80'; // Low
+                        if (t.risk === 'Medium') riskColor = '#facc15';
+                        if (t.risk === 'High') riskColor = '#fb923c';
+                        if (t.risk === 'Critical') riskColor = '#ef4444';
 
                         const ip = t.ip || 'N/A';
                         const location = translateLocation(t.location || 'Unknown');
@@ -1642,36 +1632,45 @@
 
                         return `
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 8px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace;">${ip}</div></td>
-                                <td style="padding: 8px; color: #94a3b8;">${location}</td>
-                                <td style="padding: 8px; color: #94a3b8;">${type}</td>
-                                <td style="padding: 8px;"><span style="color:${c};background:${c}20;padding:2px 6px;border-radius:4px;font-size:11px;border:1px solid ${c}40;">${risk}</span></td>
-                                <td style="padding: 8px; color: rgba(255,255,255,0.4);">${time}</td>
+                                <td style="padding: 8px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace; font-size: 11px;">${ip}</div></td>
+                                <td style="padding: 8px; color: #94a3b8; font-size: 11px;">${location}</td>
+                                <td style="padding: 8px; color: #94a3b8; font-size: 11px;">${type}</td>
+                                <td style="padding: 8px;"><span style="color:${riskColor};background:${riskColor}20;padding:2px 6px;border-radius:4px;font-size:10px;border:1px solid ${riskColor}40;">${risk}</span></td>
+                                <td style="padding: 8px; color: rgba(255,255,255,0.4); font-size: 11px;">${time}</td>
                             </tr>`;
                     } catch (e) {
-                        console.warn('[HoneyScan] Error rendering threat row:', e);
                         return '';
                     }
                 }).filter(row => row !== '').join('');
 
-                // Inject with safety check
+                // Inject table with FULL HEIGHT styling
                 try {
                     body.innerHTML = `
-                        <div style="width:100%; height:100%; overflow-y:auto; background: #1e293b; border-radius: 4px;">
-                            <table style="width:100%; border-collapse:collapse; color:#fff; font-size:12px;">
-                                <thead style="background: rgba(0,0,0,0.2); position: sticky; top: 0;">
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);text-align:left;">
-                                        <th style="padding:8px;">IP Address</th><th style="padding:8px;">Location</th>
-                                        <th style="padding:8px;">Type</th><th style="padding:8px;">Risk</th><th style="padding:8px;">Time</th>
+                        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden;">
+                            <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed;">
+                                <thead style="background: rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 10;">
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                        <th style="padding: 10px 8px; text-align: left; font-weight: 600; color: #94a3b8; width: 25%;">IP Address</th>
+                                        <th style="padding: 10px 8px; text-align: left; font-weight: 600; color: #94a3b8; width: 20%;">Location</th>
+                                        <th style="padding: 10px 8px; text-align: left; font-weight: 600; color: #94a3b8; width: 20%;">Type</th>
+                                        <th style="padding: 10px 8px; text-align: left; font-weight: 600; color: #94a3b8; width: 15%;">Risk</th>
+                                        <th style="padding: 10px 8px; text-align: left; font-weight: 600; color: #94a3b8; width: 20%;">Time</th>
                                     </tr>
                                 </thead>
-                                <tbody>${rowHtml}</tbody>
                             </table>
+                            <div style="flex: 1; overflow-y: auto; overflow-x: hidden;">
+                                <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed;">
+                                    <tbody>
+                                        ${rowHtml}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>`;
+
                     body.setAttribute('data-hs-injected', 'true');
-                    console.log('[HoneyScan] Dashboard threat intelligence injected');
+                    console.log('[HoneyScan] Dashboard threat table injected (' + threats.length + ' threats)');
                 } catch (e) {
-                    console.error('[HoneyScan] Failed to inject HTML:', e);
+                    console.error('[HoneyScan] Failed to inject table:', e);
                 }
             } catch (e) {
                 console.error('[HoneyScan] Dashboard injection error:', e);
@@ -1953,9 +1952,8 @@
             // Run checks throttled
             if (now < 60000 || frameCount % 20 === 0) {
                 ensureLayoutStyles(); // CRITICAL: ACTIVATE STYLES
-                // ALL INJECTION PERMANENTLY DISABLED - causes dashboard crash
-                // Dashboard will show original HFish data
-                // if (location.href.includes('/dashboard')) injectDashboardThreats();
+                if (location.href.includes('/dashboard')) injectDashboardThreats();
+                // Map injection still disabled
                 // if (location.href.includes('/index')) injectCloudIntelligence();
             }
             requestAnimationFrame(persistenceLoop);
