@@ -1832,6 +1832,8 @@
         };
 
         // MutationObserver to fight React's DOM overwrites
+        // TEMPORARILY DISABLED FOR DEBUGGING
+        /*
         if (location.pathname.includes('/index') || location.hash.includes('index')) {
             const observer = new MutationObserver((mutations) => {
                 // Re-inject if React removes our data
@@ -1859,6 +1861,7 @@
                 console.log("[HoneyScan Map Injector] MutationObserver started");
             }, 2000);
         }
+        */
 
         // Auto-refresh for map page: Re-run injection every 30 seconds
         setInterval(() => {
