@@ -1167,7 +1167,8 @@
             patchBrandingAggressive();
             // patchDataIssues(); // DISABLED FOR DEBUGGING
             // fixLayoutAndFlags(); // DISABLED FOR DEBUGGING
-            injectCloudThreats();
+            // injectCloudThreats(); 
+            injectCloudThreatsRobust();
         };
 
         // Start Loop (250ms is a good balance)
@@ -1442,6 +1443,100 @@
 
             } catch (e) {
                 console.error("Cloud Threat Injection Error:", e);
+            }
+        };
+
+        const injectCloudThreatsRobust = async () => {
+            try {
+                const logPrefix = "[HoneyScan Cloud Injector] ";
+
+                // 1. Find Data Wrapper (HFish CSS Modules are messy)
+                // We assume there is a card with "Threat Intelligence from the Cloud" header.
+                const allLeafs = Array.from(document.querySelectorAll('span, div, h3, h4, p'));
+                const headerEl = allLeafs.find(el => el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud');
+
+                if (!headerEl) return;
+
+                // 2. Find the Card Container
+                // Traverse up until we find something looking like a card or the known container
+                let card = null;
+                let p = headerEl.parentElement;
+                while (p && p !== document.body) {
+                    // Check for CSS module class pattern for card wrapper
+                    if (p.className && (p.className.includes('card-wrapper') || p.className.includes('el-card'))) {
+                        card = p;
+                        break;
+                    }
+                    p = p.parentElement;
+                }
+
+                // Fallback: If generic traversal failed, use fixed structure observed in debug
+                // Header (span) -> DIV (header-wrapper) -> DIV (card-wrapper)
+                if (!card && headerEl.parentElement && headerEl.parentElement.parentElement) {
+                    card = headerEl.parentElement.parentElement;
+                }
+
+                if (!card) return;
+
+                // 3. Find body to inject into
+                // It is usually the LAST child of the card wrapper (Header is first)
+                let body = card.lastElementChild;
+                if (!body) return;
+
+                // 4. Check if already injected
+                if (body.getAttribute('data-honeyscan-injected') === 'true') return;
+
+                // 5. Fetch Data
+                if (window.hasInjectedThreatsRobust) return;
+
+                // console.log(logPrefix + "Fetching...");
+                const response = await fetch('/assets/live_threats.json?t=' + Math.floor(Date.now() / 60000));
+                if (!response.ok) return;
+                const json = await response.json();
+                const threats = json.cs || [];
+                if (threats.length === 0) return;
+
+                // 6. Build Content
+                let rowHtml = '';
+                threats.forEach(t => {
+                    let c = '#4ade80'; if (t.risk === 'Medium') c = '#facc15'; if (t.risk === 'High') c = '#fb923c'; if (t.risk === 'Critical') c = '#ef4444';
+                    rowHtml += `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 8px;">
+                                <div style="font-weight: bold; color: #e2e8f0;">${t.ip}</div>
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.5);">${t.location}</div>
+                            </td>
+                            <td style="padding: 8px; color: #94a3b8;">${t.type || 'Scanner'}</td>
+                            <td style="padding: 8px;"><span style="color:${c};background:${c}20;padding:2px 6px;border-radius:4px;font-size:11px;">${t.risk}</span></td>
+                            <td style="padding: 8px; color: rgba(255,255,255,0.4);">${t.time}</td>
+                        </tr>
+                   `;
+                });
+
+                const tableHtml = `
+                    <div style="width:100%; height:100%; overflow-y:auto; padding:10px;">
+                        <table style="width:100%; border-collapse:collapse; color:#fff; font-size:12px;">
+                            <thead>
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.1);text-align:left;">
+                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">IP / Location</th>
+                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">Type</th>
+                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">Risk</th>
+                                    <th style="padding:8px;color:rgba(255,255,255,0.6)">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rowHtml}</tbody>
+                        </table>
+                    </div>
+                `;
+
+                // 7. Inject
+                body.innerHTML = tableHtml;
+                body.setAttribute('data-honeyscan-injected', 'true');
+                window.hasInjectedThreatsRobust = true;
+                console.log(logPrefix + "Injected " + threats.length + " threats.");
+
+            } catch (e) {
+                console.error(e);
             }
         };
 
