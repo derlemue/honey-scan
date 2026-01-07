@@ -21,12 +21,12 @@ HFish supports over 90 types of honeypot services, including basic network servi
 
 **Download & Deploy:**
 
-- [Linux AMD64 Management Server](https://hfish.net/#/en/2-2-linux)
-- [Linux ARM64 Management Server](https://hfish.net/#/en/2-2-linux)
-- [Windows Management Server](https://hfish.net/#/en/2-3-windows)
-- [Docker Image](https://hfish.net/#/en/2-1-docker)
+- [Linux AMD64 Management Server](2-2-linux.md)
+- [Linux ARM64 Management Server](2-2-linux.md)
+- [Windows Management Server](2-3-windows.md)
+- [Docker Image](2-1-docker.md)
 
-For enterprise deployment documentation, visit the [HFish Documentation](https://hfish.net/#/docs).
+For enterprise deployment documentation, visit the [HFish Documentation](docs.md).
 
 #### Why Choose HFish?
 
