@@ -2052,19 +2052,29 @@
 
         // Wait for React to load, then inject overlay
         if (location.pathname.includes('/index') || location.hash.includes('index')) {
+            console.log("[HoneyScan Map Overlay] Initializing React detector...");
+
             const waitForReact = () => {
                 const allElements = Array.from(document.querySelectorAll('div, span, h3, h4'));
-                const cloudIntelHeader = allElements.find(el => el.textContent && el.textContent.includes('Cloud intelligence'));
+                // Use looser matching logic matching the injector function
+                const cloudIntelHeader = allElements.find(el => {
+                    const text = (el.textContent || '').toLowerCase();
+                    return text.includes('cloud') && text.includes('intelligence');
+                });
 
                 if (cloudIntelHeader) {
-                    console.log("[HoneyScan Map Overlay] React loaded, injecting overlay...");
+                    console.log("[HoneyScan Map Overlay] React loaded (header found), injecting overlay...");
                     setTimeout(injectMapCloudIntelligenceOverlay, 500);
                 } else {
+                    // console.log("[HoneyScan Map Overlay] Waiting for React..."); // Reduced noise
                     setTimeout(waitForReact, 500);
                 }
             };
 
             setTimeout(waitForReact, 1000);
+        }
+
+        setTimeout(waitForReact, 1000);
         }
 
     </script>
