@@ -241,11 +241,11 @@ def update_threat_feed():
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
         
-        # Atomic write to prevent corruption/partial reads
-        temp_file = LIVE_THREATS_FILE + ".tmp"
-        with open(temp_file, "w") as f:
+        # Direct write to preserve inode for Docker bind mount
+        with open(LIVE_THREATS_FILE, "w") as f:
             json.dump(output, f)
-        os.replace(temp_file, LIVE_THREATS_FILE)
+            f.flush()
+            os.fsync(f.fileno())
 
         # Generate General Stats
         stats = {
@@ -273,11 +273,11 @@ def update_threat_feed():
         except Exception as e:
             logger.warning(f"Stats calculation partial failure: {e}")
 
-        # Atomic write for stats
-        temp_stats = STATS_FILE + ".tmp"
-        with open(temp_stats, "w") as f:
+        # Direct write for stats
+        with open(STATS_FILE, "w") as f:
             json.dump(stats, f)
-        os.replace(temp_stats, STATS_FILE)
+            f.flush()
+            os.fsync(f.fileno())
 
     except Exception as e:
         logger.error(f"Error updating threat feed: {e}")
