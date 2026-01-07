@@ -1687,11 +1687,8 @@
             }
         }, 30000);
 
-        // === MAP PAGE CLOUD INTELLIGENCE INJECTOR ===
-        // DISABLED: This script breaks the original Local/Cloud Intelligence panels
-        // The React application manages these panels internally and overwrites manual DOM injections
-        // Keeping the code for future reference but not executing it
-        /*
+        // === MAP PAGE CLOUD INTELLIGENCE INJECTOR WITH MUTATION OBSERVER ===
+        // Enhanced version that fights React's DOM overwrites using MutationObserver
         const injectMapCloudIntelligence = async () => {
             try {
                 // Only run on map page
@@ -1740,11 +1737,19 @@
 
                         if (dailyEl) {
                             const dailyCount = cs.length;
-                            dailyEl.innerHTML = dailyEl.innerHTML.replace(/Daily\s*--/, `Daily ${dailyCount}`);
+                            const newText = dailyEl.textContent.replace(/Daily\s*--/, `Daily ${dailyCount}`).replace(/Daily\s*\d+/, `Daily ${dailyCount}`);
+                            if (dailyEl.textContent !== newText) {
+                                dailyEl.textContent = newText;
+                                console.log(logPrefix + `Updated Daily: ${dailyCount}`);
+                            }
                         }
                         if (totalEl) {
                             const totalCount = hackers.length;
-                            totalEl.innerHTML = totalEl.innerHTML.replace(/Total\s*--/, `Total ${totalCount}`);
+                            const newText = totalEl.textContent.replace(/Total\s*--/, `Total ${totalCount}`).replace(/Total\s*\d+/, `Total ${totalCount}`);
+                            if (totalEl.textContent !== newText) {
+                                totalEl.textContent = newText;
+                                console.log(logPrefix + `Updated Total: ${totalCount}`);
+                            }
                         }
                     }
                 }
@@ -1759,27 +1764,25 @@
                     }
 
                     if (container) {
-                        const listContainer = container.querySelector('ul, div[class*="list"]') || container;
+                        const listContainer = container.querySelector('ul, div[class*="list"]') || container.querySelector('div');
 
-                        // Build hacker list (show first 10)
-                        let hackersHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;">';
-                        hackers.slice(0, 10).forEach(h => {
-                            const loc = translateLocation(h.location);
-                            hackersHtml += `
-                                <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-family: monospace; color: #4ade80; font-size: 12px;">${h.ip}</span>
-                                    <span style="color: #94a3b8; font-size: 11px;">${loc}</span>
-                                </li>
-                            `;
-                        });
-                        hackersHtml += '</ul>';
+                        if (listContainer && !listContainer.getAttribute('data-honeyscan-hackers')) {
+                            // Build hacker list (show first 10)
+                            let hackersHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;" data-honeyscan-hackers="true">';
+                            hackers.slice(0, 10).forEach(h => {
+                                const loc = translateLocation(h.location);
+                                hackersHtml += `
+                                    <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-family: monospace; color: #4ade80; font-size: 12px;">${h.ip}</span>
+                                        <span style="color: #94a3b8; font-size: 11px;">${loc}</span>
+                                    </li>
+                                `;
+                            });
+                            hackersHtml += '</ul>';
 
-                        if (listContainer.tagName === 'UL') {
-                            listContainer.outerHTML = hackersHtml;
-                        } else {
                             listContainer.innerHTML = hackersHtml;
+                            console.log(logPrefix + "Injected " + Math.min(10, hackers.length) + " recent hackers");
                         }
-                        console.log(logPrefix + "Injected " + Math.min(10, hackers.length) + " recent hackers");
                     }
                 }
 
@@ -1793,35 +1796,33 @@
                     }
 
                     if (container) {
-                        const listContainer = container.querySelector('ul, div[class*="list"]') || container;
+                        const listContainer = container.querySelector('ul, div[class*="list"]') || container.querySelector('div');
 
-                        // Build CS list (show first 10)
-                        let csHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;">';
-                        cs.slice(0, 10).forEach(c => {
-                            const loc = translateLocation(c.location);
-                            let riskColor = '#4ade80';
-                            if (c.risk === 'Medium') riskColor = '#facc15';
-                            if (c.risk === 'High') riskColor = '#fb923c';
-                            if (c.risk === 'Critical') riskColor = '#ef4444';
+                        if (listContainer && !listContainer.getAttribute('data-honeyscan-cs')) {
+                            // Build CS list (show first 10)
+                            let csHtml = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto;" data-honeyscan-cs="true">';
+                            cs.slice(0, 10).forEach(c => {
+                                const loc = translateLocation(c.location);
+                                let riskColor = '#4ade80';
+                                if (c.risk === 'Medium') riskColor = '#facc15';
+                                if (c.risk === 'High') riskColor = '#fb923c';
+                                if (c.risk === 'Critical') riskColor = '#ef4444';
 
-                            csHtml += `
-                                <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                                    <div style="flex: 1;">
-                                        <div style="font-family: monospace; color: #e2e8f0; font-size: 12px;">${c.ip}</div>
-                                        <div style="color: #94a3b8; font-size: 10px;">${loc} • ${c.type}</div>
-                                    </div>
-                                    <span style="color: ${riskColor}; background: ${riskColor}20; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid ${riskColor}40;">${c.risk}</span>
-                                </li>
-                            `;
-                        });
-                        csHtml += '</ul>';
+                                csHtml += `
+                                    <li style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="flex: 1;">
+                                            <div style="font-family: monospace; color: #e2e8f0; font-size: 12px;">${c.ip}</div>
+                                            <div style="color: #94a3b8; font-size: 10px;">${loc} • ${c.type}</div>
+                                        </div>
+                                        <span style="color: ${riskColor}; background: ${riskColor}20; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid ${riskColor}40;">${c.risk}</span>
+                                    </li>
+                                `;
+                            });
+                            csHtml += '</ul>';
 
-                        if (listContainer.tagName === 'UL') {
-                            listContainer.outerHTML = csHtml;
-                        } else {
                             listContainer.innerHTML = csHtml;
+                            console.log(logPrefix + "Injected " + Math.min(10, cs.length) + " suspicious CS");
                         }
-                        console.log(logPrefix + "Injected " + Math.min(10, cs.length) + " suspicious CS");
                     }
                 }
 
@@ -1829,6 +1830,35 @@
                 console.error("[HoneyScan Map Injector] Error:", e);
             }
         };
+
+        // MutationObserver to fight React's DOM overwrites
+        if (location.pathname.includes('/index') || location.hash.includes('index')) {
+            const observer = new MutationObserver((mutations) => {
+                // Re-inject if React removes our data
+                const needsReinjection = mutations.some(mutation => {
+                    return Array.from(mutation.removedNodes).some(node => {
+                        return node.getAttribute && (
+                            node.getAttribute('data-honeyscan-hackers') === 'true' ||
+                            node.getAttribute('data-honeyscan-cs') === 'true'
+                        );
+                    });
+                });
+
+                if (needsReinjection) {
+                    console.log("[HoneyScan Map Injector] React removed our data, re-injecting...");
+                    setTimeout(injectMapCloudIntelligence, 100);
+                }
+            });
+
+            // Start observing after page loads
+            setTimeout(() => {
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+                console.log("[HoneyScan Map Injector] MutationObserver started");
+            }, 2000);
+        }
 
         // Auto-refresh for map page: Re-run injection every 30 seconds
         setInterval(() => {
@@ -1841,7 +1871,6 @@
         if (location.pathname.includes('/index') || location.hash.includes('index')) {
             setTimeout(injectMapCloudIntelligence, 2000); // Wait for page to load
         }
-        */
 
     </script>
 
