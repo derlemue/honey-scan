@@ -1551,11 +1551,10 @@
             const style = document.createElement('style');
             style.id = 'hs-layout-styles';
             style.innerHTML = `
-                /* V5 COLUMN TAKEOVER STYLES */
+                /* V6 CONTENT-AWARE TAKEOVER STYLES */
                 
-                /* Target Right Column */
-                .index-cssmodule__rightCol-2h2WM, 
-                div[class*="rightCol"] {
+                /* Target Discovered Column via ID */
+                #hs-target-column {
                     display: flex !important;
                     flex-direction: column !important;
                     height: calc(100vh - 120px) !important;
@@ -1563,8 +1562,7 @@
                 }
 
                 /* HIDE ALL ORIGINAL REACT CHILDREN */
-                .index-cssmodule__rightCol-2h2WM > *:not(.hs-custom-dashboard), 
-                div[class*="rightCol"] > *:not(.hs-custom-dashboard) {
+                #hs-target-column > *:not(.hs-custom-dashboard) {
                     display: none !important;
                     visibility: hidden !important;
                     height: 0 !important;
@@ -1652,11 +1650,45 @@
                 // 0. Ensure CSS Rules exist
                 ensureLayoutStyles();
 
-                const rightCol = document.querySelector('.index-cssmodule__rightCol-2h2WM') ||
-                    Array.from(document.querySelectorAll('[class*="rightCol"]')).find(el => el.getBoundingClientRect().left > 500);
+                // 1. LOCATE TARGET COLUMN (The "Bloodhound" Search)
+                // We search for the text "Recent active hackers" to find the correct container
+                let rightCol = document.getElementById('hs-target-column');
+                if (!rightCol) {
+                    // Heuristic search
+                    const allDivs = document.querySelectorAll('div, span, h4, h5');
+                    for (let el of allDivs) {
+                        if (el.innerText && el.innerText.includes('Recent active hackers')) {
+                            // Found the header! Now traverse up to find the main container (usually a flex column)
+                            // We look for a parent that has siblings (the other box) or is the column itself
+                            // Let's go up 3-4 levels and check rect
+                            let parent = el.closest('[class*="card"]'); // It's usually inside a card
+                            if (parent) {
+                                // The column is the parent of the card
+                                rightCol = parent.parentElement;
+                                if (rightCol) {
+                                    rightCol.id = 'hs-target-column'; // TAG IT
+                                    console.log("[HoneyScan] Target Column Discovered and Tagged");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Fallback: If text search fails (e.g. language diff), try position
+                if (!rightCol) {
+                    const candidates = Array.from(document.querySelectorAll('div'));
+                    rightCol = candidates.find(el => {
+                        const r = el.getBoundingClientRect();
+                        // It should be on the right side (> 60% width) and tall
+                        return r.left > window.innerWidth * 0.6 && r.height > window.innerHeight * 0.5;
+                    });
+                    if (rightCol) rightCol.id = 'hs-target-column';
+                }
+
                 if (!rightCol) return;
 
-                // 1. Fetch Data
+                // 2. Fetch Data
                 if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 30000)) {
                     const data = await window.getThreatData();
                     if (data) {
@@ -1667,7 +1699,7 @@
                 const threatData = cachedThreatData;
                 if (!threatData) return;
 
-                // 2. CHECK FOR CUSTOM DASHBOARD
+                // 3. CHECK FOR CUSTOM DASHBOARD
                 let customDashboard = rightCol.querySelector('.hs-custom-dashboard');
                 if (!customDashboard) {
                     customDashboard = document.createElement('div');
@@ -1688,7 +1720,7 @@
                     rightCol.appendChild(customDashboard);
                 }
 
-                // 3. UPDATE DATA
+                // 4. UPDATE DATA
                 const updateList = (cardId, items, type) => {
                     const card = customDashboard.querySelector(cardId);
                     if (!card) return;
