@@ -1559,8 +1559,13 @@
         };
 
         // 2. Dashboard Injector
+        let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
+
         const injectDashboardThreats = async () => {
             try {
+                // CRITICAL: Check global flag FIRST to prevent re-injection
+                if (dashboardInjected) return;
+
                 // Safety: only run on dashboard
                 if (!location.href.includes('/dashboard')) return;
 
@@ -1595,9 +1600,6 @@
                 }
 
                 if (!body) return;
-
-                // Check if already injected (prevent re-injection)
-                if (body.getAttribute('data-hs-injected') === 'true') return;
 
                 // Fetch threat data from live_threats.json (updated by sidecar)
                 let threats = [];
@@ -1667,7 +1669,8 @@
                             </div>
                         </div>`;
 
-                    body.setAttribute('data-hs-injected', 'true');
+                    // SET GLOBAL FLAG - prevents re-injection even if React re-renders
+                    dashboardInjected = true;
                     console.log('[HoneyScan] Dashboard threat table injected (' + threats.length + ' threats)');
                 } catch (e) {
                     console.error('[HoneyScan] Failed to inject table:', e);
