@@ -1562,7 +1562,7 @@
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
         // Global State for Pagination
-        window.hsTableState = window.hsTableState || { page: 1, limit: 36 };
+        window.hsTableState = window.hsTableState || { page: 1, limit: 35 };
         window.hsThreatData = window.hsThreatData || [];
 
         // Shared Render Function
@@ -1732,7 +1732,40 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <!-- PAGINATION FOOTER -->
+                            <div style="flex-shrink: 0; padding: 5px 10px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-size: 11px; color: #94a3b8;">
+                                <div style="cursor: pointer; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); user-select: none;" onclick="window.hsChangePage(-1)">&lt;</div>
+                                <div id="hs-page-info">1/5</div>
+                                <div style="cursor: pointer; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); user-select: none;" onclick="window.hsChangePage(1)">&gt;</div>
+                            </div>
                         </div>`;
+
+                    // Pagination Control Function (Global)
+                    window.hsChangePage = (delta) => {
+                        const s = window.hsTableState;
+                        const total = Math.ceil(window.hsThreatData.length / s.limit);
+                        let next = s.page + delta;
+                        if (next < 1) next = total; // Wrap around (optional, or clamp: next = 1)
+                        if (next > total) next = 1; // Wrap around
+
+                        s.page = next;
+                        window.renderThreatTable();
+                    };
+
+                    // Keyboard Navigation
+                    const handleKey = (e) => {
+                        if (!document.getElementById('hs-page-info')) return; // Only if widget exists
+                        if (e.key === 'ArrowLeft') window.hsChangePage(-1);
+                        if (e.key === 'ArrowRight') window.hsChangePage(1);
+                    };
+
+                    // Attach to window and parent (if possible)
+                    window.addEventListener('keydown', handleKey);
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            window.parent.addEventListener('keydown', handleKey);
+                        }
+                    } catch (e) { /* Cross-origin block expected */ }
 
                     // Initial Render
                     window.hsThreatData = threats;
