@@ -1767,6 +1767,10 @@
         let cachedThreatData = null;
 
         const injectCloudIntelligence = async () => {
+            // DISABLED: Map injection causes fullscreen overlay issues
+            // Cloud Intelligence is only active on Dashboard page
+            return;
+
             try {
                 // V20: PRECISE HEADER-BASED TARGETING
                 // Only inject if we're on the index/map page
