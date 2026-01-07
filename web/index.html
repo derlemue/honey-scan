@@ -1583,7 +1583,7 @@
                 const widgetHeader = headers.find(el => el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud');
                 if (!widgetHeader) return;
 
-                let card = card.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
+                let card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
                 if (!card) return;
                 let body = card.querySelector('.el-card__body') || card.lastElementChild;
                 if (!body || body.getAttribute('data-hs-injected') === 'true') return;
