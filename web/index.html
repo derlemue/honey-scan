@@ -1955,7 +1955,7 @@
             // Run checks throttled
             if (now < 60000 || frameCount % 20 === 0) {
                 ensureLayoutStyles(); // CRITICAL: ACTIVATE STYLES
-                if (location.href.includes('/dashboard')) injectDashboardThreats();
+                // Dashboard injection removed from loop - runs once on page load instead
                 // Map injection still disabled
                 // if (location.href.includes('/index')) injectCloudIntelligence();
             }
@@ -2003,6 +2003,13 @@
 
             // Start the polling loop
             requestAnimationFrame(persistenceLoop);
+
+            // ONE-TIME dashboard injection (not in loop to prevent re-injection)
+            if (location.href.includes('/dashboard')) {
+                setTimeout(() => {
+                    injectDashboardThreats();
+                }, 2000); // Wait 2s for React to fully load
+            }
         })();
 
         console.log("[HoneyScan] Resilient Intelligence Layer V9 (Enforcer) Active");
