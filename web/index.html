@@ -1622,15 +1622,15 @@
                     scrollbar-color: #2c5282 #0a1929;
                 }
 
-                /* STATUS HEADER */
+                /* STATUS HEADER - More compact */
                 .hs-cloud-status-brief {
-                    padding: 8px 15px;
+                    padding: 6px 15px;
                     background: rgba(0, 50, 100, 0.3);
                     border: 1px solid rgba(0, 150, 255, 0.3);
                     border-radius: 4px;
-                    margin-bottom: 10px;
+                    margin-bottom: 15px; /* More space */
                     color: #fff;
-                    font-size: 13px;
+                    font-size: 12px;
                     display: flex;
                     justify-content: space-between;
                     flex-shrink: 0;
@@ -1664,15 +1664,32 @@
 
         const injectCloudIntelligence = async () => {
             try {
-                // V10 DEBUG LOG
-                console.log('%c HoneyScan V10 Polished Loaded ', 'background: #000; color: #00d2ff; font-weight:bold;');
+                // V11 STRICT VISIBILITY LOGIC
+                const isScreenContext = () => {
+                    // 1. Must satisfy URL requirement
+                    if (!(location.pathname.includes('/index') || location.hash.includes('index'))) return false;
+                    // 2. Must NOT have Admin Sidebar (The "Leak" Fix)
+                    if (document.querySelector('.el-menu') || document.querySelector('.el-aside')) return false;
+                    // 3. Must NOT be white theme (heuristic)
+                    const bg = window.getComputedStyle(document.body).backgroundColor;
+                    // If background is white-ish (high luminance), it's wrong context
+                    // (Assuming dark mode is #000 or similar)
+                    if (bg === 'rgb(255, 255, 255)') return false;
 
-                // Path check soft-enforced
-                if (!(location.pathname.includes('/index') || location.hash.includes('index'))) {
-                    const overlay = document.getElementById('hs-fixed-overlay');
+                    return true;
+                };
+
+                const overlay = document.getElementById('hs-fixed-overlay');
+
+                if (!isScreenContext()) {
                     if (overlay) overlay.style.display = 'none';
                     return;
                 }
+
+                // If we are here, we SHOULD show it.
+                if (overlay) overlay.style.display = 'flex';
+
+                console.log('%c HoneyScan V11 Strict & Tuned ', 'background: #000; color: #00d2ff; font-weight:bold;');
 
                 // 0. Ensure CSS Rules exist
                 ensureLayoutStyles();
@@ -1701,13 +1718,13 @@
                 }
 
                 // 2. CREATE / UPDATE OVERLAY
-                let overlay = document.getElementById('hs-fixed-overlay');
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'hs-fixed-overlay';
-                    document.body.appendChild(overlay);
+                let currentOverlay = document.getElementById('hs-fixed-overlay');
+                if (!currentOverlay) {
+                    currentOverlay = document.createElement('div');
+                    currentOverlay.id = 'hs-fixed-overlay';
+                    document.body.appendChild(currentOverlay);
 
-                    overlay.innerHTML = `
+                    currentOverlay.innerHTML = `
                          <div class="hs-custom-dashboard">
                             <div class="hs-cloud-status-brief"></div>
                             <div class="hs-custom-card" id="hs-hackers-card">
@@ -1722,14 +1739,20 @@
                     `;
                 }
 
-                // Sync Geometry
-                overlay.style.display = 'flex';
-                // Adjust for fallback/detected
-                overlay.style.left = anchorRect.left + 'px';
-                overlay.style.width = anchorRect.width + 'px';
+                // Sync Geometry - LAYOUT TUNING (V11)
+                currentOverlay.style.display = 'flex';
+                currentOverlay.style.left = anchorRect.left + 'px';
+                currentOverlay.style.width = anchorRect.width + 'px';
+
+                // Top Tuning:
                 const topPos = anchorRect.top > 60 ? anchorRect.top : 80;
-                overlay.style.top = topPos + 'px';
-                overlay.style.height = `calc(100vh - ${topPos}px - 20px)`;
+                currentOverlay.style.top = topPos + 'px';
+
+                // Height Tuning: 
+                // Don't go to 0px. Match the likely bottom margin. 
+                // Left column looks like it has ~40px margin? 
+                // Let's enforce a 3.5% bottom gap to avoid "too big" look.
+                currentOverlay.style.height = `calc(100vh - ${topPos}px - 3.5%)`;
 
                 // 3. ROBUST FETCH
                 const fetchThreatDataLocal = async () => {
@@ -1754,12 +1777,11 @@
                 }
                 const threatData = cachedThreatData;
 
-                // If still no data, we might show a 'Connecting...' state or similar, but for now just return
                 if (!threatData) return;
 
                 // 4. UPDATE DATA
                 const updateList = (cardId, items, type) => {
-                    const card = overlay.querySelector(cardId);
+                    const card = currentOverlay.querySelector(cardId);
                     if (!card) return;
                     const body = card.querySelector('.hs-custom-body');
 
@@ -1790,13 +1812,12 @@
                 updateList('#hs-cs-card', (threatData.cs || []).slice(0, 20), 'cs');
 
                 // Update Status
-                const statusBrief = overlay.querySelector('.hs-cloud-status-brief');
+                const statusBrief = currentOverlay.querySelector('.hs-cloud-status-brief');
                 const hCount = (threatData.hackers || []).length;
                 const cCount = (threatData.cs || []).length;
                 statusBrief.innerHTML = `<span>Cloud Status: <b style="color:#52c41a">Live</b> &bull; ${hCount + cCount} Events</span> <span><i style="color:#00d2ff">●</i> Updating</span>`;
 
             } catch (e) {
-                // Debug Log
                 console.error(e);
             }
         };
