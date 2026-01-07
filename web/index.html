@@ -2052,6 +2052,8 @@
 
         // Wait for React to load, then inject overlay
         if (location.pathname.includes('/index') || location.hash.includes('index')) {
+            // NUCLEAR DEBUG
+            document.title = "⚠️ DEBUG MODE ACTIVE ⚠️";
             console.log("[HoneyScan Map Overlay] Initializing React detector...");
 
             let attempts = 0;
