@@ -1719,11 +1719,11 @@
 
                     return `
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                            <td style="padding: 7px; width: 26%;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace; font-size: 11px;">${ip}</div></td>
-                            <td style="padding: 7px; color: #94a3b8; font-size: 11px; width: 25%;">${location}</td>
+                            <td style="padding: 7px; width: 25%;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace; font-size: 11px;">${ip}</div></td>
+                            <td style="padding: 7px; color: #94a3b8; font-size: 11px; width: 24%;">${location}</td>
                             <td style="padding: 7px; color: #94a3b8; font-size: 11px; width: 23%;">${type}</td>
                             <td style="padding: 7px; width: 14%;"><span style="color:${riskColor};background:${riskColor}20;padding:2px 6px;border-radius:4px;font-size:10px;border:1px solid ${riskColor}40;">${risk}</span></td>
-                            <td style="padding: 7px; color: rgba(255,255,255,0.4); font-size: 11px; text-align: left; width: 12%;">${time}</td>
+                            <td style="padding: 7px; color: rgba(255,255,255,0.4); font-size: 11px; text-align: left; width: 14%;">${time}</td>
                         </tr>`;
                 } catch (e) { return ''; }
             }).join('');
@@ -1849,11 +1849,11 @@
                             <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed; flex-shrink: 0;">
                                 <thead style="background: rgba(0,0,0,0.3);">
                                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                        <th style="padding: 7px 6px; text-align: left; font-weight: 600; color: #94a3b8; width: 26%;">IP Address</th>
-                                        <th style="padding: 7px 6px; text-align: left; font-weight: 600; color: #94a3b8; width: 25%;">Location</th>
+                                        <th style="padding: 7px 6px; text-align: left; font-weight: 600; color: #94a3b8; width: 25%;">IP Address</th>
+                                        <th style="padding: 7px 6px; text-align: left; font-weight: 600; color: #94a3b8; width: 24%;">Location</th>
                                         <th style="padding: 7px 6px; text-align: left; font-weight: 600; color: #94a3b8; width: 23%;">Type</th>
                                         <th style="padding: 7px 6px; text-align: left; font-weight: 600; color: #94a3b8; width: 14%;">Risk</th>
-                                        <th style="padding: 7px 6px; text-align: left; font-weight: 600; color: #94a3b8; width: 12%;">Time</th>
+                                        <th style="padding: 7px 6px; text-align: left; font-weight: 600; color: #94a3b8; width: 14%;">Time</th>
                                     </tr>
                                 </thead>
                             </table>
