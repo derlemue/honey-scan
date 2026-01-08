@@ -45,7 +45,6 @@ services:
       - ./web/assets/app.6539b5af.js:/opt/hfish/3.3.6/web/assets/app.6539b5af.js:ro
       - ./docs:/opt/hfish/current/web/docs:ro
       - ./docs:/opt/hfish/3.3.6/web/docs:ro
-      - ./api:/opt/hfish/api:ro
     deploy:
       resources:
         limits:
