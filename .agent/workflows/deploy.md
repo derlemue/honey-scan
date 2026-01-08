@@ -5,4 +5,4 @@ description: Deploy to lemue-sec
 1. Push changes to git
 git push
 2. SSH to remote and deploy
-ssh root@lemue-sec "cd honey-scan && git pull && docker compose up -d --build"
+ssh root@lemue-sec "cd honey-scan && git pull && docker compose up -d --build && docker compose restart hfish"
