@@ -37,10 +37,10 @@ services:
       - ./web/assets/location.json:/opt/hfish/current/web/assets/location.json:ro
       - ./web/assets/location.json:/opt/hfish/current/web/assets/location.json:ro
       - ./web/assets/location.json:/opt/hfish/3.3.6/web/assets/location.json:ro
-      - ./web/assets/live_threats.json:/opt/hfish/current/web/assets/live_threats.json:ro
-      - ./web/assets/live_threats.json:/opt/hfish/3.3.6/web/assets/live_threats.json:ro
-      - ./web/assets/stats.json:/opt/hfish/current/web/assets/stats.json:ro
-      - ./web/assets/stats.json:/opt/hfish/3.3.6/web/assets/stats.json:ro
+      - ./web/assets/live_threats.json:/opt/hfish/current/web/assets/live_threats.json
+      - ./web/assets/live_threats.json:/opt/hfish/3.3.6/web/assets/live_threats.json
+      - ./web/assets/stats.json:/opt/hfish/current/web/assets/stats.json
+      - ./web/assets/stats.json:/opt/hfish/3.3.6/web/assets/stats.json
       - ./web/assets/app.6539b5af.js:/opt/hfish/current/web/assets/app.6539b5af.js:ro
       - ./web/assets/app.6539b5af.js:/opt/hfish/3.3.6/web/assets/app.6539b5af.js:ro
       - ./docs:/opt/hfish/current/web/docs:ro
