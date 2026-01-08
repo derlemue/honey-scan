@@ -368,7 +368,8 @@ def fix_missing_severity():
         if DB_TYPE == "mysql":
             # Fix empty severity and set threat_level=2 (Suspicious) for Low risk entries
             # This ensures HFish UI displays a badge instead of [Unk]
-            query = "UPDATE ipaddress SET severity = 'Low', threat_level = 2 WHERE severity IS NULL OR severity = '' OR threat_level = 1"
+            # Catch level 0 and 1
+            query = "UPDATE ipaddress SET severity = 'Low', threat_level = 2 WHERE severity IS NULL OR severity = '' OR threat_level <= 1"
             cursor.execute(query)
             if cursor.rowcount > 0: logger.info(f"Fixed missing severity/level for {cursor.rowcount} IPs.")
             conn.commit()
