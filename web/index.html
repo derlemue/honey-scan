@@ -1824,7 +1824,7 @@
                     }
 
                     body.innerHTML = `
-                        <div style="width: 100%; height: 100%; max-height: 100%; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden; box-sizing: border-box;">
+                        <div style="width: 100%; height: calc(100% - 10px); max-height: 100%; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden; box-sizing: border-box;">
                             <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed; flex-shrink: 0;">
                                 <thead style="background: rgba(0,0,0,0.3);">
                                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
@@ -1836,7 +1836,7 @@
                                     </tr>
                                 </thead>
                             </table>
-                            <div style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; max-height: calc(100% - 45px);">
+                            <div style="flex: 1; overflow-y: hidden; overflow-x: hidden; min-height: 0; max-height: calc(100% - 45px);">
                                 <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed;">
                                     <tbody>
                                         ${rowHtml}

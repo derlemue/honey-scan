@@ -240,6 +240,10 @@ def update_threat_feed():
         suspicious_cs.insert(0, {"ip": "103.45.67.89", "location": "Vietnam", "type": "Exploit", "risk": "Critical", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
         suspicious_cs.insert(0, {"ip": "185.200.11.22", "location": "Turkey", "type": "Web Scan", "risk": "Medium", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
+        # Enforce exact limit of 135 items (27 * 5 pages)
+        recent_hackers = recent_hackers[:135]
+        suspicious_cs = suspicious_cs[:135]
+
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
         
         # Direct write to preserve inode for Docker bind mount
