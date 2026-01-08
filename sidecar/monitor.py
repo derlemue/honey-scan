@@ -19,9 +19,7 @@ DB_USER = os.getenv("DB_USER", "hfish") # User Request (Made configurable)
 DB_PASSWORD = os.getenv("DB_PASSWORD", "password") # Default password for hfish
 DB_NAME = os.getenv("DB_NAME", "hfish")
 
-# ThreatBook API Config
-THREATBOOK_API_KEY = os.getenv("THREATBOOK_API_KEY")
-THREATBOOK_API_BASE_URL = os.getenv("THREATBOOK_API_BASE_URL", "https://api.threatbook.io/v3")
+# ThreatBook API Config Removed
 
 # Legacy/SQLite Path
 DB_PATH = "/hfish_ro/database/hfish.db"
@@ -37,7 +35,7 @@ REPORT_DIR = SCANS_DIR
 scanning_ips = set() # Track IPs currently in queue or being scanned
 
 
-MAX_WORKERS = 3  # Limit concurrent scans to avoid timeouts 
+MAX_WORKERS = 12  # Increased concurrency for faster processing
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -176,41 +174,7 @@ def update_node_location():
         logger.error(f"Database update failed: {e}")
         if conn: conn.close()
 
-def query_threatbook_ip(ip):
-    if not THREATBOOK_API_KEY: return None
-    # Use the verified Community API endpoint
-    url = "https://api.threatbook.io/v1/community/ip"
-    # Parameters for POST request
-    params = {"apikey": THREATBOOK_API_KEY, "resource": ip}
-    
-    try:
-        # Change to POST request
-        resp = requests.post(url, data=params, timeout=5)
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get("response_code") == 200:
-                result = data.get("data", {})
-                
-                # Extract severity/risk - Community API doesn't have explicit severity field
-                # Infer from judgments: if judgments exist -> High/Critical depending on type?
-                # For now, default to Medium if judgments exist, Low/Info if not.
-                judgments = result.get("summary", {}).get("judgments", [])
-                severity = "medium" if judgments else "low"
-                
-                # Check for specific critical judgments if needed
-                if any(j.lower() in ['c2', 'malware', 'botnet', 'zombie'] for j in judgments):
-                    severity = "critical"
-                
-                return {
-                    "severity": severity,
-                    "judgments": judgments,
-                    "scene": "Unknown", # Community API doesn't provide scene context clearly
-                    "carrier": result.get("basic", {}).get("carrier", "Unknown"),
-                    "location": result.get("basic", {}).get("location", {})
-                }
-    except Exception as e:
-        logger.error(f"ThreatBook API Error for {ip}: {e}")
-    return None
+# query_threatbook_ip removed
 
 def update_threat_feed():
     logger.info("Updating Threat Feed...")
@@ -249,7 +213,7 @@ def update_threat_feed():
         recent_hackers = recent_hackers[:125]
         suspicious_cs = suspicious_cs[:125]
 
-        output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
+        output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": False}
         
         # Direct write to preserve inode for Docker bind mount
         with open(LIVE_THREATS_FILE, "w") as f:
@@ -300,7 +264,7 @@ def get_new_attackers():
     ips = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT ip FROM ipaddress ORDER BY create_time DESC LIMIT 2000"
+        query = "SELECT DISTINCT ip FROM ipaddress ORDER BY create_time DESC LIMIT 2500"
         cursor.execute(query)
         rows = cursor.fetchall()
         for row in rows:
