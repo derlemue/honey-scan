@@ -33,6 +33,9 @@ BANNED_IPS_FILE = os.path.join(FEED_DIR, "banned_ips.txt")
 INDEX_FILE = os.path.join(FEED_DIR, "index.html")
 LIVE_THREATS_FILE = os.path.join(ASSETS_DIR, "live_threats.json")
 STATS_FILE = os.path.join(ASSETS_DIR, "stats.json")
+REPORT_DIR = SCANS_DIR
+scanning_ips = set() # Track IPs currently in queue or being scanned
+
 
 MAX_WORKERS = 3  # Limit concurrent scans to avoid timeouts 
 
@@ -314,16 +317,16 @@ def get_new_attackers():
         # Skip ban check - scan everything without reports
         new_ips = []
         for ip in ips:
-            if len(ip) < 7:
+            if len(ip) < 7 or ip in scanning_ips:
                 continue
-            report_path = os.path.join(FEED_DIR, f"{ip}.txt")
+            report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
             if not os.path.exists(report_path):
                 new_ips.append(ip)
         if new_ips:
             logger.info(f"FORCE RESCAN: Found {len(new_ips)} IPs without reports (out of {len(ips)} total)")
         return new_ips
     
-    # Normal mode: Filter out IPs already in banned list
+    # Normal mode: Filter out IPs already in banned list or currently scanning
     current_banned = set()
     if os.path.exists(BANNED_IPS_FILE):
         try:
@@ -332,7 +335,7 @@ def get_new_attackers():
         except Exception as e:
             logger.error(f"Error reading banned IPs: {e}")
     
-    new_ips = [ip for ip in ips if ip not in current_banned and len(ip) >= 7]
+    new_ips = [ip for ip in ips if ip not in current_banned and ip not in scanning_ips and len(ip) >= 7]
     if new_ips:
         logger.info(f"Found {len(new_ips)} new attacker IPs to process")
     return new_ips
@@ -353,6 +356,9 @@ def scan_ip(ip):
     except Exception as e:
         logger.error(f"Error scanning {ip}: {e}")
         return None
+    finally:
+        if ip in scanning_ips:
+            scanning_ips.remove(ip)
 
 def update_banned_list(ips):
     current_banned = set()
@@ -486,6 +492,7 @@ def main():
                 if attackers:
                     logger.info(f"Processing {len(attackers)} new attacker IPs...")
                     for ip in attackers:
+                        scanning_ips.add(ip)
                         executor.submit(scan_ip, ip)
                     update_banned_list(attackers)
                 fix_missing_severity()
