@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Платформа Активного Захисту та Розвідки Загроз</b></p>
 
-[![Version](https://img.shields.io/badge/version-7.0.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-7.1.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -196,6 +196,21 @@ chmod +x client_banned_ips.sh
 # Запустити (Потрібен Root для Fail2Ban)
 sudo ./client_banned_ips.sh
 ```
+
+#### 🔄 Варіант Б: Активне звітування (Fail2Ban Action)
+Хочете, щоб клієнтські сервери **повідомляли про атаки** назад на головний сервер?
+
+1.  **Встановіть клієнтський скрипт**:
+    ```bash
+    sudo wget https://feed.sec.lemue.org/scripts/hfish-client.sh -O /usr/local/bin/hfish-client.sh
+    sudo chmod +x /usr/local/bin/hfish-client.sh
+    ```
+
+2.  **Налаштуйте Fail2Ban Action**:
+    Додайте це до вашого `jail.local`:
+    ```ini
+    actionban = /usr/local/bin/hfish-client.sh <ip>
+    ```
 
 ### 4. Налаштування автооновлення (Cron)
 Оновлюйте список банів кожні 15 хвилин.

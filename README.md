@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Active Defense & Threat Intelligence Platform</b></p>
     
-[![Version](https://img.shields.io/badge/version-7.0.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-7.1.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -196,6 +196,21 @@ chmod +x client_banned_ips.sh
 # Run (Requires Root for Fail2Ban interaction)
 sudo ./client_banned_ips.sh
 ```
+
+#### 🔄 Option B: Active Reporting (Fail2Ban Action)
+Want your client servers to **report attacks back** to the mothership?
+
+1.  **Install the Client Script**:
+    ```bash
+    sudo wget https://feed.sec.lemue.org/scripts/hfish-client.sh -O /usr/local/bin/hfish-client.sh
+    sudo chmod +x /usr/local/bin/hfish-client.sh
+    ```
+
+2.  **Configure Fail2Ban Action**:
+    Add this to your `jail.local` or action config:
+    ```ini
+    actionban = /usr/local/bin/hfish-client.sh <ip>
+    ```
 
 ### 4. Configure Auto-Updates (Cron)
 Keep your ban list fresh by running the script every 15 minutes.

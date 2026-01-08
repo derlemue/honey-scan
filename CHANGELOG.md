@@ -1,3 +1,9 @@
+## [7.1.0] - 2026-01-08
+
+### Added
+- 🛡️ **Client Shield**: Added `hfish-client.sh` script for reporting attacks back to HFish from client servers.
+- 📘 **Documentation**: Added "Active Reporting" (Fail2Ban Action) guide to all READMEs.
+
 ## [7.0.0] - 2026-01-08
 
 ### Added
