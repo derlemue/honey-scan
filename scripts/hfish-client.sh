@@ -142,7 +142,7 @@ sync_history() {
         echo "  Response: $RESPONSE"
         
         # Small delay to be nice to the API
-        sleep 0.1
+        sleep 0.5
     done
     
     echo "Sync completed."
