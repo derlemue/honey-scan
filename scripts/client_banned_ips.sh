@@ -9,12 +9,13 @@ import fcntl
 import sqlite3
 import time
 import re
+import socket
 from collections import Counter
 
 # ==========================================
 #  lemueIO Active Intelligence Feed - Client Shield (Python Variant)
 # ==========================================
-#  Version: 5.3.2
+#  Version: 5.3.3
 #  Description: Fetches malicious IPs, bans them on remote hosts, and cleans up Fail2Ban jails.
 # ==========================================
 
@@ -278,7 +279,7 @@ def main():
 
     try:
         logger.info("=" * 60)
-        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.2")
+        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.3")
         logger.info("Starting execution (Cron mode)...")
         logger.info("=" * 60)
         
@@ -298,8 +299,22 @@ def main():
             
             # Feature: Dynamic Jail Configuration
             open_ports = get_open_ports(host)
-            logger.info(f"Open ports on {host}: {open_ports}")
+            
+            # Resolve ports to service names for better logging
+            service_map = []
+            for p in open_ports.split(','):
+                try:
+                    p_int = int(p)
+                    service_name = socket.getservbyport(p_int)
+                    service_map.append(f"{service_name.upper()}/{p}")
+                except:
+                    service_map.append(f"UNKNOWN/{p}")
+            
+            services_str = ", ".join(service_map)
+            logger.info(f"Detected active services on {host}: {services_str}")
+            
             configure_jail(host, TARGET_JAIL, open_ports, bantime=1209600) # 14 days
+            logger.info(f"Protected services on {host} (Jail: {TARGET_JAIL}) -> {services_str}")
 
             # Feature: Jail Cleanup (with updated config)
             cleanup_jail(host)
