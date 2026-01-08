@@ -126,7 +126,7 @@ services:
     environment:
       - TZ=Europe/Amsterdam
       - DB_HOST=hfish-db
-      - DB_PORT=3306
+      - DB_PORT=3307
       - DB_USER=hfish
       - DB_PASSWORD=734f181149acdabc269dacba6faf3be7
       - DB_NAME=hfish
