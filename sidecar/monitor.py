@@ -216,14 +216,14 @@ def update_threat_feed():
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
-            recent_hackers.append({
-                "ip": ip,
-                "location": country,
-                "time": str(row.get('create_time', 'Just now')),
-                "flag": country, 
-                "count": 1
-            })
-            if len(recent_hackers) > 125: recent_hackers.pop()
+            if len(recent_hackers) < 125:
+                recent_hackers.append({
+                    "ip": ip,
+                    "location": country,
+                    "time": str(row.get('create_time', 'Just now')),
+                    "flag": country, 
+                    "count": 1
+                })
             if len(suspicious_cs) < 125:
                 threat_data = query_threatbook_ip(ip)
                 if threat_data:
