@@ -130,24 +130,8 @@ def get_geolocation():
         logger.error(f"Geolocation fetch failed: {e}")
     return None
 
-def check_cloud_connectivity():
-    try:
-        # Check against Community API with a known safe IP
-        url = "https://api.threatbook.io/v1/community/ip"
-        params = {"apikey": THREATBOOK_API_KEY, "resource": "8.8.8.8"}
-        try:
-             resp = requests.post(url, data=params, timeout=10)
-             if resp.status_code == 200: 
-                 logger.info(f"Cloud Intelligence Connectivity: OK ({url})")
-             else:
-                 logger.warning(f"Cloud Intelligence Connectivity: HTTP {resp.status_code}")
-        except Exception as e:
-             logger.error(f"Cloud Intelligence Connectivity: FAILED ({url}) - {e}")
-    except Exception as e:
-        logger.error(f"Cloud Intelligence Connectivity: Critical Error - {e}")
-
 def update_node_location():
-    check_cloud_connectivity() 
+    # check_cloud_connectivity() removed 
     data = get_geolocation()
     if not data:
         logger.warning("Could not determine dynamic location.")
