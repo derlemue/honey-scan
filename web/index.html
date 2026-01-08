@@ -8,6 +8,7 @@
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="/assets/hfish-ui.1.2.12.css" />
+    <script src="/assets/country_map.js"></script>
     <style type="text/css">
         .main-loading-wrap {
             text-align: center;
@@ -2161,15 +2162,15 @@
                 // Helper function to generate table rows
                 const generateTableRows = (data, isHackers) => {
                     const l = window.hsTableState ? window.hsTableState.limit : 26;
-                    
+
                     // Access global COUNTRY_MAP if available
                     const countryMap = window.COUNTRY_MAP || {};
-                    
+
                     return data.slice(0, l).map(item => { // Dynamic Limit
                         const ip = item.ip || 'N/A';
                         let locationName = item.location || item.flag || 'Unknown';
                         locationName = translateLocation(locationName); // Translate to English
-                        
+
                         const time = item.time || '';
 
                         // Determine Flag Icon
@@ -2177,7 +2178,7 @@
                         let flagCode = countryMap[locationName];
                         if (!flagCode) {
                             // Try lowercase lookup
-                             flagCode = countryMap[Object.keys(countryMap).find(key => key.toLowerCase() === locationName.toLowerCase())];
+                            flagCode = countryMap[Object.keys(countryMap).find(key => key.toLowerCase() === locationName.toLowerCase())];
                         }
                         // Fallback for common ones if map missing
                         if (!flagCode && locationName === 'United States') flagCode = 'us';
