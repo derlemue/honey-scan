@@ -35,7 +35,7 @@ REPORT_DIR = SCANS_DIR
 scanning_ips = set() # Track IPs currently in queue or being scanned
 
 
-MAX_WORKERS = 32  # Optimized concurrency (User Request: 32)
+MAX_WORKERS = 16  # Optimized concurrency (User Request: 16)
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -181,7 +181,7 @@ def update_threat_feed():
             # Formatting for Fail2Ban entries
             threat_type = "Port Scanner"
             threat_risk = "Medium"
-            location_disp = country
+            location_disp = get_english_name(country)
             
             if service == 'FAIL2BAN':
                 threat_type = "jailed by rules"
@@ -193,7 +193,7 @@ def update_threat_feed():
                     "ip": ip,
                     "location": location_disp,
                     "time": str(row.get('create_time', 'Just now')),
-                    "flag": country if service != 'FAIL2BAN' else "Unknown", # Don't show flag for Fail2Ban or show Unknown? 
+                    "flag": get_english_name(country) if service != 'FAIL2BAN' else "Unknown",
                     "count": 1
                 })
             if len(suspicious_cs) < 130:
@@ -375,81 +375,89 @@ def fix_missing_severity():
     finally:
         if conn: conn.close()
 
-def translate_to_english():
-    """Translate Chinese location names to English"""
+# Translation Dictionary (Chinese -> English)
+TRANSLATIONS = {
+    "美国": "United States",
+    "中国": "China",
+    "俄罗斯": "Russia",
+    "德国": "Germany",
+    "英国": "United Kingdom",
+    "法国": "France",
+    "日本": "Japan",
+    "韩国": "South Korea",
+    "印度": "India",
+    "巴西": "Brazil",
+    "加拿大": "Canada",
+    "澳大利亚": "Australia",
+    "意大利": "Italy",
+    "西班牙": "Spain",
+    "荷兰": "Netherlands",
+    "瑞士": "Switzerland",
+    "瑞典": "Sweden",
+    "挪威": "Norway",
+    "丹麦": "Denmark",
+    "芬兰": "Finland",
+    "波兰": "Poland",
+    "土耳其": "Turkey",
+    "以色列": "Israel",
+    "沙特阿拉伯": "Saudi Arabia",
+    "阿联酋": "United Arab Emirates",
+    "新加坡": "Singapore",
+    "马来西亚": "Malaysia",
+    "泰国": "Thailand",
+    "越南": "Vietnam",
+    "印度尼西亚": "Indonesia",
+    "菲律宾": "Philippines",
+    "巴基斯坦": "Pakistan",
+    "刚果共和国": "Republic of the Congo",
+    "刚果民主共和国": "DR Congo",
+    "孟加拉国": "Bangladesh",
+    "墨西哥": "Mexico",
+    "阿根廷": "Argentina",
+    "智利": "Chile",
+    "哥伦比亚": "Colombia",
+    "南非": "South Africa",
+    "埃及": "Egypt",
+    "尼日利亚": "Nigeria",
+    "肯尼亚": "Kenya",
+    "乌克兰": "Ukraine",
+    "罗马尼亚": "Romania",
+    "捷克": "Czech Republic",
+    "匈牙利": "Hungary",
+    "奥地利": "Austria",
+    "比利时": "Belgium",
+    "葡萄牙": "Portugal",
+    "希腊": "Greece",
+    "爱尔兰": "Ireland",
+    "新西兰": "New Zealand",
+    "香港": "Hong Kong",
+    "台湾": "Taiwan",
+    "危地马拉": "Guatemala",
+    "未知": "Unknown"
+}
+
+def get_english_name(chinese_name):
+    return TRANSLATIONS.get(chinese_name, chinese_name)
+
+def restore_db_language():
+    """Revert English location names to Chinese in DB to fix HFish dashboard"""
     conn = get_db_connection()
     if not conn: return
     try:
         cursor = conn.cursor()
         if DB_TYPE == "mysql":
-            # Comprehensive Chinese to English translation dictionary
-            translations = {
-                "美国": "United States",
-                "中国": "China",
-                "俄罗斯": "Russia",
-                "德国": "Germany",
-                "英国": "United Kingdom",
-                "法国": "France",
-                "日本": "Japan",
-                "韩国": "South Korea",
-                "印度": "India",
-                "巴西": "Brazil",
-                "加拿大": "Canada",
-                "澳大利亚": "Australia",
-                "意大利": "Italy",
-                "西班牙": "Spain",
-                "荷兰": "Netherlands",
-                "瑞士": "Switzerland",
-                "瑞典": "Sweden",
-                "挪威": "Norway",
-                "丹麦": "Denmark",
-                "芬兰": "Finland",
-                "波兰": "Poland",
-                "土耳其": "Turkey",
-                "以色列": "Israel",
-                "沙特阿拉伯": "Saudi Arabia",
-                "阿联酋": "United Arab Emirates",
-                "新加坡": "Singapore",
-                "马来西亚": "Malaysia",
-                "泰国": "Thailand",
-                "越南": "Vietnam",
-                "印度尼西亚": "Indonesia",
-                "菲律宾": "Philippines",
-                "巴基斯坦": "Pakistan",
-                "刚果共和国": "Republic of the Congo",
-                "刚果民主共和国": "DR Congo",
-                "孟加拉国": "Bangladesh",
-                "墨西哥": "Mexico",
-                "阿根廷": "Argentina",
-                "智利": "Chile",
-                "哥伦比亚": "Colombia",
-                "南非": "South Africa",
-                "埃及": "Egypt",
-                "尼日利亚": "Nigeria",
-                "肯尼亚": "Kenya",
-                "乌克兰": "Ukraine",
-                "罗马尼亚": "Romania",
-                "捷克": "Czech Republic",
-                "匈牙利": "Hungary",
-                "奥地利": "Austria",
-                "比利时": "Belgium",
-                "葡萄牙": "Portugal",
-                "希腊": "Greece",
-                "爱尔兰": "Ireland",
-                "新西兰": "New Zealand",
-                "香港": "Hong Kong",
-                "台湾": "Taiwan",
-                "危地马拉": "Guatemala",
-                "未知": "Unknown"
-            }
-            for cn, en in translations.items():
-                cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (en, cn))
-                cursor.execute("UPDATE ipaddress SET region = %s WHERE region = %s", (en, cn))
-                cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip_country = %s", (en, cn))
+            # Create reverse mapping
+            reverse_translations = {v: k for k, v in TRANSLATIONS.items()}
+            
+            for en, cn in reverse_translations.items():
+                # Only update if it currently matches the English name
+                cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (cn, en))
+                cursor.execute("UPDATE ipaddress SET region = %s WHERE region = %s", (cn, en))
+                cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip_country = %s", (cn, en))
             conn.commit()
-            logger.info("Translated Chinese location names to English")
+            logger.info("Restored DB location names to Chinese")
     except Exception as e:
-        logger.warning(f"Translation error: {e}")
+        logger.warning(f"Restoration error: {e}")
     finally:
         if conn: conn.close()
 
@@ -482,7 +490,8 @@ def main():
                 
                 update_banned_list()
                 fix_missing_severity()
-                translate_to_english()  # Translate Chinese to English
+                restore_db_language()   # Restore Chinese names in DB for HFish Native Dashboard
+                # translate_to_english() removed - translation now happens only on feed generation
                 # update_index() removed
                 update_threat_feed()
                 if int(time.time()) % 600 < 15: 
