@@ -59,7 +59,9 @@ def get_db_connection():
                 password=DB_PASSWORD,
                 database=DB_NAME,
                 cursorclass=pymysql.cursors.DictCursor,
-                connect_timeout=5,
+                connect_timeout=30,
+                read_timeout=30,
+                write_timeout=30,
                 autocommit=True,
                 charset='utf8mb4'
             )
