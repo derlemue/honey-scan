@@ -17,8 +17,6 @@ DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
 DB_USER = "root" # FORCE ROOT
 DB_PASSWORD = os.getenv("DB_PASSWORD", os.getenv("MYSQL_ROOT_PASSWORD"))
-print(f"!!! DEBUG STARTUP: DB_USER={DB_USER} !!!", flush=True)
-DB_PASSWORD = os.getenv("DB_PASSWORD", os.getenv("MYSQL_ROOT_PASSWORD"))
 DB_NAME = os.getenv("DB_NAME", "hfish")
 
 # ThreatBook API Config
@@ -52,7 +50,6 @@ signal.signal(signal.SIGTERM, signal_handler)
 def get_db_connection():
     try:
         if DB_TYPE.lower() in ("mysql", "mariadb"):
-            logger.info(f"Connecting with user={DB_USER}")
             return pymysql.connect(
                 host=DB_HOST,
                 port=DB_PORT,
@@ -256,13 +253,12 @@ def update_threat_feed():
                              
                              # Force conversion to datetime if possible, or just add if it supports it
                              if final_dt:
-                                 # Add 1 hour
-                                 new_time = final_dt + timedelta(hours=1)
+                                 # Add 2 hours (1h was insufficient, implies DB is UTC-1 or similar lag)
+                                 new_time = final_dt + timedelta(hours=2)
                                  time_display = str(new_time)
-                                 # logger.info(f"DEBUG TIME: Original={info_time} -> Adjusted={time_display}")
                              else:
                                  time_display = str(info_time)
-                                 logger.warning(f"DEBUG TIME: Failed to parse {info_time}")
+                                 # logger.warning(f"DEBUG TIME: Failed to parse {info_time}")
 
                          except Exception as e:
                              logger.error(f"Time parsing error: {e}")
