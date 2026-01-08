@@ -208,8 +208,14 @@ Want your client servers to **report attacks back** to the mothership?
 
 2.  **Configure Fail2Ban Action**:
     Add this to your `jail.local` or action config:
-    ```ini
     actionban = /usr/local/bin/hfish-client.sh <ip>
+    ```
+
+3.  **Configure API Key**:
+    Create `/usr/local/bin/.env.apikeys` with your key:
+    ```bash
+    echo "API_KEY=your_key_here" | sudo tee /usr/local/bin/.env.apikeys
+    sudo chmod 600 /usr/local/bin/.env.apikeys
     ```
 
 ### 4. Configure Auto-Updates (Cron)
