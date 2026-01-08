@@ -79,16 +79,14 @@ services:
     build: ./sidecar
     container_name: hfish-sidecar-v2
     restart: unless-stopped
-    dns:
-      - 1.1.1.1
-      - 1.0.0.1
+    network_mode: "host"
     environment:
       - TZ=Europe/Amsterdam
       - DB_TYPE=${DB_TYPE:-mysql}
-      - DB_HOST=${DB_HOST:-mariadb}
-      - DB_PORT=${DB_PORT:-3306}
-      - DB_USER=root
-      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - DB_HOST=127.0.0.1
+      - DB_PORT=3307
+      - DB_USER=hfish
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=hfish
       - THREATBOOK_API_KEY=${THREATBOOK_API_KEY}
       - THREATBOOK_API_BASE_URL=${THREATBOOK_API_BASE_URL}

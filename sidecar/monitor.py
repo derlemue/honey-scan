@@ -15,7 +15,7 @@ from datetime import timedelta, datetime
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
-DB_USER = "hfish" # User Request
+DB_USER = os.getenv("DB_USER", "hfish") # User Request (Made configurable)
 DB_PASSWORD = os.getenv("DB_PASSWORD", "password") # Default password for hfish
 DB_NAME = os.getenv("DB_NAME", "hfish")
 
@@ -34,7 +34,7 @@ INDEX_FILE = os.path.join(FEED_DIR, "index.html")
 LIVE_THREATS_FILE = os.path.join(ASSETS_DIR, "live_threats.json")
 STATS_FILE = os.path.join(ASSETS_DIR, "stats.json")
 
-MAX_WORKERS = 5 
+MAX_WORKERS = 10 
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -55,7 +55,7 @@ def get_db_connection():
             return pymysql.connect(
                 host=DB_HOST,
                 port=DB_PORT,
-                user="hfish",
+                user=DB_USER,
                 password=DB_PASSWORD,
                 database=DB_NAME,
                 cursorclass=pymysql.cursors.DictCursor,
@@ -313,12 +313,12 @@ def get_new_attackers():
     return new_ips
 
 def scan_ip(ip):
-    report_path = os.path.join(SCANS_DIR, f"{ip}.txt")
+    report_path = os.path.join(FEED_DIR, f"{ip}.txt")
     if os.path.exists(report_path): return None
     logger.info(f"Scanning {ip}...")
     try:
         command = ["nmap", "-A", "-T4", "-Pn", ip] 
-        result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+        result = subprocess.run(command, capture_output=True, text=True, timeout=20)
         with open(report_path, "w") as f:
             f.write(f"Scan Time: {time.ctime()}\n")
             f.write(f"Target: {ip}\n")
