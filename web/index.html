@@ -132,6 +132,7 @@
                     return timeStr;
                 }
             };
+            window.adjustTime = adjustTime;
 
             // Fetch and cache threat data
             const getThreatData = async () => {
@@ -1615,6 +1616,15 @@
                 const response = await fetch('/assets/live_threats.json?t=' + Date.now());
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
+                // Apply time adjustment globally here
+                if (data && window.adjustTime) {
+                    if (Array.isArray(data.cs)) {
+                        data.cs = data.cs.map(i => ({ ...i, time: window.adjustTime(i.time) }));
+                    }
+                    if (Array.isArray(data.hackers)) {
+                        data.hackers = data.hackers.map(i => ({ ...i, time: window.adjustTime(i.time) }));
+                    }
+                }
                 return data; // Return the fetched data
             } catch (error) {
                 console.error(HS_LOG_PREFIX + "Data Fetch Error:", error);
@@ -1777,7 +1787,11 @@
                     if (r.ok) {
                         const data = await r.json();
                         if (data && Array.isArray(data.cs)) {
-                            threats = data.cs;
+                            // Apply time adjustment
+                            threats = data.cs.map(item => ({
+                                ...item,
+                                time: window.adjustTime ? window.adjustTime(item.time) : item.time
+                            }));
                         }
                     }
                 } catch (e) {
@@ -2052,6 +2066,11 @@
                         const r = await fetch('/assets/live_threats.json');
                         if (r.ok) {
                             cachedThreatData = await r.json();
+                            // Apply time adjustment
+                            if (cachedThreatData && window.adjustTime) {
+                                if (Array.isArray(cachedThreatData.cs)) cachedThreatData.cs = cachedThreatData.cs.map(i => ({ ...i, time: window.adjustTime(i.time) }));
+                                if (Array.isArray(cachedThreatData.hackers)) cachedThreatData.hackers = cachedThreatData.hackers.map(i => ({ ...i, time: window.adjustTime(i.time) }));
+                            }
                             cachedThreatData.timestamp = Date.now();
                             threatData = cachedThreatData;
                         }
@@ -2274,6 +2293,13 @@
                             // Fetch fresh data
                             fetch('/assets/live_threats.json?t=' + Date.now())
                                 .then(r => r.json())
+                                .then(data => {
+                                    // Apply time adjustment
+                                    if (data && Array.isArray(data.cs) && window.adjustTime) {
+                                        data.cs = data.cs.map(i => ({ ...i, time: window.adjustTime(i.time) }));
+                                    }
+                                    return data;
+                                })
                                 .then(data => {
                                     if (!data || !Array.isArray(data.cs)) return;
 
