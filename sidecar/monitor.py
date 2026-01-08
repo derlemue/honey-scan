@@ -15,8 +15,8 @@ from datetime import timedelta, datetime
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
-DB_USER = "root" # FORCE ROOT
-DB_PASSWORD = os.getenv("DB_PASSWORD", os.getenv("MYSQL_ROOT_PASSWORD"))
+DB_USER = "hfish" # User Request
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password") # Default password for hfish
 DB_NAME = os.getenv("DB_NAME", "hfish")
 
 # ThreatBook API Config
