@@ -3,7 +3,7 @@ HFish API Replacement Service
 Provides REST API endpoints compatible with HFish API documentation
 """
 
-from fastapi import FastAPI, Query, HTTPException, Depends, Body
+from fastapi import FastAPI, Query, HTTPException, Depends, Body, Header
 from fastapi.responses import JSONResponse
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
@@ -47,8 +47,15 @@ def get_db_connection():
         raise HTTPException(status_code=500, detail="Database connection failed")
 
 
-def validate_api_key(api_key: str = Query(..., alias="api_key")):
-    """Validate API key from query parameter"""
+def validate_api_key(
+    api_key_query: Optional[str] = Query(None, alias="api_key"),
+    api_key_header: Optional[str] = Header(None, alias="api_key")
+):
+    """Validate API key from query parameter or header"""
+    api_key = api_key_query or api_key_header
+    if not api_key:
+        raise HTTPException(status_code=401, detail="API Key missing")
+        
     if api_key != VALID_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
     return api_key
