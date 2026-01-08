@@ -1807,6 +1807,7 @@
                     body.style.overflow = 'hidden'; // Hide scrollbar, use pagination
                     body.style.display = 'flex';
                     body.style.flexDirection = 'column';
+                    body.style.boxSizing = 'border-box'; // FIX: Maintain box model
                     body.setAttribute('data-hs-injected', 'true');
 
                     // Only modify body to make it fill the card's available space WITHOUT overflowing
@@ -1817,12 +1818,13 @@
                         body.style.display = 'flex';
                         body.style.flexDirection = 'column';
                         body.style.minHeight = '0';
-                        body.style.padding = '0';
+                        body.style.padding = '0'; // FIX: Remove padding to prevent overflow
+                        body.style.boxSizing = 'border-box';
                         // Remove maxHeight constraint to allow natural fit
                     }
 
                     body.innerHTML = `
-                        <div style="width: 100%; height: 100%; max-height: 100%; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden;">
+                        <div style="width: 100%; height: 100%; max-height: 100%; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden; box-sizing: border-box;">
                             <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed; flex-shrink: 0;">
                                 <thead style="background: rgba(0,0,0,0.3);">
                                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
