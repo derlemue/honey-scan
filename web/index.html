@@ -1643,7 +1643,7 @@
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
         // Global State for Pagination
-        window.hsTableState = window.hsTableState || { page: 1, limit: 25 };
+        window.hsTableState = window.hsTableState || { page: 1, limit: 26 };
         window.hsThreatData = window.hsThreatData || [];
 
         // Shared Render Function
@@ -1832,7 +1832,7 @@
                         body.style.display = 'flex';
                         body.style.flexDirection = 'column';
                         body.style.minHeight = '0';
-                        body.style.padding = '0'; // FIX: Remove padding to prevent overflow
+                        body.style.padding = '2px'; // FIX: Outer padding 2px
                         body.style.boxSizing = 'border-box';
                         // Remove maxHeight constraint to allow natural fit
                         // Remove explicit height if it was set
@@ -1852,7 +1852,7 @@
                                     </tr>
                                 </thead>
                             </table>
-                            <div style="flex: 1; overflow-y: hidden; overflow-x: hidden; min-height: 0;">
+                            <div style="flex: 1; overflow-y: hidden; overflow-x: hidden; min-height: 0; padding-bottom: 2px;">
                                 <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed;">
                                     <tbody>
                                         ${rowHtml}
@@ -2135,7 +2135,7 @@
 
                 // Helper function to generate table rows
                 const generateTableRows = (data, isHackers) => {
-                    const l = window.hsTableState ? window.hsTableState.limit : 25;
+                    const l = window.hsTableState ? window.hsTableState.limit : 26;
                     return data.slice(0, l).map(item => { // Dynamic Limit
                         const ip = item.ip || 'N/A';
                         const location = translateLocation(item.location || item.flag || 'Unknown');
