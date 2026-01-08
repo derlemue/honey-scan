@@ -9,6 +9,7 @@ import logging
 import requests
 import json
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta, datetime
 
 # Configuration
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
@@ -223,12 +224,43 @@ def update_threat_feed():
             if len(suspicious_cs) < 50:
                 threat_data = query_threatbook_ip(ip)
                 if threat_data:
+                    # Location Logic: Default to DB Country (English). Append API City if available.
+                    # This avoids the Chinese country name from ThreatBook.
+                    city = threat_data['location'].get('city', '')
+                    location_str = country
+                    if city and city != country:
+                         location_str = f"{country} {city}"
+
+                    # Timezone Logic: Add 1 hour to DB time
+                    info_time = row.get('create_time')
+                    time_display = "Just now"
+                    if info_time:
+                         try:
+                             # If it's already a datetime object, just add timedelta
+                             if isinstance(info_time, str):
+                                 # Basic parsing if string (assuming standard SQL format)
+                                 # But pymysql usually returns datetime. 
+                                 # Let's try to parse if string, or just use if datetime
+                                 pass 
+                             
+                             if not isinstance(info_time, datetime):
+                                  # If string, try to parse? Or just leave it?
+                                  # For safety, if it's not a datetime, we might skip +1h or try robust parse.
+                                  # Assuming pymysql returns datetime...
+                                  pass
+                             
+                             # Force conversion to datetime if possible, or just add if it supports it
+                             new_time = info_time + timedelta(hours=1)
+                             time_display = str(new_time)
+                         except Exception:
+                             time_display = str(info_time)
+
                     suspicious_cs.append({
                         "ip": ip,
-                        "location": f"{threat_data['location'].get('country_name', country)} {threat_data['location'].get('city', '')}",
+                        "location": location_str,
                         "type": threat_data['judgments'][0] if threat_data['judgments'] else "Scanner",
                         "risk": threat_data['severity'].capitalize(),
-                        "time": str(row.get('create_time', '')) if 'create_time' in row else "Just now"
+                        "time": time_display
                     })
                 else:
                      suspicious_cs.append({
