@@ -1,3 +1,15 @@
+## [6.1.0] - 2026-01-08
+
+### Added
+- 🚀 **Sidecar Evolution**: Significant upgrades to the `hfish-sidecar-v2` component for professional reconnaissance.
+    - **Retroactive Scanning**: Implemented `FORCE_RESCAN` mode to automatically scan the entire historical database of attacker IPs.
+    - **Nmap Optimization**: Migrated from slow `-A` scans to high-speed SYN scans (`-sS -sV -F`) with a robust 120s timeout.
+    - **Persistence**: Fixed volume mounts and pathing to ensure reports are persistently saved in the `scans/` directory for web visibility.
+
+### Changed
+- 🔧 **Infrastructure**: Migrated MariaDB to Port **3307** internally and externally to eliminate conflicts with Honeypot services on Port 3306.
+- 🔧 **Networking**: Optimized Sidecar to use Docker Bridge networking (`mariadb:3307`), resolving persistent PyMySQL connection timeouts.
+
 ## [6.0.0] - 2026-01-08
 
 ### Added
