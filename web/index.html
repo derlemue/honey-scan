@@ -1643,7 +1643,7 @@
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
         // Global State for Pagination
-        window.hsTableState = window.hsTableState || { page: 1, limit: 25 };
+        window.hsTableState = window.hsTableState || { page: 1, limit: 27 };
         window.hsThreatData = window.hsThreatData || [];
 
         // Shared Render Function
@@ -1835,7 +1835,7 @@
                                     </tr>
                                 </thead>
                             </table>
-                            <div style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; max-height: calc(100% - 35px);">
+                            <div style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; max-height: calc(100% - 45px);">
                                 <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed;">
                                     <tbody>
                                         ${rowHtml}

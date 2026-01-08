@@ -208,7 +208,7 @@ def update_threat_feed():
     suspicious_cs = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 150"
+        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 162"
         logger.info(f"Executing Query: {query}")
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -216,7 +216,7 @@ def update_threat_feed():
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
-            if len(recent_hackers) < 125:
+            if len(recent_hackers) < 135:
                 recent_hackers.append({
                     "ip": ip,
                     "location": country,
@@ -224,7 +224,7 @@ def update_threat_feed():
                     "flag": country, 
                     "count": 1
                 })
-            if len(suspicious_cs) < 125:
+            if len(suspicious_cs) < 135:
                 suspicious_cs.append({
                         "ip": ip,
                         "location": country,
