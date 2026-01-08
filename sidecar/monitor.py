@@ -409,6 +409,8 @@ def translate_to_english():
                 "印度尼西亚": "Indonesia",
                 "菲律宾": "Philippines",
                 "巴基斯坦": "Pakistan",
+                "刚果共和国": "Republic of the Congo",
+                "刚果民主共和国": "DR Congo",
                 "孟加拉国": "Bangladesh",
                 "墨西哥": "Mexico",
                 "阿根廷": "Argentina",
