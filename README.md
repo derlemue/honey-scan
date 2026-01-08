@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Active Defense & Threat Intelligence Platform</b></p>
     
-[![Version](https://img.shields.io/badge/version-6.2.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-7.0.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -115,6 +115,21 @@ graph LR
     D -- 5. Updates --> E[📂 Feed]
     F[💻 Dashboard] -- Reads --> E
     G[🛡️ Prod Server] -- 6. Feeds & Blocks --> E
+```
+
+## 🔌 API Reference
+
+The system allows interaction via a REST API (Port 4444).
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/api/v1/hfish/sys_info` | `GET` | Returns system health, attack stats, and uptime. |
+| `/api/v1/config/black_list/add` | `POST` | Manually bans an IP by simulating an attack (Fail2Ban integration). |
+
+**Example (Ban IP):**
+```bash
+curl -X POST "https://sec.lemue.org/api/v1/config/black_list/add?api_key=YOUR_KEY" \
+     -d '{"ip": "1.2.3.4", "memo": "Manual Ban"}'
 ```
 
 ## 🛠️ Installation

@@ -7,7 +7,7 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-6.2.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-7.0.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -119,6 +119,21 @@ graph LR
     D -- 5. Aktualisiert --> E[📂 Feed]
     F[💻 Dashboard] -- Liest --> E
     G[🛡️ Prod Server] -- 6. Feeds & Blockiert --> E
+```
+
+## 🔌 API Referenz
+
+Das System ermöglicht die Interaktion über eine REST-API (Port 4444).
+
+| Endpunkt | Methode | Beschreibung |
+| :--- | :--- | :--- |
+| `/api/v1/hfish/sys_info` | `GET` | Liefert Systemstatus, Angriffsstatistiken und Uptime. |
+| `/api/v1/config/black_list/add` | `POST` | Bannt eine IP manuell durch Simulation eines Angriffs (Fail2Ban Integration). |
+
+**Beispiel (IP Bannen):**
+```bash
+curl -X POST "https://sec.lemue.org/api/v1/config/black_list/add?api_key=DEIN_KEY" \
+     -d '{"ip": "1.2.3.4", "memo": "Manueller Ban"}'
 ```
 
 ## 🛠️ Installation

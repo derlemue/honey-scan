@@ -1,3 +1,20 @@
+## [7.0.0] - 2026-01-08
+
+### Added
+- 🔌 **API**: Full Python-based API replacement (`hfish-sidecar-v2`) integrated into the sidecar container.
+- 🔌 **API**: New endpoint `/api/v1/config/black_list/add` for manual IP banning (Fail2Ban integration).
+- 🔌 **API**: Added `Header` support for API Key authentication (`api_key` and `api-key`).
+
+### Changed
+- 🆙 **Major Release**: Version 7.0.0 marks the transition to a fully custom Python API backend, replacing the broken/missing HFish native API.
+- 🔧 **Architecture**: API moved to Port **4444** (Sidecar) to coexist with HFish internal services.
+- 📘 **Documentation**: Added API Reference to all READMEs.
+
+### Fixed
+- 🐛 **API**: Resolved 404/502 errors by routing Nginx `/api/` traffic to the new Python service.
+- 🐛 **Scripts**: Updated `client_banned_ips.sh` to use the new robust blacklist endpoint.
+- 🖼️ **Docs**: Fixed broken logo link in README.
+
 ## [6.1.0] - 2026-01-08
 
 ### Added

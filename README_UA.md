@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Платформа Активного Захисту та Розвідки Загроз</b></p>
 
-[![Version](https://img.shields.io/badge/version-6.2.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-7.0.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -105,6 +105,21 @@
 | **HFish** | 🍯 Core | Базова платформа ханіпоту (Управління та Ноди). (Стандартні порти `80`/`443`) |
 | **Sidecar** | 🐍 Python | Мозок. Стежить за БД, оркеструє Nmap, оновлює фіди. |
 | **Feed** | 🌐 Nginx | Обслуговує звіти та списки бану на порту `8888`. |
+
+## 🔌 API Довідка
+
+Система дозволяє взаємодію через REST API (Порт 4444).
+
+| Ендпоінт | Метод | Опис |
+| :--- | :--- | :--- |
+| `/api/v1/hfish/sys_info` | `GET` | Повертає статус системи, статистику атак та uptime. |
+| `/api/v1/config/black_list/add` | `POST` | Вручну банить IP шляхом симуляції атаки (інтеграція з Fail2Ban). |
+
+**Приклад (Бан IP):**
+```bash
+curl -X POST "https://sec.lemue.org/api/v1/config/black_list/add?api_key=ВАШ_КЛЮЧ" \
+     -d '{"ip": "1.2.3.4", "memo": "Manual Ban"}'
+```
 
 ```mermaid
 graph LR

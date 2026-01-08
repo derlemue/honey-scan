@@ -7,7 +7,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-6.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-7.0.0-blue.svg)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -110,6 +110,21 @@ Es sind Container (Docker). Sie erweitern das Programm HFish:
 | **HFish** | 🍯 Kern | Der Honigtopf. Er lockt Angreifer an. (Port `80` und `443`) |
 | **Sidecar** | 🐍 Python | Das Gehirn. Es merkt Angriffe und startet den Scan. |
 | **Feed** | 🌐 Nginx | Die Webseite. Sie zeigt die Berichte. (Port `8888`) |
+
+## 🔌 API (Schnittstelle)
+
+Du kannst das System auch per Programm steuern (Port 4444).
+
+| Befehl | Was passiert? |
+| :--- | :--- |
+| `/api/v1/hfish/sys_info` | Zeigt Gesundheit und Statistiken. |
+| `/api/v1/config/black_list/add` | Bannt eine IP sofort. |
+
+**Beispiel:**
+```bash
+curl -X POST "https://sec.lemue.org/api/v1/config/black_list/add?api_key=DEIN_KEY" \
+     -d '{"ip": "1.2.3.4", "memo": "Bannen"}'
+```
 
 ```mermaid
 graph LR
