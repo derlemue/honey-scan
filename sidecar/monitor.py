@@ -288,11 +288,11 @@ def get_new_attackers():
     ips = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT source_ip FROM infos ORDER BY create_time DESC LIMIT 1000"
+        query = "SELECT DISTINCT ip FROM ipaddress ORDER BY create_time DESC LIMIT 1000"
         cursor.execute(query)
         rows = cursor.fetchall()
         for row in rows:
-            ips.append(row['source_ip'] if isinstance(row, dict) else row[0])
+            ips.append(row['ip'] if isinstance(row, dict) else row[0])
         conn.close()
     except Exception as e:
         logger.error(f"Error fetching attackers: {e}")
