@@ -105,6 +105,34 @@
                 return map[loc] || loc;
             };
 
+            // Helper: Adjust time by +1 hour
+            const adjustTime = (timeStr) => {
+                if (!timeStr) return timeStr;
+                try {
+                    let date = new Date(timeStr);
+                    // Fallback for Safari/older browsers
+                    if (isNaN(date.getTime())) {
+                        date = new Date(timeStr.replace(/-/g, '/'));
+                    }
+                    if (isNaN(date.getTime())) return timeStr;
+
+                    // Add 1 hour
+                    date.setTime(date.getTime() + 3600000);
+
+                    const pad = (n) => n.toString().padStart(2, '0');
+                    const year = date.getFullYear();
+                    const month = pad(date.getMonth() + 1);
+                    const day = pad(date.getDate());
+                    const hour = pad(date.getHours());
+                    const minute = pad(date.getMinutes());
+                    const second = pad(date.getSeconds());
+
+                    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+                } catch (e) {
+                    return timeStr;
+                }
+            };
+
             // Fetch and cache threat data
             const getThreatData = async () => {
                 const now = Date.now();
@@ -146,7 +174,7 @@
                     const hackers = (data.hackers || []).map(h => ({
                         ip: h.ip,
                         location: translateLocation(h.location),
-                        time: h.time,
+                        time: adjustTime(h.time),
                         country: translateLocation(h.location),
                         flag: h.flag
                     }));
@@ -156,7 +184,7 @@
                         location: translateLocation(c.location),
                         type: c.type || 'Scanner',
                         risk: c.risk || 'Medium',
-                        time: c.time || 'Just now',
+                        time: adjustTime(c.time) || 'Just now',
                         severity: c.risk || 'Medium'
                     }));
 
@@ -734,6 +762,7 @@
                         fetch('/v1/captcha')
                             .then(response => response.json())
                             .then(data => {
+                                console.log("[NativeLogin] Captcha Response:", data); // DEBUG: Log full response
                                 if (data.response_code === 0 && data.data) {
                                     captchaImg.src = data.data;
                                     captchaInput.value = ''; // Clear input on refresh
