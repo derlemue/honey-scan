@@ -593,6 +593,9 @@ def main():
     # update_node_location()
     logger.info("Skipping schema migration and location update - proceeding to main loop")
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+    
+    last_maintenance = 0
+    
     try:
         while True:
             try:
@@ -602,10 +605,13 @@ def main():
                     for ip in attackers:
                         scanning_ips.add(ip)
                         executor.submit(scan_ip, ip)
-                # Optimization: Run heavy tasks every 60s
-                if int(time.time()) % 60 == 0:
+                
+                # Optimization: Run heavy tasks roughly every 60s
+                # Using timestamp check is more robust than modulo 0 against loop drift
+                if time.time() - last_maintenance > 60:
                     update_banned_list()
                     fix_missing_severity()
+                    last_maintenance = time.time()
 
                 restore_db_language()
                 update_threat_feed()
