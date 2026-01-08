@@ -288,7 +288,7 @@ def get_new_attackers():
     ips = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT source_ip FROM infos ORDER BY create_time DESC LIMIT 100"
+        query = "SELECT DISTINCT source_ip FROM infos ORDER BY create_time DESC LIMIT 1000"
         cursor.execute(query)
         rows = cursor.fetchall()
         for row in rows:
