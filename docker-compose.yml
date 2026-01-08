@@ -78,6 +78,9 @@ services:
     build: ./sidecar
     container_name: hfish-sidecar-v2
     restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     environment:
       - TZ=Europe/Amsterdam
       - DB_TYPE=${DB_TYPE:-mysql}
@@ -87,6 +90,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=hfish
       - FORCE_RESCAN=true
+    env_file: .env.apikeys
     volumes:
       - ./scans:/app/scans
       - ./feed:/app/feed

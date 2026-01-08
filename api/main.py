@@ -3,8 +3,9 @@ HFish API Replacement Service
 Provides REST API endpoints compatible with HFish API documentation
 """
 
-from fastapi import FastAPI, Query, HTTPException, Depends, Body, Header
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Query, HTTPException, Depends, Body, Header, Request
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime, timedelta
@@ -12,10 +13,15 @@ import mysql.connector
 from mysql.connector import Error
 import os
 import logging
+import uuid
+import secrets
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Templates
+templates = Jinja2Templates(directory="templates")
 
 app = FastAPI(
     title="HFish API",
@@ -33,9 +39,44 @@ DB_CONFIG = {
     'charset': 'utf8mb4'
 }
 
-# API Key validation (simple for now)
-VALID_API_KEY = os.getenv('API_KEY', 'nXYzlupNuFFiUZvGRrfaRTySjsIIfYChnpIDnDWIczkvIdMYXhdotcdtLLsBKuMU')
-
+# Ensure API Keys table exists
+def init_db():
+    connection = get_db_connection()
+    if not connection:
+        return
+    try:
+        cursor = connection.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS api_keys (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                access_key VARCHAR(64) NOT NULL UNIQUE,
+                memo VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Check if default key exists, if table empty
+        cursor.execute("SELECT COUNT(*) FROM api_keys")
+        count = cursor.fetchone()[0]
+        if count == 0:
+             # BETTER: try to use key from env, or generate random
+             bootstrap_key = os.getenv('BOOTSTRAP_API_KEY')
+             if not bootstrap_key:
+                 bootstrap_key = secrets.token_urlsafe(32)
+                 logger.warning(f"!!! RANDOM BOOTSTRAP API KEY GENERATED: {bootstrap_key} !!!")
+             else:
+                 logger.info("Using Bootstrap API Key from environment")
+             cursor.execute("INSERT INTO api_keys (access_key, memo) VALUES (%s, 'Bootstrap Key')", (bootstrap_key,))
+             if not os.getenv('BOOTSTRAP_API_KEY'):
+                logger.warning(f"!!! BOOTSTRAP API KEY GENERATED: {bootstrap_key} !!!")
+             
+        connection.commit()
+    except Error as e:
+        logger.error(f"DB Init Error: {e}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
 def get_db_connection():
     """Create database connection"""
@@ -46,20 +87,33 @@ def get_db_connection():
         logger.error(f"Database connection error: {e}")
         raise HTTPException(status_code=500, detail="Database connection failed")
 
+# Initialize DB on startup
+@app.on_event("startup")
+async def startup_event():
+    init_db()
 
 def validate_api_key(
     api_key_query: Optional[str] = Query(None, alias="api_key"),
     api_key_header: Optional[str] = Header(None, alias="api-key"),
     api_key_header_alt: Optional[str] = Header(None, alias="api_key")
 ):
-    """Validate API key from query parameter or header (supports api-key and api_key)"""
+    """Validate API key from query parameter or header against Database"""
     api_key = api_key_query or api_key_header or api_key_header_alt
     if not api_key:
         raise HTTPException(status_code=401, detail="API Key missing")
         
-    if api_key != VALID_API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid API key")
-    return api_key
+    connection = get_db_connection()
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT id FROM api_keys WHERE access_key = %s", (api_key,))
+        result = cursor.fetchone()
+        if not result:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+        return api_key
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
 
 
 @app.get("/")
@@ -415,7 +469,22 @@ async def add_black_list(
         import uuid
         info_id = str(uuid.uuid4())[:20] # Generate unique ID, max 20 chars
         
-        query = """
+        # Determine service and metadata based on memo (hfish-client.sh sends "Fail2ban Client Jail")
+        service_name = 'API_MANUAL'
+        country_name = 'Unknown'
+        
+        # Default keys for timestamp (using raw NOW())
+        create_time_expr = "NOW()"
+        update_time_expr = "NOW()"
+        
+        if request.memo and "Fail2ban" in request.memo:
+            service_name = 'FAIL2BAN'
+            country_name = 'by Fail2Ban'
+            # Correction for Fail2Ban script timezone (1 hour ahead)
+            create_time_expr = "DATE_SUB(NOW(), INTERVAL 1 HOUR)"
+            update_time_expr = "DATE_SUB(NOW(), INTERVAL 1 HOUR)"
+
+        query = f"""
             INSERT INTO infos (
                 info_id,
                 source_ip, 
@@ -429,16 +498,16 @@ async def add_black_list(
             ) VALUES (
                 %s,
                 %s, 
-                'Unknown', 
-                'FAIL2BAN', 
+                %s, 
+                %s, 
                 'manual_api', 
-                NOW(), 
-                NOW(),
+                {create_time_expr}, 
+                {update_time_expr},
                 0, 
                 %s
             )
         """
-        cursor.execute(query, (info_id, request.ip, request.memo))
+        cursor.execute(query, (info_id, request.ip, country_name, service_name, request.memo))
         connection.commit()
         
         return {
@@ -454,6 +523,55 @@ async def add_black_list(
         cursor.close()
         connection.close()
 
+
+@app.get("/api/v1/keys")
+async def list_keys(api_key: str = Depends(validate_api_key)):
+    connection = get_db_connection()
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT id, access_key, memo, created_at FROM api_keys ORDER BY created_at DESC")
+        keys = cursor.fetchall()
+        return {"status": 0, "data": keys}
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+class CreateKeyRequest(BaseModel):
+    memo: str
+
+@app.post("/api/v1/keys")
+async def create_key(request: CreateKeyRequest, api_key: str = Depends(validate_api_key)):
+    connection = get_db_connection()
+    try:
+        cursor = connection.cursor()
+        new_key = secrets.token_urlsafe(32)
+        cursor.execute("INSERT INTO api_keys (access_key, memo) VALUES (%s, %s)", (new_key, request.memo))
+        connection.commit()
+        return {"status": 0, "data": {"key": new_key, "memo": request.memo}}
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.delete("/api/v1/keys/{key_id}")
+async def delete_key(key_id: int, api_key: str = Depends(validate_api_key)):
+    connection = get_db_connection()
+    try:
+        cursor = connection.cursor()
+        # Prevent deleting the last key? Optional safety, but for now allow full control.
+        # Actually, let's prevent deleting the key used to make the request? No, tricky with multiple keys.
+        cursor.execute("DELETE FROM api_keys WHERE id = %s", (key_id,))
+        connection.commit()
+        return {"status": 0, "msg": "deleted"}
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.get("/api/ui", response_class=HTMLResponse)
+async def api_ui(request: Request): # No auth on UI load, but JS will fail without key
+    return templates.TemplateResponse("keys.html", {"request": request})
 
 if __name__ == "__main__":
     import uvicorn
