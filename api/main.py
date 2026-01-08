@@ -415,6 +415,7 @@ async def add_black_list(
                 service, 
                 client_id, 
                 create_time, 
+                update_time,
                 dest_port, 
                 info
             ) VALUES (
@@ -424,6 +425,7 @@ async def add_black_list(
                 'FAIL2BAN', 
                 'manual_api', 
                 NOW(), 
+                NOW(),
                 0, 
                 %s
             )
