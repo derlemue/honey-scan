@@ -168,7 +168,7 @@ def update_threat_feed():
     suspicious_cs = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 162"
+        query = "SELECT DISTINCT source_ip, source_ip_country, create_time, service FROM infos ORDER BY create_time DESC LIMIT 162"
         logger.info(f"Executing Query: {query}")
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -176,20 +176,32 @@ def update_threat_feed():
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
+            service = row.get('service', '') if isinstance(row, dict) else ""
+            
+            # Formatting for Fail2Ban entries
+            threat_type = "Port Scanner"
+            threat_risk = "Medium"
+            location_disp = country
+            
+            if service == 'FAIL2BAN':
+                threat_type = "jailed by rules"
+                threat_risk = "Low"
+                location_disp = "by Fail2Ban"
+
             if len(recent_hackers) < 135:
                 recent_hackers.append({
                     "ip": ip,
-                    "location": country,
+                    "location": location_disp,
                     "time": str(row.get('create_time', 'Just now')),
-                    "flag": country, 
+                    "flag": country if service != 'FAIL2BAN' else "Unknown", # Don't show flag for Fail2Ban or show Unknown? 
                     "count": 1
                 })
             if len(suspicious_cs) < 130:
                 suspicious_cs.append({
                         "ip": ip,
-                        "location": country,
-                        "type": "Port Scanner",
-                        "risk": "Medium",
+                        "location": location_disp,
+                        "type": threat_type,
+                        "risk": threat_risk,
                         "time": str(row.get("create_time", "")) if "create_time" in row else "Just now"
                     })
 
