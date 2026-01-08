@@ -114,6 +114,30 @@ services:
       - ./web/assets:/var/www/html/assets:ro
       - ./scripts:/var/www/html/scripts:ro
 
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: hfish-api
+    restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+    environment:
+      - TZ=Europe/Amsterdam
+      - DB_HOST=hfish-db
+      - DB_PORT=3306
+      - DB_USER=hfish
+      - DB_PASSWORD=734f181149acdabc269dacba6faf3be7
+      - DB_NAME=hfish
+      - API_KEY=nXYzlupNuFFiUZvGRrfaRTySjsIIfYChnpIDnDWIczkvIdMYXhdotcdtLLsBKuMU
+    ports:
+      - "4434:4434"
+    depends_on:
+      - mariadb
+    networks:
+      - default
+
   proxy:
     image: nginx:alpine
     container_name: hfish-proxy
@@ -131,6 +155,7 @@ services:
     depends_on:
       - hfish
       - feed
+      - api
 
 volumes:
   hfish_data:
