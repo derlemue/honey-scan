@@ -264,11 +264,11 @@ def get_new_attackers():
     ips = []
     try:
         cursor = conn.cursor()
-        # Filter for recent (last 7 days/168h) IPs to align with banned list policy and avoid reprocessing old IPs
+        # Filter for recent (last 14 days/336h) IPs to align with banned list policy and avoid reprocessing old IPs
         if DB_TYPE.lower() in ("mysql", "mariadb"):
-            query = "SELECT DISTINCT ip FROM ipaddress WHERE create_time >= DATE_SUB(NOW(), INTERVAL 168 HOUR) ORDER BY create_time DESC LIMIT 7500"
+            query = "SELECT DISTINCT ip FROM ipaddress WHERE create_time >= DATE_SUB(NOW(), INTERVAL 336 HOUR) ORDER BY create_time DESC LIMIT 7500"
         else:
-            query = "SELECT DISTINCT ip FROM ipaddress WHERE create_time >= datetime('now', '-168 hours') ORDER BY create_time DESC LIMIT 7500"
+            query = "SELECT DISTINCT ip FROM ipaddress WHERE create_time >= datetime('now', '-336 hours') ORDER BY create_time DESC LIMIT 7500"
         
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -334,12 +334,12 @@ def update_banned_list():
     if not conn: return
     try:
         cursor = conn.cursor()
-        # Regenerate banned list from DB (infos table) for the last 7 days (168 hours)
-        # This ensures the list serves as a 7-day rolling window blocklist
+        # Regenerate banned list from DB (infos table) for the last 14 days (336 hours)
+        # This ensures the list serves as a 14-day rolling window blocklist
         if DB_TYPE.lower() in ("mysql", "mariadb"):
-            query = "SELECT DISTINCT source_ip FROM infos WHERE create_time >= DATE_SUB(NOW(), INTERVAL 168 HOUR)"
+            query = "SELECT DISTINCT source_ip FROM infos WHERE create_time >= DATE_SUB(NOW(), INTERVAL 336 HOUR)"
         else:
-            query = "SELECT DISTINCT source_ip FROM infos WHERE create_time >= datetime('now', '-168 hours')"
+            query = "SELECT DISTINCT source_ip FROM infos WHERE create_time >= datetime('now', '-336 hours')"
             
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -351,7 +351,7 @@ def update_banned_list():
         with open(BANNED_IPS_FILE, "w") as f:
             for ip in sorted(banned_ips):
                 f.write(f"{ip}\n")
-        logger.info(f"Updated banned list from DB (last 7 days). Total active: {len(banned_ips)}")
+        logger.info(f"Updated banned list from DB (last 14 days). Total active: {len(banned_ips)}")
         
     except Exception as e:
         logger.error(f"Error updating banned list: {e}")
