@@ -343,7 +343,7 @@ def scan_ip(ip):
     logger.info(f"Scanning {ip}...")
     try:
         command = ["nmap", "-A", "-T4", "-Pn", ip] 
-        result = subprocess.run(command, capture_output=True, text=True, timeout=20)
+        result = subprocess.run(command, capture_output=True, text=True, timeout=120)
         with open(report_path, "w") as f:
             f.write(f"Scan Time: {time.ctime()}\n")
             f.write(f"Target: {ip}\n")
