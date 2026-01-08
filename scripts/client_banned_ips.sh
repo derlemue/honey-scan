@@ -262,7 +262,12 @@ def configure_jail(host, jail, ports, bantime=1209600): # 14 days default
                 continue
             if "The jail" in clean_line and "actions" in clean_line:
                 continue
-            actions.append(clean_line)
+            
+            # Split by comma if multiple actions are on one line
+            for act in clean_line.split(','):
+                act = act.strip()
+                if act:
+                    actions.append(act)
         
         for action in actions:
             # Setting port: fail2ban-client set JAIL action ACTION port PORTS
