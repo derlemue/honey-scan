@@ -83,7 +83,7 @@ set -- "${ARGS[@]}"
 # Help / Usage
 usage() {
     echo "Usage: $0 <ip_address> [api_key] OR $0 --sync"
-    echo "  --sync       : Sync last 200 banned IPs from Fail2Ban to API"
+    echo "  --sync       : Sync ALL banned IPs from Fail2Ban to API"
     echo "  <ip_address> : The attacker IP to ban (required)"
     echo "  [api_key]    : Your HFish API Key (optional if configured in script)"
     echo ""
@@ -99,7 +99,7 @@ sync_history() {
         exit 1
     fi
 
-    echo "Syncing up to 200 banned IPs from Fail2Ban..."
+    echo "Syncing ALL banned IPs from Fail2Ban..."
     
     # Get all jails
     JAILS=$(fail2ban-client status 2>/dev/null | grep "Jail list:" | sed 's/.*Jail list://' | tr ',' ' ')
@@ -116,9 +116,9 @@ sync_history() {
         ALL_IPS="$ALL_IPS $IPS"
     done
 
-    # Process IPs: unique, clean, take last 200
+    # Process IPs: unique, clean, take ALL
     # Note: 'fail2ban-client status' output order is not strictly chronological, but good enough for snapshot
-    UNIQUE_IPS=$(echo "$ALL_IPS" | tr ' ' '\n' | grep -E "^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$" | sort -u | head -n 200)
+    UNIQUE_IPS=$(echo "$ALL_IPS" | tr ' ' '\n' | grep -E "^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$" | sort -u)
     
     COUNT=0
     TOTAL=$(echo "$UNIQUE_IPS" | wc -w)
@@ -142,7 +142,7 @@ sync_history() {
         echo "  Response: $RESPONSE"
         
         # Small delay to be nice to the API
-        sleep 0.5
+        sleep 0.75
     done
     
     echo "Sync completed."
