@@ -2161,16 +2161,44 @@
                 // Helper function to generate table rows
                 const generateTableRows = (data, isHackers) => {
                     const l = window.hsTableState ? window.hsTableState.limit : 26;
+                    
+                    // Access global COUNTRY_MAP if available
+                    const countryMap = window.COUNTRY_MAP || {};
+                    
                     return data.slice(0, l).map(item => { // Dynamic Limit
                         const ip = item.ip || 'N/A';
-                        const location = translateLocation(item.location || item.flag || 'Unknown');
+                        let locationName = item.location || item.flag || 'Unknown';
+                        locationName = translateLocation(locationName); // Translate to English
+                        
                         const time = item.time || '';
+
+                        // Determine Flag Icon
+                        // Try to find code by English name
+                        let flagCode = countryMap[locationName];
+                        if (!flagCode) {
+                            // Try lowercase lookup
+                             flagCode = countryMap[Object.keys(countryMap).find(key => key.toLowerCase() === locationName.toLowerCase())];
+                        }
+                        // Fallback for common ones if map missing
+                        if (!flagCode && locationName === 'United States') flagCode = 'us';
+                        if (!flagCode && locationName === 'China') flagCode = 'cn';
+                        if (!flagCode && locationName === 'Unknown') flagCode = 'un';
+
+                        // Flag HTML
+                        let flagHtml = '';
+                        if (flagCode) {
+                            flagHtml = `<svg class="icon" aria-hidden="true" style="width: 16px; height: 12px; vertical-align: middle; margin-right: 4px;">
+                                            <use xlink:href="#icon-flag-${flagCode}"></use>
+                                        </svg>`;
+                        }
 
                         if (isHackers) {
                             const timeDisplay = time.includes(' ') ? time.split(' ')[1] : time;
                             return `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                                         <td style="padding: 6px;"><div style="font-weight: bold; color: #e2e8f0; font-family: monospace; font-size: 11px;">${ip}</div></td>
-                                        <td style="padding: 6px; color: #94a3b8; font-size: 11px;">${location}</td>
+                                        <td style="padding: 6px; color: #94a3b8; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                           ${flagHtml} ${locationName}
+                                        </td>
                                         <td style="padding: 6px; color: rgba(255,255,255,0.4); font-size: 11px;">${timeDisplay}</td>
                                     </tr>`;
                         } else {
