@@ -231,28 +231,30 @@ def update_threat_feed():
                     if city and city != country:
                          location_str = f"{country} {city}"
 
-                    # Timezone Logic: Add 1 hour to DB time
+                     # Timezone Logic: Add 1 hour to DB time
                     info_time = row.get('create_time')
                     time_display = "Just now"
                     if info_time:
                          try:
-                             # If it's already a datetime object, just add timedelta
+                             # 1. Ensure we have a datetime object
                              if isinstance(info_time, str):
-                                 # Basic parsing if string (assuming standard SQL format)
-                                 # But pymysql usually returns datetime. 
-                                 # Let's try to parse if string, or just use if datetime
-                                 pass 
-                             
-                             if not isinstance(info_time, datetime):
-                                  # If string, try to parse? Or just leave it?
-                                  # For safety, if it's not a datetime, we might skip +1h or try robust parse.
-                                  # Assuming pymysql returns datetime...
-                                  pass
-                             
-                             # Force conversion to datetime if possible, or just add if it supports it
-                             new_time = info_time + timedelta(hours=1)
-                             time_display = str(new_time)
-                         except Exception:
+                                 # Try parsing common MySQL formats
+                                 try:
+                                    info_time = datetime.strptime(info_time, "%Y-%m-%d %H:%M:%S")
+                                 except ValueError:
+                                    # Try without seconds or other formats if needed
+                                    pass
+
+                             if isinstance(info_time, datetime):
+                                 # 2. Add 1 hour
+                                 new_time = info_time + timedelta(hours=1)
+                                 time_display = str(new_time)
+                             else:
+                                 # Fallback: Just return string if we failed to parse
+                                 time_display = str(info_time)
+
+                         except Exception as e:
+                             logger.error(f"Time parsing error: {e}")
                              time_display = str(info_time)
 
                     suspicious_cs.append({
