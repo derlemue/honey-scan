@@ -89,6 +89,7 @@ services:
       - DB_NAME=hfish
       - THREATBOOK_API_KEY=${THREATBOOK_API_KEY}
       - THREATBOOK_API_BASE_URL=${THREATBOOK_API_BASE_URL}
+      - FORCE_RESCAN=true
     volumes:
       - ./scans:/app/scans
       - ./feed:/app/feed

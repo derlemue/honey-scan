@@ -307,7 +307,23 @@ def get_new_attackers():
         logger.error(f"Error fetching attackers: {e}")
         if conn: conn.close()
     
-    # Filter out IPs already in banned list
+    # Check if force rescan is enabled
+    force_rescan = os.getenv('FORCE_RESCAN', 'false').lower() == 'true'
+    
+    if force_rescan:
+        # Skip ban check - scan everything without reports
+        new_ips = []
+        for ip in ips:
+            if len(ip) < 7:
+                continue
+            report_path = os.path.join(FEED_DIR, f"{ip}.txt")
+            if not os.path.exists(report_path):
+                new_ips.append(ip)
+        if new_ips:
+            logger.info(f"FORCE RESCAN: Found {len(new_ips)} IPs without reports (out of {len(ips)} total)")
+        return new_ips
+    
+    # Normal mode: Filter out IPs already in banned list
     current_banned = set()
     if os.path.exists(BANNED_IPS_FILE):
         try:
