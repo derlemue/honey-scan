@@ -200,7 +200,7 @@ def update_threat_feed():
                     "flag": country, 
                     "count": 1
                 })
-            if len(suspicious_cs) < 125:
+            if len(suspicious_cs) < 130:
                 suspicious_cs.append({
                         "ip": ip,
                         "location": country,
@@ -209,9 +209,9 @@ def update_threat_feed():
                         "time": str(row.get("create_time", "")) if "create_time" in row else "Just now"
                     })
 
-        # Enforce exact limit of 125 items (25 * 5 pages)
-        recent_hackers = recent_hackers[:125]
-        suspicious_cs = suspicious_cs[:125]
+        # Enforce exact limit of 130 items (26 * 5 pages)
+        recent_hackers = recent_hackers[:130]
+        suspicious_cs = suspicious_cs[:130]
 
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": False}
         
