@@ -77,7 +77,7 @@ services:
 
   sidecar:
     build: ./sidecar
-    container_name: hfish-sidecar
+    container_name: hfish-sidecar-v2
     restart: unless-stopped
     dns:
       - 1.1.1.1
