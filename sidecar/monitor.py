@@ -483,7 +483,8 @@ def main():
                     for ip in attackers:
                         scanning_ips.add(ip)
                         executor.submit(scan_ip, ip)
-                    update_banned_list()
+                
+                update_banned_list()
                 fix_missing_severity()
                 translate_to_english()  # Translate Chinese to English
                 # update_index() removed
