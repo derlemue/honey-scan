@@ -95,7 +95,7 @@ Wenn dich jemand angreift:
     *   **Statistik**:
         <br>
         <div align="center">
-        <img src="docs/img/hfish_dashboard_v4.png" width="80%">
+        <img src="docs/img/hfish_dashboard_v5.png" width="80%">
         <p><em>Statistik Seite</em></p>
         </div>
 

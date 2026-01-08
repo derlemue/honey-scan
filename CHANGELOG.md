@@ -1,3 +1,16 @@
+## [6.0.0] - 2026-01-08
+
+### Added
+- 📸 **Visuals**: Updated "lemueIO Statistics" screenshot in documentation with the new v6 Dashboard layout.
+- 🎨 **Layout**: Complete overhaul of the "Threat Intelligence from the Cloud" widget on the dashboard.
+    - **Optimized Columns**: Redistributed column widths (IP 25%, Loc 24%, Type 23%, Risk 14%, Time 14%) for perfect readability.
+    - **Robust Rendering**: Enforced Flexbox layout to prevent overflows and scrollbars on parent containers.
+    - **Capacity**: Optimized for exactly 26 items per page without vertical scrolling.
+    - **Styling**: Restored row separators and refined padding (5px margins).
+
+### Changed
+- 🆙 **Major Release**: Version bump to 6.0.0 marking the finalization of the dashboard layout and stability fixes.
+
 ## [5.2.0] - 2026-01-05
 
 ### Added

@@ -94,7 +94,7 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
     *   **lemueIO Statistics** (Intern):
         <br>
         <div align="center">
-        <img src="docs/img/hfish_dashboard_v4.png" width="80%">
+        <img src="docs/img/hfish_dashboard_v5.png" width="80%">
         <p><em>Statistics Dashboard</em></p>
         </div>
 

@@ -7,7 +7,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-5.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-6.0.0-blue.svg)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -94,7 +94,7 @@ When an attacker touches your honeypot, Honey-Scan automatically:
     *   **lemueIO Statistics** (Internal):
         <br>
         <div align="center">
-        <img src="docs/img/hfish_dashboard_v4.png" width="80%">
+        <img src="docs/img/hfish_dashboard_v5.png" width="80%">
         <p><em>Statistics Dashboard</em></p>
         </div>
 
