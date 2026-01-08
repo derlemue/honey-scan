@@ -251,15 +251,18 @@ def update_threat_feed():
                                  except ValueError:
                                      pass
                              
+                             # Force conversion to datetime if possible, or just add if it supports it
                              if final_dt:
                                  # Add 1 hour
-                                 final_dt = final_dt + timedelta(hours=1)
-                                 time_display = str(final_dt)
+                                 new_time = final_dt + timedelta(hours=1)
+                                 time_display = str(new_time)
+                                 # logger.info(f"DEBUG TIME: Original={info_time} -> Adjusted={time_display}")
                              else:
                                  time_display = str(info_time)
+                                 logger.warning(f"DEBUG TIME: Failed to parse {info_time}")
 
                          except Exception as e:
-                             # logger.error(f"Time parsing error: {e}")
+                             logger.error(f"Time parsing error: {e}")
                              time_display = str(info_time)
 
                     suspicious_cs.append({
@@ -487,6 +490,7 @@ def init_env():
 def main():
     init_env()
     logger.info(f"Monitor started (DB_TYPE={DB_TYPE}).")
+    logger.info(f"DEBUG: DB_USER={DB_USER}, DB_HOST={DB_HOST}, DB_NAME={DB_NAME}")
     logger.info("Waiting 30s for DB to be ready...")
     time.sleep(30) 
     ensure_db_schema()
