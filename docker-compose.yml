@@ -46,8 +46,6 @@ services:
       - ./docs:/opt/hfish/current/web/docs:ro
       - ./docs:/opt/hfish/3.3.6/web/docs:ro
       - ./api:/opt/hfish/api:ro
-    command: >
-      sh -c " pip3 install --no-cache-dir fastapi==0.115.0 uvicorn[standard]==0.32.0 mysql-connector-python==9.1.0 python-dotenv==1.0.1 && cd /opt/hfish/api && nohup uvicorn main:app --host 127.0.0.1 --port 4434 --workers 2 & exec /opt/hfish/hfish "
     deploy:
       resources:
         limits:
@@ -95,8 +93,14 @@ services:
       - ./feed:/app/feed
       - ./web/assets:/app/assets
       - ./sidecar/monitor.py:/app/monitor.py
+      - ./api:/app/api
+    ports:
+      - "4434:4434"
+    command: >
+      sh -c " pip install --no-cache-dir fastapi==0.115.0 uvicorn[standard]==0.32.0 mysql-connector-python==9.1.0 python-dotenv==1.0.1 && cd /app/api && nohup uvicorn main:app --host 0.0.0.0 --port 4434 --workers 2 > /tmp/api.log 2>&1 & cd /app && exec python monitor.py "
+    networks:
+      - default
     depends_on:
-      - hfish
       - mariadb
 
   feed:
