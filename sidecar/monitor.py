@@ -34,7 +34,7 @@ INDEX_FILE = os.path.join(FEED_DIR, "index.html")
 LIVE_THREATS_FILE = os.path.join(ASSETS_DIR, "live_threats.json")
 STATS_FILE = os.path.join(ASSETS_DIR, "stats.json")
 
-MAX_WORKERS = 10 
+MAX_WORKERS = 3  # Limit concurrent scans to avoid timeouts 
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -297,7 +297,7 @@ def get_new_attackers():
     ips = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT ip FROM ipaddress ORDER BY create_time DESC LIMIT 1000"
+        query = "SELECT DISTINCT ip FROM ipaddress ORDER BY create_time DESC LIMIT 1500"
         cursor.execute(query)
         rows = cursor.fetchall()
         for row in rows:
