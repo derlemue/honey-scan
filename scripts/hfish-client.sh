@@ -82,7 +82,8 @@ set -- "${ARGS[@]}"
 
 # Help / Usage
 usage() {
-    echo "Usage: $0 <ip_address> [api_key]"
+    echo "Usage: $0 <ip_address> [api_key] OR $0 --sync"
+    echo "  --sync       : Sync last 200 banned IPs from Fail2Ban to API"
     echo "  <ip_address> : The attacker IP to ban (required)"
     echo "  [api_key]    : Your HFish API Key (optional if configured in script)"
     echo ""
@@ -91,7 +92,68 @@ usage() {
     exit 1
 }
 
+# Sync History Logic
+sync_history() {
+    if ! command -v fail2ban-client &> /dev/null; then
+        echo "Error: fail2ban-client not found. Cannot sync history."
+        exit 1
+    fi
+
+    echo "Syncing up to 200 banned IPs from Fail2Ban..."
+    
+    # Get all jails
+    JAILS=$(fail2ban-client status 2>/dev/null | grep "Jail list:" | sed 's/.*Jail list://' | tr ',' ' ')
+    
+    if [ -z "$JAILS" ]; then
+        echo "No jails found or Fail2Ban not running."
+        exit 0
+    fi
+
+    # Collect IPs from all jails
+    ALL_IPS=""
+    for JAIL in $JAILS; do
+        IPS=$(fail2ban-client status "$JAIL" 2>/dev/null | grep -E "Banned IP list:|Invalid" | sed 's/.*Banned IP list://' | tr ',' ' ')
+        ALL_IPS="$ALL_IPS $IPS"
+    done
+
+    # Process IPs: unique, clean, take last 200
+    # Note: 'fail2ban-client status' output order is not strictly chronological, but good enough for snapshot
+    UNIQUE_IPS=$(echo "$ALL_IPS" | tr ' ' '\n' | grep -E "^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$" | sort -u | head -n 200)
+    
+    COUNT=0
+    TOTAL=$(echo "$UNIQUE_IPS" | wc -w)
+    
+    echo "Found $TOTAL unique IPs to sync."
+
+    for IP in $UNIQUE_IPS; do
+        ((COUNT++))
+        echo "[$COUNT/$TOTAL] Syncing $IP..."
+        
+        # Reuse API key logic
+        if [ -z "$API_KEY" ]; then
+             echo "Error: API_KEY not configured."
+             exit 1
+        fi
+
+        URL="$API_URL/api/v1/config/black_list/add?api_key=$API_KEY"
+        PAYLOAD="{\"ip\": \"$IP\", \"memo\": \"Fail2ban Start Sync\"}"
+        
+        RESPONSE=$(curl -k -s -X POST "$URL" -H "Content-Type: application/json" -d "$PAYLOAD")
+        echo "  Response: $RESPONSE"
+        
+        # Small delay to be nice to the API
+        sleep 0.1
+    done
+    
+    echo "Sync completed."
+}
+
 # Check arguments
+if [ "$1" == "--sync" ]; then
+    sync_history
+    exit 0
+fi
+
 if [ -z "$1" ]; then
     usage
 fi
