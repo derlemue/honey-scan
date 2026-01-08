@@ -2255,11 +2255,14 @@
                     injectDashboardThreats();
                 }, 2000); // Wait 2s for React to fully load
 
-                // AUTO-REFRESH mechanism - respects HFish's auto-refresh settings
+                // AUTO-REFRESH mechanism - always enabled
+                console.log('[HoneyScan] Starting auto-refresh interval (30s)');
                 setInterval(() => {
+                    console.log('[HoneyScan] Auto-refresh tick at', new Date().toTimeString());
                     try {
                         // Auto-refresh is always enabled for dashboard
                         if (location.href.includes('/dashboard')) {
+                            console.log('[HoneyScan] Dashboard detected, fetching fresh data...');
                             // Find the injected table body
                             const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
                             const widgetHeader = headers.find(el => {
@@ -2270,18 +2273,28 @@
                                 }
                             });
 
-                            if (!widgetHeader) return;
+                            if (!widgetHeader) {
+                                console.warn('[HoneyScan] Widget header not found');
+                                return;
+                            }
 
                             let card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
-                            if (!card) return;
+                            if (!card) {
+                                console.warn('[HoneyScan] Card container not found');
+                                return;
+                            }
 
                             let body = card.querySelector('.el-card__body') || card.lastElementChild;
-                            if (!body) return;
+                            if (!body) {
+                                console.warn('[HoneyScan] Card body not found');
+                                return;
+                            }
 
                             // Fetch fresh data
                             fetch('/assets/live_threats.json?t=' + Date.now())
                                 .then(r => r.json())
                                 .then(data => {
+                                    console.log('[HoneyScan] Fresh data fetched:', data.cs?.length, 'items');
                                     // Apply time adjustment
                                     if (data && Array.isArray(data.cs) && window.adjustTime) {
                                         data.cs = data.cs.map(i => ({ ...i, time: window.adjustTime(i.time) }));
@@ -2289,17 +2302,25 @@
                                     return data;
                                 })
                                 .then(data => {
-                                    if (!data || !Array.isArray(data.cs)) return;
+                                    if (!data || !Array.isArray(data.cs)) {
+                                        console.warn('[HoneyScan] Invalid data received');
+                                        return;
+                                    }
 
                                     // Update Global Data and Re-render
                                     window.hsThreatData = window.ensureMinThreats(data.cs);
 
                                     if (typeof window.renderThreatTable === 'function') {
                                         window.renderThreatTable();
+                                        console.log('[HoneyScan] Table re-rendered successfully');
+                                    } else {
+                                        console.warn('[HoneyScan] renderThreatTable function not found');
                                     }
                                 })
                                 .catch(e => console.warn('[HoneyScan] Auto-refresh failed:', e));
 
+                        } else {
+                            console.log('[HoneyScan] Not on dashboard page, skipping refresh');
                         }
                     } catch (e) {
                         console.warn('[HoneyScan] Auto-refresh loop error:', e);
