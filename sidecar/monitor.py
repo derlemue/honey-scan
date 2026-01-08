@@ -255,8 +255,8 @@ def update_threat_feed():
                              
                              # Force conversion to datetime if possible, or just add if it supports it
                              if final_dt:
-                                 # Add 2 hours (1h was insufficient, implies DB is UTC-1 or similar lag)
-                                 new_time = final_dt + timedelta(hours=2)
+                                 # Add 3 hours (Heuristic adjustment based on observation)
+                                 new_time = final_dt + timedelta(hours=3)
                                  time_display = str(new_time)
                              else:
                                  time_display = str(info_time)
