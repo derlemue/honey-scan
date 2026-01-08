@@ -112,7 +112,7 @@ def get_geolocation():
                 'lng': geo.get('lon', 0.0),
                 'city': geo.get('city', 'Unknown'),
                 'country': geo.get('country', 'Unknown'),
-                'location_str': f"{geo.get('city')}, {geo.get('country')}"
+                'country': f"{geo.get('city')}, {geo.get('country')}"
             }
         else:
             logger.warning(f"Geo API failed for {ip}: {geo.get('message')}")
@@ -142,7 +142,7 @@ def update_node_location():
     if not data:
         logger.warning("Could not determine dynamic location.")
         return
-    logger.info(f"Detected Public IP: {data['ip']}, Location: {data['location_str']} ({data['lat']}, {data['lng']})")
+    logger.info(f"Detected Public IP: {data['ip']}, Location: {data['country']} ({data['lat']}, {data['lng']})")
     try:
         json_path = "/app/assets/location.json"
         if not os.path.exists(os.path.dirname(json_path)):
@@ -157,7 +157,7 @@ def update_node_location():
         cursor = conn.cursor()
         if DB_TYPE == "mysql":
             query = """UPDATE nodes SET location = %s, lat = %s, lng = %s, city = %s, country = %s"""
-            cursor.execute(query, (data['location_str'], data['lat'], data['lng'], data['city'], data['country']))
+            cursor.execute(query, (data['country'], data['lat'], data['lng'], data['city'], data['country']))
             if cursor.rowcount > 0: logger.info(f"Updated {cursor.rowcount} node(s) location.")
         conn.close()
     except Exception as e:
@@ -225,54 +225,12 @@ def update_threat_feed():
                     "count": 1
                 })
             if len(suspicious_cs) < 125:
-                # Removed ThreatBook API due to rate limiting
-                if threat_data:
-                    # Location Logic: Default to DB Country (English). Append API City if available.
-                    # This avoids the Chinese country name from ThreatBook.
-                    city = threat_data['location'].get('city', '')
-                    location_str = country
-                    if city and city != country:
-                         location_str = f"{country} {city}"
-
-                     # Timezone Logic: Add 1 hour to DB time
-                    info_time = row.get('create_time')
-                    time_display = "Just now"
-                    
-                    if info_time:
-                         try:
-                             final_dt = None
-                             
-                             # 1. If it relies on pymysql's datetime conversion
-                             if isinstance(info_time, datetime):
-                                 final_dt = info_time
-                             
-                             # 2. If it's a string (e.g. from sqlite or failed conversion)
-                             elif isinstance(info_time, str):
-                                 # Try standard format
-                                 try:
-                                     final_dt = datetime.strptime(info_time, "%Y-%m-%d %H:%M:%S")
-                                 except ValueError:
-                                     pass
-                             
-                             # Force conversion to datetime if possible, or just add if it supports it
-                             if final_dt:
-                                 # Add 1 hour (User Request: +1 is sufficient)
-                                 new_time = final_dt + timedelta(hours=1)
-                                 time_display = str(new_time)
-                             else:
-                                 time_display = str(info_time)
-                                 # logger.warning(f"DEBUG TIME: Failed to parse {info_time}")
-
-                         except Exception as e:
-                             logger.error(f"Time parsing error: {e}")
-                             time_display = str(info_time)
-
-                    suspicious_cs.append({
+                suspicious_cs.append({
                         "ip": ip,
-                        "location": location_str,
-                        "type": threat_data['judgments'][0] if threat_data['judgments'] else "Scanner",
-                        "risk": threat_data['severity'].capitalize(),
-                        "time": time_display
+                        "location": country,
+                        "type": "Port Scanner",
+                        "risk": "Medium",
+                        "time": str(row.get("create_time", "")) if "create_time" in row else "Just now"
                     })
                 else:
                 suspicious_cs.append({
