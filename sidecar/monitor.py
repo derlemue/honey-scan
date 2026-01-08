@@ -232,14 +232,15 @@ def update_threat_feed():
                         "risk": "Medium",
                         "time": str(row.get("create_time", "")) if "create_time" in row else "Just now"
                     })
-            # Inject static IPs as requested
-            recent_hackers.insert(0, {"ip": "45.33.22.11", "location": "France", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "flag": "France", "count": 1})
-            recent_hackers.insert(0, {"ip": "188.166.44.33", "location": "Netherlands", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "flag": "Netherlands", "count": 1})
-            
-            suspicious_cs.insert(0, {"ip": "103.45.67.89", "location": "Vietnam", "type": "Exploit", "risk": "Critical", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
-            suspicious_cs.insert(0, {"ip": "185.200.11.22", "location": "Turkey", "type": "Web Scan", "risk": "Medium", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
-            output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
+        # Inject static IPs as requested
+        recent_hackers.insert(0, {"ip": "45.33.22.11", "location": "France", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "flag": "France", "count": 1})
+        recent_hackers.insert(0, {"ip": "188.166.44.33", "location": "Netherlands", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "flag": "Netherlands", "count": 1})
+        
+        suspicious_cs.insert(0, {"ip": "103.45.67.89", "location": "Vietnam", "type": "Exploit", "risk": "Critical", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+        suspicious_cs.insert(0, {"ip": "185.200.11.22", "location": "Turkey", "type": "Web Scan", "risk": "Medium", "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+
+        output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
         
         # Direct write to preserve inode for Docker bind mount
         with open(LIVE_THREATS_FILE, "w") as f:
