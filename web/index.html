@@ -1818,8 +1818,7 @@
                         body.style.flexDirection = 'column';
                         body.style.minHeight = '0';
                         body.style.padding = '0';
-                        body.style.maxHeight = '100%'; // Don't exceed parent
-                        body.style.overflow = 'hidden'; // Prevent overflow
+                        // Remove maxHeight constraint to allow natural fit
                     }
 
                     body.innerHTML = `
