@@ -1807,7 +1807,11 @@
                     // NEW: Flex layout on CARD to ensure body fills space correctly
                     card.style.display = 'flex';
                     card.style.flexDirection = 'column';
-                    card.style.padding = '2px'; // FIX: Outer parent padding to 2px as requested
+                    // FIX: Restore top padding (default), set others to 5px
+                    card.style.paddingTop = '';
+                    card.style.paddingRight = '5px';
+                    card.style.paddingBottom = '5px';
+                    card.style.paddingLeft = '5px';
 
                     // Ensure children respect flex
                     // Header (usually first child) should not grow
