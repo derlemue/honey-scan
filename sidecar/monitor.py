@@ -283,7 +283,6 @@ def update_threat_feed():
                         "time": str(row.get('create_time', '')) if 'create_time' in row else "Just now"
                     })
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
-        output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": bool(THREATBOOK_API_KEY)}
         
         # Direct write to preserve inode for Docker bind mount
         with open(LIVE_THREATS_FILE, "w") as f:
