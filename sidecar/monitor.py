@@ -225,7 +225,7 @@ def update_threat_feed():
                     "count": 1
                 })
             if len(suspicious_cs) < 125:
-                threat_data = query_threatbook_ip(ip)
+                # Removed ThreatBook API due to rate limiting
                 if threat_data:
                     # Location Logic: Default to DB Country (English). Append API City if available.
                     # This avoids the Chinese country name from ThreatBook.
@@ -275,7 +275,7 @@ def update_threat_feed():
                         "time": time_display
                     })
                 else:
-                     suspicious_cs.append({
+                suspicious_cs.append({
                         "ip": ip,
                         "location": country,
                         "type": "Port Scanner",
