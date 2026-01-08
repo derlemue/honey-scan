@@ -1,13 +1,9 @@
 <div align="center">
-
-# 🍯 Honey-Scan
-### Active Defense Ecosystem
-
-<img src="docs/img/logo.png" width="200">
-
-<br>
-
-![Version](https://img.shields.io/badge/version-6.1.0-blue.svg)
+    <img src="doc/img/logo_bear.webp" alt="Honey Scan Bear" width="300" style="border-radius: 50%; padding: 10px;">
+    <h1>Honey Scan</h1>
+    <p><b>Active Defense & Threat Intelligence Platform</b></p>
+    
+[![Version](https://img.shields.io/badge/version-6.2.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
