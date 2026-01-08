@@ -264,7 +264,12 @@ def get_new_attackers():
     ips = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT ip FROM ipaddress ORDER BY create_time DESC LIMIT 7500"
+        # Filter for recent (last 72h) IPs to align with banned list policy and avoid reprocessing old IPs
+        if DB_TYPE.lower() in ("mysql", "mariadb"):
+            query = "SELECT DISTINCT ip FROM ipaddress WHERE create_time >= DATE_SUB(NOW(), INTERVAL 72 HOUR) ORDER BY create_time DESC LIMIT 7500"
+        else:
+            query = "SELECT DISTINCT ip FROM ipaddress WHERE create_time >= datetime('now', '-72 hours') ORDER BY create_time DESC LIMIT 7500"
+        
         cursor.execute(query)
         rows = cursor.fetchall()
         for row in rows:
@@ -324,28 +329,34 @@ def scan_ip(ip):
         if ip in scanning_ips:
             scanning_ips.remove(ip)
 
-def update_banned_list(ips):
-    current_banned = set()
-    if os.path.exists(BANNED_IPS_FILE):
-        try:
-            with open(BANNED_IPS_FILE, "r") as f:
-                current_banned = set(line.strip() for line in f if line.strip())
-        except Exception as e:
-            logger.error(f"Error reading banned IPs: {e}")
+def update_banned_list():
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cursor = conn.cursor()
+        # Regenerate banned list from DB (infos table) for the last 72 hours
+        # This ensures the list serves as a 72-hour rolling window blocklist
+        if DB_TYPE.lower() in ("mysql", "mariadb"):
+            query = "SELECT DISTINCT source_ip FROM infos WHERE create_time >= DATE_SUB(NOW(), INTERVAL 72 HOUR)"
+        else:
+            query = "SELECT DISTINCT source_ip FROM infos WHERE create_time >= datetime('now', '-72 hours')"
+            
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        
+        banned_ips = set()
+        for row in rows:
+            banned_ips.add(row['source_ip'] if isinstance(row, dict) else row[0])
 
-    # Calculate actually new IPs for logging
-    new_ips = set(ips) - current_banned
-    
-    if new_ips:
-        # Merge and rewriting file to ensure no duplicates and sorted order
-        all_banned = current_banned.union(new_ips)
-        try:
-            with open(BANNED_IPS_FILE, "w") as f:
-                for ip in sorted(all_banned):
-                    f.write(f"{ip}\n")
-            logger.info(f"Added {len(new_ips)} IPs to ban list. Total unique: {len(all_banned)}")
-        except Exception as e:
-            logger.error(f"Error writing banned IPs: {e}")
+        with open(BANNED_IPS_FILE, "w") as f:
+            for ip in sorted(banned_ips):
+                f.write(f"{ip}\n")
+        logger.info(f"Updated banned list from DB (last 72h). Total active: {len(banned_ips)}")
+        
+    except Exception as e:
+        logger.error(f"Error updating banned list: {e}")
+    finally:
+        if conn: conn.close()
 
 
     
@@ -471,7 +482,7 @@ def main():
                     for ip in attackers:
                         scanning_ips.add(ip)
                         executor.submit(scan_ip, ip)
-                    update_banned_list(attackers)
+                    update_banned_list()
                 fix_missing_severity()
                 translate_to_english()  # Translate Chinese to English
                 # update_index() removed
