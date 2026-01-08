@@ -1613,7 +1613,7 @@
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
         // Global State for Pagination
-        window.hsTableState = window.hsTableState || { page: 1, limit: 8 };
+        window.hsTableState = window.hsTableState || { page: 1, limit: 25 };
         window.hsThreatData = window.hsThreatData || [];
 
         // Shared Render Function
@@ -2079,7 +2079,7 @@
 
                 // Helper function to generate table rows
                 const generateTableRows = (data, isHackers) => {
-                    const l = window.hsTableState ? window.hsTableState.limit : 8;
+                    const l = window.hsTableState ? window.hsTableState.limit : 25;
                     return data.slice(0, l).map(item => { // Dynamic Limit
                         const ip = item.ip || 'N/A';
                         const location = translateLocation(item.location || item.flag || 'Unknown');

@@ -234,27 +234,32 @@ def update_threat_feed():
                      # Timezone Logic: Add 1 hour to DB time
                     info_time = row.get('create_time')
                     time_display = "Just now"
+                    
                     if info_time:
                          try:
-                             # 1. Ensure we have a datetime object
-                             if isinstance(info_time, str):
-                                 # Try parsing common MySQL formats
-                                 try:
-                                    info_time = datetime.strptime(info_time, "%Y-%m-%d %H:%M:%S")
-                                 except ValueError:
-                                    # Try without seconds or other formats if needed
-                                    pass
-
+                             final_dt = None
+                             
+                             # 1. If it relies on pymysql's datetime conversion
                              if isinstance(info_time, datetime):
-                                 # 2. Add 1 hour
-                                 new_time = info_time + timedelta(hours=1)
-                                 time_display = str(new_time)
+                                 final_dt = info_time
+                             
+                             # 2. If it's a string (e.g. from sqlite or failed conversion)
+                             elif isinstance(info_time, str):
+                                 # Try standard format
+                                 try:
+                                     final_dt = datetime.strptime(info_time, "%Y-%m-%d %H:%M:%S")
+                                 except ValueError:
+                                     pass
+                             
+                             if final_dt:
+                                 # Add 1 hour
+                                 final_dt = final_dt + timedelta(hours=1)
+                                 time_display = str(final_dt)
                              else:
-                                 # Fallback: Just return string if we failed to parse
                                  time_display = str(info_time)
 
                          except Exception as e:
-                             logger.error(f"Time parsing error: {e}")
+                             # logger.error(f"Time parsing error: {e}")
                              time_display = str(info_time)
 
                     suspicious_cs.append({
