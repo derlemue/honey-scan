@@ -300,7 +300,7 @@ def get_new_attackers():
     ips = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT ip FROM ipaddress ORDER BY create_time DESC LIMIT 1500"
+        query = "SELECT DISTINCT ip FROM ipaddress ORDER BY create_time DESC LIMIT 2000"
         cursor.execute(query)
         rows = cursor.fetchall()
         for row in rows:
