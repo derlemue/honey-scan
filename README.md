@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="doc/img/logo_bear.webp" alt="Honey Scan Bear" width="300" style="border-radius: 50%; padding: 10px;">
+    <img src="web/assets/logo_bear.png" alt="Honey Scan Bear" width="300" style="border-radius: 50%; padding: 10px;">
     <h1>Honey Scan</h1>
     <p><b>Active Defense & Threat Intelligence Platform</b></p>
     
