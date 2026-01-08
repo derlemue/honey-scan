@@ -2293,9 +2293,38 @@
 
             // ONE-TIME dashboard injection (not in loop to prevent re-injection)
             if (location.href.includes('/dashboard')) {
-                setTimeout(() => {
+                // ROBUST POLLING: Retry injection for up to 10 seconds (fail-safe for slow loads)
+                let attempts = 0;
+                const pollInjection = setInterval(() => {
+                    attempts++;
+                    console.log(`[HoneyScan] Dashboard Injection Attempt ${attempts}/20`);
+
+                    // Try to inject
                     injectDashboardThreats();
-                }, 2000); // Wait 2s for React to fully load
+
+                    // Check if successful (by looking for our injected attribute)
+                    // We need to find the body again to check the attribute
+                    const headers = Array.from(document.querySelectorAll('div, span, p, h3, h4'));
+                    const widgetHeader = headers.find(el => {
+                        try { return el.innerText && el.innerText.trim() === 'Threat Intelligence from the Cloud'; } catch (e) { return false; }
+                    });
+
+                    if (widgetHeader) {
+                        const card = widgetHeader.closest('.el-card') || widgetHeader.closest('div[class*="card"]');
+                        if (card) {
+                            const body = card.querySelector('.el-card__body') || card.lastElementChild;
+                            if (body && body.getAttribute('data-hs-injected') === 'true') {
+                                console.log('[HoneyScan] Injection successful, stopping poller.');
+                                clearInterval(pollInjection);
+                            }
+                        }
+                    }
+
+                    if (attempts >= 20) {
+                        console.warn('[HoneyScan] Dashboard Injection timed out after 10s');
+                        clearInterval(pollInjection);
+                    }
+                }, 500);
 
                 // AUTO-REFRESH mechanism - always enabled
                 console.log('[HoneyScan] Starting auto-refresh interval (30s)');
