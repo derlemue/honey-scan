@@ -443,6 +443,7 @@ def translate_to_english():
                 "新西兰": "New Zealand",
                 "香港": "Hong Kong",
                 "台湾": "Taiwan",
+                "危地马拉": "Guatemala",
                 "未知": "Unknown"
             }
             for cn, en in translations.items():
