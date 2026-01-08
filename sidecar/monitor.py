@@ -51,11 +51,11 @@ def get_db_connection():
     try:
         if DB_TYPE.lower() in ("mysql", "mariadb"):
             logger.info(f"Connecting with user={DB_USER}")
-            print(f"!!! DEBUG CONNECT: Connecting as {DB_USER} to {DB_HOST} !!!", flush=True)
+            print(f"!!! FORCE DEBUG: Connecting as hfish to {DB_HOST} !!!", flush=True)
             return pymysql.connect(
                 host=DB_HOST,
                 port=DB_PORT,
-                user=DB_USER,
+                user="hfish",
                 password=DB_PASSWORD,
                 database=DB_NAME,
                 cursorclass=pymysql.cursors.DictCursor,
