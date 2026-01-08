@@ -35,7 +35,7 @@ REPORT_DIR = SCANS_DIR
 scanning_ips = set() # Track IPs currently in queue or being scanned
 
 
-MAX_WORKERS = 64  # Increased concurrency for faster processing
+MAX_WORKERS = 40  # Optimized concurrency (User Request: 40)
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
