@@ -99,35 +99,64 @@ sync_history() {
         exit 1
     fi
 
-    echo "Syncing ALL banned IPs from Fail2Ban..."
+    echo "Syncing banned IPs from Fail2Ban..."
     
-    # Get all jails
+    # Check for prerequisites
+    if ! command -v comm &> /dev/null; then
+        echo "Error: 'comm' command not found. Please install coreutils."
+        exit 1
+    fi
+
+    # 1. Fetch Remote List
+    REMOTE_FEED_URL="https://feed.sec.lemue.org/feed/banned_ips.txt"
+    TEMP_REMOTE=$(mktemp)
+    TEMP_LOCAL=$(mktemp)
+    TEMP_DIFF=$(mktemp)
+
+    echo "Fetching current banned list from $REMOTE_FEED_URL..."
+    curl -s -k "$REMOTE_FEED_URL" | sort > "$TEMP_REMOTE"
+    
+    REMOTE_COUNT=$(wc -l < "$TEMP_REMOTE")
+    echo "Fetched $REMOTE_COUNT IPs from remote feed."
+
+    # 2. Get Local Fail2Ban IPs
     JAILS=$(fail2ban-client status 2>/dev/null | grep "Jail list:" | sed 's/.*Jail list://' | tr ',' ' ')
     
     if [ -z "$JAILS" ]; then
         echo "No jails found or Fail2Ban not running."
+        rm -f "$TEMP_REMOTE" "$TEMP_LOCAL" "$TEMP_DIFF"
         exit 0
     fi
 
-    # Collect IPs from all jails
     ALL_IPS=""
     for JAIL in $JAILS; do
         IPS=$(fail2ban-client status "$JAIL" 2>/dev/null | grep -E "Banned IP list:|Invalid" | sed 's/.*Banned IP list://' | tr ',' ' ')
         ALL_IPS="$ALL_IPS $IPS"
     done
 
-    # Process IPs: unique, clean, take ALL
-    # Note: 'fail2ban-client status' output order is not strictly chronological, but good enough for snapshot
-    UNIQUE_IPS=$(echo "$ALL_IPS" | tr ' ' '\n' | grep -E "^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$" | sort -u)
-    
-    COUNT=0
-    TOTAL=$(echo "$UNIQUE_IPS" | wc -w)
-    
-    echo "Found $TOTAL unique IPs to sync."
+    # Sort local IPs for comparison
+    echo "$ALL_IPS" | tr ' ' '\n' | grep -E "^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$" | sort -u > "$TEMP_LOCAL"
+    LOCAL_COUNT=$(wc -l < "$TEMP_LOCAL")
 
-    for IP in $UNIQUE_IPS; do
+    # 3. Calculate Difference (Local - Remote)
+    # comm -23 suppresses col 2 (unique to file 2) and col 3 (common), leaving unique to file 1 (Local)
+    comm -23 "$TEMP_LOCAL" "$TEMP_REMOTE" > "$TEMP_DIFF"
+    
+    DIFF_COUNT=$(wc -l < "$TEMP_DIFF")
+    
+    echo "Local IPs: $LOCAL_COUNT | Remote IPs: $REMOTE_COUNT | New IPs to sync: $DIFF_COUNT"
+
+    if [ "$DIFF_COUNT" -eq 0 ]; then
+        echo "No new IPs to sync."
+        rm -f "$TEMP_REMOTE" "$TEMP_LOCAL" "$TEMP_DIFF"
+        exit 0
+    fi
+
+    COUNT=0
+    # Read line by line from difference file
+    while IFS= read -r IP; do
         ((COUNT++))
-        echo "[$COUNT/$TOTAL] Syncing $IP..."
+        echo "[$COUNT/$DIFF_COUNT] Syncing $IP..."
         
         # Reuse API key logic
         if [ -z "$API_KEY" ]; then
@@ -136,15 +165,17 @@ sync_history() {
         fi
 
         URL="$API_URL/api/v1/config/black_list/add?api_key=$API_KEY"
-        PAYLOAD="{\"ip\": \"$IP\", \"memo\": \"Fail2ban Start Sync\"}"
+        PAYLOAD="{\"ip\": \"$IP\", \"memo\": \"Fail2ban Sync\"}"
         
         RESPONSE=$(curl -k -s -X POST "$URL" -H "Content-Type: application/json" -d "$PAYLOAD")
         echo "  Response: $RESPONSE"
         
-        # Small delay to be nice to the API
-        sleep 0.75
-    done
+        # 500ms delay
+        sleep 0.5
+    done < "$TEMP_DIFF"
     
+    # Cleanup
+    rm -f "$TEMP_REMOTE" "$TEMP_LOCAL" "$TEMP_DIFF"
     echo "Sync completed."
 }
 
