@@ -327,14 +327,25 @@ def scan_ip(ip):
 def update_banned_list(ips):
     current_banned = set()
     if os.path.exists(BANNED_IPS_FILE):
-        with open(BANNED_IPS_FILE, "r") as f:
-            current_banned = set(line.strip() for line in f if line.strip())
+        try:
+            with open(BANNED_IPS_FILE, "r") as f:
+                current_banned = set(line.strip() for line in f if line.strip())
+        except Exception as e:
+            logger.error(f"Error reading banned IPs: {e}")
+
+    # Calculate actually new IPs for logging
     new_ips = set(ips) - current_banned
+    
     if new_ips:
-        with open(BANNED_IPS_FILE, "a") as f:
-            for ip in new_ips:
-                f.write(f"{ip}\n")
-        logger.info(f"Added {len(new_ips)} IPs to ban list.")
+        # Merge and rewriting file to ensure no duplicates and sorted order
+        all_banned = current_banned.union(new_ips)
+        try:
+            with open(BANNED_IPS_FILE, "w") as f:
+                for ip in sorted(all_banned):
+                    f.write(f"{ip}\n")
+            logger.info(f"Added {len(new_ips)} IPs to ban list. Total unique: {len(all_banned)}")
+        except Exception as e:
+            logger.error(f"Error writing banned IPs: {e}")
 
 
     
