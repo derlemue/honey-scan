@@ -1643,7 +1643,7 @@
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
         // Global State for Pagination
-        window.hsTableState = window.hsTableState || { page: 1, limit: 26 };
+        window.hsTableState = window.hsTableState || { page: 1, limit: 25 };
         window.hsThreatData = window.hsThreatData || [];
 
         // Shared Render Function
@@ -1803,8 +1803,21 @@
                 try {
                     // DON'T modify card height - let it keep its original size
                     // But ensure body doesn't scroll and hides overflow
-                    body.style.height = '100%'; // FORCE height to match parent
-                    body.style.maxHeight = '100%';
+
+                    // NEW: Flex layout on CARD to ensure body fills space correctly
+                    card.style.display = 'flex';
+                    card.style.flexDirection = 'column';
+
+                    // Ensure children respect flex
+                    // Header (usually first child) should not grow
+                    if (card.children.length > 0) {
+                        const header = card.children[0];
+                        if (header && header !== body) {
+                            header.style.flex = '0 0 auto';
+                        }
+                    }
+
+                    body.style.height = 'auto'; // Let flex control height
                     body.style.overflow = 'hidden'; // Hide scrollbar, use pagination
                     body.style.display = 'flex';
                     body.style.flexDirection = 'column';
@@ -1815,13 +1828,15 @@
                     // The previous block already set flex, flexDirection, etc.
                     // This part ensures the inner structure also respects the flex layout.
                     if (body) {
-                        body.style.flex = '1';
+                        body.style.flex = '1'; // Fill remaining space
                         body.style.display = 'flex';
                         body.style.flexDirection = 'column';
                         body.style.minHeight = '0';
                         body.style.padding = '0'; // FIX: Remove padding to prevent overflow
                         body.style.boxSizing = 'border-box';
                         // Remove maxHeight constraint to allow natural fit
+                        // Remove explicit height if it was set
+                        body.style.removeProperty('height');
                     }
 
                     body.innerHTML = `
@@ -2120,7 +2135,7 @@
 
                 // Helper function to generate table rows
                 const generateTableRows = (data, isHackers) => {
-                    const l = window.hsTableState ? window.hsTableState.limit : 26;
+                    const l = window.hsTableState ? window.hsTableState.limit : 25;
                     return data.slice(0, l).map(item => { // Dynamic Limit
                         const ip = item.ip || 'N/A';
                         const location = translateLocation(item.location || item.flag || 'Unknown');
