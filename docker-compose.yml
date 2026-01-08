@@ -87,8 +87,8 @@ services:
       - DB_TYPE=${DB_TYPE:-mysql}
       - DB_HOST=${DB_HOST:-mariadb}
       - DB_PORT=${DB_PORT:-3306}
-      - DB_USER=${DB_USER:-hfish}
-      - DB_PASSWORD=${DB_PASSWORD:-hfish}
+      - DB_USER=root
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - DB_NAME=${DB_NAME:-hfish}
       - THREATBOOK_API_KEY=${THREATBOOK_API_KEY}
       - THREATBOOK_API_BASE_URL=${THREATBOOK_API_BASE_URL}
