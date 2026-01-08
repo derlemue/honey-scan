@@ -404,8 +404,12 @@ async def add_black_list(
         
         # Insert simulated attack into infos table
         # This will be picked up by the sidecar monitor and added to banned_ips.txt
+        import uuid
+        info_id = str(uuid.uuid4())[:20] # Generate unique ID, max 20 chars
+        
         query = """
             INSERT INTO infos (
+                info_id,
                 source_ip, 
                 source_ip_country, 
                 service, 
@@ -414,6 +418,7 @@ async def add_black_list(
                 dest_port, 
                 info
             ) VALUES (
+                %s,
                 %s, 
                 'Unknown', 
                 'FAIL2BAN', 
@@ -423,7 +428,7 @@ async def add_black_list(
                 %s
             )
         """
-        cursor.execute(query, (request.ip, request.memo))
+        cursor.execute(query, (info_id, request.ip, request.memo))
         connection.commit()
         
         return {
