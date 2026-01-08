@@ -208,7 +208,7 @@ def update_threat_feed():
     suspicious_cs = []
     try:
         cursor = conn.cursor()
-        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 200"
+        query = "SELECT DISTINCT source_ip, source_ip_country, create_time FROM infos ORDER BY create_time DESC LIMIT 150"
         logger.info(f"Executing Query: {query}")
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -223,7 +223,8 @@ def update_threat_feed():
                 "flag": country, 
                 "count": 1
             })
-            if len(suspicious_cs) < 50:
+            if len(recent_hackers) > 125: recent_hackers.pop()
+            if len(suspicious_cs) < 125:
                 threat_data = query_threatbook_ip(ip)
                 if threat_data:
                     # Location Logic: Default to DB Country (English). Append API City if available.

@@ -1634,19 +1634,10 @@
 
         // HELPER: Ensure Data fills 5 pages
         window.ensureMinThreats = (threats) => {
-            if (!threats || !Array.isArray(threats)) return [];
-            const limit = window.hsTableState ? window.hsTableState.limit : 34;
-            const required = limit * 5;
-            if (threats.length < required && threats.length > 0) { // Safety check > 0
-                // console.log(`[HoneyScan] Hydrating data: ${threats.length} -> ${required} items`);
-                let hydrated = [...threats];
-                while (hydrated.length < required) {
-                    hydrated = hydrated.concat(threats);
-                }
-                return hydrated.slice(0, required);
-            }
+            // PASSTHROUGH - NO PADDING as per User Request (Fixed size from backend)
             return threats;
         };
+
 
         // 2. Dashboard Injector
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
@@ -2061,7 +2052,7 @@
 
                 // Fetch threat data
                 let threatData = cachedThreatData;
-                if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 10000)) {
+                if (!cachedThreatData || (Date.now() - (cachedThreatData.timestamp || 0) > 30000)) {
                     try {
                         const r = await fetch('/assets/live_threats.json');
                         if (r.ok) {
