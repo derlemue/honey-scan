@@ -25,7 +25,7 @@ app = FastAPI(
 # Database configuration
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'hfish-db'),
-    'port': int(os.getenv('DB_PORT', '3306')),
+    'port': int(os.getenv('DB_PORT', '3307')),
     'user': os.getenv('DB_USER', 'hfish'),
     'password': os.getenv('DB_PASSWORD', '734f181149acdabc269dacba6faf3be7'),
     'database': os.getenv('DB_NAME', 'hfish'),
