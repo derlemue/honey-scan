@@ -1643,7 +1643,7 @@
         let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
 
         // Global State for Pagination
-        window.hsTableState = window.hsTableState || { page: 1, limit: 25 };
+        window.hsTableState = window.hsTableState || { page: 1, limit: 26 };
         window.hsThreatData = window.hsThreatData || [];
 
         // Shared Render Function
@@ -1781,6 +1781,7 @@
                             // Apply time adjustment
                             threats = data.cs.map(item => ({
                                 ...item,
+                                ...item,
                                 time: window.adjustTime ? window.adjustTime(item.time) : item.time
                             }));
                         }
@@ -1824,7 +1825,7 @@
                     }
 
                     body.innerHTML = `
-                        <div style="width: 100%; height: calc(100% - 4px); max-height: 100%; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden; box-sizing: border-box;">
+                        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; background: #1e293b; border-radius: 4px; overflow: hidden; box-sizing: border-box;">
                             <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed; flex-shrink: 0;">
                                 <thead style="background: rgba(0,0,0,0.3);">
                                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
@@ -1836,7 +1837,7 @@
                                     </tr>
                                 </thead>
                             </table>
-                            <div style="flex: 1; overflow-y: hidden; overflow-x: hidden; min-height: 0; max-height: calc(100% - 45px);">
+                            <div style="flex: 1; overflow-y: hidden; overflow-x: hidden; min-height: 0;">
                                 <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px; table-layout: fixed;">
                                     <tbody>
                                         ${rowHtml}
@@ -2119,7 +2120,7 @@
 
                 // Helper function to generate table rows
                 const generateTableRows = (data, isHackers) => {
-                    const l = window.hsTableState ? window.hsTableState.limit : 25;
+                    const l = window.hsTableState ? window.hsTableState.limit : 26;
                     return data.slice(0, l).map(item => { // Dynamic Limit
                         const ip = item.ip || 'N/A';
                         const location = translateLocation(item.location || item.flag || 'Unknown');
