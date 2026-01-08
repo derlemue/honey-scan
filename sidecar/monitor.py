@@ -15,8 +15,9 @@ from datetime import timedelta, datetime
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
-DB_PORT = int(os.getenv("DB_PORT") or 3306)
 DB_USER = "root" # FORCE ROOT
+DB_PASSWORD = os.getenv("DB_PASSWORD", os.getenv("MYSQL_ROOT_PASSWORD"))
+print(f"!!! DEBUG STARTUP: DB_USER={DB_USER} !!!", flush=True)
 DB_PASSWORD = os.getenv("DB_PASSWORD", os.getenv("MYSQL_ROOT_PASSWORD"))
 DB_NAME = os.getenv("DB_NAME", "hfish")
 
@@ -51,6 +52,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 def get_db_connection():
     try:
         if DB_TYPE.lower() in ("mysql", "mariadb"):
+            logger.info(f"Connecting with user={DB_USER}")
             return pymysql.connect(
                 host=DB_HOST,
                 port=DB_PORT,
