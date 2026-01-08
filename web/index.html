@@ -1392,6 +1392,7 @@
             // patchDataIssues(); // DISABLED FOR DEBUGGING
             // fixLayoutAndFlags(); // DISABLED FOR DEBUGGING
             // injectCloudIntelligence(); 
+            injectDashboardThreats(); // RUN ROBUST DASHBOARD CHECK
         };
 
         // Start Loop (250ms is a good balance)
@@ -1640,7 +1641,7 @@
 
 
         // 2. Dashboard Injector
-        let dashboardInjected = false; // GLOBAL FLAG - survives React re-renders
+        // 2. Dashboard Injector
 
         // Global State for Pagination
         window.hsTableState = window.hsTableState || { page: 1, limit: 26 };
@@ -1733,8 +1734,8 @@
 
         const injectDashboardThreats = async () => {
             try {
-                // CRITICAL: Check global flag FIRST to prevent re-injection
-                if (dashboardInjected) return;
+                // CRITICAL: Check global flag REMOVED to allow re-injection on navigation
+                // if (dashboardInjected) return;
 
                 // Safety: only run on dashboard
                 if (!location.href.includes('/dashboard')) return;
@@ -1770,6 +1771,11 @@
                 }
 
                 if (!body) return;
+
+                // DOM-BASED IDEMPOTENCY CHECK
+                // If the body already has our attribute, we skip.
+                // This survives navigation because new DOM elements won't have it!
+                if (body.getAttribute('data-hs-injected') === 'true') return;
 
                 // Fetch threat data
                 let threats = [];
@@ -1932,8 +1938,7 @@
                 window.hsThreatData = threats;
                 window.renderThreatTable();
 
-                // SET GLOBAL FLAG - prevents re-injection even if React re-renders
-                dashboardInjected = true;
+                // SET GLOBAL FLAG REMOVED
                 console.log('[HoneyScan] Dashboard threat table injected (' + threats.length + ' threats)');
             } catch (e) {
                 console.error('[HoneyScan] Failed to inject table:', e);
