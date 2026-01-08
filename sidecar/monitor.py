@@ -185,7 +185,7 @@ def update_threat_feed():
             
             if service == 'FAIL2BAN':
                 threat_type = "jailed by rules"
-                threat_risk = "Low"
+                threat_risk = "low"
                 location_disp = "by Fail2Ban"
 
             if len(recent_hackers) < 135:
