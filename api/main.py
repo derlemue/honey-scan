@@ -3,9 +3,10 @@ HFish API Replacement Service
 Provides REST API endpoints compatible with HFish API documentation
 """
 
-from fastapi import FastAPI, Query, HTTPException, Depends
+from fastapi import FastAPI, Query, HTTPException, Depends, Body
 from fastapi.responses import JSONResponse
 from typing import Optional, List, Dict, Any
+from pydantic import BaseModel
 from datetime import datetime, timedelta
 import mysql.connector
 from mysql.connector import Error
@@ -370,6 +371,69 @@ async def get_system_info(api_key: str = Depends(validate_api_key)):
         
     except Error as e:
         logger.error(f"Database query error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+
+class BlackListRequest(BaseModel):
+    ip: str
+    memo: Optional[str] = "Manual Blacklist"
+
+
+@app.post("/api/v1/config/black_list/add")
+async def add_black_list(
+    request: BlackListRequest,
+    api_key: str = Depends(validate_api_key)
+):
+    """
+    Add IP to blacklist (Simulated as an attack from FAIL2BAN service)
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    
+    try:
+        # Check if IP already exists in ipaddress table, if not add it
+        cursor.execute("SELECT id FROM ipaddress WHERE ip = %s", (request.ip,))
+        if not cursor.fetchone():
+            cursor.execute("""
+                INSERT INTO ipaddress (ip, create_time, update_time, country, region, city) 
+                VALUES (%s, NOW(), NOW(), 'Unknown', 'Unknown', 'Unknown')
+            """, (request.ip,))
+        
+        # Insert simulated attack into infos table
+        # This will be picked up by the sidecar monitor and added to banned_ips.txt
+        query = """
+            INSERT INTO infos (
+                source_ip, 
+                source_ip_country, 
+                service, 
+                client_id, 
+                create_time, 
+                dest_port, 
+                info
+            ) VALUES (
+                %s, 
+                'Unknown', 
+                'FAIL2BAN', 
+                'manual_api', 
+                NOW(), 
+                0, 
+                %s
+            )
+        """
+        cursor.execute(query, (request.ip, request.memo))
+        connection.commit()
+        
+        return {
+            "status": 0,
+            "msg": "success",
+            "data": None
+        }
+        
+    except Error as e:
+        logger.error(f"Database error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
