@@ -8,12 +8,13 @@ import logging
 import fcntl
 import sqlite3
 import time
+import re
 from collections import Counter
 
 # ==========================================
 #  lemueIO Active Intelligence Feed - Client Shield (Python Variant)
 # ==========================================
-#  Version: 5.3.1
+#  Version: 5.3.2
 #  Description: Fetches malicious IPs, bans them on remote hosts, and cleans up Fail2Ban jails.
 # ==========================================
 
@@ -176,6 +177,96 @@ def ban_ip_remote(ip, host):
         logger.error(f"Failed to ban {ip} on {host}: {e.stderr.strip() if e.stderr else e}")
     return False
 
+def get_open_ports(host):
+    """Detects open TCP/UDP ports on the target host using `ss`."""
+    # We want listening TCP/UDP ports, numeric output
+    # Command: ss -tuln
+    h_clean = host.strip().lower()
+    if h_clean in ["localhost", "127.0.0.1", "::1"]:
+        cmd = ["sudo", "ss", "-tulnH"] # H to suppress header
+    else:
+        cmd = [
+            "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+            host, "sudo ss -tulnH"
+        ]
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        # Parse output. Example line: "UDP UNCONN 0 0 0.0.0.0:68 0.0.0.0:*" or "tcp LISTEN 0 128 *:22 *:* "
+        # We need the local port.
+        ports = set()
+        for line in result.stdout.splitlines():
+            parts = line.split()
+            if len(parts) >= 4:
+                # Local address is usually the 5th column (index 4)
+                # But sometimes state is missing for UDP? "UDP UNCONN..." -> state is UNCONN (idx 1)
+                # ss output format varies slightly by version, but usually:
+                # Netid State Recv-Q Send-Q Local_Address:Port Peer_Address:Port
+                # TCP   LISTEN 0      128    0.0.0.0:22         0.0.0.0:*
+                
+                # Let's simple regex for IP:Port patterns
+                # We are looking for the Local Address column which has the port.
+                # It's typically the 4th/5th token.
+                
+                # A robust way: find all tokens that look like address:port
+                # and take the port if it's a listening/bound port.
+                # Since we used -l, all are listening (or bound UDP).
+                
+                # Let's iterate tokens and look for the LAST colon
+                local_addr = parts[4] # Standard ss -tuln output has local addr at index 4
+                if ':' in local_addr:
+                    port_str = local_addr.rsplit(':', 1)[1]
+                    if port_str.isdigit():
+                        ports.add(port_str)
+                        
+        if not ports:
+            # Fallback or empty? Return default ssh port if nothing found to avoid breaking configuration
+            logger.warning(f"No open ports detected on {host}. Defaulting to 22.")
+            return "22"
+            
+        sorted_ports = sorted(list(ports), key=int)
+        return ",".join(sorted_ports)
+        
+    except Exception as e:
+        logger.error(f"Failed to detect open ports on {host}: {e}")
+        return "22" # Safe fallback
+
+def configure_jail(host, jail, ports, bantime=1209600): # 14 days default
+    """Configures the jail with a 14-day bantime and updates monitored ports."""
+    h_clean = host.strip().lower()
+    prefix = []
+    if h_clean not in ["localhost", "127.0.0.1", "::1"]:
+        prefix = ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", host]
+        
+    base_cmd = prefix + ["sudo", "fail2ban-client", "set", jail]
+    
+    # 1. Set Bantime
+    try:
+        subprocess.run(base_cmd + ["bantime", str(bantime)], capture_output=True, check=True)
+        logger.info(f"Updated bantime to {bantime}s for {jail} on {host}.")
+    except Exception as e:
+        logger.error(f"Failed to set bantime on {host}: {e}")
+
+    # 2. update ports for all actions
+    # First, get list of actions
+    try:
+        # 'fail2ban-client get JAIL actions' returns a list of actions
+        # The output format is a bit tricky to parse from CLI: "The actions are: \n iptables-multiport \n ..."
+        get_actions_cmd = prefix + ["sudo", "fail2ban-client", "get", jail, "actions"]
+        res = subprocess.run(get_actions_cmd, capture_output=True, text=True, check=True)
+        # Parse output - assuming simplistic output structure
+        # Typical output: "The actions are:\n\t iptables-multiport\n\t other-action"
+        actions = [line.strip() for line in res.stdout.splitlines() if line.strip() and "The actions are" not in line]
+        
+        for action in actions:
+            # Setting port: fail2ban-client set JAIL action ACTION port PORTS
+            set_port_cmd = base_cmd + ["action", action, "port", ports]
+            subprocess.run(set_port_cmd, capture_output=True, check=True)
+            logger.info(f"Updated ports for action '{action}' in {jail} on {host} to: {ports}")
+            
+    except Exception as e:
+        logger.error(f"Failed to configure jail actions on {host}: {e}")
+
 def main():
     lock_path = "/tmp/client_banned_ips.lock"
     try:
@@ -187,7 +278,7 @@ def main():
 
     try:
         logger.info("=" * 60)
-        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.1")
+        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.2")
         logger.info("Starting execution (Cron mode)...")
         logger.info("=" * 60)
         
@@ -205,7 +296,12 @@ def main():
         for host in REMOTE_HOSTS:
             logger.info(f"--- Processing host: {host} ---")
             
-            # Feature: Jail Cleanup
+            # Feature: Dynamic Jail Configuration
+            open_ports = get_open_ports(host)
+            logger.info(f"Open ports on {host}: {open_ports}")
+            configure_jail(host, TARGET_JAIL, open_ports, bantime=1209600) # 14 days
+
+            # Feature: Jail Cleanup (with updated config)
             cleanup_jail(host)
             
             if not all_ips:
