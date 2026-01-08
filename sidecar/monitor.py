@@ -342,7 +342,7 @@ def scan_ip(ip):
     if os.path.exists(report_path): return None
     logger.info(f"Scanning {ip}...")
     try:
-        command = ["nmap", "-A", "-T4", "-Pn", ip] 
+        command = ["nmap", "-sS", "-sV", "-T4", "-F", "-Pn", ip]  # Faster: SYN scan + version detection, top ports only 
         result = subprocess.run(command, capture_output=True, text=True, timeout=120)
         with open(report_path, "w") as f:
             f.write(f"Scan Time: {time.ctime()}\n")
