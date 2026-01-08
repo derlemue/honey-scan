@@ -338,7 +338,7 @@ def get_new_attackers():
     return new_ips
 
 def scan_ip(ip):
-    report_path = os.path.join(FEED_DIR, f"{ip}.txt")
+    report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
     if os.path.exists(report_path): return None
     logger.info(f"Scanning {ip}...")
     try:
