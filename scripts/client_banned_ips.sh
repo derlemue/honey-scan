@@ -83,10 +83,11 @@ def fetch_ips_from_db():
         conn = sqlite3.connect(f"file:{HFISH_DB_PATH}?mode=ro", uri=True)
         cursor = conn.cursor()
         # Querying the 'infos' table for source_ip, similar to monitor.py
-        cursor.execute("SELECT DISTINCT source_ip FROM infos")
+        # Filter for recent (last 7 days) IPs to match server-side policy
+        cursor.execute("SELECT DISTINCT source_ip FROM infos WHERE create_time >= datetime('now', '-7 days')")
         ips = [row[0] for row in cursor.fetchall() if row[0]]
         conn.close()
-        logger.info(f"Fetched {len(ips)} IPs from local DB.")
+        logger.info(f"Fetched {len(ips)} IPs from local DB (last 7 days).")
         return ips
     except Exception as e:
         logger.error(f"Failed to fetch IPs from DB: {e}")
