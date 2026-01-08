@@ -15,7 +15,7 @@ from collections import Counter
 # ==========================================
 #  lemueIO Active Intelligence Feed - Client Shield (Python Variant)
 # ==========================================
-#  Version: 5.3.3
+#  Version: 5.3.4
 #  Description: Fetches malicious IPs, bans them on remote hosts, and cleans up Fail2Ban jails.
 # ==========================================
 
@@ -252,18 +252,23 @@ def configure_jail(host, jail, ports, bantime=1209600): # 14 days default
     # First, get list of actions
     try:
         # 'fail2ban-client get JAIL actions' returns a list of actions
-        # The output format is a bit tricky to parse from CLI: "The actions are: \n iptables-multiport \n ..."
         get_actions_cmd = prefix + ["sudo", "fail2ban-client", "get", jail, "actions"]
         res = subprocess.run(get_actions_cmd, capture_output=True, text=True, check=True)
-        # Parse output - assuming simplistic output structure
-        # Typical output: "The actions are:\n\t iptables-multiport\n\t other-action"
-        actions = [line.strip() for line in res.stdout.splitlines() if line.strip() and "The actions are" not in line]
+        # Parse output: Ignore lines that contain "The jail ... has the following actions" or are empty
+        actions = []
+        for line in res.stdout.splitlines():
+            clean_line = line.strip()
+            if not clean_line:
+                continue
+            if "The jail" in clean_line and "actions" in clean_line:
+                continue
+            actions.append(clean_line)
         
         for action in actions:
             # Setting port: fail2ban-client set JAIL action ACTION port PORTS
             set_port_cmd = base_cmd + ["action", action, "port", ports]
             subprocess.run(set_port_cmd, capture_output=True, check=True)
-            logger.info(f"Updated ports for action '{action}' in {jail} on {host} to: {ports}")
+            logger.info(f"Updated monitored ports for action '{action}' in jail '{jail}' on {host}.")
             
     except Exception as e:
         logger.error(f"Failed to configure jail actions on {host}: {e}")
@@ -279,7 +284,7 @@ def main():
 
     try:
         logger.info("=" * 60)
-        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.3")
+        logger.info("lemueIO Active Intelligence Feed - Client Shield v5.3.4")
         logger.info("Starting execution (Cron mode)...")
         logger.info("=" * 60)
         
@@ -310,11 +315,13 @@ def main():
                 except:
                     service_map.append(f"UNKNOWN/{p}")
             
-            services_str = ", ".join(service_map)
-            logger.info(f"Detected active services on {host}: {services_str}")
-            
+            # Prettier log output
+            logger.info(f"Active Services on {host}:")
+            for svc in service_map:
+                 logger.info(f"  -> {svc}")
+
             configure_jail(host, TARGET_JAIL, open_ports, bantime=1209600) # 14 days
-            logger.info(f"Protected services on {host} (Jail: {TARGET_JAIL}) -> {services_str}")
+            logger.info(f"Security Policy Applied to {TARGET_JAIL} on {host}: Protected {len(service_map)} services.")
 
             # Feature: Jail Cleanup (with updated config)
             cleanup_jail(host)
