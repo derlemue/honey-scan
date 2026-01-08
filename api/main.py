@@ -49,10 +49,11 @@ def get_db_connection():
 
 def validate_api_key(
     api_key_query: Optional[str] = Query(None, alias="api_key"),
-    api_key_header: Optional[str] = Header(None, alias="api_key")
+    api_key_header: Optional[str] = Header(None, alias="api-key"),
+    api_key_header_alt: Optional[str] = Header(None, alias="api_key")
 ):
-    """Validate API key from query parameter or header"""
-    api_key = api_key_query or api_key_header
+    """Validate API key from query parameter or header (supports api-key and api_key)"""
+    api_key = api_key_query or api_key_header or api_key_header_alt
     if not api_key:
         raise HTTPException(status_code=401, detail="API Key missing")
         
