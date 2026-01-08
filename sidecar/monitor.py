@@ -74,9 +74,12 @@ def get_db_connection():
 def ensure_db_schema():
     if DB_TYPE.lower() not in ("mysql", "mariadb"):
         return
-    conn = get_db_connection()
-    if not conn: return
+    conn = None
     try:
+        conn = get_db_connection()
+        if not conn: 
+            logger.warning("Skipping schema migration - no DB connection")
+            return
         cursor = conn.cursor()
         cursor.execute("DESCRIBE nodes")
         columns = [row['Field'] for row in cursor.fetchall()]
@@ -88,10 +91,16 @@ def ensure_db_schema():
         for cmd in alter_cmds:
             logger.info(f"Migrating DB: {cmd}")
             cursor.execute(f"ALTER TABLE nodes {cmd}")
-        conn.close()
+        logger.info("Schema migration completed successfully")
     except Exception as e:
-        logger.error(f"Schema migration failed: {e}")
-        if conn: conn.close()
+        logger.warning(f"Schema migration skipped due to error: {e}")
+        # Non-fatal - allow monitor to continue
+    finally:
+        if conn: 
+            try: 
+                conn.close()
+            except: 
+                pass
 
 def get_geolocation():
     try:
@@ -451,8 +460,10 @@ def main():
     logger.info(f"DEBUG: DB_USER={DB_USER}, DB_HOST={DB_HOST}, DB_NAME={DB_NAME}")
     logger.info("Waiting 30s for DB to be ready...")
     time.sleep(30) 
-    ensure_db_schema()
-    update_node_location()
+    # Skip these on startup - they timeout and block the main loop
+    # ensure_db_schema()
+    # update_node_location()
+    logger.info("Skipping schema migration and location update - proceeding to main loop")
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     try:
         while True:
@@ -467,7 +478,11 @@ def main():
                 translate_to_english()  # Translate Chinese to English
                 # update_index() removed
                 update_threat_feed()
-                if int(time.time()) % 600 < 15: update_node_location()
+                if int(time.time()) % 600 < 15: 
+                    try:
+                        update_node_location()
+                    except Exception as e:
+                        logger.warning(f"Node location update failed: {e}")
             except Exception as e:
                 logger.error(f"Loop error: {e}")
             time.sleep(10)
