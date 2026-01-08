@@ -597,12 +597,12 @@ def main():
                     for ip in attackers:
                         scanning_ips.add(ip)
                         executor.submit(scan_ip, ip)
-                
-                update_banned_list()
-                fix_missing_severity()
-                restore_db_language()   # Restore Chinese names in DB for HFish Native Dashboard
-                # translate_to_english() removed - translation now happens only on feed generation
-                # update_index() removed
+                # Optimization: Run heavy tasks every 60s
+                if int(time.time()) % 60 == 0:
+                    update_banned_list()
+                    fix_missing_severity()
+
+                restore_db_language()
                 update_threat_feed()
                 if int(time.time()) % 600 < 15: 
                     try:
