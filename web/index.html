@@ -1807,6 +1807,7 @@
                     // NEW: Flex layout on CARD to ensure body fills space correctly
                     card.style.display = 'flex';
                     card.style.flexDirection = 'column';
+                    card.style.padding = '2px'; // FIX: Outer parent padding to 2px as requested
 
                     // Ensure children respect flex
                     // Header (usually first child) should not grow
@@ -1832,7 +1833,7 @@
                         body.style.display = 'flex';
                         body.style.flexDirection = 'column';
                         body.style.minHeight = '0';
-                        body.style.padding = '2px'; // FIX: Outer padding 2px
+                        body.style.padding = '0'; // FIX: Remove padding to allow full expansion
                         body.style.boxSizing = 'border-box';
                         // Remove maxHeight constraint to allow natural fit
                         // Remove explicit height if it was set
