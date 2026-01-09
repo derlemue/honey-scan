@@ -29,19 +29,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-@app.middleware("http")
-async def normalize_path_middleware(request: Request, call_next):
-    """
-    Middleware to normalize request paths by replacing double slashes with single slashes.
-    This fixes issues where clients (like HFish) might send requests like //v3/...
-    """
-    if "//" in request.scope["path"]:
-        new_path = request.scope["path"].replace("//", "/")
-        request.scope["path"] = new_path
-    
-    response = await call_next(request)
-    return response
-
 # Database configuration
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'hfish-db'),
@@ -577,83 +564,6 @@ async def delete_key(key_id: int, api_key: str = Depends(validate_api_key)):
         cursor.execute("DELETE FROM api_keys WHERE id = %s", (key_id,))
         connection.commit()
         return {"status": 0, "msg": "deleted"}
-    finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
-
-@app.get("/v3/scene/ip_reputation")
-async def threatbook_ip_reputation(
-    apikey: str = Query(..., alias="apikey"),
-    resource: str = Query(..., alias="resource")
-):
-    """
-    ThreatBook v3 Analysis Emulator
-    Checks local HFish database for IP reputation.
-    """
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        # Check if IP exists in ipaddress table
-        cursor.execute("SELECT * FROM ipaddress WHERE ip = %s", (resource,))
-        ip_info = cursor.fetchone()
-
-        # Check for attack history in infos table
-        cursor.execute("SELECT COUNT(*) as count, MAX(create_time) as last_seen FROM infos WHERE source_ip = %s", (resource,))
-        attack_stats = cursor.fetchone()
-
-        is_malicious = False
-        severity = "clean"
-        judgments = []
-
-        if (ip_info and ip_info.get('threat_level', 0) > 0) or (attack_stats and attack_stats['count'] > 0):
-            is_malicious = True
-            severity = "high"
-            judgments = ["HoneyPot"]
-            # Add specific judgment if we have service info, but simple is fine for now
-
-        country = "Unknown"
-        province = "Unknown" 
-        city = "Unknown"
-        
-        if ip_info:
-            country = ip_info.get('country', "Unknown")
-            province = ip_info.get('region', "Unknown")
-            city = ip_info.get('city', "Unknown")
-
-        return {
-            "response_code": 0,
-            "verbose_msg": "OK",
-            "data": {
-                resource: {
-                    "severity": severity,
-                    "is_malicious": is_malicious,
-                    "judgments": judgments,
-                    "confidence_level": "high" if is_malicious else "low",
-                    "basic": {
-                        "location": {
-                            "country": country,
-                            "province": province,
-                            "city": city
-                        }
-                    }
-                }
-            }
-        }
-    except Error as e:
-        logger.error(f"Database error in ip_reputation: {e}")
-        # Return safe default
-        return {
-            "response_code": 0,
-            "verbose_msg": "OK",
-            "data": {
-                resource: {
-                    "severity": "clean",
-                    "is_malicious": False,
-                    "judgments": []
-                }
-            }
-        }
     finally:
         if connection.is_connected():
             cursor.close()
