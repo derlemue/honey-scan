@@ -274,20 +274,27 @@ def update_threat_feed():
         except Exception as e:
             logger.warning(f"Failed to pre-fetch Fail2Ban IPs: {e}")
 
-        cursor = conn.cursor()
-        # Unified Sort Query: Fail2Ban/Manual are Local. Native are UTC.
-        # Normalize Native (UTC) to Local (+1h) for Correct Sorting against Fail2Ban.
+        # Flood Protection: Use UNION to guarantee representation of Native/Cloud events 
+        # even if Fail2Ban is flooding 1000+ ev/sec. 
+        # We fetch top 100 from EACH group, then Sort & Limit.
         query = """
-            SELECT DISTINCT 
-                source_ip, 
-                source_ip_country, 
-                service,
+            SELECT *,
                 CASE 
-                    WHEN service = 'FAIL2BAN' OR service = 'API_MANUAL' THEN create_time 
+                    WHEN service IN ('FAIL2BAN', 'API_MANUAL') THEN create_time 
                     ELSE DATE_ADD(create_time, INTERVAL 1 HOUR) 
                 END as normalized_time
-            FROM infos 
-            ORDER BY normalized_time DESC 
+            FROM (
+                (SELECT source_ip, source_ip_country, service, create_time 
+                 FROM infos 
+                 WHERE service IN ('FAIL2BAN', 'API_MANUAL') 
+                 ORDER BY create_time DESC LIMIT 100)
+                UNION ALL
+                (SELECT source_ip, source_ip_country, service, create_time 
+                 FROM infos 
+                 WHERE service NOT IN ('FAIL2BAN', 'API_MANUAL') 
+                 ORDER BY create_time DESC LIMIT 100)
+            ) as combined_feeds
+            ORDER BY normalized_time DESC
             LIMIT 162
         """
         logger.info(f"Executing Query: {query}")
