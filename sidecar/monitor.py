@@ -288,9 +288,9 @@ def update_threat_feed():
             location_disp = get_english_name(country)
             
             if service == 'FAIL2BAN':
-                threat_type = "jailed by Fail2Ban"
-                threat_risk = "Low"
-                location_disp = "Fail2Ban"
+                threat_type = "jailed by rules"
+                threat_risk = "low"
+                location_disp = "FAIL2BAN"
             elif service == 'BRIDGE_SYNC':
                 threat_type = "Global Threat"
                 threat_risk = "High"
