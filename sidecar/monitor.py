@@ -843,10 +843,6 @@ def main():
 
                 # Run background tasks
                 fix_unknown_countries()
-                    last_maintenance = time.time()
-                
-                # Run background tasks
-                fix_unknown_countries()
                 restore_db_language()
                 update_threat_feed()
                 if int(time.time()) % 600 < 15: 
