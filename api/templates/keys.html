@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HFish API Keys</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --accent-color: #3b82f6;
+            --danger-color: #ef4444;
+            --success-color: #22c55e;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            filter: brightness(110%);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            color: #94a3b8;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        input[type="text"] {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            width: 200px;
+            margin-right: 10px;
+        }
+
+        input:focus {
+            outline: 2px solid var(--accent-color);
+            border-color: transparent;
+        }
+
+        .key-display {
+            font-family: monospace;
+            background: #0f172a;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #e2e8f0;
+            user-select: all;
+        }
+
+        .status-msg {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .success {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success-color);
+        }
+
+        #login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            width: 300px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="login-modal">
+        <div class="modal-content">
+            <h2 style="margin-top:0">Auth Required</h2>
+            <p style="color:#94a3b8; margin-bottom: 20px;">Enter an existing API Key to manage keys.</p>
+            <input type="text" id="auth-key" placeholder="Enter API Key"
+                style="width: 100%; box-sizing: border-box; margin-bottom: 15px;">
+            <button class="btn" style="width:100%" onclick="login()">Access Management</button>
+            <p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">First time? Check your container logs for the
+                bootstrap key.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>API Key Management</h1>
+                <p style="color: #94a3b8; margin: 5px 0 0 0;">Manage access tokens for remote clients</p>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0;">Generate New Key</h3>
+            <div style="display: flex;">
+                <input type="text" id="new-memo" placeholder="Description (e.g. Server A)">
+                <button class="btn" onclick="createKey()">Generate Key</button>
+            </div>
+            <div id="msg-area" class="status-msg"></div>
+        </div>
+
+        <div class="card" style="padding: 0;">
+            <table id="keys-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Prefix / Key</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Keys loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let apiKey = localStorage.getItem('hfish_api_key');
+
+        function login() {
+            const key = document.getElementById('auth-key').value;
+            if (!key) return;
+            apiKey = key;
+            localStorage.setItem('hfish_api_key', key);
+            loadKeys();
+        }
+
+        function logout() {
+            localStorage.removeItem('hfish_api_key');
+            location.reload();
+        }
+
+        async function loadKeys() {
+            try {
+                const res = await fetch('/api/v1/keys', {
+                    headers: { 'api-key': apiKey }
+                });
+                const data = await res.json();
+
+                if (res.status === 401) {
+                    document.getElementById('login-modal').style.display = 'flex';
+                    return;
+                }
+
+                document.getElementById('login-modal').style.display = 'none';
+
+                const tbody = document.querySelector('#keys-table tbody');
+                tbody.innerHTML = '';
+
+                data.data.forEach(key => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 500;">${key.memo}</td>
+                        <td><span class="key-display">${key.access_key}</span></td>
+                        <td style="color:#94a3b8; font-size:12px;">${new Date(key.created_at).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteKey(${key.id})">Revoke</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function createKey() {
+            const memo = document.getElementById('new-memo').value;
+            if (!memo) return;
+
+            try {
+                const res = await fetch('/api/v1/keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'api-key': apiKey },
+                    body: JSON.stringify({ memo })
+                });
+                const data = await res.json();
+
+                if (data.status === 0) {
+                    showMsg('Key generated successfully!', 'success');
+                    document.getElementById('new-memo').value = '';
+                    loadKeys();
+                } else {
+                    showMsg('Error generating key', 'error');
+                }
+            } catch (e) {
+                showMsg(e.message, 'error');
+            }
+        }
+
+        async function deleteKey(id) {
+            if (!confirm('Are you sure you want to revoke this key? Clients using it will stop working immediately.')) return;
+
+            try {
+                const res = await fetch(`/api/v1/keys/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'api-key': apiKey }
+                });
+                loadKeys();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function showMsg(msg, type) {
+            const el = document.getElementById('msg-area');
+            el.textContent = msg;
+            el.className = `status-msg ${type}`;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        // Init
+        if (apiKey) {
+            loadKeys();
+        } else {
+            // Check if URL has key (e.g. ?api_key=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlKey = urlParams.get('api_key');
+            if (urlKey) {
+                document.getElementById('auth-key').value = urlKey;
+                login();
+            }
+        }
+    </script>
+</body>
+
+</html>

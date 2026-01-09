@@ -1,1 +1,1 @@
-{"hackers": [{"ip": "::1", "location": "\u672c\u673a\u5730\u5740", "time": "2025-12-31 17:14:41", "flag": "\u672c\u673a\u5730\u5740", "count": 1}], "cs": [{"ip": "::1", "location": "\u672c\u673a\u5730\u5740", "type": "Port Scanner", "risk": "Medium", "time": "2025-12-31 17:14:41"}], "api_active": true}
+{"hackers": [], "cs": [], "api_active": false}
