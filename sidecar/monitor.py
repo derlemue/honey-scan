@@ -304,10 +304,15 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            # Time Adjustment: Disabled to prevent Future Data.
-            # Assuming all sources now write Local Time (T) or T-1 (UTC).
+            # Time Adjustment: Frontend expects UTC.
+            # Fail2Ban/Manual are Local (T). We must convert to UTC (T-1) so Frontend (UTC->Local) works.
+            # Others (Honey Cloud) are already UTC.
             raw_time = row.get('create_time')
-            adjusted_time = raw_time
+            
+            if (service_actual == 'FAIL2BAN' or service_actual == 'API_MANUAL') and isinstance(raw_time, datetime):
+                 adjusted_time = raw_time - timedelta(hours=1)
+            else:
+                 adjusted_time = raw_time
 
             if len(recent_hackers) < 135:
                 recent_hackers.append({
