@@ -682,7 +682,9 @@ TRANSLATIONS = {
     "博茨瓦纳": "Botswana",
     "根西岛": "Guernsey",
     "本机地址": "Localhost",
-    "未知": "Unknown"
+    "未知": "Unknown",
+    "HFish Honeypot": "Honey Cloud",
+    "hfish honeypot": "Honey Cloud"
 }
 
 def get_english_name(chinese_name):
