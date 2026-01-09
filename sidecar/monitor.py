@@ -106,6 +106,12 @@ def ensure_db_schema():
             logger.info("Migrating DB (ipaddress): ADD COLUMN pushed_to_bridge")
             cursor.execute("ALTER TABLE ipaddress ADD COLUMN pushed_to_bridge TINYINT DEFAULT 0")
             cursor.execute("CREATE INDEX idx_pushed_to_bridge ON ipaddress(pushed_to_bridge)")
+
+        # Fix "Data too long" for region
+        try:
+             cursor.execute("ALTER TABLE ipaddress MODIFY region VARCHAR(128) DEFAULT ''")
+        except Exception as e:
+             pass
             
         logger.info("Schema migration completed successfully")
     except Exception as e:
@@ -752,10 +758,16 @@ def fix_unknown_countries():
                 if geo.get('status') == 'success':
                     country = geo.get('country', 'Unknown')
                     city = geo.get('city', 'Unknown')
+                    region = geo.get('regionName', '')
+
+                    # Truncate to avoid "Data too long" errors
+                    country = country[:64]
+                    city = city[:64]
+                    region = region[:128]
                     
                     # Update ipaddress table
                     cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s WHERE ip = %s", 
-                                   (country, city, geo.get('regionName', ''), ip))
+                                   (country, city, region, ip))
                                    
                     # Update infos table for historical accuracy in feed
                     cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip = %s AND source_ip_country = 'Unknown'", 
