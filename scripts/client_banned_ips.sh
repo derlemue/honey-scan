@@ -97,7 +97,55 @@ apply_firewall_block() {
     fi
 }
 
+# --- AUTO-DETECT & ENABLE JAILS ---
+auto_enable_jails() {
+    echo "Prüfe offene Ports und aktiviere Jails..."
+    
+    if ! command -v ss &> /dev/null; then return; fi
+    
+    # Get all listening ports
+    PORTS=$(ss -tuln | awk 'NR>1 {print $5}' | awk -F: '{print $NF}' | sort -u)
+    
+    # Helper to start jail if not running
+    ensure_jail() {
+        local NAME=$1
+        if ! fail2ban-client status "$NAME" &>/dev/null; then
+            echo "Aktiviere Jail '$NAME' (Port erkannt)..."
+            # Try to start. If it fails (not in config), just ignore.
+            fail2ban-client start "$NAME" 2>/dev/null || true
+            fail2ban-client reload "$NAME" 2>/dev/null || true
+        fi
+    }
+    
+    # Mapping Logic
+    # SSH
+    if echo "$PORTS" | grep -q -E "^22$"; then ensure_jail "sshd"; fi
+    
+    # HTTP/HTTPS
+    if echo "$PORTS" | grep -q -E "^(80|443)$"; then 
+        ensure_jail "nginx-http-auth"
+        ensure_jail "nginx-botsearch" 
+        ensure_jail "apache-auth"
+    fi
+    
+    # FTP
+    if echo "$PORTS" | grep -q -E "^21$"; then ensure_jail "vsftpd"; fi
+    
+    # Mail
+    if echo "$PORTS" | grep -q -E "^(25|465|587)$"; then ensure_jail "postfix"; fi
+    if echo "$PORTS" | grep -q -E "^(110|143|993|995)$"; then ensure_jail "dovecot"; fi
+    
+    # Bedrock (UDP) - User request
+    if echo "$PORTS" | grep -q -E "^19132$"; then ensure_jail "bedrock"; fi
+    
+    # Generic TCP/UDP Flood protection if *any* port is open? 
+    # Recidive should always be on
+    ensure_jail "recidive"
+}
+
 # --- HAUPTLOGIK (SYNC ONLY) ---
+auto_enable_jails
+
 
 echo "Abgleich mit Feed: $FEED_URL"
 
