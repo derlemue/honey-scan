@@ -225,6 +225,13 @@ sudo crontab -e
 */15 * * * * /pfad/zur/datei/client_banned_ips.sh > /dev/null 2>&1
 ```
 
+## 🔗 Andere Projekte
+
+### Honey-API (Bedrohungs-Brücke)
+Ein Programm, das die Daten vom Honeypot an andere Systeme sendet.
+*   **Code**: [lemueIO/honey-api](https://github.com/lemueIO/honey-api)
+*   **Was es macht**: Es hilft, die Daten in Sicherheits-Systeme (SIEM) zu bekommen.
+
 ## 📜 Über HFish
 
 Dieses Projekt basiert auf [HFish](https://hfish.net). Das ist ein bekannter Honeypot.
@@ -233,12 +240,5 @@ Dieses Projekt basiert auf [HFish](https://hfish.net). Das ist ein bekannter Hon
 *   **Hinweis**: Hier geht es um die Erweiterung (Aktive Verteidigung). Für HFish selbst, schau in die [Anleitung von HFish](https://hfish.net/#/docs).
 
 ---
-*Gemacht von der Honey-Scan Community.*
-
-## 🔗 Andere Projekte
-
-### Honey-API (Bedrohungs-Brücke)
-Ein Programm, das die Daten vom Honeypot an andere Systeme sendet.
-*   **Code**: [lemueIO/honey-api](https://github.com/lemueIO/honey-api)
-*   **Was es macht**: Es hilft, die Daten in Sicherheits-Systeme (SIEM) zu bekommen.
+*Gemacht von der Honey-Scan Community und [lemueIO](https://github.com/lemueIO/) ♥️*
 
