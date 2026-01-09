@@ -291,6 +291,10 @@ def update_threat_feed():
                 threat_type = "jailed by Fail2Ban"
                 threat_risk = "Low"
                 location_disp = "Fail2Ban"
+            elif service == 'BRIDGE_SYNC':
+                threat_type = "Global Threat"
+                threat_risk = "High"
+                # location_disp remains calculated (Country name)
 
             # Adjust time (subtract 1 hour)
             raw_time = row.get('create_time')
@@ -791,7 +795,9 @@ def main():
                     update_banned_list()
                     fix_missing_severity()
                     last_maintenance = time.time()
-
+                
+                # Run background tasks
+                fix_unknown_countries()
                 restore_db_language()
                 update_threat_feed()
                 if int(time.time()) % 600 < 15: 
