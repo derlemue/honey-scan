@@ -275,7 +275,21 @@ def update_threat_feed():
             logger.warning(f"Failed to pre-fetch Fail2Ban IPs: {e}")
 
         cursor = conn.cursor()
-        query = "SELECT DISTINCT source_ip, source_ip_country, create_time, service FROM infos ORDER BY create_time DESC LIMIT 162"
+        # Unified Sort Query: Fail2Ban/Manual are Local. Native are UTC.
+        # Normalize Native (UTC) to Local (+1h) for Correct Sorting against Fail2Ban.
+        query = """
+            SELECT DISTINCT 
+                source_ip, 
+                source_ip_country, 
+                service,
+                CASE 
+                    WHEN service = 'FAIL2BAN' OR service = 'API_MANUAL' THEN create_time 
+                    ELSE DATE_ADD(create_time, INTERVAL 1 HOUR) 
+                END as normalized_time
+            FROM infos 
+            ORDER BY normalized_time DESC 
+            LIMIT 162
+        """
         logger.info(f"Executing Query: {query}")
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -286,7 +300,7 @@ def update_threat_feed():
             service_actual = row.get('service', '') if isinstance(row, dict) else ""
             service = service_actual
             
-            # Metadata Override: If IP is a known Fail2Ban jail, force service context
+            # Metadata Override: If IP is a known Fail2Ban jail, force context
             if ip in f2b_ips:
                 service = 'FAIL2BAN'
             
@@ -304,10 +318,14 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            # Time Adjustment: DB is now Unified UTC (Native=UTC, Fail2Ban=UTC).
-            # No shift needed. Frontend (UTC+1) will handle display.
-            raw_time = row.get('create_time')
-            adjusted_time = raw_time
+            # Time Adjustment: normalized_time is Unified Local (T).
+            # Frontend (UTC+1) expects UTC (T-1).
+            # So we shift -1h.
+            raw_time = row.get('normalized_time')
+            if isinstance(raw_time, datetime):
+                adjusted_time = raw_time - timedelta(hours=1)
+            else:
+                adjusted_time = raw_time
 
             if len(recent_hackers) < 135:
                 recent_hackers.append({
