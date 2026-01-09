@@ -116,6 +116,60 @@ def validate_api_key(
             connection.close()
 
 
+class WebhookRequest(BaseModel):
+    attack_ip: str
+
+
+@app.post("/webhook")
+async def bridge_webhook(request: WebhookRequest):
+    """
+    Handle intelligence push from sidecar.
+    Compatible with honey-api /webhook response format.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    
+    try:
+        # Check if IP already exists
+        cursor.execute("SELECT id FROM ipaddress WHERE ip = %s", (request.attack_ip,))
+        result = cursor.fetchone()
+        
+        is_new = False
+        if not result:
+            is_new = True
+            # Add to ipaddress table
+            cursor.execute("""
+                INSERT INTO ipaddress (ip, create_time, update_time, country, region, city) 
+                VALUES (%s, NOW(), NOW(), 'Unknown', 'Unknown', 'Unknown')
+            """, (request.attack_ip,))
+            
+        # Add to infos table to ensure it shows up in dashboard/feed
+        # Similar logic to add_black_list
+        import uuid
+        info_id = str(uuid.uuid4())[:20]
+        
+        query = """
+            INSERT INTO infos (
+                info_id, source_ip, source_ip_country, service, 
+                client_id, create_time, update_time, dest_port, info
+            ) VALUES (%s, %s, 'Unknown', 'BRIDGE_SYNC', 'sidecar', NOW(), NOW(), 0, 'Internal Bridge Sync')
+        """
+        cursor.execute(query, (info_id, request.attack_ip))
+        connection.commit()
+        
+        return {
+            "status": "ok",
+            "is_new": is_new
+        }
+        
+    except Error as e:
+        logger.error(f"Webhook error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @app.get("/")
 async def root():
     """Health check endpoint"""
