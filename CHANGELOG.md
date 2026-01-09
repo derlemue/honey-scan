@@ -1,3 +1,12 @@
+## [7.4.0] - 2026-01-09
+
+### Fixed
+- 🐛 **Database**: Resolved "Data too long" error for `region` and `city` columns in `monitor.py` by implementing schema migration (VARCHAR 128) and data truncation.
+
+### Changed
+- 🚨 **Rebranding**: Replaced "HFish Honeypot" string with "**Honey Cloud**" in Dashboard and Feed location mapping.
+- ✅ **Verification**: Verified concurrent execution protection for `client_banned_ips.sh`.
+
 ## [7.3.0] - 2026-01-09
 
 ### Added
