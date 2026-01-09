@@ -95,10 +95,18 @@ async def startup_event():
 def validate_api_key(
     api_key_query: Optional[str] = Query(None, alias="api_key"),
     api_key_header: Optional[str] = Header(None, alias="api-key"),
-    api_key_header_alt: Optional[str] = Header(None, alias="api_key")
+    api_key_header_alt: Optional[str] = Header(None, alias="api_key"),
+    authorization: Optional[str] = Header(None, alias="Authorization")
 ):
     """Validate API key from query parameter or header against Database"""
     api_key = api_key_query or api_key_header or api_key_header_alt
+
+    if not api_key and authorization:
+         if authorization.startswith("Bearer "):
+             api_key = authorization.split(" ")[1]
+         else:
+             api_key = authorization
+
     if not api_key:
         raise HTTPException(status_code=401, detail="API Key missing")
         
@@ -107,8 +115,14 @@ def validate_api_key(
         cursor = connection.cursor()
         cursor.execute("SELECT id FROM api_keys WHERE access_key = %s", (api_key,))
         result = cursor.fetchone()
+        
+        # Fallback: Check for Bootstrap Key in env
         if not result:
-            raise HTTPException(status_code=401, detail="Invalid API key")
+             bootstrap_key = os.getenv('BOOTSTRAP_API_KEY')
+             if bootstrap_key and api_key == bootstrap_key:
+                 return api_key
+             raise HTTPException(status_code=401, detail="Invalid API key")
+             
         return api_key
     finally:
         if connection and connection.is_connected():
