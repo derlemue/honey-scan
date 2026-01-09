@@ -304,12 +304,13 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            # Time Adjustment: Specific Request - Only FAIL2BAN +1h
+            # Time Adjustment: Align UTC entries to Local (UTC+1)
             raw_time = row.get('create_time')
             
-            # Fail2Ban is stored at T-1 (via API), so we add 1h to get Local Time (T).
-            # Other services (Honey Cloud) are stored at UTC (T-1) and will stay at T-1 (UTC) per user request.
-            if service_actual == 'FAIL2BAN' and isinstance(raw_time, datetime):
+            # Fail2Ban and API_MANUAL are stored at Local Time (T).
+            # Other services (SSH, TCP, etc) from HFish are UTC (T-1).
+            # So we shift only non-local services.
+            if service_actual != 'FAIL2BAN' and service_actual != 'API_MANUAL' and isinstance(raw_time, datetime):
                  adjusted_time = raw_time + timedelta(hours=1)
             else:
                  adjusted_time = raw_time
