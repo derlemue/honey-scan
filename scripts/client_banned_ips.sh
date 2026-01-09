@@ -7,11 +7,27 @@
 
 # --- SINGLETON CHECK ---
 LOCK_FILE="/var/lock/honey_client_bans.lock"
+PID_FILE="/var/run/honey_client_bans.pid"
+
+# 1. Try FLOCK (Best method)
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
-    echo "Another instance of client_banned_ips.sh is already running. Exiting."
+    echo "$(date): Another instance is holding the lock. Exiting."
     exit 1
 fi
+
+# 2. Double Check PID (Fallback for weird filesystems)
+if [ -f "$PID_FILE" ]; then
+    OLD_PID=$(cat "$PID_FILE")
+    if kill -0 "$OLD_PID" 2>/dev/null; then
+        echo "$(date): PID file exists and process $OLD_PID is running. Exiting."
+        exit 1
+    fi
+fi
+echo $$ > "$PID_FILE"
+
+# Cleanup PID on exit
+trap 'rm -f "$PID_FILE"' EXIT
 
 # --- KONFIGURATION ---
 ENV_FILE="/root/.env.apikeys"
