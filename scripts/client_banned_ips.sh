@@ -13,24 +13,55 @@ AUTO_UPDATE=true
 SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/refs/heads/main/scripts/client_banned_ips.sh"
 SCRIPT_PATH="/root/client_banned_ips.sh"
 
-# --- AUTO UPDATE (BEFORE LOCK CHECK) ---
-self_update() {
-    if [ "$AUTO_UPDATE" != "true" ]; then return; fi
-    
-    # Check if curl and md5sum exist
-    if ! command -v curl &> /dev/null || ! command -v md5sum &> /dev/null; then
-        return
+# --- SINGLETON CHECK ---
+LOCK_DIR="/var/lock/honey_client_bans.lock"
+PID_FILE="/var/run/honey_client_bans.pid"
+
+# Atomic Lock using mkdir
+if [ -f "$LOCK_DIR" ]; then
+    rm -f "$LOCK_DIR"
+fi
+
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    STALE_LOCK=false
+    if [ -f "$PID_FILE" ]; then
+        OLD_PID=$(cat "$PID_FILE")
+        if [ "$OLD_PID" = "$$" ]; then
+            # This is us after an exec-update
+            STALE_LOCK=true
+        elif kill -0 "$OLD_PID" 2>/dev/null; then
+            echo "$(date): Process $OLD_PID is running. Exiting."
+            exit 1
+        else
+            STALE_LOCK=true
+        fi
+    else
+        STALE_LOCK=true
     fi
 
-    TEMP_FILE="/tmp/client_banned_ips.sh.tmp"
+    if [ "$STALE_LOCK" = true ]; then
+        rm -rf "$LOCK_DIR"
+        if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+             exit 1
+        fi
+    fi
+fi
+echo $$ > "$PID_FILE"
+cleanup() { rm -f "$PID_FILE"; rm -rf "$LOCK_DIR"; }
+trap cleanup EXIT
+
+# --- AUTO UPDATE ---
+self_update() {
+    if [ "$AUTO_UPDATE" != "true" ]; then return; fi
+    if ! command -v curl &> /dev/null || ! command -v md5sum &> /dev/null; then return; fi
+
+    TEMP_FILE=$(mktemp)
     if curl -s -f "$SCRIPT_URL" -o "$TEMP_FILE"; then
-        # Check syntax
         if ! bash -n "$TEMP_FILE"; then
             rm -f "$TEMP_FILE"
             return
         fi
         
-        # Compare hash
         LOCAL_HASH=$(md5sum "$0" | awk '{print $1}')
         REMOTE_HASH=$(md5sum "$TEMP_FILE" | awk '{print $1}')
         
@@ -47,56 +78,6 @@ self_update() {
 }
 self_update
 
-# --- SINGLETON CHECK ---
-LOCK_DIR="/var/lock/honey_client_bans.lock"
-PID_FILE="/var/run/honey_client_bans.pid"
-
-# Atomic Lock using mkdir (Works on all POSIX systems, NFS safe)
-# 1. Handle Legacy Lock FILE from previous versions
-if [ -f "$LOCK_DIR" ]; then
-    echo "$(date): Detected legacy lock file from old version. Removing to upgrade to folder lock."
-    rm -f "$LOCK_DIR"
-fi
-
-# 2. Try to acquire lock
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-    # Lock exists. Check if it's stale.
-    STALE_LOCK=false
-    
-    if [ -f "$PID_FILE" ]; then
-        OLD_PID=$(cat "$PID_FILE")
-        if kill -0 "$OLD_PID" 2>/dev/null; then
-            echo "$(date): Process $OLD_PID is running. Exiting."
-            exit 1
-        else
-            echo "$(date): Stale lock detected (PID $OLD_PID not found). cleaning up..."
-            STALE_LOCK=true
-        fi
-    else
-        echo "$(date): Lock directory exists but no PID file. cleaning up..."
-        STALE_LOCK=true
-    fi
-
-    if [ "$STALE_LOCK" = true ]; then
-        rm -rf "$LOCK_DIR"
-        # Retry once
-        if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-             echo "$(date): Failed to acquire lock after cleanup. Exiting."
-             exit 1
-        fi
-        echo "$(date): Stale lock removed. Proceeding..."
-    fi
-fi
-
-# Write PID
-echo $$ > "$PID_FILE"
-
-# Cleanup on exit
-cleanup() {
-    rm -f "$PID_FILE"
-    rm -rf "$LOCK_DIR"
-}
-trap cleanup EXIT
 
 # --- FIREWALL FUNKTION (DER UDP/BEDROCK FIX) ---
 apply_firewall_block() {

@@ -5,6 +5,49 @@ API_URL="https://sec.lemue.org"
 UPDATE_URL="https://raw.githubusercontent.com/derlemue/honey-scan/refs/heads/main/scripts/hfish-client.sh"
 API_KEY="" 
 
+# --- SINGLETON CHECK ---
+LOCK_DIR="/var/lock/hfish_client_export.lock"
+PID_FILE="/var/run/hfish_client_export.pid"
+
+# Attempt to remove a file-based lock if it exists (unlikely for a directory lock, but included as per instruction)
+if [ -f "$LOCK_DIR" ]; then rm -f "$LOCK_DIR"; fi
+
+# Try to create the lock directory atomically
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    STALE_LOCK=false
+    if [ -f "$PID_FILE" ]; then
+        OLD_PID=$(cat "$PID_FILE")
+        # Check if the PID in the file is the current script's PID (self-restart via exec)
+        if [ "$OLD_PID" = "$$" ]; then
+            # This is the same script instance after an exec, so it's not a stale lock from another process.
+            # We will proceed to re-acquire the lock.
+            STALE_LOCK=true # Treat as stale to force re-creation of lock and PID file
+        elif kill -0 "$OLD_PID" 2>/dev/null; then
+            # Another process with OLD_PID is still running
+            echo "$(date): Process $OLD_PID is already running. Exiting."
+            exit 0 # Exit gracefully if already running
+        else
+            # PID file exists but process is not running (stale PID)
+            STALE_LOCK=true
+        fi
+    else
+        # Lock directory exists but no PID file (stale lock)
+        STALE_LOCK=true
+    fi
+
+    if [ "$STALE_LOCK" = true ]; then
+        # Remove stale lock and try to acquire it
+        rm -rf "$LOCK_DIR"
+        if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+            echo "$(date): Failed to acquire lock after cleanup. Exiting."
+            exit 1
+        fi
+    fi
+fi
+echo $$ > "$PID_FILE"
+cleanup() { rm -f "$PID_FILE"; rm -rf "$LOCK_DIR"; }
+trap cleanup EXIT
+
 # Load API Key from .env.apikeys if available
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 POSSIBLE_ENV_FILES=(
