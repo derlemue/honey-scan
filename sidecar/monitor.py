@@ -695,9 +695,9 @@ def get_english_name(chinese_name):
         return "Unknown"
     
     # Clean string
-    name = chinese_name.strip()
+    name = str(chinese_name).strip()
     
-    # Handle specific common patterns
+    # Handle specific common patterns FIRST
     if "台湾" in name or "Taiwan" in name:
         return "Taiwan"
     if "香港" in name or "Hong Kong" in name:
@@ -705,21 +705,29 @@ def get_english_name(chinese_name):
     if "澳门" in name or "Macau" in name:
         return "Macau"
         
-    # If it contains China prefix or is just China
-    if "中国" in name:
-        # Try to find a specific translation for the sub-part if it's a hyphenated string
+    # If it contains China prefix or is just China in any form
+    if "中国" in name or "china" in name.lower():
+        # Try to find a more specific translation for the sub-part if it's a hyphenated string
         if "-" in name:
             parts = name.split("-")
             for part in reversed(parts):
                 p = part.strip()
-                if p in TRANSLATIONS:
-                    return TRANSLATIONS[p]
+                if p in TRANSLATIONS and p != "中国":
+                     return TRANSLATIONS[p]
         return "China"
     
     # Try direct mapping
     if name in TRANSLATIONS:
         return TRANSLATIONS[name]
         
+    # Final check for sub-parts of any hyphenated string
+    if "-" in name:
+        parts = name.split("-")
+        for part in reversed(parts):
+            p = part.strip()
+            if p in TRANSLATIONS:
+                return TRANSLATIONS[p]
+                
     # Return as-is if no match
     return name
 
