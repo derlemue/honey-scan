@@ -304,16 +304,10 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            # Time Adjustment: Align UTC entries to Local (UTC+1)
+            # Time Adjustment: Disabled to prevent Future Data.
+            # Assuming all sources now write Local Time (T) or T-1 (UTC).
             raw_time = row.get('create_time')
-            
-            # Fail2Ban and API_MANUAL are stored at Local Time (T).
-            # Other services (SSH, TCP, etc) from HFish are UTC (T-1).
-            # So we shift only non-local services.
-            if service_actual != 'FAIL2BAN' and service_actual != 'API_MANUAL' and isinstance(raw_time, datetime):
-                 adjusted_time = raw_time + timedelta(hours=1)
-            else:
-                 adjusted_time = raw_time
+            adjusted_time = raw_time
 
             if len(recent_hackers) < 135:
                 recent_hackers.append({
