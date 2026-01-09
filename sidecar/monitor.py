@@ -259,6 +259,7 @@ def update_threat_feed():
     recent_hackers = []
     suspicious_cs = []
     try:
+        cursor = conn.cursor()
         # Pre-fetch known Fail2Ban IPs from the last 14 days to prioritize their metadata
         # preventing "Bridge Sync" from overriding the "Fail2Ban" status.
         f2b_ips = set()
