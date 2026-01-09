@@ -715,6 +715,12 @@ def main():
     init_env()
     logger.info(f"Monitor started (DB_TYPE={DB_TYPE}).")
     logger.info(f"DEBUG: DB_USER={DB_USER}, DB_HOST={DB_HOST}, DB_NAME={DB_NAME}")
+
+    if THREAT_BRIDGE_WEBHOOK_URL:
+        logger.info(f"Threat Intelligence Bridge ENABLED. Target: {THREAT_BRIDGE_WEBHOOK_URL}")
+    else:
+        logger.warning("Threat Intelligence Bridge DISABLED (URL not set).")
+
     logger.info("Waiting 30s for DB to be ready...")
     time.sleep(30) 
     ensure_db_schema()
