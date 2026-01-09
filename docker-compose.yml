@@ -90,6 +90,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=hfish
       - FORCE_RESCAN=true
+      - THREAT_BRIDGE_WEBHOOK_URL=${THREAT_BRIDGE_WEBHOOK_URL}
     env_file: .env.apikeys
     volumes:
       - ./scans:/app/scans
