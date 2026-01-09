@@ -2,7 +2,7 @@
 
 # Default Configuration
 API_URL="https://sec.lemue.org"
-UPDATE_URL="https://feed.sec.lemue.org/scripts/hfish-client.sh"
+UPDATE_URL="https://raw.githubusercontent.com/derlemue/honey-scan/refs/heads/main/scripts/hfish-client.sh"
 API_KEY="" 
 
 # Load API Key from .env.apikeys if available
@@ -114,7 +114,7 @@ sync_history() {
     fi
 
     # 1. Fetch Remote List
-    REMOTE_FEED_URL="https://feed.sec.lemue.org/feed/banned_ips.txt"
+    REMOTE_FEED_URL="https://raw.githubusercontent.com/derlemue/honey-scan/refs/heads/main/feed/banned_ips.txt"
     TEMP_REMOTE=$(mktemp)
     TEMP_LOCAL=$(mktemp)
     TEMP_DIFF=$(mktemp)

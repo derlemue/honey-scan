@@ -10,7 +10,7 @@ ENV_FILE="/root/.env.apikeys"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
 AUTO_UPDATE=true 
-SCRIPT_URL="https://feed.sec.lemue.org/scripts/client_banned_ips.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/refs/heads/main/scripts/client_banned_ips.sh"
 SCRIPT_PATH="/root/client_banned_ips.sh"
 
 # --- AUTO UPDATE (BEFORE LOCK CHECK) ---
