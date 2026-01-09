@@ -42,6 +42,10 @@ MAX_WORKERS = 16  # Optimized concurrency (User Request: 16)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("HoneySidecar")
 
+def is_loopback(ip):
+    """Check if the IP is a loopback address."""
+    return ip in ("127.0.0.1", "::1", "localhost")
+
 def signal_handler(sig, frame):
     logger.info("Exiting...")
     sys.exit(0)
@@ -300,7 +304,7 @@ def get_new_attackers():
         # Skip ban check - scan everything without reports
         new_ips = []
         for ip in ips:
-            if len(ip) < 7 or ip in scanning_ips:
+            if len(ip) < 7 or ip in scanning_ips or is_loopback(ip):
                 continue
             report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
             if not os.path.exists(report_path):
@@ -318,7 +322,7 @@ def get_new_attackers():
         except Exception as e:
             logger.error(f"Error reading banned IPs: {e}")
     
-    new_ips = [ip for ip in ips if ip not in current_banned and ip not in scanning_ips and len(ip) >= 7]
+    new_ips = [ip for ip in ips if ip not in current_banned and ip not in scanning_ips and len(ip) >= 7 and not is_loopback(ip)]
     if new_ips:
         logger.info(f"Found {len(new_ips)} new attacker IPs to process")
     return new_ips
@@ -360,7 +364,9 @@ def update_banned_list():
         
         banned_ips = set()
         for row in rows:
-            banned_ips.add(row['source_ip'] if isinstance(row, dict) else row[0])
+            ip = row['source_ip'] if isinstance(row, dict) else row[0]
+            if not is_loopback(ip):
+                banned_ips.add(ip)
 
         with open(BANNED_IPS_FILE, "w") as f:
             for ip in sorted(banned_ips):
