@@ -19,30 +19,30 @@ fi
 # 2. Try to acquire lock
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     # Lock exists. Check if it's stale.
+    STALE_LOCK=false
+    
     if [ -f "$PID_FILE" ]; then
         OLD_PID=$(cat "$PID_FILE")
         if kill -0 "$OLD_PID" 2>/dev/null; then
             echo "$(date): Process $OLD_PID is running. Exiting."
             exit 1
         else
-            echo "$(date): Stale lock detected (PID $OLD_PID not found). Removing lock."
-            rm -rf "$LOCK_DIR"
-            # Retry once
-            if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-                 echo "$(date): Failed to acquire lock after cleanup. Exiting."
-                 exit 1
-            fi
+            echo "$(date): Stale lock detected (PID $OLD_PID not found). cleaning up..."
+            STALE_LOCK=true
         fi
     else
-        # No PID file but lock dir exists? Assume stale after timeout or manual cleanup.
-        # Too risky to auto-delete without PID check. 
-        # But if we rely on PID file inside the lock logic...
-        # Let's trust PID_FILE for stale check.
-        # If PID_FILE is missing but LOCK_DIR exists, it's a zombie lock.
-        # We can check creation time of LOCK_DIR? No portable way.
-        
-        echo "$(date): Lock directory exists but no PID file. Possible stale lock. Exiting to be safe."
-        exit 1
+        echo "$(date): Lock directory exists but no PID file. cleaning up..."
+        STALE_LOCK=true
+    fi
+
+    if [ "$STALE_LOCK" = true ]; then
+        rm -rf "$LOCK_DIR"
+        # Retry once
+        if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+             echo "$(date): Failed to acquire lock after cleanup. Exiting."
+             exit 1
+        fi
+        echo "$(date): Stale lock removed. Proceeding..."
     fi
 fi
 
