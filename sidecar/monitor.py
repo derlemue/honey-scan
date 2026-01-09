@@ -19,7 +19,8 @@ DB_USER = os.getenv("DB_USER", "hfish") # User Request (Made configurable)
 DB_PASSWORD = os.getenv("DB_PASSWORD", "password") # Default password for hfish
 DB_NAME = os.getenv("DB_NAME", "hfish")
 
-# ThreatBook API Config Removed
+# Threat Intelligence Bridge Config
+THREAT_BRIDGE_WEBHOOK_URL = os.getenv("THREAT_BRIDGE_WEBHOOK_URL")
 
 # Legacy/SQLite Path
 DB_PATH = "/hfish_ro/database/hfish.db"
@@ -157,6 +158,23 @@ def update_node_location():
     except Exception as e:
         logger.error(f"Database update failed: {e}")
         if conn: conn.close()
+
+def push_intelligence(ip):
+    if not THREAT_BRIDGE_WEBHOOK_URL:
+        return
+    try:
+        logger.info(f"Pushing intelligence for {ip} to bridge...")
+        resp = requests.post(
+            THREAT_BRIDGE_WEBHOOK_URL,
+            json={"attack_ip": ip},
+            timeout=10
+        )
+        if resp.status_code == 200:
+            logger.info(f"Intelligence push success for {ip}: {resp.text}")
+        else:
+            logger.warning(f"Intelligence push failed for {ip}: HTTP {resp.status_code}")
+    except Exception as e:
+        logger.error(f"Error pushing intelligence for {ip}: {e}")
 
 # query_threatbook_ip removed
 
@@ -605,6 +623,8 @@ def main():
                     for ip in attackers:
                         scanning_ips.add(ip)
                         executor.submit(scan_ip, ip)
+                        # Push to Threat Intelligence Bridge
+                        executor.submit(push_intelligence, ip)
                 
                 # Optimization: Run heavy tasks roughly every 60s
                 # Using timestamp check is more robust than modulo 0 against loop drift
