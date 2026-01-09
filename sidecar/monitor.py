@@ -253,6 +253,20 @@ def update_threat_feed():
     recent_hackers = []
     suspicious_cs = []
     try:
+        # Pre-fetch known Fail2Ban IPs from the last 14 days to prioritize their metadata
+        # preventing "Bridge Sync" from overriding the "Fail2Ban" status.
+        f2b_ips = set()
+        try:
+            f2b_query = "SELECT DISTINCT source_ip FROM infos WHERE service = 'FAIL2BAN' AND create_time >= DATE_SUB(NOW(), INTERVAL 14 DAY)"
+            cursor.execute(f2b_query)
+            f2b_rows = cursor.fetchall()
+            for r in f2b_rows:
+                f2b_ip = r['source_ip'] if isinstance(r, dict) else r[0]
+                f2b_ips.add(f2b_ip)
+            logger.info(f"Loaded {len(f2b_ips)} Fail2Ban IPs for metadata prioritization.")
+        except Exception as e:
+            logger.warning(f"Failed to pre-fetch Fail2Ban IPs: {e}")
+
         cursor = conn.cursor()
         query = "SELECT DISTINCT source_ip, source_ip_country, create_time, service FROM infos ORDER BY create_time DESC LIMIT 162"
         logger.info(f"Executing Query: {query}")
@@ -263,6 +277,10 @@ def update_threat_feed():
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
             service = row.get('service', '') if isinstance(row, dict) else ""
+            
+            # Metadata Override: If IP is a known Fail2Ban jail, force service context
+            if ip in f2b_ips:
+                service = 'FAIL2BAN'
             
             # Formatting for Fail2Ban entries
             threat_type = "Port Scanner"
