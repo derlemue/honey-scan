@@ -4,7 +4,7 @@
     run_mode = "release"
 
 [webapp]
-    web_addr = ":4433"
+    web_addr = ":4435"
     api_addr = ":4434"
 
 [title]
