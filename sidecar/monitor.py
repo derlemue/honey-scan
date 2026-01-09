@@ -270,15 +270,23 @@ def update_threat_feed():
             location_disp = get_english_name(country)
             
             if service == 'FAIL2BAN':
-                threat_type = "jailed by rules"
-                threat_risk = "low"
-                location_disp = "by Fail2Ban"
+                threat_type = "jailed by Fail2Ban"
+                threat_risk = "Low"
+                location_disp = "Fail2Ban"
+
+            # Adjust time (subtract 1 hour)
+            raw_time = row.get('create_time')
+            if isinstance(raw_time, datetime):
+                adjusted_time = raw_time - timedelta(hours=1)
+            else:
+                # If it's a string, we might need to parse it or just use it as is if it's already "Just now"
+                adjusted_time = raw_time
 
             if len(recent_hackers) < 135:
                 recent_hackers.append({
                     "ip": ip,
                     "location": location_disp,
-                    "time": str(row.get('create_time', 'Just now')),
+                    "time": str(adjusted_time if adjusted_time else 'Just now'),
                     "flag": get_english_name(country) if service != 'FAIL2BAN' else "Unknown",
                     "count": 1
                 })
@@ -288,7 +296,7 @@ def update_threat_feed():
                         "location": location_disp,
                         "type": threat_type,
                         "risk": threat_risk,
-                        "time": str(row.get("create_time", "")) if "create_time" in row else "Just now"
+                        "time": str(adjusted_time if adjusted_time else 'Just now')
                     })
 
         # Enforce exact limit of 130 items (26 * 5 pages)
