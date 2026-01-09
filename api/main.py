@@ -528,7 +528,7 @@ async def add_black_list(
         service_name = 'API_MANUAL'
         country_name = 'Unknown'
         
-        if request.memo and "Fail2ban" in request.memo:
+        if request.memo and "fail2ban" in request.memo.lower():
             service_name = 'FAIL2BAN'
             country_name = 'by Fail2Ban'
             # Storage Offset: Store 1 hour behind so Sidecar's global +1h shift aligns it to Local
