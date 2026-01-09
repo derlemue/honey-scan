@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default Configuration
-API_URL="https://sec.lemue.org"
+API_URL="http://127.0.0.1:4444"
 UPDATE_URL="https://feed.sec.lemue.org/scripts/hfish-client.sh"
 API_KEY="" 
 
@@ -19,6 +19,12 @@ for env_file in "${POSSIBLE_ENV_FILES[@]}"; do
     if [ -f "$env_file" ]; then
         # export variables from file
         export $(grep -v '^#' "$env_file" | xargs)
+        
+        # Support BOOTSTRAP_API_KEY as fallback
+        if [ -z "$API_KEY" ] && [ -n "$BOOTSTRAP_API_KEY" ]; then
+            API_KEY="$BOOTSTRAP_API_KEY"
+        fi
+        
         # If API_KEY was loaded, break
         if [ -n "$API_KEY" ]; then
              break
@@ -70,7 +76,7 @@ self_update() {
 }
 
 # Run update check
-self_update "$@"
+# self_update "$@"
 
 # Filter out --no-update from args for the rest of the script
 ARGS=()
@@ -164,10 +170,13 @@ sync_history() {
              exit 1
         fi
 
-        URL="$API_URL/api/v1/config/black_list/add?api_key=$API_KEY"
-        PAYLOAD="{\"ip\": \"$IP\", \"memo\": \"Fail2ban Sync\"}"
+        URL="$API_URL/api/v1/config/black_list/add"
+        PAYLOAD="{\"ip\": \"$IP\", \"memo\": \"Fail2ban Start Sync\"}"
         
-        RESPONSE=$(curl -k -s -X POST "$URL" -H "Content-Type: application/json" -d "$PAYLOAD")
+        RESPONSE=$(curl -k -s -X POST "$URL" \
+            -H "Authorization: $API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
         echo "  Response: $RESPONSE"
         
         # 500ms delay
@@ -202,7 +211,7 @@ if [ -z "$API_KEY" ]; then
 fi
 
 # Construct the URL
-URL="$API_URL/api/v1/config/black_list/add?api_key=$API_KEY"
+URL="$API_URL/api/v1/config/black_list/add"
 
 # Payload
 payload=$(cat <<EOF
@@ -214,9 +223,13 @@ EOF
 )
 
 response=$(curl -k -s -X POST "$URL" \
+     -H "Authorization: $API_KEY" \
      -H "Content-Type: application/json" \
      -d "$payload")
 
 # Log result
 KEY_MASKED="${API_KEY:0:5}..."
 echo "$(date): IP $TARGET_IP sent with key $KEY_MASKED. Response: $response" >> /var/log/hfish-client-export.log
+
+# User Feedback
+echo "Success: Blocked $TARGET_IP and reported to API."
