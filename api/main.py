@@ -524,26 +524,9 @@ async def add_black_list(
     cursor = connection.cursor(dictionary=True)
     
     try:
-        # Check if IP already exists in ipaddress table, if not add it
-        cursor.execute("SELECT id FROM ipaddress WHERE ip = %s", (request.ip,))
-        if not cursor.fetchone():
-            cursor.execute("""
-                INSERT INTO ipaddress (ip, create_time, update_time, country, region, city) 
-                VALUES (%s, NOW(), NOW(), 'Unknown', 'Unknown', 'Unknown')
-            """, (request.ip,))
-        
-        # Insert simulated attack into infos table
-        # This will be picked up by the sidecar monitor and added to banned_ips.txt
-        import uuid
-        info_id = str(uuid.uuid4())[:20] # Generate unique ID, max 20 chars
-        
-        # Determine service and metadata based on memo (hfish-client.sh sends "Fail2ban Client Jail")
+        # Determine service and metadata based on memo
         service_name = 'API_MANUAL'
         country_name = 'Unknown'
-        
-        # Default keys for timestamp (using raw NOW())
-        create_time_expr = "NOW()"
-        update_time_expr = "NOW()"
         
         if request.memo and "Fail2ban" in request.memo:
             service_name = 'FAIL2BAN'
@@ -551,6 +534,21 @@ async def add_black_list(
             # Correction for Fail2Ban script timezone (1 hour ahead)
             create_time_expr = "DATE_SUB(NOW(), INTERVAL 1 HOUR)"
             update_time_expr = "DATE_SUB(NOW(), INTERVAL 1 HOUR)"
+        else:
+            create_time_expr = "NOW()"
+            update_time_expr = "NOW()"
+
+        # Check if IP already exists in ipaddress table, if not add it
+        cursor.execute("SELECT id FROM ipaddress WHERE ip = %s", (request.ip,))
+        if not cursor.fetchone():
+            cursor.execute(f"""
+                INSERT INTO ipaddress (ip, create_time, update_time, country, region, city) 
+                VALUES (%s, {create_time_expr}, {update_time_expr}, 'Unknown', 'Unknown', 'Unknown')
+            """, (request.ip,))
+
+        # Insert simulated attack into infos table
+        import uuid
+        info_id = str(uuid.uuid4())[:20]
 
         query = f"""
             INSERT INTO infos (
