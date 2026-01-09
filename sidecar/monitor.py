@@ -192,7 +192,7 @@ def push_intelligence(ip):
     return True
 
 def sync_to_bridge():
-    """Sync unsynced IPs to the bridge with a 500ms delay."""
+    """Sync unsynced IPs to the bridge with a 200ms delay."""
     if not THREAT_BRIDGE_WEBHOOK_URL:
         return
     
@@ -213,8 +213,8 @@ def sync_to_bridge():
                 # Update status in DB
                 cursor.execute("UPDATE ipaddress SET pushed_to_bridge = 1 WHERE ip = %s", (ip,))
             
-            # Respect the 500ms delay requested by the user
-            time.sleep(0.5)
+            # Respect the 200ms delay requested by the user
+            time.sleep(0.2)
             
         conn.commit()
     except Exception as e:
