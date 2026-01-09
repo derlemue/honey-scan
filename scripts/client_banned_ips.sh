@@ -8,15 +8,9 @@
 # --- KONFIGURATION ---
 ENV_FILE="/root/.env.apikeys"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
-API_URL="http://localhost:5000/api/ban"
 BAN_TIME=1209600 # 14 Tage
 AUTO_UPDATE=false 
 SCRIPT_PATH="/root/client_banned_ips.sh"
-
-# --- LADE API-KEY ---
-if [ -f "$ENV_FILE" ]; then
-    API_KEY=$(grep "^BOOTSTRAP_API_KEY=" "$ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
-fi
 
 # --- FIREWALL FUNKTION (DER UDP/BEDROCK FIX) ---
 apply_firewall_block() {
@@ -36,56 +30,31 @@ apply_firewall_block() {
     fi
 }
 
-# --- HAUPTLOGIK ---
+# --- HAUPTLOGIK (SYNC ONLY) ---
 
-# FALL 1: Synchronisation mit dem externen Feed (--sync)
-if [ "$1" == "--sync" ]; then
-    echo "Abgleich mit Feed: $FEED_URL"
-    
-    # 1. Remote IPs holen
-    REMOTE_IPS=$(curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
-    
-    # 2. Lokale Jails ermitteln
-    JAILS=$(fail2ban-client status | grep "Jail list:" | sed 's/.*Jail list://' | tr -d ',')
+echo "Abgleich mit Feed: $FEED_URL"
 
-    for JAIL in $JAILS; do
-        echo "Prüfe Jail: $JAIL"
-        # 3. Bereits lokal gebannte IPs holen für Duplikatsprüfung
-        LOCAL_BANS=$(fail2ban-client status "$JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -d ',')
-        
-        for R_IP in $REMOTE_IPS; do
-            # 4. Nur hinzufügen, wenn IP noch NICHT lokal vorhanden ist
-            if [[ ! $LOCAL_BANS =~ $R_IP ]]; then
-                echo "Neu: $R_IP -> 14 Tage Ban & Firewall Block (TCP/UDP)"
-                fail2ban-client set "$JAIL" banip "$R_IP" "$BAN_TIME" > /dev/null
-                apply_firewall_block "$R_IP" "$JAIL"
-            else
-                # IP ist schon in F2B, aber wir stellen sicher, dass die UDP-Regel sitzt
-                apply_firewall_block "$R_IP" "$JAIL"
-            fi
-        done
+# 1. Remote IPs holen
+REMOTE_IPS=$(curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+
+# 2. Lokale Jails ermitteln
+JAILS=$(fail2ban-client status | grep "Jail list:" | sed 's/.*Jail list://' | tr -d ',')
+
+for JAIL in $JAILS; do
+    echo "Prüfe Jail: $JAIL"
+    # 3. Bereits lokal gebannte IPs holen für Duplikatsprüfung
+    LOCAL_BANS=$(fail2ban-client status "$JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -d ',')
+    
+    for R_IP in $REMOTE_IPS; do
+        # 4. Nur hinzufügen, wenn IP noch NICHT lokal vorhanden ist
+        if [[ ! $LOCAL_BANS =~ $R_IP ]]; then
+            echo "Neu: $R_IP -> 14 Tage Ban & Firewall Block (TCP/UDP)"
+            fail2ban-client set "$JAIL" banip "$R_IP" "$BAN_TIME" > /dev/null
+            apply_firewall_block "$R_IP" "$JAIL"
+        else
+            # IP ist schon in F2B, aber wir stellen sicher, dass die UDP-Regel sitzt
+            apply_firewall_block "$R_IP" "$JAIL"
+        fi
     done
-    echo "Sync abgeschlossen."
-
-# FALL 2: Neue IP von lokalem Fail2Ban gemeldet (Push an API)
-elif [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    IP=$1
-    echo "Lokaler Ban erkannt: $IP"
-    
-    # Sofortiger lokaler Schutz für TCP & UDP
-    apply_firewall_block "$IP"
-    
-    # An API melden (Honey-Scan Bestandteil)
-    if [ -n "$API_KEY" ]; then
-        curl -s -X POST -H "Authorization: $API_KEY" \
-             -d "ip=$IP" \
-             -d "reason=local_detection" \
-             "$API_URL" > /dev/null
-        echo "IP an API gepusht."
-    fi
-
-else
-    echo "Verwendung: $0 <ip_address> OR $0 --sync"
-    echo "Status: API-Key $([ -n "$API_KEY" ] && echo 'GELADEN' || echo 'FEHLT')"
-    exit 1
-fi
+done
+echo "Sync abgeschlossen."
