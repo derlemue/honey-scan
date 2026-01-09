@@ -139,22 +139,6 @@ graph LR
 
 ## 🛠️ Installation
 
-### 📦 Datenbank (MariaDB)
-1.  Kopiere die Datei für Einstellungen:
-    ```bash
-    cp .env.example .env
-    ```
-2.  **Bearbeite `.env`**. Schreibe sichere Passwörter bei `DB_PASSWORD` und `MYSQL_ROOT_PASSWORD`.
-3.  Benutze diese Daten beim HFish Start:
-
-| Feld | Wert |
-| :--- | :--- |
-| **Datenbank Typ** | **MySQL / MariaDB** |
-| **Adresse** | `127.0.0.1` |
-| **Port** | `3307` |
-| **Name** | `hfish` |
-| **Benutzer** | `hfish` |
-| **Passwort** | *(Dein Passwort aus der .env Datei)* |
 
 ### 0. Automatische Einrichtung (Debian 13)
 Wir haben ein Skript. Es macht alles automatisch:

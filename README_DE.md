@@ -138,22 +138,6 @@ curl -X POST "https://sec.lemue.org/api/v1/config/black_list/add?api_key=DEIN_KE
 
 ## 🛠️ Installation
 
-### 📦 Datenbank-Setup (MariaDB)
-1.  Kopiere die Beispiel-Environment-Datei:
-    ```bash
-    cp .env.example .env
-    ```
-2.  **Bearbeite `.env`** und setze sichere Passwörter für `DB_PASSWORD` und `MYSQL_ROOT_PASSWORD`.
-3.  Nutze diese Werte beim Konfigurieren des HFish-Assistenten.
-
-| Einstellung | Wert |
-| :--- | :--- |
-| **Datenbank Typ** | **MySQL / MariaDB** |
-| **Adresse** | `127.0.0.1` |
-| **Port** | `3307` |
-| **Name** | `hfish` |
-| **Benutzername** | `hfish` |
-| **Passwort** | *(Der Wert aus `.env`)* |
 
 ### 0. Automatisches Host-Setup (Debian 13)
 Wir stellen ein Setup-Skript bereit, das:

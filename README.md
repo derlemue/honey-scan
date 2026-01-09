@@ -134,22 +134,6 @@ curl -X POST "https://sec.lemue.org/api/v1/config/black_list/add?api_key=YOUR_KE
 
 ## 🛠️ Installation
 
-### 📦 Database Setup (MariaDB)
-1.  Copy the example environment file:
-    ```bash
-    cp .env.example .env
-    ```
-2.  **Edit `.env`** and set secure passwords for `DB_PASSWORD` and `MYSQL_ROOT_PASSWORD`.
-3.  Use these values when configuring HFish wizard.
-
-| Setting | Value |
-| :--- | :--- |
-| **Database Type** | **MySQL / MariaDB** |
-| **Address** | `127.0.0.1` |
-| **Port** | `3307` |
-| **Name** | `hfish` |
-| **Username** | `hfish` |
-| **Password** | *(The value you set in `.env`)* |
 
 ### 0. Automated Host Setup (Debian 13)
 We provide a setup script that:
