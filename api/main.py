@@ -531,9 +531,10 @@ async def add_black_list(
         if request.memo and "fail2ban" in request.memo.lower():
             service_name = 'FAIL2BAN'
             country_name = 'by Fail2Ban'
-            # Storage Offset: Standard NOW() (Local Time T) - Unified approach
-            create_time_expr = "NOW()"
-            update_time_expr = "NOW()"
+            # Storage Offset: Store as UTC (T-1) to match Native/Cloud entries.
+            # This ensures correct Sorting in DB and Unified Display.
+            create_time_expr = "DATE_SUB(NOW(), INTERVAL 1 HOUR)"
+            update_time_expr = "DATE_SUB(NOW(), INTERVAL 1 HOUR)"
         else:
             create_time_expr = "NOW()"
             update_time_expr = "NOW()"

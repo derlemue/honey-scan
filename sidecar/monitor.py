@@ -304,15 +304,10 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            # Time Adjustment: Formatting specific.
-            # Only shift if Location is explicitly FAIL2BAN (Native/Script Local Time T -> UTC T-1).
-            # "Honey Cloud" or other locations (UTC) remain UTC.
+            # Time Adjustment: DB is now Unified UTC (Native=UTC, Fail2Ban=UTC).
+            # No shift needed. Frontend (UTC+1) will handle display.
             raw_time = row.get('create_time')
-            
-            if location_disp == "FAIL2BAN" and isinstance(raw_time, datetime):
-                 adjusted_time = raw_time - timedelta(hours=1)
-            else:
-                 adjusted_time = raw_time
+            adjusted_time = raw_time
 
             if len(recent_hackers) < 135:
                 recent_hackers.append({
