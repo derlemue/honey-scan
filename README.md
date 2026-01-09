@@ -228,14 +228,14 @@ sudo crontab -e
 */15 * * * * /path/to/client_banned_ips.sh > /dev/null 2>&1
 ```
 
-## � Associated Projects
+## 🔗 Associated Projects
 
 ### Honey-API (Threat Intelligence Bridge)
 A standalone API service that bridges HFish data to external threat intelligence platforms.
 *   **Repository**: [lemueIO/honey-api](https://github.com/lemueIO/honey-api)
 *   **Features**: Provides a standardized API (ThreatBook v3 compatible) for your honeypot data, allowing integration with SOAR/SIEM tools.
 
-## �📜 About Core HFish
+## 📜 About Core HFish
 
 This project is built upon [HFish](https://hfish.net), a high-performance community honeypot.
 *   **Base Features**: Supports SSH, Redis, Mysql web honeypots, and more.
