@@ -299,7 +299,7 @@ def update_threat_feed():
             # Adjust time (subtract 1 hour)
             raw_time = row.get('create_time')
             if isinstance(raw_time, datetime):
-                adjusted_time = raw_time - timedelta(hours=1)
+                adjusted_time = raw_time + timedelta(hours=1)
             else:
                 # If it's a string, we might need to parse it or just use it as is if it's already "Just now"
                 adjusted_time = raw_time
