@@ -1,38 +1,73 @@
 #!/bin/bash
 
-# Script: client_banned_ips.sh (Fixed for UDP/Bedrock Support)
-# Dieses Script stellt sicher, dass IPs für TCP UND UDP gesperrt werden.
+# ==============================================================================
+# Script: client_banned_ips.sh
+# Beschreibung: Synchronisiert Fail2Ban Bans mit nftables (Fix für UDP/Bedrock)
+# Version: 1.1.0 (Fixed UDP Support)
+# ==============================================================================
 
-# 1. Variablen definieren (Basierend auf deinem Screenshot)
-JAIL="sshd"
-ACTION="nftables"
+# --- KONFIGURATION ---
+AUTO_UPDATE=true
+REMOTE_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/client_banned_ips.sh"
+SCRIPT_PATH=$(readlink -f "$0")
 
-# 2. Ports aus Fail2Ban abrufen
-# Dies liefert die Liste: 22,68,80,81,...,19132,...
-PORTS=$(fail2ban-client get "$JAIL" action "$ACTION" port)
+# --- AUTO-UPDATE FUNKTION ---
+if [ "$AUTO_UPDATE" = "true" ]; then
+    TMP_FILE="/tmp/client_banned_ips_update.sh"
+    if curl -s -o "$TMP_FILE" "$REMOTE_URL"; then
+        # Vergleiche lokale Datei mit Remote (ohne Berücksichtigung von Leerzeichen)
+        if ! diff -qB "$SCRIPT_PATH" "$TMP_FILE" > /dev/null; then
+            echo "[AutoUpdate] Neue Version gefunden. Aktualisiere..."
+            mv "$TMP_FILE" "$SCRIPT_PATH"
+            chmod +x "$SCRIPT_PATH"
+            echo "[AutoUpdate] Update durchgeführt. Starte neu..."
+            exec "$SCRIPT_PATH" "$@"
+        fi
+        rm -f "$TMP_FILE"
+    fi
+fi
 
-# 3. Banned IPs abrufen
-# Wir entfernen Kommas, um eine saubere Liste für die Bash-Schleife zu erhalten
+# --- HAUPTTEIL ---
+
+# 1. Parameter oder Defaults setzen
+JAIL=${1:-"sshd"}
+ACTION=${2:-"nftables"}
+
+# 2. Ports dynamisch aus Fail2Ban auslesen
+# Beispiel-Output: 22,80,19132...
+PORTS=$(fail2ban-client get "$JAIL" action "$ACTION" port 2>/dev/null)
+
+if [ -z "$PORTS" ]; then
+    echo "[Error] Konnte keine Ports für Jail '$JAIL' finden."
+    exit 1
+fi
+
+# 3. Liste der aktuell gebannten IPs abrufen
 BANNED_IPS=$(fail2ban-client status "$JAIL" | grep "Banned IP list" | sed 's/.*Banned IP list://' | tr -d ',')
 
-echo "Aktualisiere nftables für Jail: $JAIL"
-echo "Ports: $PORTS"
+echo "Verarbeite Jail: $JAIL | Ports: $PORTS"
 
+# 4. nftables Regeln anwenden
 for IP in $BANNED_IPS; do
     if [ -n "$IP" ]; then
-        echo "Sperre IP: $IP"
-        
-        # Regel für TCP (Standard)
-        # Wir nutzen 'add', damit das Script auch bei bereits existierenden Regeln nicht abbricht
-        nft add rule inet filter input ip saddr "$IP" tcp dport { $PORTS } drop 2>/dev/null
-        
-        # --- FIX: UDP REGEL HINZUFÜGEN ---
-        # Dies blockiert Minecraft Bedrock (19132) und andere UDP-Dienste
-        nft add rule inet filter input ip saddr "$IP" udp dport { $PORTS } drop 2>/dev/null
-        
-        # Optional: Falls du Docker nutzt, muss die Regel oft zusätzlich in die DOCKER-USER Chain
-        # nft add rule inet filter DOCKER-USER ip saddr "$IP" udp dport { $PORTS } drop 2>/dev/null
+        # Prüfen ob IP valide ist (rudimentär)
+        if [[ $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            
+            # --- DER FIX ---
+            # Wir nutzen 'meta l4proto { tcp, udp }', um beide Protokolle abzudecken.
+            # 'th dport' steht für 'transport header destination port'.
+            
+            # Bestehende IP-Sperre in nftables (falls vorhanden, Fehlermeldung ignorieren)
+            nft add rule inet filter input ip saddr "$IP" meta l4proto { tcp, udp } th dport { $PORTS } drop 2>/dev/null
+            
+            # Falls Docker im Einsatz ist, zusätzlich in der DOCKER-USER Chain sperren
+            if nft list chain inet filter DOCKER-USER >/dev/null 2>&1; then
+                nft add rule inet filter DOCKER-USER ip saddr "$IP" meta l4proto { tcp, udp } th dport { $PORTS } drop 2>/dev/null
+            fi
+            
+            echo "[Banned] $IP (TCP & UDP)"
+        fi
     fi
 done
 
-echo "Fertig. UDP-Sperren für Minecraft Bedrock sind nun aktiv."
+echo "Synchronisierung abgeschlossen."
