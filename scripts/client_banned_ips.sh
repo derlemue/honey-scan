@@ -5,6 +5,14 @@
 # Funktion: Sync Feed -> Local F2B (14 Tage) & TCP/UDP Dual-Block
 # ==============================================================================
 
+# --- SINGLETON CHECK ---
+LOCK_FILE="/var/lock/honey_client_bans.lock"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+    echo "Another instance of client_banned_ips.sh is already running. Exiting."
+    exit 1
+fi
+
 # --- KONFIGURATION ---
 ENV_FILE="/root/.env.apikeys"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
