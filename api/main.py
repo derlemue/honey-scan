@@ -531,7 +531,7 @@ async def add_black_list(
         if request.memo and "fail2ban" in request.memo.lower():
             service_name = 'FAIL2BAN'
             country_name = 'by Fail2Ban'
-            # Storage Offset: Store 1 hour behind so Sidecar's global +1h shift aligns it to Local
+            # Storage Offset: Store 1 hour behind so Sidecar's FAIL2BAN +1h shift aligns it to Local
             create_time_expr = "DATE_SUB(NOW(), INTERVAL 1 HOUR)"
             update_time_expr = "DATE_SUB(NOW(), INTERVAL 1 HOUR)"
         else:
