@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default Configuration
-API_URL="http://127.0.0.1:4444"
+API_URL="https://sec.lemue.org"
 UPDATE_URL="https://feed.sec.lemue.org/scripts/hfish-client.sh"
 API_KEY="" 
 
