@@ -694,25 +694,26 @@ def get_english_name(chinese_name):
     if not chinese_name:
         return "Unknown"
     
-    # Clean string
+    # Clean string and ensure it is unicode
     name = str(chinese_name).strip()
     
-    # Handle specific common patterns FIRST
-    if "台湾" in name or "Taiwan" in name:
+    # Specific common patterns using unicode escapes for stability
+    # \u53f0\u6e7e = 台湾, \u9999\u6e2f = 香港, \u6fb3\u95e8 = 澳门
+    if "\u53f0\u6e7e" in name or "Taiwan" in name:
         return "Taiwan"
-    if "香港" in name or "Hong Kong" in name:
+    if "\u9999\u6e2f" in name or "Hong Kong" in name:
         return "Hong Kong"
-    if "澳门" in name or "Macau" in name:
+    if "\u6fb3\u95e8" in name or "Macau" in name:
         return "Macau"
         
-    # If it contains China prefix or is just China in any form
-    if "中国" in name or "china" in name.lower():
+    # If it contains China (\u4e2d\u56fd) in any form
+    if "\u4e2d\u56fd" in name or "china" in name.lower():
         # Try to find a more specific translation for the sub-part if it's a hyphenated string
         if "-" in name:
             parts = name.split("-")
             for part in reversed(parts):
                 p = part.strip()
-                if p in TRANSLATIONS and p != "中国":
+                if p in TRANSLATIONS and p != "\u4e2d\u56fd":
                      return TRANSLATIONS[p]
         return "China"
     
