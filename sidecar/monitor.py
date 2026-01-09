@@ -283,7 +283,8 @@ def update_threat_feed():
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
-            service = row.get('service', '') if isinstance(row, dict) else ""
+            service_actual = row.get('service', '') if isinstance(row, dict) else ""
+            service = service_actual
             
             # Metadata Override: If IP is a known Fail2Ban jail, force service context
             if ip in f2b_ips:
@@ -306,7 +307,8 @@ def update_threat_feed():
             # Adjust time (subtract 1 hour)
             raw_time = row.get('create_time')
             if isinstance(raw_time, datetime):
-                if service == 'FAIL2BAN':
+                # Only add 1 hour if it's REALLY a Fail2Ban entry from the DB
+                if service_actual == 'FAIL2BAN':
                     adjusted_time = raw_time + timedelta(hours=1)
                 else:
                     adjusted_time = raw_time
@@ -829,8 +831,8 @@ def main():
     # update_node_location()
     logger.info("Schema migration completed - proceeding to main loop")
     
-    # Reset sync status on startup
-    reset_sync_status()
+    # Reset sync status on startup (REMOVED: Causes flooding/stagnation)
+    # reset_sync_status()
     
     # Fix insecure default password
     fix_default_password()
