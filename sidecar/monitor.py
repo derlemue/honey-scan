@@ -305,6 +305,7 @@ def update_threat_feed():
                 location_disp = "Honey Cloud"
 
             # Time Adjustment: None (Rely on DB NOW() being correct)
+            raw_time = row.get('create_time')
             # Previously added +1h here, but that caused future timestamps
             adjusted_time = raw_time
 
