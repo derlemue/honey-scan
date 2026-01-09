@@ -96,6 +96,7 @@ services:
       - ./feed:/app/feed
       - ./web/assets:/app/assets
       - ./sidecar/monitor.py:/app/monitor.py
+      - ./sidecar/retro_sync.py:/app/retro_sync.py
       - ./api:/app/api
       - ./sidecar/start.sh:/app/start.sh
     ports:
