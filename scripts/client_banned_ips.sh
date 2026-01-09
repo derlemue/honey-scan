@@ -6,28 +6,48 @@
 # ==============================================================================
 
 # --- SINGLETON CHECK ---
-LOCK_FILE="/var/lock/honey_client_bans.lock"
+LOCK_DIR="/var/lock/honey_client_bans.lock"
 PID_FILE="/var/run/honey_client_bans.pid"
 
-# 1. Try FLOCK (Best method)
-exec 9>"$LOCK_FILE"
-if ! flock -n 9; then
-    echo "$(date): Another instance is holding the lock. Exiting."
-    exit 1
-fi
-
-# 2. Double Check PID (Fallback for weird filesystems)
-if [ -f "$PID_FILE" ]; then
-    OLD_PID=$(cat "$PID_FILE")
-    if kill -0 "$OLD_PID" 2>/dev/null; then
-        echo "$(date): PID file exists and process $OLD_PID is running. Exiting."
+# Atomic Lock using mkdir (Works on all POSIX systems, NFS safe)
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    # Lock exists. Check if it's stale.
+    if [ -f "$PID_FILE" ]; then
+        OLD_PID=$(cat "$PID_FILE")
+        if kill -0 "$OLD_PID" 2>/dev/null; then
+            echo "$(date): Process $OLD_PID is running. Exiting."
+            exit 1
+        else
+            echo "$(date): Stale lock detected (PID $OLD_PID not found). Removing lock."
+            rm -rf "$LOCK_DIR"
+            # Retry once
+            if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+                 echo "$(date): Failed to acquire lock after cleanup. Exiting."
+                 exit 1
+            fi
+        fi
+    else
+        # No PID file but lock dir exists? Assume stale after timeout or manual cleanup.
+        # Too risky to auto-delete without PID check. 
+        # But if we rely on PID file inside the lock logic...
+        # Let's trust PID_FILE for stale check.
+        # If PID_FILE is missing but LOCK_DIR exists, it's a zombie lock.
+        # We can check creation time of LOCK_DIR? No portable way.
+        
+        echo "$(date): Lock directory exists but no PID file. Possible stale lock. Exiting to be safe."
         exit 1
     fi
 fi
+
+# Write PID
 echo $$ > "$PID_FILE"
 
-# Cleanup PID on exit
-trap 'rm -f "$PID_FILE"' EXIT
+# Cleanup on exit
+cleanup() {
+    rm -f "$PID_FILE"
+    rm -rf "$LOCK_DIR"
+}
+trap cleanup EXIT
 
 # --- KONFIGURATION ---
 ENV_FILE="/root/.env.apikeys"
