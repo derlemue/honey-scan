@@ -174,6 +174,20 @@ clone the repo and launch the stack:
 ```bash
 git clone https://github.com/derlemue/honey-scan.git
 cd honey-scan
+
+# 1. Create Environment Configuration
+cp .env.example .env
+# Edit .env and set your database passwords!
+
+# 2. Create API Keys Configuration
+cp .env.apikeys.example .env.apikeys
+# Edit .env.apikeys if you need specific webhook URLs or Keys
+
+# 3. Create HFish Configuration
+cp config/hfish.toml.example config/hfish.toml
+# Edit config/hfish.toml to match your database settings from .env
+
+# 4. Launch
 docker compose up -d --build
 ```
 
