@@ -192,7 +192,7 @@ def push_intelligence(ip):
                 if is_new is True:
                     logger.info(f"✅ New IP added to bridge: {ip}")
                 elif is_new is False:
-                    logger.info(f"🔄 Updated existing IP on bridge: {ip}")
+                    logger.info(f"🔄 Updated intelligence for {ip} to bridge...")
                 else:
                     logger.info(f"Intelligence push success for {ip}: {resp.text}")
             except Exception:
