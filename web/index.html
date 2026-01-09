@@ -91,6 +91,8 @@
 
             // Helper: Translate Chinese location names to English
             const translateLocation = (loc) => {
+                if (!loc) return loc;
+
                 const map = {
                     '美国': 'United States', '加拿大': 'Canada', '中国': 'China', '俄罗斯': 'Russia',
                     '德国': 'Germany', '英国': 'United Kingdom', '法国': 'France', '荷兰': 'Netherlands',
@@ -101,9 +103,23 @@
                     '意大利': 'Italy', '西班牙': 'Spain', '瑞典': 'Sweden', '挪威': 'Norway',
                     '芬兰': 'Finland', '丹麦': 'Denmark', '瑞士': 'Switzerland', '奥地利': 'Austria',
                     '比利时': 'Belgium', '爱尔兰': 'Ireland', '墨西哥': 'Mexico', '土耳其': 'Turkey',
-                    '伊朗': 'Iran', '以色列': 'Israel', '沙特阿拉伯': 'Saudi Arabia', '南非': 'South Africa'
+                    '伊朗': 'Iran', '以色列': 'Israel', '沙特阿拉伯': 'Saudi Arabia', '南非': 'South Africa',
+                    '朝鲜': 'North Korea', '菲律宾': 'Philippines', '马来西亚': 'Malaysia', '巴基斯坦': 'Pakistan',
+                    '埃及': 'Egypt', '希腊': 'Greece', '葡萄牙': 'Portugal', '匈牙利': 'Hungary',
+                    '罗马尼亚': 'Romania', '捷克': 'Czech Republic', '斯洛伐克': 'Slovakia',
+                    '保加利亚': 'Bulgaria', '新西兰': 'New Zealand', '智利': 'Chile',
+                    '哥伦比亚': 'Colombia', '秘鲁': 'Peru', '委内瑞拉': 'Venezuela',
+                    'Asia-Pacific Region': 'Asia-Pacific Region', 'Europe': 'Europe'
                 };
-                return map[loc] || loc;
+                
+                if (map[loc]) return map[loc];
+
+                // Handle prefixes
+                if (loc.startsWith('中国')) return 'China';
+                if (loc.startsWith('美国')) return 'United States';
+                if (loc.startsWith('俄罗斯')) return 'Russia';
+
+                return loc;
             };
 
             // Helper: Adjust time by +1 hour (Restored as per user request)
