@@ -206,6 +206,7 @@ Want your client servers to **report attacks back** to the mothership?
 
 2.  **Configure Fail2Ban Action**:
     Add this to your `jail.local` or action config:
+    ```ini
     actionban = /usr/local/bin/hfish-client.sh <ip>
     ```
 
