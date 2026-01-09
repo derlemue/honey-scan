@@ -192,7 +192,7 @@ def push_intelligence(ip):
     return True
 
 def sync_to_bridge():
-    """Sync unsynced IPs to the bridge with a 200ms delay."""
+    """Sync unsynced IPs to the bridge with a 50ms delay."""
     if not THREAT_BRIDGE_WEBHOOK_URL:
         return
     
@@ -213,8 +213,8 @@ def sync_to_bridge():
                 # Update status in DB
                 cursor.execute("UPDATE ipaddress SET pushed_to_bridge = 1 WHERE ip = %s", (ip,))
             
-            # Respect the 200ms delay requested by the user
-            time.sleep(0.2)
+            # Respect the 50ms delay requested by the user
+            time.sleep(0.05)
             
         conn.commit()
     except Exception as e:
@@ -648,6 +648,22 @@ def init_env():
     if not os.path.exists(ASSETS_DIR): os.makedirs(ASSETS_DIR)
     # update_index() removed
 
+def reset_sync_status():
+    """Reset pushed_to_bridge status for all IPs on startup."""
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cursor = conn.cursor()
+        logger.info("Resetting sync status for all IPs...")
+        cursor.execute("UPDATE ipaddress SET pushed_to_bridge = 0")
+        logger.info(f"Reset sync status for {cursor.rowcount} rows.")
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Failed to reset sync status: {e}")
+    finally:
+        if conn: conn.close()
+
+
 def main():
     init_env()
     logger.info(f"Monitor started (DB_TYPE={DB_TYPE}).")
@@ -657,6 +673,10 @@ def main():
     ensure_db_schema()
     # update_node_location()
     logger.info("Schema migration completed - proceeding to main loop")
+    
+    # Reset sync status on startup
+    reset_sync_status()
+    
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     
     last_maintenance = 0
