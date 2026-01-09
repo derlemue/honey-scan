@@ -304,12 +304,12 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            # Time Adjustment: Frontend expects UTC.
-            # Fail2Ban/Manual are Local (T). We must convert to UTC (T-1) so Frontend (UTC->Local) works.
-            # Others (Honey Cloud) are already UTC.
+            # Time Adjustment: Formatting specific.
+            # Only shift if Location is explicitly FAIL2BAN (Native/Script Local Time T -> UTC T-1).
+            # "Honey Cloud" or other locations (UTC) remain UTC.
             raw_time = row.get('create_time')
             
-            if (service_actual == 'FAIL2BAN' or service_actual == 'API_MANUAL') and isinstance(raw_time, datetime):
+            if location_disp == "FAIL2BAN" and isinstance(raw_time, datetime):
                  adjusted_time = raw_time - timedelta(hours=1)
             else:
                  adjusted_time = raw_time
