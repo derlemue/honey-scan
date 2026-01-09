@@ -294,7 +294,7 @@ def update_threat_feed():
             elif service == 'BRIDGE_SYNC':
                 threat_type = "Global Threat"
                 threat_risk = "High"
-                # location_disp remains calculated (Country name)
+                location_disp = "Honey Cloud"
 
             # Adjust time (subtract 1 hour)
             raw_time = row.get('create_time')
