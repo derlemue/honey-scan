@@ -728,6 +728,51 @@ def restore_db_language():
     finally:
         if conn: conn.close()
 
+def fix_unknown_countries():
+    """Resolves 'Unknown' countries for IPs in the DB using background GeoIP lookup."""
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cursor = conn.cursor()
+        # Fetch a few IPs with Unknown country
+        cursor.execute("SELECT DISTINCT ip FROM ipaddress WHERE country = 'Unknown' AND ip NOT IN ('::1', '127.0.0.1', 'localhost') LIMIT 2")
+        rows = cursor.fetchall()
+        
+        if not rows: return
+
+        for row in rows:
+            ip = row['ip'] if isinstance(row, dict) else row[0]
+            logger.info(f"Resolving location for {ip}...")
+            
+            try:
+                geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=5).json()
+                if geo.get('status') == 'success':
+                    country = geo.get('country', 'Unknown')
+                    city = geo.get('city', 'Unknown')
+                    
+                    # Update ipaddress table
+                    cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s WHERE ip = %s", 
+                                   (country, city, geo.get('regionName', ''), ip))
+                                   
+                    # Update infos table for historical accuracy in feed
+                    cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip = %s AND source_ip_country = 'Unknown'", 
+                                   (country, ip))
+                    
+                    logger.info(f"Resolved {ip} -> {country}")
+                else:
+                    pass
+            except Exception as e:
+                logger.warning(f"Geo lookup failed for {ip}: {e}")
+            
+            # Respect rate limit (45/min -> ~1.3s per req). 
+            time.sleep(1.5)
+            
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Error fixing unknown countries: {e}")
+    finally:
+        if conn: conn.close()
+
 def init_env():
     if not os.path.exists(SCANS_DIR): os.makedirs(SCANS_DIR)
     if not os.path.exists(FEED_DIR): os.makedirs(FEED_DIR)
@@ -794,6 +839,10 @@ def main():
                 if time.time() - last_maintenance > 60:
                     update_banned_list()
                     fix_missing_severity()
+                    last_maintenance = time.time()
+
+                # Run background tasks
+                fix_unknown_countries()
                     last_maintenance = time.time()
                 
                 # Run background tasks
