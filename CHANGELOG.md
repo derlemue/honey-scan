@@ -1,3 +1,13 @@
+## [7.3.0] - 2026-01-09
+
+### Added
+- 🔌 **API**: Added `/webhook` endpoint to the local sidecar API to handle intelligence pushes and return IP status.
+- 🐍 **Sidecar**: Enhanced `push_intelligence` with a local status fallback. Emojis ("✅ New IP" and "🔄 Updated") are now reliably logged regardless of the remote bridge's response format.
+
+### Fixed
+- 🐛 **Logging**: Resolved issue where extended logging indicators (emojis) were missing in live systems.
+- 🔧 **Networking**: Optimized `THREAT_BRIDGE_WEBHOOK_URL` to point to the secure Reverse Proxy domain.
+
 ## [7.2.0] - 2026-01-09
 
 ### Added

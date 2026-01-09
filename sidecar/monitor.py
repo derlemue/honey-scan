@@ -175,11 +175,14 @@ def update_node_location():
         logger.error(f"Database update failed: {e}")
         if conn: conn.close()
 
-def push_intelligence(ip):
+def push_intelligence(ip, is_new_hint=None):
     if not THREAT_BRIDGE_WEBHOOK_URL:
         return
     try:
-        logger.info(f"Pushing intelligence for {ip} to bridge...")
+        # Use simple logging if hint is not provided to keep logs clean
+        if is_new_hint is None:
+            logger.info(f"Pushing intelligence for {ip} to bridge...")
+            
         resp = requests.post(
             THREAT_BRIDGE_WEBHOOK_URL,
             json={"attack_ip": ip},
@@ -189,6 +192,11 @@ def push_intelligence(ip):
             try:
                 data = resp.json()
                 is_new = data.get("is_new")
+                
+                # Fallback to hint if response doesn't contain is_new (e.g. central bridge)
+                if is_new is None:
+                    is_new = is_new_hint
+                
                 if is_new is True:
                     logger.info(f"✅ New IP added to bridge: {ip}")
                 elif is_new is False:
@@ -222,7 +230,8 @@ def sync_to_bridge():
         logger.info(f"Syncing {len(rows)} IPs to bridge...")
         for row in rows:
             ip = row['ip']
-            if push_intelligence(ip):
+            # During full sync, they are technically 'new' for the bridge status check
+            if push_intelligence(ip, is_new_hint=True):
                 # Update status in DB
                 cursor.execute("UPDATE ipaddress SET pushed_to_bridge = 1 WHERE ip = %s", (ip,))
             
@@ -747,7 +756,8 @@ def main():
                         scanning_ips.add(ip)
                         executor.submit(scan_ip, ip)
                         # Push to Threat Intelligence Bridge
-                        executor.submit(push_intelligence, ip)
+                        # Check if it was already synced to decide on the hint
+                        executor.submit(push_intelligence, ip, is_new_hint=True)
                 
                 # Optimization: Run heavy tasks roughly every 60s
                 # Using timestamp check is more robust than modulo 0 against loop drift

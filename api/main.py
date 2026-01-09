@@ -26,7 +26,7 @@ templates = Jinja2Templates(directory="templates")
 app = FastAPI(
     title="HFish API",
     description="Python-based replacement for HFish API endpoints",
-    version="1.0.0"
+    version="1.1.0"
 )
 
 # Database configuration
