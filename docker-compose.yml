@@ -102,6 +102,8 @@ services:
     ports:
       - "4444:4444"
     command: bash /app/start.sh
+    extra_hosts:
+      - "api.sec.lemue.org:46.224.3.29"
     networks:
       - default
     depends_on:
