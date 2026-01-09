@@ -93,8 +93,17 @@ def ensure_db_schema():
         if 'city' not in columns: alter_cmds.append("ADD COLUMN city VARCHAR(64) DEFAULT ''")
         if 'country' not in columns: alter_cmds.append("ADD COLUMN country VARCHAR(64) DEFAULT ''")
         for cmd in alter_cmds:
-            logger.info(f"Migrating DB: {cmd}")
+            logger.info(f"Migrating DB (nodes): {cmd}")
             cursor.execute(f"ALTER TABLE nodes {cmd}")
+        
+        # Check ipaddress table for pushed_to_bridge column
+        cursor.execute("DESCRIBE ipaddress")
+        ip_columns = [row['Field'] for row in cursor.fetchall()]
+        if 'pushed_to_bridge' not in ip_columns:
+            logger.info("Migrating DB (ipaddress): ADD COLUMN pushed_to_bridge")
+            cursor.execute("ALTER TABLE ipaddress ADD COLUMN pushed_to_bridge TINYINT DEFAULT 0")
+            cursor.execute("CREATE INDEX idx_pushed_to_bridge ON ipaddress(pushed_to_bridge)")
+            
         logger.info("Schema migration completed successfully")
     except Exception as e:
         logger.warning(f"Schema migration skipped due to error: {e}")
@@ -179,6 +188,39 @@ def push_intelligence(ip):
             logger.warning(f"Intelligence push failed for {ip}: HTTP {resp.status_code}")
     except Exception as e:
         logger.error(f"Error pushing intelligence for {ip}: {e}")
+        return False
+    return True
+
+def sync_to_bridge():
+    """Sync unsynced IPs to the bridge with a 500ms delay."""
+    if not THREAT_BRIDGE_WEBHOOK_URL:
+        return
+    
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cursor = conn.cursor()
+        # Fetch a batch of unsynced IPs
+        cursor.execute("SELECT ip FROM ipaddress WHERE pushed_to_bridge = 0 AND ip NOT IN ('::1', '127.0.0.1', 'localhost') LIMIT 100")
+        rows = cursor.fetchall()
+        if not rows:
+            return
+
+        logger.info(f"Syncing {len(rows)} IPs to bridge...")
+        for row in rows:
+            ip = row['ip']
+            if push_intelligence(ip):
+                # Update status in DB
+                cursor.execute("UPDATE ipaddress SET pushed_to_bridge = 1 WHERE ip = %s", (ip,))
+            
+            # Respect the 500ms delay requested by the user
+            time.sleep(0.5)
+            
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Sync to bridge failed: {e}")
+    finally:
+        if conn: conn.close()
 
 # query_threatbook_ip removed
 
@@ -612,10 +654,9 @@ def main():
     logger.info(f"DEBUG: DB_USER={DB_USER}, DB_HOST={DB_HOST}, DB_NAME={DB_NAME}")
     logger.info("Waiting 30s for DB to be ready...")
     time.sleep(30) 
-    # Skip these on startup - they timeout and block the main loop
-    # ensure_db_schema()
+    ensure_db_schema()
     # update_node_location()
-    logger.info("Skipping schema migration and location update - proceeding to main loop")
+    logger.info("Schema migration completed - proceeding to main loop")
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     
     last_maintenance = 0
@@ -646,6 +687,10 @@ def main():
                         update_node_location()
                     except Exception as e:
                         logger.warning(f"Node location update failed: {e}")
+                
+                # Run sync to bridge in the main loop
+                sync_to_bridge()
+
             except Exception as e:
                 logger.error(f"Loop error: {e}")
             time.sleep(10)
