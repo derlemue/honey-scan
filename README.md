@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Active Defense & Threat Intelligence Platform</b></p>
     
-[![Version](https://img.shields.io/badge/version-7.1.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-7.2.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -251,4 +251,11 @@ This project is built upon [HFish](https://hfish.net), a high-performance commun
 *   **Note**: This repository focuses on the *Active Defense* extension. For core HFish documentation, please refer to the [official docs](https://hfish.net/#/docs).
 
 ---
-*Maintained by the Honey-Scan Community.*
+Maintained by the Honey-Scan Community.
+
+## 🔗 Associated Projects
+
+### Honey-API (Threat Intelligence Bridge)
+A standalone API service that bridges HFish data to external threat intelligence platforms.
+*   **Repository**: [lemueIO/honey-api](https://github.com/lemueIO/honey-api)
+*   **Features**: Provides a standardized API (ThreatBook v3 compatible) for your honeypot data, allowing integration with SOAR/SIEM tools.

@@ -53,11 +53,14 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
+# Passwords
+DEFAULT_PASS_HASH_OLD = "$2a$04$9PBC6S/jB8w4jUZcMkbSs.8TkraTZxUU8ZCk2HIXW1l2Q1dEH84gu" # HFish2021
+DEFAULT_PASS_HASH_NEW = "$2y$04$qxgj8E6W/BhtiMmf4GO1t.2FsMD/96WYblQmGxaIko6P.0a9hIZsm" # HoneyScan2024!
+
 def get_db_connection():
     try:
         if DB_TYPE.lower() in ("mysql", "mariadb"):
-            logger.info(f"Connecting with user={DB_USER}")
-            print(f"!!! FORCE DEBUG: Connecting as hfish to {DB_HOST} !!!", flush=True)
+            # logger.info(f"Connecting with user={DB_USER}") # Reduce log noise
             return pymysql.connect(
                 host=DB_HOST,
                 port=DB_PORT,
@@ -183,7 +186,17 @@ def push_intelligence(ip):
             timeout=10
         )
         if resp.status_code == 200:
-            logger.info(f"Intelligence push success for {ip}: {resp.text}")
+            try:
+                data = resp.json()
+                is_new = data.get("is_new")
+                if is_new is True:
+                    logger.info(f"✅ New IP added to bridge: {ip}")
+                elif is_new is False:
+                    logger.info(f"🔄 Updated existing IP on bridge: {ip}")
+                else:
+                    logger.info(f"Intelligence push success for {ip}: {resp.text}")
+            except Exception:
+                 logger.info(f"Intelligence push success for {ip}: {resp.text}")
         else:
             logger.warning(f"Intelligence push failed for {ip}: HTTP {resp.status_code}")
     except Exception as e:
@@ -446,6 +459,40 @@ def fix_missing_severity():
 
 
 
+def fix_default_password():
+    """Checks for default insecure password and updates it to new secure default."""
+    if DB_TYPE.lower() not in ("mysql", "mariadb"):
+        return
+
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cursor = conn.cursor()
+        # Check known weak hash
+        query = "SELECT id, password FROM users WHERE username = 'admin'"
+        cursor.execute(query)
+        row = cursor.fetchone()
+        
+        if row:
+            current_hash = row['password'] if isinstance(row, dict) else row[1].decode() if isinstance(row[1], bytes) else row[1]
+            # Verify if it matches the known insecure hash
+            if current_hash == DEFAULT_PASS_HASH_OLD:
+                logger.warning("Detected insecure default password (HFish2021). Updating to HoneyScan2024!...")
+                update_query = "UPDATE users SET password = %s WHERE username = 'admin'"
+                cursor.execute(update_query, (DEFAULT_PASS_HASH_NEW,))
+                conn.commit()
+                logger.info("Admin password updated successfully.")
+            elif current_hash == DEFAULT_PASS_HASH_NEW:
+                # logger.info("Admin password is secure (HoneyScan2024!).")
+                pass
+            else:
+                pass # User has set a custom password, do nothing
+                
+    except Exception as e:
+        logger.error(f"Error checking default password: {e}")
+    finally:
+        if conn: conn.close()
+
 # Translation Dictionary (Chinese -> English)
 TRANSLATIONS = {
     "美国": "United States",
@@ -676,6 +723,9 @@ def main():
     
     # Reset sync status on startup
     reset_sync_status()
+    
+    # Fix insecure default password
+    fix_default_password()
     
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     

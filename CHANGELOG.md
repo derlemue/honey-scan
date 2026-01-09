@@ -1,3 +1,13 @@
+## [7.2.0] - 2026-01-09
+
+### Added
+- 🔗 **Documentation**: Added reference to `lemueIO/honey-api` (Threat Intelligence Bridge).
+- 🔐 **Security**: Implemented auto-fix for insecure default password (`HFish2021` -> `HoneyScan2024!`) on startup in `monitor.py`.
+
+### Changed
+- 📘 **Documentation**: Updated installation steps to explicitly require copying `.env`, `.env.apikeys`, and `config/hfish.toml`.
+- 🔐 **Security**: Updated default password in documentation to `HoneyScan2024!`.
+
 ## [7.1.0] - 2026-01-08
 
 ### Added

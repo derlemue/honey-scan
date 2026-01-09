@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Платформа Активного Захисту та Розвідки Загроз</b></p>
 
-[![Version](https://img.shields.io/badge/version-7.1.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-7.2.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -174,12 +174,25 @@ sudo ./setup_host.sh
 ```bash
 git clone https://github.com/derlemue/honey-scan.git
 cd honey-scan
+
+# 1. Налаштування оточення
+cp .env.example .env
+# ВАЖЛИВО: Встановіть паролі в .env!
+
+# 2. Налаштування ключів
+cp .env.apikeys.example .env.apikeys
+
+# 3. Налаштування HFish
+cp config/hfish.toml.example config/hfish.toml
+# Відредагуйте файл за потреби
+
+# 4. Запуск
 docker compose up -d --build
 ```
 
 ### 2. Доступ до панелей керування
 *   **lemueIO Active Intelligence Feed**: `http://localhost:8888`
-*   **HFish Admin**: `https://localhost:4433` (За замовчуванням: `admin` / `HFish2021`)
+*   **HFish Admin**: `https://localhost:4433` (За замовчуванням: `admin` / `HoneyScan2024!`)
 
 ### 3. Розгортання клієнтського щита (Інтеграція Fail2Ban)
 Захистіть ваші *інші* сервери, автоматично блокуючи IP, виявлені цим ханіпотом.
@@ -232,3 +245,11 @@ sudo crontab -e
 
 ---
 *Підтримується спільнотою Honey-Scan.*
+
+## 🔗 Пов'язані проекти
+
+### Honey-API (Threat Intelligence Bridge)
+Окремий API-сервіс, що передає дані HFish до зовнішніх платформ розвідки загроз.
+*   **Репозиторій**: [lemueIO/honey-api](https://github.com/lemueIO/honey-api)
+*   **Функції**: Надає стандартизований API (сумісний з ThreatBook v3) для даних ханіпоту, дозволяючи інтеграцію з інструментами SOAR/SIEM.
+

@@ -7,7 +7,7 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-7.1.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-7.2.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -178,12 +178,26 @@ Klone das Repo und starte den Stack:
 ```bash
 git clone https://github.com/derlemue/honey-scan.git
 cd honey-scan
+
+# 1. Umgebungskonfiguration erstellen
+cp .env.example .env
+# Bearbeite .env und setze deine Datenbank-Passwörter!
+
+# 2. API-Key-Konfiguration erstellen
+cp .env.apikeys.example .env.apikeys
+# Bearbeite .env.apikeys für Webhook-URLs oder Keys
+
+# 3. HFish-Konfiguration erstellen
+cp config/hfish.toml.example config/hfish.toml
+# Bearbeite config/hfish.toml passend zu den .env Einstellungen
+
+# 4. Starten
 docker compose up -d --build
 ```
 
 ### 2. Dashboards erreichen
 *   **lemueIO Active Intelligence Feed**: `http://localhost:8888`
-*   **HFish Admin**: `https://localhost:4433` (Standard: `admin` / `HFish2021`)
+*   **HFish Admin**: `https://localhost:4433` (Standard: `admin` / `HoneyScan2024!`)
 
 ### 3. Client Shield deployen (Fail2Ban Integration)
 Schütze deine *anderen* Server, indem du IPs automatisch bannst, die von diesem Honeypot erkannt wurden.
@@ -235,4 +249,13 @@ Dieses Projekt basiert auf [HFish](https://hfish.net), einem leistungsstarken Co
 *   **Hinweis**: Dieses Repository konzentriert sich auf die *Active Defense* Erweiterung. Für Core-HFish-Dokumentation siehe die [offiziellen Docs](https://hfish.net/#/docs).
 
 ---
-*Gepflegt von der Honey-Scan Community.*
+---
+Gepflegt von der Honey-Scan Community.
+
+## 🔗 Verbundene Projekte
+
+### Honey-API (Threat Intelligence Bridge)
+Ein eigenständiger API-Dienst, der HFish-Daten an externe Threat Intelligence Plattformen weiterleitet.
+*   **Repository**: [lemueIO/honey-api](https://github.com/lemueIO/honey-api)
+*   **Funktionen**: Bietet eine standardisierte API (ThreatBook v3 kompatibel) für Honeypot-Daten zur Integration in SOAR/SIEM Tools.
+

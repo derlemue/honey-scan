@@ -7,7 +7,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-7.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-7.2.0-blue.svg)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -179,12 +179,25 @@ Lade das Programm herunter und starte es:
 ```bash
 git clone https://github.com/derlemue/honey-scan.git
 cd honey-scan
+
+# 1. Einstellungen kopieren
+cp .env.example .env
+# WICHTIG: Schreibe dein Passwort in .env!
+
+# 2. Schlüssel kopieren
+cp .env.apikeys.example .env.apikeys
+
+# 3. HFish Einstellung kopieren
+cp config/hfish.toml.example config/hfish.toml
+# Bearbeite die Datei wenn nötig
+
+# 4. Starten
 docker compose up -d --build
 ```
 
 ### 2. Anschauen
 *   **Berichte**: `http://localhost:8888`
-*   **Admin**: `https://localhost:4433` (Login: `admin` / `HFish2021`)
+*   **Admin**: `https://localhost:4433` (Login: `admin` / `HoneyScan2024!`)
 
 ### 3. Schutz für andere Server (Fail2Ban)
 Schütze deine anderen Server. Sie sollen die Angreifer automatisch blockieren.
@@ -237,3 +250,11 @@ Dieses Projekt basiert auf [HFish](https://hfish.net). Das ist ein bekannter Hon
 
 ---
 *Gemacht von der Honey-Scan Community.*
+
+## 🔗 Andere Projekte
+
+### Honey-API (Bedrohungs-Brücke)
+Ein Programm, das die Daten vom Honeypot an andere Systeme sendet.
+*   **Code**: [lemueIO/honey-api](https://github.com/lemueIO/honey-api)
+*   **Was es macht**: Es hilft, die Daten in Sicherheits-Systeme (SIEM) zu bekommen.
+
