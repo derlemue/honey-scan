@@ -33,7 +33,7 @@ trap 'rm -f "$PID_FILE"' EXIT
 ENV_FILE="/root/.env.apikeys"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
-AUTO_UPDATE=false 
+AUTO_UPDATE=true 
 SCRIPT_PATH="/root/client_banned_ips.sh"
 
 # --- FIREWALL FUNKTION (DER UDP/BEDROCK FIX) ---
