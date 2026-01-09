@@ -304,17 +304,9 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            # Adjust time (subtract 1 hour)
-            raw_time = row.get('create_time')
-            if isinstance(raw_time, datetime):
-                # Only add 1 hour if it's REALLY a Fail2Ban entry from the DB
-                if service_actual == 'FAIL2BAN':
-                    adjusted_time = raw_time + timedelta(hours=1)
-                else:
-                    adjusted_time = raw_time
-            else:
-                # If it's a string, we might need to parse it or just use it as is if it's already "Just now"
-                adjusted_time = raw_time
+            # Time Adjustment: None (Rely on DB NOW() being correct)
+            # Previously added +1h here, but that caused future timestamps
+            adjusted_time = raw_time
 
             if len(recent_hackers) < 135:
                 recent_hackers.append({
