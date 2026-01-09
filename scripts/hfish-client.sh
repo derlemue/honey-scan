@@ -44,8 +44,8 @@ self_update() {
     # Create temp file
     TMP_FILE=$(mktemp)
     
-    # Download latest version
-    if wget -q "$UPDATE_URL" -O "$TMP_FILE"; then
+    # Download latest version (verbose)
+    if wget "$UPDATE_URL" -O "$TMP_FILE"; then
         # Check if download was successful and is a valid script (basic check)
         if grep -q "bash" "$TMP_FILE"; then
             # Compare with current script
@@ -76,7 +76,7 @@ self_update() {
 }
 
 # Run update check
-# self_update "$@"
+self_update "$@"
 
 # Filter out --no-update from args for the rest of the script
 ARGS=()
