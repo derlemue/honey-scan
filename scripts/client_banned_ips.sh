@@ -34,6 +34,42 @@ ENV_FILE="/root/.env.apikeys"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
 AUTO_UPDATE=true 
+SCRIPT_URL="https://feed.sec.lemue.org/scripts/client_banned_ips.sh"
+
+# --- AUTO UPDATE ---
+self_update() {
+    if [ "$AUTO_UPDATE" != "true" ]; then return; fi
+    
+    # Check if curl and md5sum exist
+    if ! command -v curl &> /dev/null || ! command -v md5sum &> /dev/null; then
+        return
+    fi
+
+    TEMP_FILE="/tmp/client_banned_ips.sh.tmp"
+    if curl -s -f "$SCRIPT_URL" -o "$TEMP_FILE"; then
+        # Check syntax
+        if ! bash -n "$TEMP_FILE"; then
+            rm -f "$TEMP_FILE"
+            return
+        fi
+        
+        # Compare hash
+        LOCAL_HASH=$(md5sum "$0" | awk '{print $1}')
+        REMOTE_HASH=$(md5sum "$TEMP_FILE" | awk '{print $1}')
+        
+        if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+            echo "$(date): New version found. Updating..."
+            cp "$TEMP_FILE" "$0"
+            chmod +x "$0"
+            rm -f "$TEMP_FILE"
+            echo "$(date): Update successful. Exiting to start fresh on next run."
+            exit 0
+        fi
+        rm -f "$TEMP_FILE"
+    fi
+}
+self_update
+
 SCRIPT_PATH="/root/client_banned_ips.sh"
 
 # --- FIREWALL FUNKTION (DER UDP/BEDROCK FIX) ---
