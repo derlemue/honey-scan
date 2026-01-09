@@ -10,6 +10,13 @@ LOCK_DIR="/var/lock/honey_client_bans.lock"
 PID_FILE="/var/run/honey_client_bans.pid"
 
 # Atomic Lock using mkdir (Works on all POSIX systems, NFS safe)
+# 1. Handle Legacy Lock FILE from previous versions
+if [ -f "$LOCK_DIR" ]; then
+    echo "$(date): Detected legacy lock file from old version. Removing to upgrade to folder lock."
+    rm -f "$LOCK_DIR"
+fi
+
+# 2. Try to acquire lock
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     # Lock exists. Check if it's stale.
     if [ -f "$PID_FILE" ]; then
