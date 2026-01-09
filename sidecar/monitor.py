@@ -691,6 +691,26 @@ TRANSLATIONS = {
 }
 
 def get_english_name(chinese_name):
+    if not chinese_name:
+        return "Unknown"
+    
+    # Handle specific common patterns like "中国-台湾"
+    if "中国-台湾" in chinese_name:
+        return "Taiwan"
+    if "中国-香港" in chinese_name:
+        return "Hong Kong"
+    if "中国-澳门" in chinese_name:
+        return "Macau"
+        
+    # Remove common prefix "中国-" if it exists
+    name = chinese_name.replace("中国-", "")
+    
+    # Try direct mapping
+    english_name = TRANSLATIONS.get(name)
+    if english_name:
+        return english_name
+    
+    # Try mapping with original name
     return TRANSLATIONS.get(chinese_name, chinese_name)
 
 def restore_db_language():
