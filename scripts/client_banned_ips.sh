@@ -106,15 +106,77 @@ auto_enable_jails() {
     # Get all listening ports
     PORTS=$(ss -tuln | awk 'NR>1 {print $5}' | awk -F: '{print $NF}' | sort -u)
     
-    # Helper to start jail if not running
+    # Helper to create/enable jail
     ensure_jail() {
         local NAME=$1
         if ! fail2ban-client status "$NAME" &>/dev/null; then
-            echo "Aktiviere Jail '$NAME' (Port erkannt)..."
-            # Try to start. If it fails (not in config), just ignore.
-            fail2ban-client start "$NAME" 2>/dev/null || true
-            fail2ban-client reload "$NAME" 2>/dev/null || true
+            echo "Jail '$NAME' ist inaktiv. Versuche Aktivierung..."
+            
+            # Try start
+            if ! fail2ban-client start "$NAME" 2>/dev/null; then
+                echo "Jail '$NAME' existiert nicht. Erstelle Konfiguration..."
+                create_missing_jail "$NAME"
+                fail2ban-client reload >/dev/null
+                fail2ban-client start "$NAME" 2>/dev/null
+            fi
         fi
+    }
+    
+    create_missing_jail() {
+        local JAIL=$1
+        local CONF="/etc/fail2ban/jail.d/honey-auto.conf"
+        mkdir -p /etc/fail2ban/jail.d
+        
+        # Check if already in our auto-conf
+        if grep -q "\[$JAIL\]" "$CONF" 2>/dev/null; then return; fi
+        
+        echo "Füge Definition für '$JAIL' zu $CONF hinzu..."
+        
+        case "$JAIL" in
+            "recidive")
+                cat <<EOF >> "$CONF"
+
+[recidive]
+enabled = true
+logpath = /var/log/fail2ban.log
+banaction = iptables-allports
+bantime = 1w
+findtime = 1d
+maxretry = 5
+EOF
+                ;;
+            "apache-auth")
+                cat <<EOF >> "$CONF"
+
+[apache-auth]
+enabled = true
+port     = http,https
+logpath  = %(apache_error_log)s
+EOF
+                ;;
+            "bedrock")
+                # Minecraft Bedrock UDP
+                cat <<EOF >> "$CONF"
+
+[bedrock]
+enabled = true
+port = 19132
+protocol = udp
+filter = bedrock
+logpath = /var/log/syslog
+maxretry = 3
+EOF
+                # Create Filter if missing
+                if [ ! -f /etc/fail2ban/filter.d/bedrock.conf ]; then
+                    echo "Erstelle Filter für Bedrock..."
+                    echo -e "[Definition]\nfailregex = .*Player disconnected: <HOST>.*\nignoreregex =" > /etc/fail2ban/filter.d/bedrock.conf
+                fi
+                ;;
+            *)
+                # Generic fallback?
+                echo "Keine Vorlage für $JAIL gefunden."
+                ;;
+        esac
     }
     
     # Mapping Logic
