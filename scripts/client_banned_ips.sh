@@ -6,7 +6,7 @@
 # ==============================================================================
 
 # --- KONFIGURATION ---
-PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
 AUTO_UPDATE=true 
@@ -90,14 +90,14 @@ setup_firewall_set() {
     local CHAIN="input"
     local SET_NAME="honey-scan-set"
     
-    if nft list table inet f2b-table &>/dev/null; then
+    if /usr/sbin/nft list table inet f2b-table &>/dev/null; then
         TABLE="f2b-table"
         CHAIN="f2b-chain"
         FAMILY="inet"
-    elif nft list table ip filter &>/dev/null; then
+    elif /usr/sbin/nft list table ip filter &>/dev/null; then
         TABLE="filter"
         FAMILY="ip"
-        if nft list chain ip filter INPUT &>/dev/null; then CHAIN="INPUT"; else CHAIN="input"; fi
+        if /usr/sbin/nft list chain ip filter INPUT &>/dev/null; then CHAIN="INPUT"; else CHAIN="input"; fi
     fi
 
     # 1. Create set if missing
