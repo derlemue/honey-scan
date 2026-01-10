@@ -188,6 +188,8 @@ TEMP_CONFIG=$(mktemp)
 cat > "$TEMP_CONFIG" <<EOF
 [sshd]
 enabled = true
+# Persist Ban Time (14 Days)
+bantime = $BAN_TIME
 # Redundantly set banaction to ensure Fail2Ban knows what to use for banning itself
 banaction = $NFT_ACTION
 # Enforce our detected action (All Ports)
@@ -213,8 +215,10 @@ fi
 if [ "$NEED_RESTART" = true ]; then
     echo -e "${BLUE}[INFO]${NC} Configuration changed or service down. Restarting Fail2Ban..."
     service fail2ban restart &>/dev/null || systemctl restart fail2ban &>/dev/null
+    # Ensure service starts on boot
+    systemctl enable fail2ban &>/dev/null
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}[OK]${NC} Fail2Ban restarted successfully."
+        echo -e "${GREEN}[OK]${NC} Fail2Ban restarted and enabled successfully."
     else
         echo -e "${YELLOW}[WARN]${NC} Service restart failed. Trying client reload..."
         fail2ban-client reload &>/dev/null
