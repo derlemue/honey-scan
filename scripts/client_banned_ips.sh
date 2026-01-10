@@ -109,111 +109,72 @@ self_update() {
 }
 self_update "$@"
 
-# --- FIREWALL FUNKTION ---
+# --- FAIL2BAN CONFIGURATION ---
+echo -e "${BLUE}[INFO]${NC} Configuring Fail2Ban jail '${YELLOW}$JAIL${NC}'..."
 
-# Probe all open ports (TCP/UDP)
-DETECTED_PORTS=$(ss -tuln | awk 'NR>1 {print $5}' | awk -F: '{print $NF}' | sort -un | tr '\n' ',' | sed 's/,$//')
-echo -e "${BLUE}[INFO]${NC} Detected Open Ports: ${YELLOW}$DETECTED_PORTS${NC}"
-
-setup_firewall_set() {
-    # Discovery of correct nftables table/chain
-    local TABLE="inet"
-    local FAMILY="inet"
-    local CHAIN="input"
-    local SET_NAME="honey-scan-set"
-    
-    if /usr/sbin/nft list table inet f2b-table &>/dev/null; then
-        TABLE="f2b-table"
-        CHAIN="f2b-chain"
-        FAMILY="inet"
-    elif /usr/sbin/nft list table ip filter &>/dev/null; then
-        TABLE="filter"
-        FAMILY="ip"
-        if /usr/sbin/nft list chain ip filter INPUT &>/dev/null; then CHAIN="INPUT"; else CHAIN="input"; fi
-    fi
-
-    # 1. Create set if missing
-    /usr/sbin/nft "add set $FAMILY $TABLE $SET_NAME { type ipv4_addr; flags timeout; }" 2>/dev/null
-    
-    # 2. Add rule for set if missing
-    if ! /usr/sbin/nft list chain "$FAMILY" "$TABLE" "$CHAIN" | grep -q "$SET_NAME"; then
-        /usr/sbin/nft "add rule $FAMILY $TABLE $CHAIN ip saddr @$SET_NAME meta l4proto { tcp, udp } th dport { $DETECTED_PORTS } drop" 2>/dev/null
-    fi
-    
-    echo "$TABLE $CHAIN $FAMILY $SET_NAME"
-}
-
-# Initialize Firewall Set
-FW_CONFIG=$(setup_firewall_set)
-TABLE=$(echo "$FW_CONFIG" | awk '{print $1}')
-CHAIN=$(echo "$FW_CONFIG" | awk '{print $2}')
-FAMILY=$(echo "$FW_CONFIG" | awk '{print $3}')
-SET_NAME=$(echo "$FW_CONFIG" | awk '{print $4}')
-
-# --- ENSURE JAIL ACTIVE ---
+# Ensure Jail is Running
 if ! fail2ban-client status "$JAIL" &>/dev/null; then
     echo -e "${YELLOW}[WARN]${NC} Jail '$JAIL' is not active. Attempting to start..."
     fail2ban-client start "$JAIL" 2>/dev/null || { echo -e "${RED}[ERROR]${NC} Could not start $JAIL jail."; exit 1; }
 fi
 
+# Set Ban Time dynamically
+# Note: This affects new bans.
+if fail2ban-client set "$JAIL" bantime "$BAN_TIME" &>/dev/null; then
+    echo -e "${GREEN}[OK]${NC} Jail '$JAIL' bantime set to ${YELLOW}$BAN_TIME${NC} seconds."
+else
+    echo -e "${RED}[WARN]${NC} Could not set bantime dynamically. Using jail defaults."
+fi
+
 # --- CORE LOGIC ---
 
-# 1. Remote IPs holen
+# 1. Fetch Remote IPs
 echo -e "${BLUE}[STEP 1/3]${NC} Fetching remote ban list..."
 REMOTE_FILE=$(mktemp)
 curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'> "$REMOTE_FILE"
 REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
 echo -e "${GREEN}[OK]${NC} Received ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
 
-# 2. Sync IPs to nftables set (High Efficiency - Chunked Atomic)
-echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to nftables set ($SET_NAME)..."
-# We use chunked atomic adds to avoid memory/buffer limits
-CHUNK_SIZE=1000
-TOTAL_IP_FILE=$(mktemp)
-sort -u "$REMOTE_FILE" > "$TOTAL_IP_FILE"
+# 2. Sync IPs to Fail2Ban
+echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to Fail2Ban jail '$JAIL'..."
 
-# Split into chunks and process
-split -l "$CHUNK_SIZE" "$TOTAL_IP_FILE" "ip_chunk_"
-TOTAL_CHUNKS=$(ls ip_chunk_* | wc -l)
-CURRENT_CHUNK=0
+# Get currently banned IPs to avoid redundant calls (Optimization)
+EXISTING_BANS_FILE=$(mktemp)
+fail2ban-client status "$JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -s ' ' '\n' | sort -u > "$EXISTING_BANS_FILE"
 
-SYNC_ERROR=0
-for chunk in ip_chunk_*; do
-    ((CURRENT_CHUNK++))
-    echo -ne "\r${BLUE}[INFO]${NC} Processing chunk $CURRENT_CHUNK of $TOTAL_CHUNKS..."
-    
-    NFT_BATCH=$(mktemp)
-    echo "add element $FAMILY $TABLE $SET_NAME {" > "$NFT_BATCH"
-    # Format IPs: "ip timeout Xs, "
-    awk -v ban_time="$BAN_TIME" '{printf "%s timeout %ss, ", $1, ban_time}' "$chunk" >> "$NFT_BATCH"
-    # Remove last comma and space
-    truncate -s -2 "$NFT_BATCH"
-    echo " }" >> "$NFT_BATCH"
-    
-    if ! nft -f "$NFT_BATCH" 2>/dev/null; then
-        SYNC_ERROR=1
-        # echo "Error in chunk: $(cat $NFT_BATCH)" # Debug
-    fi
-    rm -f "$NFT_BATCH" "$chunk"
-done
-echo "" # Newline after progress
-rm -f "$TOTAL_IP_FILE"
+# Prepare IPs to ban: Remote IPs minus Existing Bans
+IPS_TO_BAN_FILE=$(mktemp)
+sort -u "$REMOTE_FILE" | comm -23 - "$EXISTING_BANS_FILE" > "$IPS_TO_BAN_FILE"
 
-if [ "$SYNC_ERROR" -eq 0 ]; then
-    echo -e "${GREEN}[OK]${NC} Successfully synced all IPs to nftables set."
+COUNT_TO_BAN=$(wc -l < "$IPS_TO_BAN_FILE")
+
+if [ "$COUNT_TO_BAN" -eq 0 ]; then
+    echo -e "${GREEN}[OK]${NC} No new IPs to ban. All feed IPs are already jailed."
 else
-    echo -e "${RED}[WARN]${NC} Some chunks failed to sync. Check nftables state."
+    echo -e "${BLUE}[INFO]${NC} Found ${YELLOW}$COUNT_TO_BAN${NC} new IPs to ban."
+    
+    # Process in chunks to give feedback
+    CURRENT=0
+    
+    while IFS= read -r ip; do
+        fail2ban-client set "$JAIL" banip "$ip" &>/dev/null
+        ((CURRENT++))
+        
+        # Progress bar every 50 IPs
+        if ((CURRENT % 50 == 0)); then
+             echo -ne "\r${BLUE}[INFO]${NC} Banning progress: $CURRENT / $COUNT_TO_BAN"
+        fi
+    done < "$IPS_TO_BAN_FILE"
+    echo "" # Newline
+    echo -e "${GREEN}[OK]${NC} Finished banning new IPs."
 fi
 
-# 3. Step 3 simplified (No mass Fail2Ban sync)
-echo -e "${BLUE}[STEP 3/3]${NC} Information only: Remote feed vs Local Jail..."
-LOCAL_BANS_COUNT=$(fail2ban-client status "$JAIL" | grep "Currently banned:" | sed 's/.*Currently banned://' | tr -d ' ')
-echo -e "${BLUE}[INFO]${NC} Remote Feed: ${YELLOW}$REMOTE_COUNT${NC} IPs blockiert via nftables set"
-echo -e "${BLUE}[INFO]${NC} Local Jail ($JAIL): ${YELLOW}$LOCAL_BANS_COUNT${NC} IPs blockiert via Fail2Ban"
+rm -f "$EXISTING_BANS_FILE" "$IPS_TO_BAN_FILE" "$REMOTE_FILE"
 
-rm -f "$REMOTE_FILE"
+# 3. Summary
+echo -e "${BLUE}[STEP 3/3]${NC} Verification..."
+TOTAL_BANS=$(fail2ban-client status "$JAIL" | grep "Currently banned:" | sed 's/.*Currently banned://' | tr -d ' ')
+echo -e "${BLUE}[INFO]${NC} Total currently banned IPs in jail '$JAIL': ${YELLOW}$TOTAL_BANS${NC}"
 
 echo "----------------------------------------------------------------"
 echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
-echo -e "${BLUE}[INFO]${NC} Protected Ports: ${YELLOW}$DETECTED_PORTS${NC}"
-echo -e "${BLUE}[HINT]${NC} Verify with: ${CYAN}nft list set $FAMILY $TABLE $SET_NAME${NC}"
