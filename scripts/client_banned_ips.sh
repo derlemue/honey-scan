@@ -2,49 +2,52 @@
 
 # ==============================================================================
 # Script: client_banned_ips.sh
-# Funktion: Sync Feed -> Local F2B (14 Tage) & TCP/UDP Dual-Block
+# Funktion: Efficient Sync Feed -> Local F2B (sshd) & TCP/UDP Dual-Block
 # ==============================================================================
 
-# --- KONFIGURATION (MOVED TO TOP) ---
-ENV_FILE="/root/.env.apikeys"
+# --- KONFIGURATION ---
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
 AUTO_UPDATE=true 
 SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/refs/heads/main/scripts/client_banned_ips.sh"
-SCRIPT_PATH="/root/client_banned_ips.sh"
+JAIL="sshd"
+
+# --- COLORS & AESTHETICS ---
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# --- BANNER ---
+echo -e "${CYAN}"
+echo "  _    _  ____  _   _ ______     __  _____  _____          _   _ "
+echo " | |  | |/ __ \| \ | |  ____|   / / / ____|/ ____|   /\   | \ | |"
+echo " | |__| | |  | |  \| | |__     / / | (___ | |       /  \  |  \| |"
+echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
+echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
+echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
+echo -e "${NC}"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.0.0"
+echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
+echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
+echo "----------------------------------------------------------------"
 
 # --- SINGLETON CHECK ---
 LOCK_DIR="/var/lock/honey_client_bans.lock"
 PID_FILE="/var/run/honey_client_bans.pid"
 
-# Atomic Lock using mkdir
-if [ -f "$LOCK_DIR" ]; then
-    rm -f "$LOCK_DIR"
-fi
-
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-    STALE_LOCK=false
     if [ -f "$PID_FILE" ]; then
         OLD_PID=$(cat "$PID_FILE")
-        if [ "$OLD_PID" = "$$" ]; then
-            # This is us after an exec-update
-            STALE_LOCK=true
-        elif kill -0 "$OLD_PID" 2>/dev/null; then
-            echo "$(date): Process $OLD_PID is running. Exiting."
+        if [ "$OLD_PID" != "$$" ] && kill -0 "$OLD_PID" 2>/dev/null; then
+            echo -e "${RED}[ERROR]${NC} Process $OLD_PID is already running. Exiting."
             exit 1
-        else
-            STALE_LOCK=true
-        fi
-    else
-        STALE_LOCK=true
-    fi
-
-    if [ "$STALE_LOCK" = true ]; then
-        rm -rf "$LOCK_DIR"
-        if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-             exit 1
         fi
     fi
+    rm -rf "$LOCK_DIR"
+    mkdir "$LOCK_DIR"
 fi
 echo $$ > "$PID_FILE"
 cleanup() { rm -f "$PID_FILE"; rm -rf "$LOCK_DIR"; }
@@ -66,11 +69,11 @@ self_update() {
         REMOTE_HASH=$(md5sum "$TEMP_FILE" | awk '{print $1}')
         
         if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
-            echo "$(date): New version found. Updating..."
+            echo -e "${YELLOW}[UPDATE]${NC} New version found. Updating..."
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo "$(date): Update successful. Restarting script..."
+            echo -e "${GREEN}[SUCCESS]${NC} Update successful. Restarting script..."
             exec "$0" "$@"
         fi
         rm -f "$TEMP_FILE"
@@ -78,16 +81,17 @@ self_update() {
 }
 self_update
 
-
-# --- FIREWALL FUNKTION (DER UDP/BEDROCK FIX) ---
+# --- FIREWALL FUNKTION ---
 apply_firewall_block() {
     local IP=$1
-    local JAIL=${2:-"sshd"}
-    # Ermittle Ports (z.B. 22,80,19132)
-    local PORTS=$(fail2ban-client get "$JAIL" action nftables port 2>/dev/null | tr -d ' ')
+    local TARGET_JAIL=$2
     
-    if [ -n "$IP" ] && [ -n "$PORTS" ]; then
-        # Füge Regel für TCP UND UDP hinzu (meta l4proto)
+    # Ermittle Ports (z.B. 22)
+    local PORTS=$(fail2ban-client get "$TARGET_JAIL" action nftables port 2>/dev/null | tr -d ' ')
+    [ -z "$PORTS" ] && PORTS="22" # Fallback if action detection fails
+    
+    if [ -n "$IP" ]; then
+        # Füge Regel für TCP UND UDP hinzu
         nft add rule inet filter input ip saddr "$IP" meta l4proto { tcp, udp } th dport { $PORTS } drop 2>/dev/null
         
         # Docker-Chain Support
@@ -97,141 +101,53 @@ apply_firewall_block() {
     fi
 }
 
-# --- AUTO-DETECT & ENABLE JAILS ---
-auto_enable_jails() {
-    echo "Prüfe offene Ports und aktiviere Jails..."
-    
-    if ! command -v ss &> /dev/null; then return; fi
-    
-    # Get all listening ports
-    PORTS=$(ss -tuln | awk 'NR>1 {print $5}' | awk -F: '{print $NF}' | sort -u)
-    
-    # Helper to create/enable jail
-    ensure_jail() {
-        local NAME=$1
-        if ! fail2ban-client status "$NAME" &>/dev/null; then
-            echo "Jail '$NAME' ist inaktiv. Versuche Aktivierung..."
-            
-            # Try start
-            if ! fail2ban-client start "$NAME" 2>/dev/null; then
-                echo "Jail '$NAME' existiert nicht. Erstelle Konfiguration..."
-                create_missing_jail "$NAME"
-                fail2ban-client reload >/dev/null
-                fail2ban-client start "$NAME" 2>/dev/null
-            fi
-        fi
-    }
-    
-    create_missing_jail() {
-        local JAIL=$1
-        local CONF="/etc/fail2ban/jail.d/honey-auto.conf"
-        mkdir -p /etc/fail2ban/jail.d
-        
-        # Check if already in our auto-conf
-        if grep -q "\[$JAIL\]" "$CONF" 2>/dev/null; then return; fi
-        
-        echo "Füge Definition für '$JAIL' zu $CONF hinzu..."
-        
-        case "$JAIL" in
-            "recidive")
-                cat <<EOF >> "$CONF"
+# --- ENSURE JAIL ACTIVE ---
+if ! fail2ban-client status "$JAIL" &>/dev/null; then
+    echo -e "${YELLOW}[WARN]${NC} Jail '$JAIL' is not active. Attempting to start..."
+    fail2ban-client start "$JAIL" 2>/dev/null || { echo -e "${RED}[ERROR]${NC} Could not start $JAIL jail."; exit 1; }
+fi
 
-[recidive]
-enabled = true
-logpath = /var/log/fail2ban.log
-banaction = iptables-allports
-bantime = 1w
-findtime = 1d
-maxretry = 5
-EOF
-                ;;
-            "apache-auth")
-                cat <<EOF >> "$CONF"
-
-[apache-auth]
-enabled = true
-port     = http,https
-logpath  = %(apache_error_log)s
-EOF
-                ;;
-            "bedrock")
-                # Minecraft Bedrock UDP
-                cat <<EOF >> "$CONF"
-
-[bedrock]
-enabled = true
-port = 19132
-protocol = udp
-filter = bedrock
-logpath = /var/log/syslog
-maxretry = 3
-EOF
-                # Create Filter if missing
-                if [ ! -f /etc/fail2ban/filter.d/bedrock.conf ]; then
-                    echo "Erstelle Filter für Bedrock..."
-                    echo -e "[Definition]\nfailregex = .*Player disconnected: <HOST>.*\nignoreregex =" > /etc/fail2ban/filter.d/bedrock.conf
-                fi
-                ;;
-            *)
-                # Generic fallback?
-                echo "Keine Vorlage für $JAIL gefunden."
-                ;;
-        esac
-    }
-    
-    # Mapping Logic
-    # SSH
-    if echo "$PORTS" | grep -q -E "^22$"; then ensure_jail "sshd"; fi
-    
-    # HTTP/HTTPS
-    if echo "$PORTS" | grep -q -E "^(80|443)$"; then 
-        ensure_jail "nginx-http-auth"
-        ensure_jail "nginx-botsearch" 
-        ensure_jail "apache-auth"
-    fi
-    
-    # FTP
-    if echo "$PORTS" | grep -q -E "^21$"; then ensure_jail "vsftpd"; fi
-    
-    # Mail
-    if echo "$PORTS" | grep -q -E "^(25|465|587)$"; then ensure_jail "postfix"; fi
-    if echo "$PORTS" | grep -q -E "^(110|143|993|995)$"; then ensure_jail "dovecot"; fi
-    
-    # Bedrock (UDP) - User request
-    if echo "$PORTS" | grep -q -E "^19132$"; then ensure_jail "bedrock"; fi
-    
-    # Generic TCP/UDP Flood protection if *any* port is open? 
-    # Recidive should always be on
-    ensure_jail "recidive"
-}
-
-# --- HAUPTLOGIK (SYNC ONLY) ---
-auto_enable_jails
-
-
-echo "Abgleich mit Feed: $FEED_URL"
+# --- CORE LOGIC ---
 
 # 1. Remote IPs holen
+echo -e "${BLUE}[STEP 1/3]${NC} Fetching remote ban list..."
 REMOTE_IPS=$(curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+REMOTE_COUNT=$(echo "$REMOTE_IPS" | wc -l)
+echo -e "${GREEN}[OK]${NC} Received ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
 
-# 2. Lokale Jails ermitteln
-JAILS=$(fail2ban-client status | grep "Jail list:" | sed 's/.*Jail list://' | tr -d ',')
+# 2. Lokale Jails ermitteln (Diff)
+echo -e "${BLUE}[STEP 2/3]${NC} Comparing with local bans (sshd)..."
+LOCAL_BANS=$(fail2ban-client status "$JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -d ',')
 
-for JAIL in $JAILS; do
-    echo "Prüfe Jail: $JAIL"
-    # 3. Bereits lokal gebannte IPs holen für Duplikatsprüfung
-    LOCAL_BANS=$(fail2ban-client status "$JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -d ',')
-    
-    for R_IP in $REMOTE_IPS; do
-        # 4. Nur hinzufügen, wenn IP noch NICHT lokal vorhanden ist
-        if [[ ! $LOCAL_BANS =~ $R_IP ]]; then
-            echo "Neu: $R_IP -> 14 Tage Ban & Firewall Block (TCP/UDP)"
-            fail2ban-client set "$JAIL" banip "$R_IP" "$BAN_TIME" > /dev/null
-            apply_firewall_block "$R_IP" "$JAIL"
-        else
-            # IP ist schon in F2B, aber wir stellen sicher, dass die UDP-Regel sitzt
-            apply_firewall_block "$R_IP" "$JAIL"
-        fi
-    done
+# Create temporary files for diff
+TEMP_REMOTE=$(mktemp)
+TEMP_LOCAL=$(mktemp)
+
+echo "$REMOTE_IPS" | tr ' ' '\n' | sort -u > "$TEMP_REMOTE"
+echo "$LOCAL_BANS" | tr ' ' '\n' | sort -u > "$TEMP_LOCAL"
+
+# Find IPs in remote but not in local
+NEW_IPS=$(comm -23 "$TEMP_REMOTE" "$TEMP_LOCAL")
+NEW_COUNT=$(echo "$NEW_IPS" | grep -v '^$' | wc -l)
+
+rm -f "$TEMP_REMOTE" "$TEMP_LOCAL"
+
+if [ "$NEW_COUNT" -eq 0 ]; then
+    echo -e "${GREEN}[DONE]${NC} No new IPs to ban. All synchronized."
+    exit 0
+fi
+
+echo -e "${YELLOW}[ACTION]${NC} Found ${YELLOW}$NEW_COUNT${NC} NEW IPs to add."
+
+# 3. Neue IPs bannen
+echo -e "${BLUE}[STEP 3/3]${NC} Applying bans and firewall rules..."
+for IP in $NEW_IPS; do
+    if [ -n "$IP" ]; then
+        echo -e "  ${BLUE}»${NC} Banning: ${YELLOW}$IP${NC} (14d + TCP/UDP Block)"
+        fail2ban-client set "$JAIL" banip "$IP" "$BAN_TIME" > /dev/null
+        apply_firewall_block "$IP" "$JAIL"
+    fi
 done
-echo "Sync abgeschlossen."
+
+echo "----------------------------------------------------------------"
+echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
