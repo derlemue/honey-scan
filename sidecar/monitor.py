@@ -270,7 +270,11 @@ def update_threat_feed():
         # 2. Bridge Sync (Cloud) - Capped at 50 
         # 3. Native (VNC etc) - Capped at 80 (Guaranteed visibility)
         query = """
-            SELECT *, create_time as normalized_time
+            SELECT *,
+                CASE 
+                    WHEN service IN ('FAIL2BAN', 'API_MANUAL', 'BRIDGE_SYNC') THEN create_time 
+                    ELSE DATE_ADD(create_time, INTERVAL 1 HOUR) 
+                END as normalized_time
             FROM (
                 (SELECT source_ip, source_ip_country, service, create_time 
                  FROM infos 
@@ -318,7 +322,14 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            adjusted_time = row.get('normalized_time')
+            # Time Adjustment: normalized_time is Unified Local (T).
+            # Frontend (UTC+1) expects UTC (T-1).
+            # So we shift -1h.
+            raw_time = row.get('normalized_time')
+            if isinstance(raw_time, datetime):
+                adjusted_time = raw_time - timedelta(hours=1)
+            else:
+                adjusted_time = raw_time
 
             if len(recent_hackers) < 135:
                 recent_hackers.append({
