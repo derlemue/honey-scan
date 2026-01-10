@@ -1,3 +1,23 @@
+## [7.6.0] - 2026-01-10
+
+### Changed
+- 🛠️ **Scripts**: Refactored `client_banned_ips.sh` and `client_banned_ips_no_update.sh` to remove all `nftables` dependencies.
+- 🛡️ **Fail2Ban**: Scripts now use `fail2ban` exclusively for blocking IPs (configuring `bantime` dynamically for the `sshd` jail).
+
+## [7.5.0] - 2026-01-10
+
+### Added
+- 🔄 **Dual Push**: Sidecar now pushes Intelligence to **multiple** targets simultaneously (e.g., Localhost for Dashboard + Remote for Central Cloud), configured via comma-separated `THREAT_BRIDGE_WEBHOOK_URL`.
+- 🛡️ **Auto-Jailing**: `client_banned_ips.sh` now automatically creates missing Fail2Ban jail configurations (e.g., `recidive`, `bedrock`, `apache-auth`) on the fly to ensure protection is always active.
+- 📊 **Feed Balancing**: Implemented a **3-Way Bucket Strategy** in the Sidecar SQL query to prevent high-volume sources (Fail2Ban) from drowning out other signals.
+    - Fail2Ban: Max 50
+    - Bridge Sync (Cloud): Max 50
+    - Native (VNC, etc): Max 80 (Guaranteed visibility)
+
+### Fixed
+- 🕒 **Timezone**: Corrected `BRIDGE_SYNC` ("Honey Cloud") entries to be treated as Local Time (no +1h shift), ensuring they align perfectly with live creation time on the Dashboard.
+- 🔧 **Scripts**: Added `bedrock` (Minecraft) filter creation logic to `client_banned_ips.sh`.
+
 ## [7.4.0] - 2026-01-09
 
 ### Fixed
