@@ -276,7 +276,7 @@ def update_threat_feed():
 
         # Flood Protection: Use UNION to guarantee representation of Native/Cloud events 
         # even if Fail2Ban is flooding 1000+ ev/sec. 
-        # We fetch top 100 from EACH group, then Sort & Limit.
+        # We fetch top 50 from Fail2Ban (Limit noise) and top 112 from Others.
         query = """
             SELECT *,
                 CASE 
@@ -287,12 +287,12 @@ def update_threat_feed():
                 (SELECT source_ip, source_ip_country, service, create_time 
                  FROM infos 
                  WHERE service IN ('FAIL2BAN', 'API_MANUAL') 
-                 ORDER BY create_time DESC LIMIT 100)
+                 ORDER BY create_time DESC LIMIT 50)
                 UNION ALL
                 (SELECT source_ip, source_ip_country, service, create_time 
                  FROM infos 
                  WHERE service NOT IN ('FAIL2BAN', 'API_MANUAL') 
-                 ORDER BY create_time DESC LIMIT 100)
+                 ORDER BY create_time DESC LIMIT 112)
             ) as combined_feeds
             ORDER BY normalized_time DESC
             LIMIT 162
