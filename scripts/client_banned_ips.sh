@@ -101,13 +101,11 @@ setup_firewall_set() {
     fi
 
     # 1. Create set if missing
-    echo -e "${BLUE}[DEBUG]${NC} Attempting to create set $SET_NAME in $FAMILY $TABLE..."
-    nft "add set $FAMILY $TABLE $SET_NAME { type ipv4_addr; flags timeout; }"
+    /usr/sbin/nft "add set $FAMILY $TABLE $SET_NAME { type ipv4_addr; flags timeout; }" 2>/dev/null
     
     # 2. Add rule for set if missing
-    if ! nft list chain "$FAMILY" "$TABLE" "$CHAIN" | grep -q "$SET_NAME"; then
-        echo -e "${YELLOW}[INFO]${NC} Adding global protection rule for $SET_NAME..."
-        nft "add rule $FAMILY $TABLE $CHAIN ip saddr @$SET_NAME meta l4proto { tcp, udp } th dport { $DETECTED_PORTS } drop"
+    if ! /usr/sbin/nft list chain "$FAMILY" "$TABLE" "$CHAIN" | grep -q "$SET_NAME"; then
+        /usr/sbin/nft "add rule $FAMILY $TABLE $CHAIN ip saddr @$SET_NAME meta l4proto { tcp, udp } th dport { $DETECTED_PORTS } drop" 2>/dev/null
     fi
     
     echo "$TABLE $CHAIN $FAMILY $SET_NAME"
