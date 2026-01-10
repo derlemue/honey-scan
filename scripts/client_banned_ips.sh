@@ -64,7 +64,8 @@ self_update() {
     if ! command -v curl &> /dev/null || ! command -v md5sum &> /dev/null; then return; fi
 
     TEMP_FILE=$(mktemp)
-    if curl -s -f "$SCRIPT_URL" -o "$TEMP_FILE"; then
+    # Use cache-buster to avoid CDN issues
+    if curl -s -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
         if ! bash -n "$TEMP_FILE"; then
             rm -f "$TEMP_FILE"
             return
