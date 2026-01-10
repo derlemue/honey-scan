@@ -314,12 +314,12 @@ def update_threat_feed():
             location_disp = get_english_name(country)
             
             if service == 'FAIL2BAN':
-                threat_type = "Fail2Ban"
-                threat_risk = "Low"
+                threat_type = "fail2ban"
+                threat_risk = "low"
                 location_disp = "FAIL2BAN"
             elif service == 'BRIDGE_SYNC':
-                threat_type = "Global Threat"
-                threat_risk = "High"
+                threat_type = "global"
+                threat_risk = "high"
                 location_disp = "Honey Cloud"
 
             # Time Adjustment: normalized_time is Unified Local (T).
@@ -350,9 +350,9 @@ def update_threat_feed():
                         "count": 1
                     })
 
-        # Enforce exact limit of 130 items (26 * 5 pages)
-        recent_hackers = recent_hackers[:130]
-        suspicious_cs = suspicious_cs[:130]
+        # Enforce reasonable limit for performance (20 items)
+        recent_hackers = recent_hackers[:20]
+        suspicious_cs = suspicious_cs[:20]
 
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": True}
         
