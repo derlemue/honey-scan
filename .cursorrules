@@ -1,2 +1,5 @@
 # Deployment Rules
 When deployment or auto-deployment is performed, you MUST always execute `docker compose restart hfish` to ensuring changes are applied to the remote server.
+
+# Documentation Rules
+When you discover new architectural patterns, hidden dependencies (like `api_active` flags), or complex data flows, you MUST update `docs/ARCHITECTURE_INSIGHTS.md` to preserve this knowledge.
