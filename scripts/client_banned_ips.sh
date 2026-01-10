@@ -87,32 +87,41 @@ self_update
 DETECTED_PORTS=$(ss -tuln | awk 'NR>1 {print $5}' | awk -F: '{print $NF}' | sort -un | tr '\n' ',' | sed 's/,$//')
 echo -e "${BLUE}[INFO]${NC} Detected Open Ports: ${YELLOW}$DETECTED_PORTS${NC}"
 
-apply_firewall_block() {
-    local IP=$1
-    local TARGET_PORTS=$2
-    
+setup_firewall_set() {
     # Discovery of correct nftables table/chain
     local TABLE="inet"
+    local FAMILY="inet"
     local CHAIN="input"
+    local SET_NAME="honey-scan-set"
     
     if nft list table inet f2b-table &>/dev/null; then
-        TABLE="inet"
+        TABLE="f2b-table"
         CHAIN="f2b-chain"
+        FAMILY="inet"
     elif nft list table ip filter &>/dev/null; then
-        TABLE="ip"
+        TABLE="filter"
+        FAMILY="ip"
         if nft list chain ip filter INPUT &>/dev/null; then CHAIN="INPUT"; else CHAIN="input"; fi
     fi
+
+    # 1. Create set if missing
+    nft add set "$FAMILY" "$TABLE" "$SET_NAME" { type ipv4_addr\; flags timeout\; } 2>/dev/null
     
-    if [ -n "$IP" ] && [ -n "$TARGET_PORTS" ]; then
-        # Füge Regel für TCP UND UDP hinzu
-        nft add rule "$TABLE" "$CHAIN" ip saddr "$IP" meta l4proto { tcp, udp } th dport { $TARGET_PORTS } drop 2>/dev/null
-        
-        # Docker-Chain Support
-        if nft list chain ip filter DOCKER-USER &>/dev/null; then
-            nft add rule ip filter DOCKER-USER ip saddr "$IP" meta l4proto { tcp, udp } th dport { $TARGET_PORTS } drop 2>/dev/null
-        fi
+    # 2. Add rule for set if missing
+    if ! nft list chain "$FAMILY" "$TABLE" "$CHAIN" | grep -q "$SET_NAME"; then
+        echo -e "${YELLOW}[INFO]${NC} Adding global protection rule for $SET_NAME..."
+        nft add rule "$FAMILY" "$TABLE" "$CHAIN" ip saddr "@$SET_NAME" meta l4proto { tcp, udp } th dport { $DETECTED_PORTS } drop 2>/dev/null
     fi
+    
+    echo "$TABLE $CHAIN $FAMILY $SET_NAME"
 }
+
+# Initialize Firewall Set
+FW_CONFIG=$(setup_firewall_set)
+TABLE=$(echo "$FW_CONFIG" | awk '{print $1}')
+CHAIN=$(echo "$FW_CONFIG" | awk '{print $2}')
+FAMILY=$(echo "$FW_CONFIG" | awk '{print $3}')
+SET_NAME=$(echo "$FW_CONFIG" | awk '{print $4}')
 
 # --- ENSURE JAIL ACTIVE ---
 if ! fail2ban-client status "$JAIL" &>/dev/null; then
@@ -124,48 +133,42 @@ fi
 
 # 1. Remote IPs holen
 echo -e "${BLUE}[STEP 1/3]${NC} Fetching remote ban list..."
-REMOTE_IPS=$(curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
-REMOTE_COUNT=$(echo "$REMOTE_IPS" | wc -l)
+REMOTE_FILE=$(mktemp)
+curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'> "$REMOTE_FILE"
+REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
 echo -e "${GREEN}[OK]${NC} Received ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
 
-# 2. Lokale Jails ermitteln (Diff)
-echo -e "${BLUE}[STEP 2/3]${NC} Comparing with local bans (sshd)..."
+# 2. Sync IPs to nftables set (High Efficiency)
+echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to nftables set ($SET_NAME)..."
+# Add elements with timeout (14 days)
+# We do this in batches to avoid command line length limits
+cat "$REMOTE_FILE" | xargs -n 500 bash -c 'nft add element '$FAMILY' '$TABLE' '$SET_NAME' { $(echo "$@" | sed "s/ / timeout '$BAN_TIME's, /g") timeout '$BAN_TIME's } 2>/dev/null' --
+
+# 3. Compare for Fail2Ban (sshd sync)
+echo -e "${BLUE}[STEP 3/3]${NC} Checking for new Fail2Ban entries..."
 LOCAL_BANS=$(fail2ban-client status "$JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -d ',')
-
-# Create temporary files for diff
-TEMP_REMOTE=$(mktemp)
 TEMP_LOCAL=$(mktemp)
-
-echo "$REMOTE_IPS" | tr ' ' '\n' | sort -u > "$TEMP_REMOTE"
 echo "$LOCAL_BANS" | tr ' ' '\n' | sort -u > "$TEMP_LOCAL"
 
-# Find IPs in remote but not in local
-NEW_IPS=$(comm -23 "$TEMP_REMOTE" "$TEMP_LOCAL")
-NEW_COUNT=$(echo "$NEW_IPS" | grep -v '^$' | wc -l)
+# Find NEW IPs for F2B
+NEW_IPS=$(comm -23 <(sort -u "$REMOTE_FILE") "$TEMP_LOCAL" | grep -v '^$')
+NEW_COUNT=$(echo "$NEW_IPS" | wc -l)
 
-rm -f "$TEMP_REMOTE" "$TEMP_LOCAL"
+rm -f "$REMOTE_FILE" "$TEMP_LOCAL"
 
-if [ "$NEW_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}[DONE]${NC} No new IPs to ban. All synchronized."
-    echo -e "${BLUE}[HINT]${NC} Verify with: ${CYAN}nft list ruleset | grep drop${NC}"
+if [ "$NEW_COUNT" -eq 0 ] || [ "$NEW_IPS" = "0" ]; then
+    echo -e "${GREEN}[DONE]${NC} All IPs synchronized."
+    echo -e "${BLUE}[HINT]${NC} Verify with: ${CYAN}nft list set $FAMILY $TABLE $SET_NAME${NC}"
     exit 0
 fi
 
-echo -e "${YELLOW}[ACTION]${NC} Found ${YELLOW}$NEW_COUNT${NC} NEW IPs to add."
-
-# 3. Neue IPs bannen
-echo -e "${BLUE}[STEP 3/3]${NC} Applying bans and firewall rules..."
+echo -e "${YELLOW}[ACTION]${NC} Adding ${YELLOW}$NEW_COUNT${NC} NEW IPs to Fail2Ban..."
 for IP in $NEW_IPS; do
     if [ -n "$IP" ]; then
-        echo -e "  ${BLUE}»${NC} Banning: ${YELLOW}$IP${NC} (14d + Dual-Block on [${CYAN}$DETECTED_PORTS${NC}])"
         fail2ban-client set "$JAIL" banip "$IP" "$BAN_TIME" > /dev/null
-        apply_firewall_block "$IP" "$DETECTED_PORTS"
     fi
 done
 
 echo "----------------------------------------------------------------"
 echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
-echo -e "${BLUE}[HINT]${NC} Verify actual rules with: ${CYAN}nft list ruleset | grep drop${NC}"
-
-echo "----------------------------------------------------------------"
-echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
+echo -e "${BLUE}[HINT]${NC} Verify with: ${CYAN}nft list set $FAMILY $TABLE $SET_NAME${NC}"
