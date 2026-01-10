@@ -189,14 +189,14 @@ Du brauchst **Fail2Ban**. Das Skript installiert es, wenn es fehlt.
 
 Mache das auf deinen echten Servern:
 ```bash
-# Skript holen
-wget https://feed.sec.lemue.org/scripts/client_banned_ips.sh
+# Herunterladen
+wget https://feed.sec.lemue.org/scripts/banned_ips.sh
 
-# Ausführbar machen
-chmod +x client_banned_ips.sh
+# Startklar machen
+chmod +x banned_ips.sh
 
-# Starten (braucht Root Rechte)
-sudo ./client_banned_ips.sh
+# Starten (als Chef/Root)
+sudo ./banned_ips.sh
 ```
 
 #### 🔄 Option B: Zurück-Melden
@@ -222,7 +222,7 @@ Die Liste soll immer aktuell sein. Mache das alle 15 Minuten.
 sudo crontab -e
 
 # Das hier eintragen (Pfad anpassen):
-*/15 * * * * /pfad/zur/datei/client_banned_ips.sh > /dev/null 2>&1
+*/15 * * * * /pfad/zu/banned_ips.sh >> /var/log/banned_ips.log 2>&1
 ```
 
 ## 🔗 Andere Projekte

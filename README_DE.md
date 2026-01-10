@@ -190,13 +190,13 @@ Benötigt **Fail2Ban**. Das Skript bietet die Installation an, falls es fehlt.
 Führe dies auf deinen Produktionsservern aus:
 ```bash
 # Skript herunterladen
-wget https://feed.sec.lemue.org/scripts/client_banned_ips.sh
+wget https://feed.sec.lemue.org/scripts/banned_ips.sh
 
 # Ausführbar machen
-chmod +x client_banned_ips.sh
+chmod +x banned_ips.sh
 
-# Ausführen (Benötigt Root für Fail2Ban)
-sudo ./client_banned_ips.sh
+# Ausführen (Benötigt Root für Fail2Ban Interaktion)
+sudo ./banned_ips.sh
 ```
 
 #### 🔄 Option B: Aktives Melden (Fail2Ban Action)
@@ -222,7 +222,7 @@ Halte deine Bannliste aktuell, indem das Skript alle 15 Minuten ausgeführt wird
 sudo crontab -e
 
 # Folgende Zeile hinzufügen (Pfad anpassen!):
-*/15 * * * * /pfad/zu/client_banned_ips.sh > /dev/null 2>&1
+*/15 * * * * /pfad/zu/banned_ips.sh >> /var/log/banned_ips.log 2>&1
 ```
 
 ## 🔗 Verbundene Projekte

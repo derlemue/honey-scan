@@ -185,13 +185,13 @@ docker compose up -d --build
 Запустіть це на ваших виробничих серверах:
 ```bash
 # Завантажити скрипт
-wget https://feed.sec.lemue.org/scripts/client_banned_ips.sh
+wget https://feed.sec.lemue.org/scripts/banned_ips.sh
 
 # Зробити виконуваним
-chmod +x client_banned_ips.sh
+chmod +x banned_ips.sh
 
-# Запустити (Потрібен Root для Fail2Ban)
-sudo ./client_banned_ips.sh
+# Запустити (Потрібен Root для взаємодії з Fail2Ban)
+sudo ./banned_ips.sh
 ```
 
 #### 🔄 Варіант Б: Активне звітування (Fail2Ban Action)
@@ -217,7 +217,7 @@ sudo ./client_banned_ips.sh
 sudo crontab -e
 
 # Додати наступний рядок (вкажіть вірний шлях):
-*/15 * * * * /path/to/client_banned_ips.sh > /dev/null 2>&1
+*/15 * * * * /path/to/banned_ips.sh >> /var/log/banned_ips.log 2>&1
 ```
 
 ## 🔗 Пов'язані проекти

@@ -186,13 +186,13 @@ Requires **Fail2Ban**. The script will offer to install it if missing.
 Run this on your production servers:
 ```bash
 # Download Script
-wget https://feed.sec.lemue.org/scripts/client_banned_ips.sh
+wget https://feed.sec.lemue.org/scripts/banned_ips.sh
 
 # Make executable
-chmod +x client_banned_ips.sh
+chmod +x banned_ips.sh
 
 # Run (Requires Root for Fail2Ban interaction)
-sudo ./client_banned_ips.sh
+sudo ./banned_ips.sh
 ```
 
 #### 🔄 Option B: Active Reporting (Fail2Ban Action)
@@ -225,7 +225,7 @@ Keep your ban list fresh by running the script every 15 minutes.
 sudo crontab -e
 
 # Add the following line (adjust path to your script location):
-*/15 * * * * /path/to/client_banned_ips.sh > /dev/null 2>&1
+*/15 * * * * /path/to/banned_ips.sh >> /var/log/banned_ips.log 2>&1
 ```
 
 ## 🔗 Associated Projects

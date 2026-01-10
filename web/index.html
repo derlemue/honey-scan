@@ -155,8 +155,8 @@
             // Fetch and cache threat data
             const getThreatData = async () => {
                 const now = Date.now();
-                // Cache for 30 seconds
-                if (threatDataCache && (now - lastFetchTime) < 30000) {
+                // Cache for 5 seconds (Optimized)
+                if (threatDataCache && (now - lastFetchTime) < 5000) {
                     setStatus('#00ff00', 'Served from Cache');
                     return threatDataCache;
                 }
@@ -270,7 +270,8 @@
                                 hackers: data.hackers,
                                 cs: data.cs,
                                 daily: data.cs.length,
-                                total: data.hackers.length
+                                total: data.hackers.length,
+                                api_active: data.api_active
                             },
                             verbose_msg: "Success"
                         }), {
