@@ -91,13 +91,25 @@ apply_firewall_block() {
     local IP=$1
     local TARGET_PORTS=$2
     
+    # Discovery of correct nftables table/chain
+    local TABLE="inet"
+    local CHAIN="input"
+    
+    if nft list table inet f2b-table &>/dev/null; then
+        TABLE="inet"
+        CHAIN="f2b-chain"
+    elif nft list table ip filter &>/dev/null; then
+        TABLE="ip"
+        if nft list chain ip filter INPUT &>/dev/null; then CHAIN="INPUT"; else CHAIN="input"; fi
+    fi
+    
     if [ -n "$IP" ] && [ -n "$TARGET_PORTS" ]; then
         # Füge Regel für TCP UND UDP hinzu
-        nft add rule inet filter input ip saddr "$IP" meta l4proto { tcp, udp } th dport { $TARGET_PORTS } drop 2>/dev/null
+        nft add rule "$TABLE" "$CHAIN" ip saddr "$IP" meta l4proto { tcp, udp } th dport { $TARGET_PORTS } drop 2>/dev/null
         
         # Docker-Chain Support
-        if nft list chain inet filter DOCKER-USER >/dev/null 2>&1; then
-            nft add rule inet filter DOCKER-USER ip saddr "$IP" meta l4proto { tcp, udp } th dport { $TARGET_PORTS } drop 2>/dev/null
+        if nft list chain ip filter DOCKER-USER &>/dev/null; then
+            nft add rule ip filter DOCKER-USER ip saddr "$IP" meta l4proto { tcp, udp } th dport { $TARGET_PORTS } drop 2>/dev/null
         fi
     fi
 }
@@ -135,6 +147,7 @@ rm -f "$TEMP_REMOTE" "$TEMP_LOCAL"
 
 if [ "$NEW_COUNT" -eq 0 ]; then
     echo -e "${GREEN}[DONE]${NC} No new IPs to ban. All synchronized."
+    echo -e "${BLUE}[HINT]${NC} Verify with: ${CYAN}nft list ruleset | grep drop${NC}"
     exit 0
 fi
 
@@ -149,6 +162,10 @@ for IP in $NEW_IPS; do
         apply_firewall_block "$IP" "$DETECTED_PORTS"
     fi
 done
+
+echo "----------------------------------------------------------------"
+echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
+echo -e "${BLUE}[HINT]${NC} Verify actual rules with: ${CYAN}nft list ruleset | grep drop${NC}"
 
 echo "----------------------------------------------------------------"
 echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
