@@ -102,7 +102,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.6"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.7"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -146,8 +146,8 @@ else
 fi
 
 # Define the ACTION line. We explicitly construct it to avoid variable expansion issues.
-# Using standard brackets [name=sshd, port="ssh", protocol="tcp,udp"] ensures it works.
-ACTION_SPEC="action = $NFT_ACTION[name=sshd, port=\"ssh\", protocol=\"tcp,udp\"]"
+# Simplified for compatibility: We remove parameters [name=..., port=...] as 'allports' implies Global blocking.
+ACTION_SPEC="action = $NFT_ACTION"
 
 # Check if hfish-client action exists
 if [ -f "/etc/fail2ban/action.d/hfish-client.conf" ]; then

@@ -1,3 +1,8 @@
+## [7.7.7] - 2026-01-10
+
+### Fixed
+- 🔨 **Compatibility**: Removed parameters from `nftables-allports` action definition. This fixes an issue where some Fail2Ban versions would fail to load the action if `[name=..., port=...]` arguments were passed to an all-ports action, causing it to fall back silently or fail.
+
 ## [7.7.6] - 2026-01-10
 
 ### Changed

@@ -105,7 +105,7 @@ else
 fi
 
 # Define the ACTION line. We explicitly construct it to avoid variable expansion issues.
-ACTION_SPEC="action = $NFT_ACTION[name=sshd, port=\"ssh\", protocol=\"tcp,udp\"]"
+ACTION_SPEC="action = $NFT_ACTION"
 
 # Check if hfish-client action exists
 if [ -f "/etc/fail2ban/action.d/hfish-client.conf" ]; then
