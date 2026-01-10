@@ -1,3 +1,8 @@
+## [7.7.2] - 2026-01-10
+
+### Changed
+- 🛠️ **Scripts**: Updated configuration logic to conditionally add `hfish-client` action to `jail.local` only if the action file `/etc/fail2ban/action.d/hfish-client.conf` is present. This prevents errors on clients that do not have the monitoring extension installed.
+
 ## [7.7.1] - 2026-01-10
 
 ### Changed
