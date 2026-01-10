@@ -314,8 +314,8 @@ def update_threat_feed():
             location_disp = get_english_name(country)
             
             if service == 'FAIL2BAN':
-                threat_type = "jailed by rules"
-                threat_risk = "low"
+                threat_type = "Fail2Ban"
+                threat_risk = "Low"
                 location_disp = "FAIL2BAN"
             elif service == 'BRIDGE_SYNC':
                 threat_type = "Global Threat"
@@ -345,14 +345,16 @@ def update_threat_feed():
                         "location": location_disp,
                         "type": threat_type,
                         "risk": threat_risk,
-                        "time": str(adjusted_time if adjusted_time else 'Just now')
+                        "time": str(adjusted_time if adjusted_time else 'Just now'),
+                        "flag": get_english_name(country) if service != 'FAIL2BAN' else "Unknown",
+                        "count": 1
                     })
 
         # Enforce exact limit of 130 items (26 * 5 pages)
         recent_hackers = recent_hackers[:130]
         suspicious_cs = suspicious_cs[:130]
 
-        output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": False}
+        output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": True}
         
         # Direct write to preserve inode for Docker bind mount
         with open(LIVE_THREATS_FILE, "w") as f:
