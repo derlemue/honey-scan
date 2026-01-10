@@ -183,20 +183,21 @@ def update_node_location():
 
 def push_intelligence(ip, is_new_hint=None):
     if not THREAT_BRIDGE_WEBHOOK_URL:
-        return
-    try:
-        # Use simple logging if hint is not provided to keep logs clean
-        if is_new_hint is None:
-            logger.info(f"Pushing intelligence for {ip} to bridge...")
-            
-        return False # Return False if no URL is configured
+        return False
 
     urls = [u.strip() for u in THREAT_BRIDGE_WEBHOOK_URL.split(',') if u.strip()]
-    
+    if not urls:
+        return False
+        
     success_count = 0
     for url in urls:
         try:
+            # Prepare payload
             payload = {"attack_ip": ip}
+            
+            # Simple logging for first url only if hint provided? No, log per URL.
+            # But avoid spam.
+            
             resp = requests.post(url, json=payload, timeout=5)
             if resp.status_code == 200:
                 logger.info(f"✅ Synced {ip} to {url}")
@@ -205,8 +206,8 @@ def push_intelligence(ip, is_new_hint=None):
                 logger.error(f"❌ Failed to sync {ip} to {url}: HTTP {resp.status_code}")
         except Exception as e:
             logger.error(f"❌ Error syncing {ip} to {url}: {e}")
-    
-    return success_count > 0 # Return True if at least one push was successful
+            
+    return success_count > 0
 
 def sync_to_bridge():
     """Sync unsynced IPs to the bridge with a 50ms delay."""
