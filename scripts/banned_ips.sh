@@ -59,7 +59,7 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.3"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.4"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -102,7 +102,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.3"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.4"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -174,7 +174,7 @@ else
 fi
 
 # 2. Jail Configuration Content (Idempotent Check)
-OVERRIDE_CONF="/etc/fail2ban/jail.d/defaults-debian.conf"
+OVERRIDE_CONF="/etc/fail2ban/jail.d/99-honey-scan.conf"
 NFT_ACTION="honey-nftables"
 ACTION_SPEC="action = $NFT_ACTION"
 

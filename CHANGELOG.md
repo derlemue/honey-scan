@@ -1,3 +1,9 @@
+## [8.0.1] - 2026-01-10
+
+### Fixed
+- 🐛 **Persistence**: Updated `banned_ips.sh` to write Fail2Ban configuration to `/etc/fail2ban/jail.d/99-honey-scan.conf` instead of `defaults-debian.conf`. This prevents system updates or restarts from resetting the configuration to defaults.
+- 📦 **Versioning**: Bumped `banned_ips.sh` to version 2.6.4.
+
 ## [8.0.0] - 2026-01-10
 
 ### Changed
