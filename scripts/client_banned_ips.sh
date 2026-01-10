@@ -181,6 +181,7 @@ rm -f "$REMOTE_FILE" "$TEMP_LOCAL"
 
 if [ "$NEW_COUNT" -eq 0 ] || [ "$NEW_IPS" = "0" ]; then
     echo -e "${GREEN}[DONE]${NC} All IPs synchronized."
+    echo -e "${BLUE}[INFO]${NC} Protected Ports: ${YELLOW}$DETECTED_PORTS${NC}"
     echo -e "${BLUE}[HINT]${NC} Verify with: ${CYAN}nft list set $FAMILY $TABLE $SET_NAME${NC}"
     exit 0
 fi
@@ -194,4 +195,5 @@ done
 
 echo "----------------------------------------------------------------"
 echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
+echo -e "${BLUE}[INFO]${NC} Protected Ports: ${YELLOW}$DETECTED_PORTS${NC}"
 echo -e "${BLUE}[HINT]${NC} Verify with: ${CYAN}nft list set $FAMILY $TABLE $SET_NAME${NC}"
