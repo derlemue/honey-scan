@@ -270,11 +270,7 @@ def update_threat_feed():
         # 2. Bridge Sync (Cloud) - Capped at 50 
         # 3. Native (VNC etc) - Capped at 80 (Guaranteed visibility)
         query = """
-            SELECT *,
-                CASE 
-                    WHEN service IN ('FAIL2BAN', 'API_MANUAL', 'BRIDGE_SYNC') THEN create_time 
-                    ELSE DATE_ADD(create_time, INTERVAL 1 HOUR) 
-                END as normalized_time
+            SELECT *, create_time as normalized_time
             FROM (
                 (SELECT source_ip, source_ip_country, service, create_time 
                  FROM infos 
@@ -322,14 +318,7 @@ def update_threat_feed():
                 threat_risk = "High"
                 location_disp = "Honey Cloud"
 
-            # Time Adjustment: normalized_time is Unified Local (T).
-            # Frontend (UTC+1) expects UTC (T-1).
-            # So we shift -1h.
-            raw_time = row.get('normalized_time')
-            if isinstance(raw_time, datetime):
-                adjusted_time = raw_time - timedelta(hours=1)
-            else:
-                adjusted_time = raw_time
+            adjusted_time = row.get('normalized_time')
 
             if len(recent_hackers) < 135:
                 recent_hackers.append({
@@ -767,28 +756,24 @@ def restore_db_language():
         logger.info(f"Found {count} English entries. Restoring specific entries to Chinese...")
 
         if DB_TYPE == "mysql":
-            # Create reverse mapping
+            # Create a reverse mapping
             reverse_translations = {v: k for k, v in TRANSLATIONS.items()}
             
-            # Optimized: Loop through reverse map, but maybe still heavy if done blindly? 
-            # Better: Only update rows that MATCH the English name.
-            # The previous code did "WHERE country = %s" which is fine, but doing it for 150+ countries is 150*3 queries.
-            # We can rely on the fact that we only really need to fix the ones that are broken.
-            # But "restore all" is safer.
-            # Let's throttle this mechanism to run only once every 60 seconds?
-            # Implemented via caller or just rely on the 'sample check' above to short-circuit.
+            # Find all English names currently in the database to only update what's necessary
+            # This avoids looping through 150+ countries every 10 seconds.
+            cursor.execute("SELECT DISTINCT country FROM ipaddress WHERE country REGEXP '^[a-zA-Z ]+$'")
+            found_countries = [row['country'] for row in cursor.fetchall()]
             
-            for en, cn in reverse_translations.items():
-                # Only update if it currently matches the English name
-                # This is still many queries, but standard for this script structure. 
-                # The 'check_query' above saves us 99% of the time.
-                cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (cn, en))
-                # optimize: regions are less critical but good to fix
-                # cursor.execute("UPDATE ipaddress SET region = %s WHERE region = %s", (cn, en)) 
-                # optimize: infos table is huge, updating it every time is heavy. 
-                # We mainly care about 'ipaddress' for the map. 
-                # HFish likely uses 'ipaddress' for the map.
-                
+            if not found_countries:
+                return
+
+            logger.info(f"Detected English country names: {found_countries}. Restoring to Chinese...")
+            
+            for en in found_countries:
+                if en in reverse_translations:
+                    cn = reverse_translations[en]
+                    cursor.execute("UPDATE ipaddress SET country = %s WHERE country = %s", (cn, en))
+                    
             conn.commit()
             logger.info("Restored DB location names to Chinese")
     except Exception as e:
