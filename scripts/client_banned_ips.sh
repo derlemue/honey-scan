@@ -9,7 +9,7 @@
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
-AUTO_UPDATE=true 
+AUTO_UPDATE=false 
 SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/client_banned_ips.sh"
 JAIL="sshd"
 
@@ -30,7 +30,7 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.0.0"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.1.0"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo "----------------------------------------------------------------"
