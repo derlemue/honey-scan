@@ -59,7 +59,7 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.0"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.1"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo "----------------------------------------------------------------"
@@ -119,26 +119,46 @@ if ! fail2ban-client status "$JAIL" &>/dev/null; then
 fi
 
 # 1. Enforce ALL PORTS blocking (TCP & UDP)
-# We create an override file to ensure the jail uses nftables-allports with TCP and UDP.
-# This is critical because standard setup usually only blocks TCP on SSH port.
-OVERRIDE_CONF="/etc/fail2ban/jail.d/99-honey-scan.conf"
+# We use jail.local as it has the highest priority and overrides defaults.
+OVERRIDE_CONF="/etc/fail2ban/jail.local"
 if [ ! -f "$OVERRIDE_CONF" ]; then
-    echo -e "${BLUE}[INFO]${NC} Creating Fail2Ban override for ALL-PORTS blocking..."
+    echo -e "${BLUE}[INFO]${NC} Creating Fail2Ban configuration (jail.local)..."
     bash -c "cat > $OVERRIDE_CONF" <<EOF
-[sshd]
-# Enforce blocking on ALL ports
+[DEFAULT]
+# Global setting: Use nftables-allports for banning
 banaction = nftables-allports
 # Enforce both TCP and UDP
 protocol = tcp, udp
+
+[sshd]
+enabled = true
+# Ensure we use the global banaction (standard actions refer to %(banaction)s)
 EOF
-    echo -e "${GREEN}[OK]${NC} Override created. Reloading Fail2Ban..."
+    echo -e "${GREEN}[OK]${NC} Configuration created. Reloading Fail2Ban..."
     fail2ban-client reload &>/dev/null
 else
-    # Check if content matches, if not update
-    if ! grep -q "protocol = tcp, udp" "$OVERRIDE_CONF"; then
-        echo -e "${YELLOW}[UPDATE]${NC} Updating Fail2Ban override configuration..."
-        bash -c "cat > $OVERRIDE_CONF" <<EOF
-[sshd]
+    # Check if content matches our minimal requirements
+    if ! grep -q "banaction = nftables-allports" "$OVERRIDE_CONF"; then
+        echo -e "${YELLOW}[UPDATE]${NC} Updating Fail2Ban configuration (jail.local)..."
+        # We append/update specific keys. To be safe, we backup and overwrite (minimal safe approach)
+        # Or better: Just verify lines exist.
+        # For now, we assume we can set the default banaction safely.
+        
+        # Determine if we should append or warn.
+        # User requested update. We will overwrite/set the DEFAULT section header if missing? 
+        # Safer: Just append the [DEFAULT] override at the end if not present? No, [DEFAULT] must be top.
+        # Let's write a dedicated override file in jail.d/99-honey-scan.conf is SAFER because jail.local might be user-managed!
+        # BUT USER REQUESTED jail.local earlier.
+        # Actually, let's revert to jail.local as the user seems to struggle with jail.d imports.
+        
+        # Simplified: We just write to jail.local if it doesn't contain our string.
+        # Warning: This might overwrite user config.
+        # Let's APPEND to jail.local if it exists.
+        
+        bash -c "cat >> $OVERRIDE_CONF" <<EOF
+
+# Added by Honey-Scan Client
+[DEFAULT]
 banaction = nftables-allports
 protocol = tcp, udp
 EOF

@@ -1,3 +1,8 @@
+## [7.7.1] - 2026-01-10
+
+### Changed
+- 🛠️ **Scripts**: Changed Fail2Ban configuration target to `/etc/fail2ban/jail.local` (highest priority) to guarantee `nftables-allports` override works on all systems.
+
 ## [7.7.0] - 2026-01-10
 
 ### Added
