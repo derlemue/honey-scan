@@ -1,3 +1,8 @@
+## [7.7.0] - 2026-01-10
+
+### Added
+- 🛡️ **Scripts**: Automatically configures Fail2Ban (`/etc/fail2ban/jail.d/99-honey-scan.conf`) to block **ALL ports** (TCP & UDP) for the `sshd` jail using `nftables-allports`.
+
 ## [7.6.0] - 2026-01-10
 
 ### Changed

@@ -29,7 +29,7 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.4.0"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.0"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo "----------------------------------------------------------------"
@@ -83,6 +83,34 @@ echo -e "${BLUE}[INFO]${NC} Configuring Fail2Ban jail '${YELLOW}$JAIL${NC}'..."
 if ! fail2ban-client status "$JAIL" &>/dev/null; then
     echo -e "${YELLOW}[WARN]${NC} Jail '$JAIL' is not active. Attempting to start..."
     fail2ban-client start "$JAIL" 2>/dev/null || { echo -e "${RED}[ERROR]${NC} Could not start $JAIL jail."; exit 1; }
+fi
+
+# 1. Enforce ALL PORTS blocking (TCP & UDP)
+# We create an override file to ensure the jail uses nftables-allports with TCP and UDP.
+# This is critical because standard setup usually only blocks TCP on SSH port.
+OVERRIDE_CONF="/etc/fail2ban/jail.d/99-honey-scan.conf"
+if [ ! -f "$OVERRIDE_CONF" ]; then
+    echo -e "${BLUE}[INFO]${NC} Creating Fail2Ban override for ALL-PORTS blocking..."
+    bash -c "cat > $OVERRIDE_CONF" <<EOF
+[sshd]
+# Enforce blocking on ALL ports
+banaction = nftables-allports
+# Enforce both TCP and UDP
+protocol = tcp, udp
+EOF
+    echo -e "${GREEN}[OK]${NC} Override created. Reloading Fail2Ban..."
+    fail2ban-client reload &>/dev/null
+else
+    # Check if content matches, if not update
+    if ! grep -q "protocol = tcp, udp" "$OVERRIDE_CONF"; then
+        echo -e "${YELLOW}[UPDATE]${NC} Updating Fail2Ban override configuration..."
+        bash -c "cat > $OVERRIDE_CONF" <<EOF
+[sshd]
+banaction = nftables-allports
+protocol = tcp, udp
+EOF
+        fail2ban-client reload &>/dev/null
+    fi
 fi
 
 # Set Ban Time dynamically
