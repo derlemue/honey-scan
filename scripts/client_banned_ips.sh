@@ -134,22 +134,39 @@ curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'> "$REMOTE_FILE"
 REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
 echo -e "${GREEN}[OK]${NC} Received ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
 
-# 2. Sync IPs to nftables set (High Efficiency - Atomic)
+# 2. Sync IPs to nftables set (High Efficiency - Chunked Atomic)
 echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to nftables set ($SET_NAME)..."
-NFT_BATCH=$(mktemp)
-echo "add element $FAMILY $TABLE $SET_NAME {" > "$NFT_BATCH"
-# Format IPs for nft: "ip1 timeout Xs, ip2 timeout Xs, ..."
-awk '{printf "%s timeout %ss, ", $1, "'${BAN_TIME}'"}' "$REMOTE_FILE" >> "$NFT_BATCH"
-echo "}" >> "$NFT_BATCH"
+# We use chunked atomic adds to avoid memory/buffer limits
+CHUNK_SIZE=1000
+TOTAL_IP_FILE=$(mktemp)
+sort -u "$REMOTE_FILE" > "$TOTAL_IP_FILE"
 
-if nft -f "$NFT_BATCH" 2>/dev/null; then
+# Split into chunks and process
+split -l "$CHUNK_SIZE" "$TOTAL_IP_FILE" "ip_chunk_"
+
+SYNC_ERROR=0
+for chunk in ip_chunk_*; do
+    NFT_BATCH=$(mktemp)
+    echo "add element $FAMILY $TABLE $SET_NAME {" > "$NFT_BATCH"
+    # Format IPs: "ip timeout Xs, "
+    awk -v ban_time="$BAN_TIME" '{printf "%s timeout %ss, ", $1, ban_time}' "$chunk" >> "$NFT_BATCH"
+    # Remove last comma and space
+    truncate -s -2 "$NFT_BATCH"
+    echo " }" >> "$NFT_BATCH"
+    
+    if ! nft -f "$NFT_BATCH" 2>/dev/null; then
+        SYNC_ERROR=1
+        # echo "Error in chunk: $(cat $NFT_BATCH)" # Debug
+    fi
+    rm -f "$NFT_BATCH" "$chunk"
+done
+rm -f "$TOTAL_IP_FILE"
+
+if [ "$SYNC_ERROR" -eq 0 ]; then
     echo -e "${GREEN}[OK]${NC} Successfully synced all IPs to nftables set."
 else
-    echo -e "${RED}[ERROR]${NC} Failed to sync IPs to nftables set (Check syntax $NFT_BATCH)"
-    # Fallback to individual adds if batch fails (slow but safe)
-    # nft -f fallbacks often fail on very large batches if memory is tight
+    echo -e "${RED}[WARN]${NC} Some chunks failed to sync. Check nftables state."
 fi
-rm -f "$NFT_BATCH"
 
 # 3. Compare for Fail2Ban (sshd sync)
 echo -e "${BLUE}[STEP 3/3]${NC} Checking for new Fail2Ban entries..."
