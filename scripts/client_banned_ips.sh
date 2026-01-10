@@ -144,11 +144,22 @@ curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'> "$REMOTE_FILE"
 REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
 echo -e "${GREEN}[OK]${NC} Received ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
 
-# 2. Sync IPs to nftables set (High Efficiency)
+# 2. Sync IPs to nftables set (High Efficiency - Atomic)
 echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to nftables set ($SET_NAME)..."
-# Add elements with timeout (14 days)
-# We do this in batches to avoid command line length limits
-cat "$REMOTE_FILE" | xargs -n 500 bash -c 'nft add element '$FAMILY' '$TABLE' '$SET_NAME' { $(echo "$@" | sed "s/ / timeout '$BAN_TIME's, /g") timeout '$BAN_TIME's } 2>/dev/null' --
+NFT_BATCH=$(mktemp)
+echo "add element $FAMILY $TABLE $SET_NAME {" > "$NFT_BATCH"
+# Format IPs for nft: "ip1 timeout Xs, ip2 timeout Xs, ..."
+sed "s/$/ timeout ${BAN_TIME}s,/" "$REMOTE_FILE" >> "$NFT_BATCH"
+# Remove last comma and close bracket
+truncate -s -2 "$NFT_BATCH"
+echo "}" >> "$NFT_BATCH"
+
+if nft -f "$NFT_BATCH" 2>/dev/null; then
+    echo -e "${GREEN}[OK]${NC} Successfully synced all IPs to nftables set."
+else
+    echo -e "${RED}[ERROR]${NC} Failed to sync IPs to nftables set."
+fi
+rm -f "$NFT_BATCH"
 
 # 3. Compare for Fail2Ban (sshd sync)
 echo -e "${BLUE}[STEP 3/3]${NC} Checking for new Fail2Ban entries..."
