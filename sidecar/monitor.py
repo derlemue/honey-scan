@@ -37,6 +37,7 @@ scanning_ips = set() # Track IPs currently in queue or being scanned
 
 
 MAX_WORKERS = 16  # Optimized concurrency (User Request: 16)
+last_stats_update = 0
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -362,13 +363,17 @@ def update_threat_feed():
             f.flush()
             os.fsync(f.fileno())
 
-        # Generate General Stats
-        stats = {
-            "total_attacks": 0,
-            "today_attacks": 0,
-            "top_country": "Unknown"
-        }
-        try:
+        # Generate General Stats (Throttled to 60s)
+        STATS_FILE_UPDATE_INTERVAL = 60
+        global last_stats_update
+        if time.time() - last_stats_update > STATS_FILE_UPDATE_INTERVAL:
+            last_stats_update = time.time()
+            stats = {
+                "total_attacks": 0,
+                "today_attacks": 0,
+                "top_country": "Unknown"
+            }
+            try:
              # Total
              cursor.execute("SELECT COUNT(*) FROM infos")
              row = cursor.fetchone()
@@ -388,11 +393,14 @@ def update_threat_feed():
         except Exception as e:
             logger.warning(f"Stats calculation partial failure: {e}")
 
-        # Direct write for stats
-        with open(STATS_FILE, "w") as f:
-            json.dump(stats, f)
-            f.flush()
-            os.fsync(f.fileno())
+            # Direct write for stats
+            with open(STATS_FILE, "w") as f:
+                json.dump(stats, f)
+                f.flush()
+                os.fsync(f.fileno())
+        else:
+            # logger.info("Skipping stats update (throttled)")
+            pass
 
     except Exception as e:
         logger.error(f"Error updating threat feed: {e}")
@@ -908,13 +916,13 @@ def main():
                 
                 # Optimization: Run heavy tasks roughly every 60s
                 # Using timestamp check is more robust than modulo 0 against loop drift
-                if time.time() - last_maintenance > 60:
                     update_banned_list()
                     fix_missing_severity()
+                    fix_unknown_countries() # Moved to maintenance loop (60s) to reduce IO
                     last_maintenance = time.time()
 
                 # Run background tasks
-                fix_unknown_countries()
+                # fix_unknown_countries() # Moved above
                 restore_db_language()
                 update_threat_feed()
                 if int(time.time()) % 600 < 15: 
