@@ -314,12 +314,12 @@ def update_threat_feed():
             location_disp = get_english_name(country)
             
             if service == 'FAIL2BAN':
-                threat_type = "fail2ban"
-                threat_risk = "low"
+                threat_type = "Fail2Ban"
+                threat_risk = "Low"
                 location_disp = "FAIL2BAN"
             elif service == 'BRIDGE_SYNC':
-                threat_type = "global"
-                threat_risk = "high"
+                threat_type = "Global Threat"
+                threat_risk = "High"
                 location_disp = "Honey Cloud"
 
             # Time Adjustment: normalized_time is Unified Local (T).
