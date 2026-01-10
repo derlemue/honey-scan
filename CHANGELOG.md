@@ -1,3 +1,13 @@
+## [8.0.0] - 2026-01-10
+
+### Changed
+- 🧹 **Cleanup**: Massive repository cleanup. Removed unused legacy scripts (`client_banned_ips_no_update.sh`, `fix_cache.sh`, `verify_api.sh`), debug tools, and temporary data dumps to ensure a clean distribution.
+- 📜 **Documentation**: Updated all README files (EN, DE, UA, DE2) with comprehensive feature lists including Auto-Update configurations, Persistence logic, and Whitelist preservation.
+- 🛡️ **Scripts**: `banned_ips.sh` promoted to v2.6.3.
+    - **Persistence**: Implemented jail refresh logic to ensure bans stick even after service restarts.
+    - **Whitelist**: Added robust whitelist preservation to prevent accidental banning of admin IPs during flush operations.
+    - **Auto-Update**: Refined self-update mechanism with version checking and checksum validation.
+
 ## [7.8.0] - 2026-01-10
 
 ### Changed

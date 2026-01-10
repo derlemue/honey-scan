@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Платформа Активного Захисту та Розвідки Загроз</b></p>
 
-[![Version](https://img.shields.io/badge/version-7.8.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-8.0.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -180,6 +180,12 @@ docker compose up -d --build
 
 ### 3. Розгортання клієнтського щита (Інтеграція Fail2Ban)
 Захистіть ваші *інші* сервери, автоматично блокуючи IP, виявлені цим ханіпотом.
+**Особливості**:
+*   **Інтеграція Fail2Ban**: Автоматично створює/налаштовує jails та actions.
+*   **Персистентність**: Оновлює jails, щоб бани зберігалися після перезавантаження.
+*   **Безпека Whitelist**: Поважає ваші налаштування `ignoreip`.
+*   **Автооновлення**: Можливість самооновлення для підтримки актуальності логіки.
+
 Вимагає **Fail2Ban**. Скрипт запропонує встановити його, якщо він відсутній.
 
 Запустіть це на ваших виробничих серверах:

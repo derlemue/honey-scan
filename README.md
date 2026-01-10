@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Active Defense & Threat Intelligence Platform</b></p>
     
-[![Version](https://img.shields.io/badge/version-7.8.0-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-8.0.0-blue.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -181,6 +181,12 @@ docker compose up -d --build
 
 ### 3. Deploy Client Shield (Fail2Ban Integration)
 Protect your *other* servers by automatically banning IPs detected by this honeypot.
+**Features**:
+*   **Fail2Ban Integration**: Automatically creates/configures jails and actions.
+*   **Persistence**: Refreshes jails to ensure bans persist across restarts.
+*   **Whitelist Safety**: Respects your existing `ignoreip` settings.
+*   **Auto-Update**: Self-updating capability to keep logic fresh.
+
 Requires **Fail2Ban**. The script will offer to install it if missing.
 
 Run this on your production servers:

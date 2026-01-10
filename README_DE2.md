@@ -7,7 +7,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-7.8.0-blue.svg)
+![Version](https://img.shields.io/badge/version-8.0.0-blue.svg)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -185,6 +185,12 @@ docker compose up -d --build
 
 ### 3. Schutz für andere Server (Fail2Ban)
 Schütze deine anderen Server. Sie sollen die Angreifer automatisch blockieren.
+**Was es kann**:
+*   **Fail2Ban**: Es stellt Fail2Ban automatisch richtig ein.
+*   **Merken**: Es vergisst keine blockierten Angreifer.
+*   **Freunde**: Es blockiert keine Freunde (Whitelist).
+*   **Neu**: Es kann sich selbst aktualisieren.
+
 Du brauchst **Fail2Ban**. Das Skript installiert es, wenn es fehlt.
 
 Mache das auf deinen echten Servern:
