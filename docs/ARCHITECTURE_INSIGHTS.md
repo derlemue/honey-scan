@@ -23,8 +23,8 @@ The sidecar is the central intelligence engine running on sensor nodes (`lemue-s
     *   **Frontend Binding:**
         *   `hackers` array -> "Recent active hackers" box.
         *   `cs` array -> "The recent suspicious CS" box.
-        *   **CRITICAL:** `api_active: true` is REQUIRED in the JSON or the "suspicious CS" box (and possibly others) will be suppressed by the frontend, even if data is present.
-        *   **Schema Requirements:** The `cs` objects share the same display component as `hackers` in some views, so fields like `flag` and `count` are necessary to prevent rendering errors, even if logically redundant for the "CS" view.
+        *   **CRITICAL UPDATE**: `api_active: true` forces the frontend to fetch data from the official HFish cloud API (`api.hfish.net`), ignoring local data. This causes high CPU usage and "No data" if the API is unreachable.
+        *   **Solution**: Set `api_active: false`. The frontend will then fallback to rendering the `cs` array from `live_threats.json`, provided the data fields (`flag`, `count`, `type`, `risk`) are present and correctly Title Cased.
 
 ### 2. Timezone Strategy
 The system handles a mix of Local Time and UTC data sources.
