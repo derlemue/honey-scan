@@ -110,7 +110,7 @@ setup_firewall_set() {
     # 2. Add rule for set if missing
     if ! nft list chain "$FAMILY" "$TABLE" "$CHAIN" | grep -q "$SET_NAME"; then
         echo -e "${YELLOW}[INFO]${NC} Adding global protection rule for $SET_NAME..."
-        nft add rule "$FAMILY" "$TABLE" "$CHAIN" ip saddr "@$SET_NAME" meta l4proto { tcp, udp } th dport { $DETECTED_PORTS } drop 2>/dev/null
+        nft add rule "$FAMILY" "$TABLE" "$CHAIN" ip saddr "@$SET_NAME" meta l4proto { tcp, udp } th dport { $DETECTED_PORTS } drop
     fi
     
     echo "$TABLE $CHAIN $FAMILY $SET_NAME"
