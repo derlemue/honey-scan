@@ -1,3 +1,9 @@
+## [7.7.3] - 2026-01-10
+
+### Changed
+- 🛠️ **Scripts**: Explicitly define `action = %(action_mwl)s` in `jail.local` (conditionally apending `hfish-client` if available). This ensures that the configured `banaction` (firewall blocking) is always activated, even if external defaults try to disable it.
+- ℹ️ **Logs**: Added `Auto-Update` status to script log header.
+
 ## [7.7.2] - 2026-01-10
 
 ### Changed
