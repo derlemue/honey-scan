@@ -9,7 +9,7 @@
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
-AUTO_UPDATE=true 
+AUTO_UPDATE=false 
 SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/client_banned_ips.sh"
 JAIL="sshd"
 
