@@ -68,7 +68,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.8"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.9"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo "----------------------------------------------------------------"
@@ -87,26 +87,32 @@ if ! fail2ban-client status "$JAIL" &>/dev/null; then
     fail2ban-client start "$JAIL" 2>/dev/null || { echo -e "${RED}[ERROR]${NC} Could not start $JAIL jail."; exit 1; }
 fi
 
+# 0. Create Custom Action for TRUE All-Ports Blocking
+ACTION_FILE="/etc/fail2ban/action.d/honey-nftables.conf"
+if [ ! -f "$ACTION_FILE" ]; then
+    echo -e "${BLUE}[INFO]${NC} Creating custom firewall action ($ACTION_FILE)..."
+    bash -c "cat > $ACTION_FILE" <<'EOF'
+[Definition]
+actionstart = nft add table inet f2b-table
+              nft add chain inet f2b-table f2b-chain { type filter hook input priority filter - 1\; }
+              nft add set inet f2b-table addr-set-<name> { type ipv4_addr\; }
+              nft add rule inet f2b-table f2b-chain ip saddr @addr-set-<name> reject
+actionstop = nft delete set inet f2b-table addr-set-<name>
+actionban = nft add element inet f2b-table addr-set-<name> { <ip> }
+actionunban = nft delete element inet f2b-table addr-set-<name> { <ip> }
+[Init]
+name = default
+EOF
+fi
+
 # 1. Enforce ALL PORTS blocking (TCP & UDP)
 # We use defaults-debian.conf in jail.d to ensure we override system defaults reliability.
 OVERRIDE_CONF="/etc/fail2ban/jail.d/defaults-debian.conf"
 
-# Detect valid nftables action
-NFT_ACTION="nftables-allports"
-if [ -f "/etc/fail2ban/action.d/nftables-allports.conf" ]; then
-    NFT_ACTION="nftables-allports"
-elif [ -f "/etc/fail2ban/action.d/nftables-multiport.conf" ]; then
-    NFT_ACTION="nftables-multiport"
-    echo -e "${YELLOW}[WARN]${NC} 'nftables-allports' not found. Falling back to '${NFT_ACTION}'."
-elif [ -f "/etc/fail2ban/action.d/nftables.conf" ]; then
-    NFT_ACTION="nftables"
-    echo -e "${YELLOW}[WARN]${NC} 'nftables-allports' not found. Falling back to '${NFT_ACTION}'."
-else
-    NFT_ACTION="iptables-allports"
-    echo -e "${YELLOW}[WARN]${NC} No nftables action found. Falling back to '${NFT_ACTION}'."
-fi
+# Use our custom action
+NFT_ACTION="honey-nftables"
 
-# Define the ACTION line. We explicitly construct it to avoid variable expansion issues.
+# Define the ACTION line.
 ACTION_SPEC="action = $NFT_ACTION"
 
 # Check if hfish-client action exists

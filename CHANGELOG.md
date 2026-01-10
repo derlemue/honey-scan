@@ -1,3 +1,8 @@
+## [7.7.9] - 2026-01-10
+
+### Added
+- ✨ **Network**: Introduced custom `honey-nftables` action for Fail2Ban. This replaces the default OS `nftables-allports` action, which was found to restrict bans to TCP only on some systems. The new action enforces Layer 3 blocking (Reject all protocols) for banned IPs, ensuring both UDP and TCP traffic are stopped.
+
 ## [7.7.8] - 2026-01-10
 
 ### Fixed
