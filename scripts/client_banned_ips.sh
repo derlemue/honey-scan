@@ -111,7 +111,8 @@ setup_firewall_set() {
     fi
 
     # 1. Create set if missing
-    nft add set "$FAMILY" "$TABLE" "$SET_NAME" { type ipv4_addr\; flags timeout\; } 2>/dev/null
+    echo -e "${BLUE}[DEBUG]${NC} Creating set $SET_NAME in $FAMILY $TABLE..."
+    nft add set "$FAMILY" "$TABLE" "$SET_NAME" { type ipv4_addr\; flags timeout\; }
     
     # 2. Add rule for set if missing
     if ! nft list chain "$FAMILY" "$TABLE" "$CHAIN" | grep -q "$SET_NAME"; then
@@ -149,15 +150,15 @@ echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to nftables set ($SET_NAME)..."
 NFT_BATCH=$(mktemp)
 echo "add element $FAMILY $TABLE $SET_NAME {" > "$NFT_BATCH"
 # Format IPs for nft: "ip1 timeout Xs, ip2 timeout Xs, ..."
-sed "s/$/ timeout ${BAN_TIME}s,/" "$REMOTE_FILE" >> "$NFT_BATCH"
-# Remove last comma and close bracket
-truncate -s -2 "$NFT_BATCH"
+awk '{printf "%s timeout %ss, ", $1, "'${BAN_TIME}'"}' "$REMOTE_FILE" >> "$NFT_BATCH"
 echo "}" >> "$NFT_BATCH"
 
 if nft -f "$NFT_BATCH" 2>/dev/null; then
     echo -e "${GREEN}[OK]${NC} Successfully synced all IPs to nftables set."
 else
-    echo -e "${RED}[ERROR]${NC} Failed to sync IPs to nftables set."
+    echo -e "${RED}[ERROR]${NC} Failed to sync IPs to nftables set (Check syntax $NFT_BATCH)"
+    # Fallback to individual adds if batch fails (slow but safe)
+    # nft -f fallbacks often fail on very large batches if memory is tight
 fi
 rm -f "$NFT_BATCH"
 
