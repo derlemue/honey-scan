@@ -1,3 +1,10 @@
+## [8.0.2] - 2026-01-10
+
+### Changed
+- 🎯 **Configuration**: Reverted Fail2Ban configuration target in `banned_ips.sh` back to `/etc/fail2ban/jail.d/defaults-debian.conf` as per user requirement for standard installation compatibility.
+- 🧹 **Cleanup**: Added auto-cleanup logic to remove valid but now deprecated `99-honey-scan.conf` to prevent configuration conflicts.
+- 📦 **Versioning**: Bumped `banned_ips.sh` to version 2.6.5.
+
 ## [8.0.1] - 2026-01-10
 
 ### Fixed
