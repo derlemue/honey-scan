@@ -22,7 +22,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # --- DEPENDENCY CHECK (Fail2Ban) ---
-if ! command -v fail2ban-client &> /dev/null; then
+if ! command -v fail2ban-client &>/dev/null; then
     echo -e "${YELLOW}[WARN]${NC} Fail2Ban is not installed but required."
     echo -ne "${CYAN}[PROMPT]${NC} Would you like to install fail2ban now? (y/N) [15s timeout]: "
     read -t 15 -n 1 user_input
@@ -30,16 +30,16 @@ if ! command -v fail2ban-client &> /dev/null; then
 
     if [[ "$user_input" =~ ^[Yy]$ ]]; then
         echo -e "${BLUE}[INFO]${NC} Installing Fail2Ban..."
-        if command -v apt-get &> /dev/null; then
+        if command -v apt-get &>/dev/null; then
             apt-get update && apt-get install -y fail2ban
-        elif command -v yum &> /dev/null; then
+        elif command -v yum &>/dev/null; then
             yum install -y fail2ban
         else
             echo -e "${RED}[ERROR]${NC} No compatible package manager found. Please install fail2ban manually."
             exit 1
         fi
         
-        if ! command -v fail2ban-client &> /dev/null; then
+        if ! command -v fail2ban-client &>/dev/null; then
             echo -e "${RED}[ERROR]${NC} Installation failed. Exiting."
             exit 1
         fi
@@ -59,7 +59,7 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.3.0"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.3.1"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo "----------------------------------------------------------------"
