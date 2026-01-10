@@ -1,3 +1,9 @@
+## [7.7.6] - 2026-01-10
+
+### Changed
+- 🎯 **Configuration**: Switched Fail2Ban override target to `/etc/fail2ban/jail.d/defaults-debian.conf`. This location is user-confirmed to work reliably on target systems.
+- 🧹 **Cleanup**: The script now strictly overwrites this file (delete & recreate) to ensure no conflicting legacy configurations remain.
+
 ## [7.7.5] - 2026-01-10
 
 ### Fixed

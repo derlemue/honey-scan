@@ -86,8 +86,8 @@ if ! fail2ban-client status "$JAIL" &>/dev/null; then
 fi
 
 # 1. Enforce ALL PORTS blocking (TCP & UDP)
-# We use jail.local as it has the highest priority and overrides defaults.
-OVERRIDE_CONF="/etc/fail2ban/jail.local"
+# We use defaults-debian.conf in jail.d to ensure we override system defaults reliability.
+OVERRIDE_CONF="/etc/fail2ban/jail.d/defaults-debian.conf"
 
 # Detect valid nftables action
 NFT_ACTION="nftables-allports"
@@ -114,39 +114,24 @@ if [ -f "/etc/fail2ban/action.d/hfish-client.conf" ]; then
          hfish-client"
 fi
 
-CONFIG_CONTENT="[DEFAULT]
-# Global setting: Use our detected action
-banaction = $NFT_ACTION
-# Enforce both TCP and UDP
-protocol = tcp, udp
-
-[sshd]
+CONFIG_CONTENT="[sshd]
 enabled = true
+# Enforce our detected action (All Ports)
 $ACTION_SPEC"
 
-if [ ! -f "$OVERRIDE_CONF" ]; then
-    echo -e "${BLUE}[INFO]${NC} Creating Fail2Ban configuration (jail.local)..."
-    bash -c "cat > $OVERRIDE_CONF" <<EOF
-$CONFIG_CONTENT
-EOF
-    echo -e "${GREEN}[OK]${NC} Configuration created. Reloading Fail2Ban..."
-    fail2ban-client reload &>/dev/null
+if [ -f "$OVERRIDE_CONF" ]; then
+    echo -e "${BLUE}[INFO]${NC} Replacing existing Fail2Ban configuration ($OVERRIDE_CONF)..."
+    rm -f "$OVERRIDE_CONF"
 else
-    # Update logic: If missing banaction
-    UPDATE_NEEDED=false
-    if ! grep -q "banaction = nftables-allports" "$OVERRIDE_CONF"; then UPDATE_NEEDED=true; fi
-    if ! grep -q "action = %" "$OVERRIDE_CONF"; then UPDATE_NEEDED=true; fi
-    
-    if [ "$UPDATE_NEEDED" == "true" ]; then
-        echo -e "${YELLOW}[UPDATE]${NC} Updating Fail2Ban configuration (jail.local)..."
-        bash -c "cat >> $OVERRIDE_CONF" <<EOF
+    echo -e "${BLUE}[INFO]${NC} Creating Fail2Ban configuration ($OVERRIDE_CONF)..."
+fi
 
-# Added by Honey-Scan Client
+bash -c "cat > $OVERRIDE_CONF" <<EOF
 $CONFIG_CONTENT
 EOF
-        fail2ban-client reload &>/dev/null
-    fi
-fi
+
+fail2ban-client reload &>/dev/null
+echo -e "${GREEN}[OK]${NC} Configuration updated. Reloaded Fail2Ban."
 
 # Set Ban Time dynamically
 # Note: This affects new bans.
