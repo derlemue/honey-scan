@@ -350,9 +350,9 @@ def update_threat_feed():
                         "count": 1
                     })
 
-        # Enforce reasonable limit for performance (User requested ~130 items)
-        recent_hackers = recent_hackers[:130]
-        suspicious_cs = suspicious_cs[:130]
+        # Enforce reasonable limit for performance (User requested ~80 items for Hackers, 20 for CS)
+        recent_hackers = recent_hackers[:80]
+        suspicious_cs = suspicious_cs[:20]
 
         output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": False}
         
