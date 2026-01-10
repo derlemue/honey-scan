@@ -56,6 +56,11 @@ trap cleanup EXIT
 # --- AUTO UPDATE ---
 self_update() {
     if [ "$AUTO_UPDATE" != "true" ]; then return; fi
+    # Break loop if already restarted
+    for arg in "$@"; do
+        if [ "$arg" == "--restarted" ]; then return; fi
+    done
+
     if ! command -v curl &> /dev/null || ! command -v md5sum &> /dev/null; then return; fi
 
     TEMP_FILE=$(mktemp)
@@ -74,12 +79,12 @@ self_update() {
             chmod +x "$0"
             rm -f "$TEMP_FILE"
             echo -e "${GREEN}[SUCCESS]${NC} Update successful. Restarting script..."
-            exec "$0" "$@"
+            exec bash "$0" "--restarted" "$@"
         fi
         rm -f "$TEMP_FILE"
     fi
 }
-self_update
+self_update "$@"
 
 # --- FIREWALL FUNKTION ---
 
