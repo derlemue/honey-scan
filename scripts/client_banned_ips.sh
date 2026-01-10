@@ -174,9 +174,14 @@ sort -u "$REMOTE_FILE" > "$TOTAL_IP_FILE"
 
 # Split into chunks and process
 split -l "$CHUNK_SIZE" "$TOTAL_IP_FILE" "ip_chunk_"
+TOTAL_CHUNKS=$(ls ip_chunk_* | wc -l)
+CURRENT_CHUNK=0
 
 SYNC_ERROR=0
 for chunk in ip_chunk_*; do
+    ((CURRENT_CHUNK++))
+    echo -ne "\r${BLUE}[INFO]${NC} Processing chunk $CURRENT_CHUNK of $TOTAL_CHUNKS..."
+    
     NFT_BATCH=$(mktemp)
     echo "add element $FAMILY $TABLE $SET_NAME {" > "$NFT_BATCH"
     # Format IPs: "ip timeout Xs, "
@@ -191,6 +196,7 @@ for chunk in ip_chunk_*; do
     fi
     rm -f "$NFT_BATCH" "$chunk"
 done
+echo "" # Newline after progress
 rm -f "$TOTAL_IP_FILE"
 
 if [ "$SYNC_ERROR" -eq 0 ]; then
