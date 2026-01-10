@@ -59,7 +59,7 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.1"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.2"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -102,7 +102,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.1"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.2"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -184,6 +184,16 @@ if [ -f "/etc/fail2ban/action.d/hfish-client.conf" ]; then
          hfish-client"
 fi
 
+# PRESERVE WHITELIST
+CURRENT_WHITELIST="127.0.0.1/8 ::1"
+if [ -f "$OVERRIDE_CONF" ]; then
+    # Extract existing ignoreip if found
+    EXISTING_IP=$(grep "^ignoreip =" "$OVERRIDE_CONF" | cut -d'=' -f2- | xargs)
+    if [ ! -z "$EXISTING_IP" ]; then
+        CURRENT_WHITELIST="$EXISTING_IP"
+    fi
+fi
+
 TEMP_CONFIG=$(mktemp)
 cat > "$TEMP_CONFIG" <<EOF
 [sshd]
@@ -192,6 +202,8 @@ enabled = true
 bantime = $BAN_TIME
 # Redundantly set banaction to ensure Fail2Ban knows what to use for banning itself
 banaction = $NFT_ACTION
+# Hier die Whitelist einfügen:
+ignoreip = $CURRENT_WHITELIST
 # Enforce our detected action (All Ports)
 $ACTION_SPEC
 EOF
