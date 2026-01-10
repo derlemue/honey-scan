@@ -59,7 +59,7 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.8"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.0"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -115,21 +115,14 @@ echo "----------------------------------------------------------------"
 self_update "$@"
 
 # --- FAIL2BAN CONFIGURATION ---
-echo -e "${BLUE}[INFO]${NC} Configuring Fail2Ban jail '${YELLOW}$JAIL${NC}'..."
+echo -e "${BLUE}[INFO]${NC} Checking Fail2Ban configuration..."
 
-# Ensure Jail is Running
-if ! fail2ban-client status "$JAIL" &>/dev/null; then
-    echo -e "${YELLOW}[WARN]${NC} Jail '$JAIL' is not active. Attempting to start..."
-    fail2ban-client start "$JAIL" 2>/dev/null || { echo -e "${RED}[ERROR]${NC} Could not start $JAIL jail."; exit 1; }
-fi
+NEED_RESTART=false
 
-# 0. Create Custom Action for TRUE All-Ports Blocking
-# Standard nftables-allports often defaults to TCP only depending on OS version.
-# We create a specific action that blocks IP completely (Layer 3).
+# 1. Custom Action Content (Idempotent Check)
 ACTION_FILE="/etc/fail2ban/action.d/honey-nftables.conf"
-if [ ! -f "$ACTION_FILE" ] || [ "$AUTO_UPDATE" == "true" ]; then
-    echo -e "${BLUE}[INFO]${NC} Creating custom firewall action ($ACTION_FILE)..."
-    bash -c "cat > $ACTION_FILE" <<'EOF'
+TEMP_ACTION=$(mktemp)
+cat > "$TEMP_ACTION" <<'EOF'
 [Definition]
 # Option:  actionstart
 # Notes.:  command executed once at the start of Fail2Ban.
@@ -171,52 +164,63 @@ actionunban = nft delete element inet f2b-table addr-set-<name> { <ip> }
 [Init]
 name = default
 EOF
+
+if [ ! -f "$ACTION_FILE" ] || ! cmp -s "$TEMP_ACTION" "$ACTION_FILE"; then
+    echo -e "${BLUE}[INFO]${NC} Updating custom firewall action ($ACTION_FILE)..."
+    mv "$TEMP_ACTION" "$ACTION_FILE"
+    NEED_RESTART=true
+else
+    rm -f "$TEMP_ACTION"
 fi
 
-# 1. Enforce ALL PORTS blocking (TCP & UDP)
-# We use defaults-debian.conf in jail.d to ensure we override system defaults reliability.
+# 2. Jail Configuration Content (Idempotent Check)
 OVERRIDE_CONF="/etc/fail2ban/jail.d/defaults-debian.conf"
-
-# Use our custom action
 NFT_ACTION="honey-nftables"
-
-# Define the ACTION line.
 ACTION_SPEC="action = $NFT_ACTION"
 
 # Check if hfish-client action exists
 if [ -f "/etc/fail2ban/action.d/hfish-client.conf" ]; then
-    echo -e "${BLUE}[INFO]${NC} Detected 'hfish-client' action. Adding to configuration..."
     ACTION_SPEC="$ACTION_SPEC
          hfish-client"
 fi
 
-CONFIG_CONTENT="[sshd]
+TEMP_CONFIG=$(mktemp)
+cat > "$TEMP_CONFIG" <<EOF
+[sshd]
 enabled = true
 # Redundantly set banaction to ensure Fail2Ban knows what to use for banning itself
 banaction = $NFT_ACTION
 # Enforce our detected action (All Ports)
-$ACTION_SPEC"
-
-# Logic: Always recreate the file to ensure clean state
-if [ -f "$OVERRIDE_CONF" ]; then
-    echo -e "${BLUE}[INFO]${NC} Replacing existing Fail2Ban configuration ($OVERRIDE_CONF)..."
-    rm -f "$OVERRIDE_CONF"
-else
-    echo -e "${BLUE}[INFO]${NC} Creating Fail2Ban configuration ($OVERRIDE_CONF)..."
-fi
-
-bash -c "cat > $OVERRIDE_CONF" <<EOF
-$CONFIG_CONTENT
+$ACTION_SPEC
 EOF
 
-# Restart is necessary to clear old ghost actions (like sendmail)
-echo -e "${BLUE}[INFO]${NC} Restarting Fail2Ban to ensure clean configuration load..."
-service fail2ban restart &>/dev/null || systemctl restart fail2ban &>/dev/null
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}[OK]${NC} Fail2Ban restarted successfully."
+if [ ! -f "$OVERRIDE_CONF" ] || ! cmp -s "$TEMP_CONFIG" "$OVERRIDE_CONF"; then
+    echo -e "${BLUE}[INFO]${NC} Updating Fail2Ban configuration ($OVERRIDE_CONF)..."
+    mv "$TEMP_CONFIG" "$OVERRIDE_CONF"
+    NEED_RESTART=true
 else
-    echo -e "${YELLOW}[WARN]${NC} Service restart failed. Trying client reload..."
-    fail2ban-client reload &>/dev/null
+    rm -f "$TEMP_CONFIG"
+    echo -e "${GREEN}[OK]${NC} Configuration up to date."
+fi
+
+# 3. Ensure Service is Running
+if ! fail2ban-client status "$JAIL" &>/dev/null; then
+    echo -e "${YELLOW}[WARN]${NC} Jail '$JAIL' is not active. Restart required."
+    NEED_RESTART=true
+fi
+
+# 4. Restart Logic
+if [ "$NEED_RESTART" = true ]; then
+    echo -e "${BLUE}[INFO]${NC} Configuration changed or service down. Restarting Fail2Ban..."
+    service fail2ban restart &>/dev/null || systemctl restart fail2ban &>/dev/null
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}[OK]${NC} Fail2Ban restarted successfully."
+    else
+        echo -e "${YELLOW}[WARN]${NC} Service restart failed. Trying client reload..."
+        fail2ban-client reload &>/dev/null
+    fi
+else
+    echo -e "${GREEN}[OK]${NC} Fail2Ban is running and config is stable. Skipping restart."
 fi
 
 # Set Ban Time dynamically
