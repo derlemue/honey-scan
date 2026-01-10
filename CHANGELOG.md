@@ -1,3 +1,10 @@
+## [7.8.0] - 2026-01-10
+
+### Changed
+- 🚀 **Major Firewall Upgrade**: Replaced default `nftables-allports` action with a custom `honey-nftables` action. This new implementation ensures **TRUE Layer 3 blocking**, effectively stopping both TCP and UDP traffic from banned IPs. This resolves issues where system defaults were silently restricting bans to TCP only.
+- 🔄 **Reliability**: Scripts now enforce a full `service fail2ban restart` instead of a reload, ensuring that old configurations (like default `sendmail` actions) are completely cleared from memory.
+- 🛠️ **Configuration**: Redundant `banaction` definitions added to `defaults-debian.conf` overrides to prevent Fallback-to-Default behavior on some Debian/Ubuntu versions.
+
 ## [7.7.9] - 2026-01-10
 
 ### Added
