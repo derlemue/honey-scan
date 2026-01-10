@@ -8,7 +8,7 @@
 # --- KONFIGURATION ---
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
-AUTO_UPDATE=true 
+AUTO_UPDATE=false 
 SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/client_banned_ips.sh"
 JAIL="sshd"
 
@@ -100,13 +100,13 @@ setup_firewall_set() {
     fi
 
     # 1. Create set if missing
-    echo -e "${BLUE}[DEBUG]${NC} Creating set $SET_NAME in $FAMILY $TABLE..."
-    nft add set "$FAMILY" "$TABLE" "$SET_NAME" { type ipv4_addr\; flags timeout\; }
+    echo -e "${BLUE}[DEBUG]${NC} Attempting to create set $SET_NAME in $FAMILY $TABLE..."
+    nft "add set $FAMILY $TABLE $SET_NAME { type ipv4_addr; flags timeout; }"
     
     # 2. Add rule for set if missing
     if ! nft list chain "$FAMILY" "$TABLE" "$CHAIN" | grep -q "$SET_NAME"; then
         echo -e "${YELLOW}[INFO]${NC} Adding global protection rule for $SET_NAME..."
-        nft add rule "$FAMILY" "$TABLE" "$CHAIN" ip saddr "@$SET_NAME" meta l4proto { tcp, udp } th dport { $DETECTED_PORTS } drop
+        nft "add rule $FAMILY $TABLE $CHAIN ip saddr @$SET_NAME meta l4proto { tcp, udp } th dport { $DETECTED_PORTS } drop"
     fi
     
     echo "$TABLE $CHAIN $FAMILY $SET_NAME"
