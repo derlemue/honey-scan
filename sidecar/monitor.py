@@ -265,9 +265,10 @@ def update_threat_feed():
         except Exception as e:
             logger.warning(f"Failed to pre-fetch Fail2Ban IPs: {e}")
 
-        # Flood Protection: Use UNION to guarantee representation of Native/Cloud events 
-        # even if Fail2Ban is flooding 1000+ ev/sec. 
-        # We fetch top 50 from Fail2Ban (Limit noise) and top 112 from Others.
+        # Flood Protection: Use 3-Way UNION to guarantee representation of all event types:
+        # 1. Fail2Ban (Local) - Capped at 50
+        # 2. Bridge Sync (Cloud) - Capped at 50 
+        # 3. Native (VNC etc) - Capped at 80 (Guaranteed visibility)
         query = """
             SELECT *,
                 CASE 
@@ -282,11 +283,16 @@ def update_threat_feed():
                 UNION ALL
                 (SELECT source_ip, source_ip_country, service, create_time 
                  FROM infos 
-                 WHERE service NOT IN ('FAIL2BAN', 'API_MANUAL') 
-                 ORDER BY create_time DESC LIMIT 112)
+                 WHERE service = 'BRIDGE_SYNC' 
+                 ORDER BY create_time DESC LIMIT 50)
+                UNION ALL
+                (SELECT source_ip, source_ip_country, service, create_time 
+                 FROM infos 
+                 WHERE service NOT IN ('FAIL2BAN', 'API_MANUAL', 'BRIDGE_SYNC') 
+                 ORDER BY create_time DESC LIMIT 80)
             ) as combined_feeds
             ORDER BY normalized_time DESC
-            LIMIT 162
+            LIMIT 180
         """
         logger.info(f"Executing Query: {query}")
         cursor.execute(query)
