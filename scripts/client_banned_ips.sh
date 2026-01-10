@@ -82,21 +82,22 @@ self_update() {
 self_update
 
 # --- FIREWALL FUNKTION ---
+
+# Probe all open ports (TCP/UDP)
+DETECTED_PORTS=$(ss -tuln | awk 'NR>1 {print $5}' | awk -F: '{print $NF}' | sort -un | tr '\n' ',' | sed 's/,$//')
+echo -e "${BLUE}[INFO]${NC} Detected Open Ports: ${YELLOW}$DETECTED_PORTS${NC}"
+
 apply_firewall_block() {
     local IP=$1
-    local TARGET_JAIL=$2
+    local TARGET_PORTS=$2
     
-    # Ermittle Ports (z.B. 22)
-    local PORTS=$(fail2ban-client get "$TARGET_JAIL" action nftables port 2>/dev/null | tr -d ' ')
-    [ -z "$PORTS" ] && PORTS="22" # Fallback if action detection fails
-    
-    if [ -n "$IP" ]; then
+    if [ -n "$IP" ] && [ -n "$TARGET_PORTS" ]; then
         # Füge Regel für TCP UND UDP hinzu
-        nft add rule inet filter input ip saddr "$IP" meta l4proto { tcp, udp } th dport { $PORTS } drop 2>/dev/null
+        nft add rule inet filter input ip saddr "$IP" meta l4proto { tcp, udp } th dport { $TARGET_PORTS } drop 2>/dev/null
         
         # Docker-Chain Support
         if nft list chain inet filter DOCKER-USER >/dev/null 2>&1; then
-            nft add rule inet filter DOCKER-USER ip saddr "$IP" meta l4proto { tcp, udp } th dport { $PORTS } drop 2>/dev/null
+            nft add rule inet filter DOCKER-USER ip saddr "$IP" meta l4proto { tcp, udp } th dport { $TARGET_PORTS } drop 2>/dev/null
         fi
     fi
 }
@@ -143,9 +144,9 @@ echo -e "${YELLOW}[ACTION]${NC} Found ${YELLOW}$NEW_COUNT${NC} NEW IPs to add."
 echo -e "${BLUE}[STEP 3/3]${NC} Applying bans and firewall rules..."
 for IP in $NEW_IPS; do
     if [ -n "$IP" ]; then
-        echo -e "  ${BLUE}»${NC} Banning: ${YELLOW}$IP${NC} (14d + TCP/UDP Block)"
+        echo -e "  ${BLUE}»${NC} Banning: ${YELLOW}$IP${NC} (14d + Dual-Block on [${CYAN}$DETECTED_PORTS${NC}])"
         fail2ban-client set "$JAIL" banip "$IP" "$BAN_TIME" > /dev/null
-        apply_firewall_block "$IP" "$JAIL"
+        apply_firewall_block "$IP" "$DETECTED_PORTS"
     fi
 done
 
