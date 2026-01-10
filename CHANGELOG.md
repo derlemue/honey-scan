@@ -1,3 +1,8 @@
+## [7.7.5] - 2026-01-10
+
+### Fixed
+- 🐛 **Scripts**: Enhanced `jail.local` detection logic to specifically check for the `action =` definition. If a previous version created an incomplete config, version 2.5.5 will now correctly detect this and apply the full fix, ensuring the firewall (`nftables-allports`) is active.
+
 ## [7.7.4] - 2026-01-10
 
 ### Changed

@@ -89,20 +89,34 @@ fi
 # We use jail.local as it has the highest priority and overrides defaults.
 OVERRIDE_CONF="/etc/fail2ban/jail.local"
 
-# Define the ACTION line. We MUST set 'action' explicitly to override potential defaults like 'sendmail'.
-# Default action uses 'action_mwl' which includes the configured 'banaction' (nftables-allports).
-ACTION_SPEC="action = %(action_mwl)s"
+# Detect valid nftables action
+NFT_ACTION="nftables-allports"
+if [ -f "/etc/fail2ban/action.d/nftables-allports.conf" ]; then
+    NFT_ACTION="nftables-allports"
+elif [ -f "/etc/fail2ban/action.d/nftables-multiport.conf" ]; then
+    NFT_ACTION="nftables-multiport"
+    echo -e "${YELLOW}[WARN]${NC} 'nftables-allports' not found. Falling back to '${NFT_ACTION}'."
+elif [ -f "/etc/fail2ban/action.d/nftables.conf" ]; then
+    NFT_ACTION="nftables"
+    echo -e "${YELLOW}[WARN]${NC} 'nftables-allports' not found. Falling back to '${NFT_ACTION}'."
+else
+    NFT_ACTION="iptables-allports"
+    echo -e "${YELLOW}[WARN]${NC} No nftables action found. Falling back to '${NFT_ACTION}'."
+fi
+
+# Define the ACTION line. We explicitly construct it to avoid variable expansion issues.
+ACTION_SPEC="action = $NFT_ACTION[name=sshd, port=\"ssh\", protocol=\"tcp,udp\"]"
 
 # Check if hfish-client action exists
 if [ -f "/etc/fail2ban/action.d/hfish-client.conf" ]; then
     echo -e "${BLUE}[INFO]${NC} Detected 'hfish-client' action. Adding to configuration..."
-    ACTION_SPEC="action = %(action_mwl)s
+    ACTION_SPEC="$ACTION_SPEC
          hfish-client"
 fi
 
 CONFIG_CONTENT="[DEFAULT]
-# Global setting: Use nftables-allports for banning
-banaction = nftables-allports
+# Global setting: Use our detected action
+banaction = $NFT_ACTION
 # Enforce both TCP and UDP
 protocol = tcp, udp
 
@@ -121,6 +135,7 @@ else
     # Update logic: If missing banaction
     UPDATE_NEEDED=false
     if ! grep -q "banaction = nftables-allports" "$OVERRIDE_CONF"; then UPDATE_NEEDED=true; fi
+    if ! grep -q "action = %" "$OVERRIDE_CONF"; then UPDATE_NEEDED=true; fi
     
     if [ "$UPDATE_NEEDED" == "true" ]; then
         echo -e "${YELLOW}[UPDATE]${NC} Updating Fail2Ban configuration (jail.local)..."

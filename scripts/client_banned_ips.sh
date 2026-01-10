@@ -102,7 +102,11 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${GREEN}[SUCCESS]${NC} Update successful. Restarting script..."
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.5"
+echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
+echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
+echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
+echo "----------------------------------------------------------------"
             exec bash "$0" "--restarted" "$@"
         fi
         rm -f "$TEMP_FILE"
@@ -123,20 +127,39 @@ fi
 # We use jail.local as it has the highest priority and overrides defaults.
 OVERRIDE_CONF="/etc/fail2ban/jail.local"
 
-# Define the ACTION line. We MUST set 'action' explicitly to override potential defaults like 'sendmail'.
-# Default action uses 'action_mwl' which includes the configured 'banaction' (nftables-allports).
-ACTION_SPEC="action = %(action_mwl)s"
+# Detect valid nftables action
+# We prefer nftables-allports, but fallback to multiport or common if missing.
+# This prevents "silent failure" if the specific action file is missing.
+NFT_ACTION="nftables-allports"
+if [ -f "/etc/fail2ban/action.d/nftables-allports.conf" ]; then
+    NFT_ACTION="nftables-allports"
+elif [ -f "/etc/fail2ban/action.d/nftables-multiport.conf" ]; then
+    NFT_ACTION="nftables-multiport"
+    echo -e "${YELLOW}[WARN]${NC} 'nftables-allports' not found. Falling back to '${NFT_ACTION}'."
+elif [ -f "/etc/fail2ban/action.d/nftables.conf" ]; then
+    NFT_ACTION="nftables"
+    echo -e "${YELLOW}[WARN]${NC} 'nftables-allports' not found. Falling back to '${NFT_ACTION}'."
+else
+    # Fallback for very old systems or iptables users
+    NFT_ACTION="iptables-allports"
+    echo -e "${YELLOW}[WARN]${NC} No nftables action found. Falling back to '${NFT_ACTION}'."
+fi
+
+# Define the ACTION line. We explicitly construct it to avoid variable expansion issues.
+# We include standard logging/whois if possible, but PRIORITY IS BLOCKING.
+# Using standard brackets [name=sshd, port="ssh", protocol="tcp,udp"] ensures it works.
+ACTION_SPEC="action = $NFT_ACTION[name=sshd, port=\"ssh\", protocol=\"tcp,udp\"]"
 
 # Check if hfish-client action exists
 if [ -f "/etc/fail2ban/action.d/hfish-client.conf" ]; then
     echo -e "${BLUE}[INFO]${NC} Detected 'hfish-client' action. Adding to configuration..."
-    ACTION_SPEC="action = %(action_mwl)s
+    ACTION_SPEC="$ACTION_SPEC
          hfish-client"
 fi
 
 CONFIG_CONTENT="[DEFAULT]
-# Global setting: Use nftables-allports for banning
-banaction = nftables-allports
+# Global setting: Use our detected action
+banaction = $NFT_ACTION
 # Enforce both TCP and UDP
 protocol = tcp, udp
 
@@ -155,16 +178,8 @@ else
     # Update logic: If missing banaction or action definition
     UPDATE_NEEDED=false
     if ! grep -q "banaction = nftables-allports" "$OVERRIDE_CONF"; then UPDATE_NEEDED=true; fi
-    # We check if 'action =' is present. If user has a custom action, we might not want to overwrite blindly?
-    # BUT the user report showed missing firewall action. We must enforce ours.
-    # To be safe: we override if our signature isn't there.
-    
-    # Simple check: Does it contain our specific action string? 
-    # If hfish is enabled, check for hfish-client. If not, check for action_mwl?
-    # Actually, simpler: just Append if "banaction = nftables-allports" is missing.
-    # But if it exists but ACTION is wrong?
-    # Let's trust the "banaction" grep for now. If that marks our config, we assume the rest is fine.
-    # If user manually edited, we respect it (unless they deleted the banaction line).
+    # Also check if the critical 'action' line exists. If an old version of this script ran, it might be missing.
+    if ! grep -q "action = %" "$OVERRIDE_CONF"; then UPDATE_NEEDED=true; fi
     
     if [ "$UPDATE_NEEDED" == "true" ]; then
         echo -e "${YELLOW}[UPDATE]${NC} Updating Fail2Ban configuration (jail.local)..."
