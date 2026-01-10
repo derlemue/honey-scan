@@ -59,13 +59,16 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.1.0"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.2.0"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo "----------------------------------------------------------------"
 
 # --- SINGLETON CHECK ---
+# Legacy fix: Remove old lock directory if it exists
 LOCK_FILE="/var/lock/honey_client_bans.lock"
+[ -d "$LOCK_FILE" ] && rm -rf "$LOCK_FILE"
+
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
     echo -e "${RED}[ERROR]${NC} Another instance is already running. Exiting."
