@@ -59,7 +59,7 @@ echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
 echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
 echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.2.0"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.3.0"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo "----------------------------------------------------------------"
@@ -199,31 +199,13 @@ else
     echo -e "${RED}[WARN]${NC} Some chunks failed to sync. Check nftables state."
 fi
 
-# 3. Compare for Fail2Ban (sshd sync)
-echo -e "${BLUE}[STEP 3/3]${NC} Checking for new Fail2Ban entries..."
-LOCAL_BANS=$(fail2ban-client status "$JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -d ',')
-TEMP_LOCAL=$(mktemp)
-echo "$LOCAL_BANS" | tr ' ' '\n' | sort -u > "$TEMP_LOCAL"
+# 3. Step 3 simplified (No mass Fail2Ban sync)
+echo -e "${BLUE}[STEP 3/3]${NC} Information only: Remote feed vs Local Jail..."
+LOCAL_BANS_COUNT=$(fail2ban-client status "$JAIL" | grep "Currently banned:" | sed 's/.*Currently banned://' | tr -d ' ')
+echo -e "${BLUE}[INFO]${NC} Remote Feed: ${YELLOW}$REMOTE_COUNT${NC} IPs blockiert via nftables set"
+echo -e "${BLUE}[INFO]${NC} Local Jail ($JAIL): ${YELLOW}$LOCAL_BANS_COUNT${NC} IPs blockiert via Fail2Ban"
 
-# Find NEW IPs for F2B
-NEW_IPS=$(comm -23 <(sort -u "$REMOTE_FILE") "$TEMP_LOCAL" | grep -v '^$')
-NEW_COUNT=$(echo "$NEW_IPS" | wc -l)
-
-rm -f "$REMOTE_FILE" "$TEMP_LOCAL"
-
-if [ "$NEW_COUNT" -eq 0 ] || [ "$NEW_IPS" = "0" ]; then
-    echo -e "${GREEN}[DONE]${NC} All IPs synchronized."
-    echo -e "${BLUE}[INFO]${NC} Protected Ports: ${YELLOW}$DETECTED_PORTS${NC}"
-    echo -e "${BLUE}[HINT]${NC} Verify with: ${CYAN}nft list set $FAMILY $TABLE $SET_NAME${NC}"
-    exit 0
-fi
-
-echo -e "${YELLOW}[ACTION]${NC} Adding ${YELLOW}$NEW_COUNT${NC} NEW IPs to Fail2Ban..."
-for IP in $NEW_IPS; do
-    if [ -n "$IP" ]; then
-        fail2ban-client set "$JAIL" banip "$IP" "$BAN_TIME" > /dev/null
-    fi
-done
+rm -f "$REMOTE_FILE"
 
 echo "----------------------------------------------------------------"
 echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
