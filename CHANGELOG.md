@@ -1,3 +1,8 @@
+## [7.7.4] - 2026-01-10
+
+### Changed
+- 🧪 **Scripts**: Verification bump to version 2.5.4 to confirm update propagation.
+
 ## [7.7.3] - 2026-01-10
 
 ### Changed
