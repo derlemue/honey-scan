@@ -35,25 +35,12 @@ echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo "----------------------------------------------------------------"
 
 # --- SINGLETON CHECK ---
-LOCK_DIR="/var/lock/honey_client_bans.lock"
-PID_FILE="/var/run/honey_client_bans.pid"
-
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-    if [ -f "$PID_FILE" ]; then
-        OLD_PID=$(cat "$PID_FILE")
-        # If the PID is different and still running, exit
-        if [ "$OLD_PID" != "$$" ] && kill -0 "$OLD_PID" 2>/dev/null; then
-            echo -e "${RED}[ERROR]${NC} Process $OLD_PID is already running. Exiting."
-            exit 1
-        fi
-    fi
-    # If same PID (after exec) or stale lock, just proceed
-    rm -rf "$LOCK_DIR"
-    mkdir -p "$LOCK_DIR" 2>/dev/null
+LOCK_FILE="/var/lock/honey_client_bans.lock"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+    echo -e "${RED}[ERROR]${NC} Another instance is already running. Exiting."
+    exit 1
 fi
-echo $$ > "$PID_FILE"
-cleanup() { rm -f "$PID_FILE"; rm -rf "$LOCK_DIR"; }
-trap cleanup EXIT
 
 # --- AUTO UPDATE ---
 self_update() {
