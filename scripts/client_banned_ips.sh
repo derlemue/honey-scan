@@ -41,13 +41,15 @@ PID_FILE="/var/run/honey_client_bans.pid"
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     if [ -f "$PID_FILE" ]; then
         OLD_PID=$(cat "$PID_FILE")
+        # If the PID is different and still running, exit
         if [ "$OLD_PID" != "$$" ] && kill -0 "$OLD_PID" 2>/dev/null; then
             echo -e "${RED}[ERROR]${NC} Process $OLD_PID is already running. Exiting."
             exit 1
         fi
     fi
+    # If same PID (after exec) or stale lock, just proceed
     rm -rf "$LOCK_DIR"
-    mkdir "$LOCK_DIR"
+    mkdir -p "$LOCK_DIR" 2>/dev/null
 fi
 echo $$ > "$PID_FILE"
 cleanup() { rm -f "$PID_FILE"; rm -rf "$LOCK_DIR"; }
