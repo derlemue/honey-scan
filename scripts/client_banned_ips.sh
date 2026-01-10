@@ -102,7 +102,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.7"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.5.8"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -158,6 +158,8 @@ fi
 
 CONFIG_CONTENT="[sshd]
 enabled = true
+# Redundantly set banaction to ensure Fail2Ban knows what to use for banning itself
+banaction = $NFT_ACTION
 # Enforce our detected action (All Ports)
 $ACTION_SPEC"
 
@@ -173,9 +175,15 @@ bash -c "cat > $OVERRIDE_CONF" <<EOF
 $CONFIG_CONTENT
 EOF
 
-# Reload is always necessary after config change
-fail2ban-client reload &>/dev/null
-echo -e "${GREEN}[OK]${NC} Configuration updated. Reloaded Fail2Ban."
+# Restart is necessary to clear old ghost actions (like sendmail)
+echo -e "${BLUE}[INFO]${NC} Restarting Fail2Ban to ensure clean configuration load..."
+service fail2ban restart &>/dev/null || systemctl restart fail2ban &>/dev/null
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}[OK]${NC} Fail2Ban restarted successfully."
+else
+    echo -e "${YELLOW}[WARN]${NC} Service restart failed. Trying client reload..."
+    fail2ban-client reload &>/dev/null
+fi
 
 # Set Ban Time dynamically
 # Note: This affects new bans.

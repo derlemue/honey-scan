@@ -1,3 +1,9 @@
+## [7.7.8] - 2026-01-10
+
+### Fixed
+- 🔄 **Service**: Switched from `fail2ban-client reload` to `service fail2ban restart` (with systemctl fallback). This ensures that "ghost" actions (like standard `sendmail` configured by distros) are properly cleared from memory and replaced by our custom `nftables-allports` configuration.
+- ⚙️ **Config**: Added redundant `banaction = ...` definition to the jail override to ensure Fail2Ban correctly maps the ban logic even if the `action` line is complex.
+
 ## [7.7.7] - 2026-01-10
 
 ### Fixed
