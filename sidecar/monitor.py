@@ -390,14 +390,14 @@ def update_threat_feed():
              row = cursor.fetchone()
              if row:
                  stats["top_country"] = row['country'] if isinstance(row, dict) else row[0]
-        except Exception as e:
-            logger.warning(f"Stats calculation partial failure: {e}")
+            except Exception as e:
+                logger.warning(f"Stats calculation partial failure: {e}")
 
-            # Direct write for stats
-            with open(STATS_FILE, "w") as f:
-                json.dump(stats, f)
-                f.flush()
-                os.fsync(f.fileno())
+                # Direct write for stats
+                with open(STATS_FILE, "w") as f:
+                    json.dump(stats, f)
+                    f.flush()
+                    os.fsync(f.fileno())
         else:
             # logger.info("Skipping stats update (throttled)")
             pass
