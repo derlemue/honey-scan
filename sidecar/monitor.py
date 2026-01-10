@@ -354,7 +354,7 @@ def update_threat_feed():
         recent_hackers = recent_hackers[:80]
         suspicious_cs = suspicious_cs[:20]
 
-        output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": False}
+        output = {"hackers": recent_hackers, "cs": suspicious_cs, "api_active": True}
         
         # Direct write to preserve inode for Docker bind mount
         with open(LIVE_THREATS_FILE, "w") as f:
