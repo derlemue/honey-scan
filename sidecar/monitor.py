@@ -189,34 +189,24 @@ def push_intelligence(ip, is_new_hint=None):
         if is_new_hint is None:
             logger.info(f"Pushing intelligence for {ip} to bridge...")
             
-        resp = requests.post(
-            THREAT_BRIDGE_WEBHOOK_URL,
-            json={"attack_ip": ip},
-            timeout=10
-        )
-        if resp.status_code == 200:
-            try:
-                data = resp.json()
-                is_new = data.get("is_new")
-                
-                # Fallback to hint if response doesn't contain is_new (e.g. central bridge)
-                if is_new is None:
-                    is_new = is_new_hint
-                
-                if is_new is True:
-                    logger.info(f"✅ New IP added to bridge: {ip}")
-                elif is_new is False:
-                    logger.info(f"🔄 Updated intelligence for {ip} to bridge...")
-                else:
-                    logger.info(f"Intelligence push success for {ip}: {resp.text}")
-            except Exception:
-                 logger.info(f"Intelligence push success for {ip}: {resp.text}")
-        else:
-            logger.warning(f"Intelligence push failed for {ip}: HTTP {resp.status_code}")
-    except Exception as e:
-        logger.error(f"Error pushing intelligence for {ip}: {e}")
-        return False
-    return True
+        return False # Return False if no URL is configured
+
+    urls = [u.strip() for u in THREAT_BRIDGE_WEBHOOK_URL.split(',') if u.strip()]
+    
+    success_count = 0
+    for url in urls:
+        try:
+            payload = {"attack_ip": ip}
+            resp = requests.post(url, json=payload, timeout=5)
+            if resp.status_code == 200:
+                logger.info(f"✅ Synced {ip} to {url}")
+                success_count += 1
+            else:
+                logger.error(f"❌ Failed to sync {ip} to {url}: HTTP {resp.status_code}")
+        except Exception as e:
+            logger.error(f"❌ Error syncing {ip} to {url}: {e}")
+    
+    return success_count > 0 # Return True if at least one push was successful
 
 def sync_to_bridge():
     """Sync unsynced IPs to the bridge with a 50ms delay."""
@@ -280,7 +270,7 @@ def update_threat_feed():
         query = """
             SELECT *,
                 CASE 
-                    WHEN service IN ('FAIL2BAN', 'API_MANUAL') THEN create_time 
+                    WHEN service IN ('FAIL2BAN', 'API_MANUAL', 'BRIDGE_SYNC') THEN create_time 
                     ELSE DATE_ADD(create_time, INTERVAL 1 HOUR) 
                 END as normalized_time
             FROM (
