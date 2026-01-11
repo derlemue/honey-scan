@@ -62,7 +62,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.7.0"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.8.0"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
     echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -93,8 +93,8 @@ self_update() {
     if ! command -v curl &> /dev/null || ! command -v md5sum &> /dev/null; then return; fi
 
     TEMP_FILE=$(mktemp)
-    # Use cache-buster to avoid CDN issues. Added timeout for reliability.
-    if curl -s --max-time 30 --connect-timeout 10 -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
+    # Use cache-buster to avoid CDN issues. Added timeout and retry for reliability.
+    if curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
         [ "$DEBUG_UPDATE" = true ] && echo -e "${CYAN}[DEBUG]${NC} Download successful."
         
         # Security: Check if file is empty
@@ -121,7 +121,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.7.0"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.8.0"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -273,8 +273,8 @@ echo -e "${BLUE}[STEP 1/3]${NC} Fetching remote ban list..."
 REMOTE_FILE=$(mktemp)
 DOWNLOAD_FILE=$(mktemp)
 
-# Download first with timeout (30s max time, 10s connect timeout)
-if curl -s --max-time 30 --connect-timeout 10 -f "$FEED_URL" -o "$DOWNLOAD_FILE"; then
+# Download first with timeout (30s max time, 10s connect timeout) and retries (3 attempts, 5s delay)
+if curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "$FEED_URL" -o "$DOWNLOAD_FILE"; then
     # Security: Check if file is empty
     if [ ! -s "$DOWNLOAD_FILE" ]; then
          echo -e "${RED}[ERROR]${NC} Downloaded feed is empty. Aborting."

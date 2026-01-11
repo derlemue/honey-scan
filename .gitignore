@@ -14,3 +14,4 @@ verification_credentials.json
 .env.api
 .env.apikeys
 .cursorrules
+.gitaccounts

@@ -1,3 +1,11 @@
+## [8.4.0] - 2026-01-11
+
+### 🚀 Minor Release: Enhanced Resilience
+- **Stable Milestone**: Updated project version to `8.4.0` (Client v2.8.0).
+- **Features**:
+  - 🔄 **Retry Logic**: Added robust retry mechanisms (`--retry 3`, `--retry-delay 5`) to `banned_ips.sh` for both feed downloads and auto-updates, significantly improving reliability over unstable connections.
+  - 🦊 **Git Identity**: Introduced `.gitaccounts` for managing contributor identities.
+
 ## [8.3.0] - 2026-01-11
 
 ### 🚀 Minor Release: Reliability & Standardization
