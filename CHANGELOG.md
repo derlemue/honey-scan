@@ -1,3 +1,11 @@
+## [8.2.6] - 2026-01-11
+
+### Fixed
+- 🐛 **Auto-Update**: Fixed incorrect update URL in `client_banned_ips.sh` (it was pointing to a deprecated file).
+- 🧹 **Cleanup**: Deleted obsolete `scripts/banned_ips.sh` to prevent confusion.
+- 🔍 **Debugging**: Enabled verbose logging (`DEBUG_UPDATE=true`) for the auto-update process to help diagnose issues.
+- ⬆️ **Update**: Bumped client script version to `2.6.9`.
+
 ## [8.2.5] - 2026-01-11
 
 ### Changed

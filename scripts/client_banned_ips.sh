@@ -10,7 +10,8 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 BAN_TIME=1209600 # 14 Tage
 AUTO_UPDATE=true 
-SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/banned_ips.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/client_banned_ips.sh"
+DEBUG_UPDATE=true # Set to true for verbose update logs
 JAIL="sshd"
 
 # --- COLORS & AESTHETICS ---
@@ -61,7 +62,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.8"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.9"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
     echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -94,6 +95,8 @@ self_update() {
     TEMP_FILE=$(mktemp)
     # Use cache-buster to avoid CDN issues. Added timeout for reliability.
     if curl -s --max-time 30 --connect-timeout 10 -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
+        [ "$DEBUG_UPDATE" = true ] && echo -e "${CYAN}[DEBUG]${NC} Download successful."
+        
         # Security: Check if file is empty
         if [ ! -s "$TEMP_FILE" ]; then
             echo -e "${RED}[ERROR]${NC} Downloaded update is empty. Aborting."
@@ -102,6 +105,7 @@ self_update() {
         fi
 
         if ! bash -n "$TEMP_FILE"; then
+            echo -e "${RED}[ERROR]${NC} Downloaded update has syntax errors. Aborting."
             rm -f "$TEMP_FILE"
             return
         fi
@@ -109,12 +113,15 @@ self_update() {
         LOCAL_HASH=$(md5sum "$0" | awk '{print $1}')
         REMOTE_HASH=$(md5sum "$TEMP_FILE" | awk '{print $1}')
         
+        [ "$DEBUG_UPDATE" = true ] && echo -e "${CYAN}[DEBUG]${NC} Local Hash:  $LOCAL_HASH"
+        [ "$DEBUG_UPDATE" = true ] && echo -e "${CYAN}[DEBUG]${NC} Remote Hash: $REMOTE_HASH"
+
         if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
             echo -e "${YELLOW}[UPDATE]${NC} New version found. Updating..."
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.8"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.9"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
