@@ -1240,8 +1240,6 @@ def main():
     
     try:
         while True:
-            # Heartbeat log every loop iteration to show activity
-            logger.info(f"[{Colors.BLUE}LOOP{Colors.RESET}] Monitor heartbeat - Loop iteration started")
             try:
                 attackers = get_new_attackers()
                 if attackers:
