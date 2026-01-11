@@ -1,3 +1,15 @@
+## [2.3.0] - 2026-01-11
+
+### 🚀 Minor Release: Strict Whitelist & Logic Refinement
+- **Beta Release**: Updated project version to `v2.3.0 beta`.
+- **Core Logic**:
+  - 🛡️ **Strict Port Whitelist**: Implemented comprehensive "Zero-Action" policy for whitelisted ports (2222, 4435, 8888). IPs solely targeting these ports now bypass **all** actions: no Nmap scan, no Geolocation, no Traceroute, and no database enrichment. They are completely ignored.
+  - 🧠 **Smart Banning**: Refined `monitor.py` logic to distinguish between "Internal Bridge Sync" (Sidecar/Agent noise) and real "Global Threats" (Bridge Sync).
+  - 🚫 **Fail2Ban Enforcement**: Hardened logic to ensuring IPs labeled as `FAIL2BAN` or `BRIDGE_SYNC` (External) are banned immediately even if no granular scan data exists yet.
+- **Client Script**:
+  - 📦 **Versioning**: Bumped `banned_ips.sh` to version `2.9.5`.
+  - 🐜 **Fix**: Resolved loophole where known administrative IPs could be banned due to lack of scan data ("Unknown" state).
+
 ## [8.11.0] - 2026-01-11
 
 ### 🚀 Minor Release: Search Engine & Roadmap Expansion

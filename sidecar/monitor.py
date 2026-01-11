@@ -157,26 +157,71 @@ signal.signal(signal.SIGTERM, signal_handler)
 DEFAULT_PASS_HASH_OLD = "$2a$04$9PBC6S/jB8w4jUZcMkbSs.8TkraTZxUU8ZCk2HIXW1l2Q1dEH84gu" # HFish2021
 DEFAULT_PASS_HASH_NEW = "$2y$04$qxgj8E6W/BhtiMmf4GO1t.2FsMD/96WYblQmGxaIko6P.0a9hIZsm" # HoneyScan2024!
 
-def get_db_connection():
+# Whitelisted Ports
+IGNORED_PORTS = {2222, 4435, 8888}
+
+def should_ignore_ip(ip):
+    """
+    Determines if an IP should be completely ignored (No Ban, No Scan, No Feed).
+    Returns True if IP targets ONLY whitelisted ports and has no other threat indicators.
+    """
+    if is_loopback(ip):
+        return True
+        
+    conn = get_db_connection()
+    if not conn: 
+        return False # Fail safe: don't ignore if we can't check
+        
     try:
-        if DB_TYPE.lower() in ("mysql", "mariadb"):
-            # logger.info(f"Connecting with user={DB_USER}") # Reduce log noise
-            return pymysql.connect(
-                host=DB_HOST,
-                port=DB_PORT,
-                user=DB_USER,
-                password=DB_PASSWORD,
-                database=DB_NAME,
-                cursorclass=pymysql.cursors.DictCursor,
-                connect_timeout=10,
-                autocommit=True,
-                charset='utf8mb4'
-            )
-        else:
-            return sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+        cursor = conn.cursor()
+        
+        # 1. Check for Login Attempts (Passwords table)
+        cursor.execute("SELECT id FROM passwords WHERE source_ip = %s LIMIT 1", (ip,))
+        if cursor.fetchone():
+            return False # Malicious (Login Attempt)
+
+        # 2. Check for Explicit Threat Services (Fail2Ban, Cloud Feeds)
+        cursor.execute("SELECT service, info FROM infos WHERE source_ip = %s LIMIT 5", (ip,))
+        info_rows = cursor.fetchall()
+        
+        if info_rows:
+            for i_row in info_rows:
+                svc = i_row['service'] if isinstance(i_row, dict) else i_row[0]
+                inf = i_row['info'] if isinstance(i_row, dict) else i_row[1]
+                
+                if svc == 'FAIL2BAN':
+                    return False # Malicious (Fail2Ban)
+                
+                if svc == 'BRIDGE_SYNC':
+                    # Allow internal sync (Agent), Ban global threats
+                    if inf != 'Internal Bridge Sync':
+                        return False # Malicious (Global Threat)
+
+        # 3. Check detected Scans
+        cursor.execute("SELECT dest_port FROM scans WHERE source_ip = %s", (ip,))
+        scan_rows = cursor.fetchall()
+        
+        if not scan_rows:
+            # No scan data + No passwords + No Fail2Ban/Global = Safe/Ignore (Agent behavior)
+            return True
+
+        for s_row in scan_rows:
+            try:
+                port = int(s_row['dest_port']) if isinstance(s_row, dict) else int(s_row[0])
+                if port not in IGNORED_PORTS:
+                    return False # Malicious (Non-whitelisted port)
+            except (ValueError, TypeError):
+                return False # Malicious (Invalid port)
+        
+        # If we passed all checks, it's safe
+        return True
+
     except Exception as e:
-        logger.error(f"Database connection failed: {e}")
-        return None
+        logger.error(f"Error checking whitelist for {ip}: {e}")
+        return False # Fail safe
+    finally:
+         conn.close()
+
 
 def ensure_db_schema():
     if DB_TYPE.lower() not in ("mysql", "mariadb"):
@@ -435,6 +480,11 @@ def update_threat_feed():
         logger.info(f"[{Colors.GREEN}FEED{Colors.RESET}] Successfully integrated {len(rows)} threats into layout.")
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
+            
+            # Strict Whitelist Check
+            if should_ignore_ip(ip):
+                continue
+            
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
             service_actual = row.get('service', '') if isinstance(row, dict) else ""
             service = service_actual
@@ -603,6 +653,20 @@ def get_new_attackers():
     return new_ips
 
 def scan_ip(ip):
+    # Strict Whitelist Check: If IP is on whitelist (e.g. Agent/Bait Ports), skip ALL actions.
+    if should_ignore_ip(ip):
+        logger.info(f"[{Colors.YELLOW}IGNORE{Colors.RESET}] {ip} skipped (Whitelisted/Safe).")
+        # Mark as scanned to prevent infinite loop
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE ipaddress SET ipscan = 1 WHERE ip = %s", (ip,))
+                conn.close()
+            except:
+                if conn: conn.close()
+        return None
+
     report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
     
     # OPTIMIZATION: Check if report already exists and we have valid location data
@@ -722,105 +786,16 @@ def update_banned_list():
 
         banned_ips = set()
         
-        # Ports to ignore (Whitelisted/Bait Ports)
-        # 2222: Admin SSH
-        # 4435: HFish Bait
-        # 8888: HFish Bait
-        IGNORED_PORTS = {2222, 4435, 8888}
-
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             if is_loopback(ip):
                 continue
-
-            # --- Port Whitelist Logic ---
-            try:
-                # 1. Check for Login Attempts (Passwords table)
-                # If they tried to login, they are malicious regardless of port.
-                cursor.execute("SELECT id FROM passwords WHERE source_ip = %s LIMIT 1", (ip,))
-                if cursor.fetchone():
-                    banned_ips.add(ip)
-                    continue # Malicious
-
-                # 2. Check for Explicit Threat Services (Fail2Ban, Cloud Feeds)
-                # User Feedback: IPs from FAIL2BAN or Global Threats might not have scan data yet, 
-                # but must still be banned.
-                # However, the Agent IP (185.24.11.174) is recorded as 'BRIDGE_SYNC' with info 'Internal Bridge Sync'.
-                # We need to distinguish real threats from the Sidecar's own sync noise.
-                
-                cursor.execute("SELECT service, info FROM infos WHERE source_ip = %s LIMIT 5", (ip,))
-                info_rows = cursor.fetchall()
-                
-                force_ban = False
-                is_internal_sync = False
-                
-                if info_rows:
-                    for i_row in info_rows:
-                        svc = i_row['service'] if isinstance(i_row, dict) else i_row[0]
-                        inf = i_row['info'] if isinstance(i_row, dict) else i_row[1]
-                        
-                        if svc == 'FAIL2BAN':
-                            force_ban = True
-                            break
-                        
-                        if svc == 'BRIDGE_SYNC':
-                            # Check if this is the Sidecar's own internal sync traffic (Agent)
-                            if inf == 'Internal Bridge Sync':
-                                is_internal_sync = True
-                            else:
-                                # Real Global Threat or other sync -> BAN
-                                force_ban = True
-                                break
-
-                if force_ban:
-                    banned_ips.add(ip)
-                    continue
-
-                # 3. Check detected Scans
-                # If they scanned, we check WHICH ports they scanned.
-                cursor.execute("SELECT dest_port FROM scans WHERE source_ip = %s", (ip,))
-                scan_rows = cursor.fetchall()
-                
-                if not scan_rows:
-                    # No detailed scan records found.
-                    # If we reached here, it means:
-                    # - No Password attempts
-                    # - No Fail2Ban events
-                    # - No 'Real' Bridge Sync events
-                    # - (Possibly 'Internal Bridge Sync' or empty/unknown events)
-                    
-                    # Logic: If it was Internal Sync (Agent), we IGNORE.
-                    # If it was totally empty (unknown), we act conservatively:
-                    # Given the user's concern, if we don't know what it is, we ideally shouldn't ban 
-                    # UNLESS we are sure it's malicious. But if it has NO info, why is it in the list?
-                    # The list comes from `infos`. So it has `infos` rows.
-                    # If those rows weren't Fail2Ban or Real Bridge Sync, they are generic hits.
-                    # If they generated no Scans and no Passwords, they are likely low-level noise or Safe.
-                    continue
-
-                all_safe = True
-                for s_row in scan_rows:
-                    try:
-                        port = int(s_row['dest_port']) if isinstance(s_row, dict) else int(s_row[0])
-                        if port not in IGNORED_PORTS:
-                            all_safe = False
-                            break
-                    except (ValueError, TypeError):
-                        # Port is not a valid number (e.g. ICMP ping or None), treat as unsafe scan
-                        all_safe = False
-                        break
-                
-                if all_safe:
-                    # logger.info(f"[{Colors.YELLOW}IGNORE{Colors.RESET}] {ip} ignored (Targeted only whitelisted ports: {IGNORED_PORTS})")
-                    continue
-                else:
-                    banned_ips.add(ip)
-
-            except Exception as check_e:
-                logger.error(f"Error validating ban for {ip}: {check_e}")
-                # Default to ban on error to be safe
-                banned_ips.add(ip)
-            # -----------------------------
+            
+            # Use strict whitelist logic
+            if should_ignore_ip(ip):
+                continue
+            
+            banned_ips.add(ip)
 
         with open(BANNED_IPS_FILE, "w") as f:
             for ip in sorted(banned_ips):

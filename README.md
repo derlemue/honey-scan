@@ -3,7 +3,9 @@
     <h1>Honey Scan</h1>
     <p><b>Active Defense & Threat Intelligence Platform</b></p>
     
-[![stable](https://img.shields.io/badge/v8.11.0-green.svg)](https://github.com/derlemue/honey-scan)
+[![Project Status](https://img.shields.io/badge/Status-Active-success)](https://github.com/derlemue/honey-scan)
+![Version](https://img.shields.io/badge/beta-v2.3.0-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
