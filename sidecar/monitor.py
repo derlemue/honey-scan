@@ -56,12 +56,12 @@ last_stats_update = 0
 # Setup Logging
 # Colors
 class Colors:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
+    HEADER = '\033[35m'
+    BLUE = '\033[34m'
+    CYAN = '\033[36m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    RED = '\033[31m'
     RESET = '\033[0m'
     BOLD = '\033[1m'
 

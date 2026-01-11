@@ -10,5 +10,6 @@ API_PID=$!
 echo "API started with PID $API_PID"
 
 echo "Starting monitor..."
+export PYTHONUNBUFFERED=1
 cd /app
 exec python monitor.py

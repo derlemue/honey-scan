@@ -90,6 +90,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=hfish
       - FORCE_RESCAN=true
+      - PYTHONUNBUFFERED=1
       - THREAT_BRIDGE_WEBHOOK_URL=${THREAT_BRIDGE_WEBHOOK_URL}
     env_file: .env.apikeys
     volumes:
@@ -103,6 +104,8 @@ services:
       - ./hsec_ascii.logo:/app/hsec_ascii.logo:ro
     ports:
       - "4444:4444"
+    tty: true
+    stdin_open: true
     command: bash /app/start.sh
     networks:
       - default
