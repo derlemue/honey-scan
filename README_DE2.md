@@ -84,6 +84,7 @@ Wenn dich jemand angreift:
 *   **⚡ Schnell**: Es reagiert in Sekunden. Ein Python-Programm passt auf.
 *   **🌍 Kluger Standort**: Es findet heraus, wo der Angreifer wohnt (Land, Stadt).
 *   **🧠 Schlaues Scannen**: Es scannt nicht doppelt und arbeitet effizient.
+*   **🛡️ Strikte Ausnahme-Regel**: Bestimmte interne Ports (2222, 4435, 8888) werden komplett ignoriert. Das heißt: Kein Scannen, kein Blockieren, keine Fehlalarme durch eigene Admin-Tools.
 *   **📊 Berichte**: Es macht Text-Dateien mit Infos über den Angreifer.
 *   **🚫 Schutz-Liste**: Es gibt eine Liste mit bösen IPs (`banned_ips.txt`). Deine Server können diese Liste nutzen, um sich zu schützen.
 *   **🖥️ Übersicht**: Es gibt eine Webseite. Da sieht man die Berichte. Die neusten sind oben.

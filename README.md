@@ -77,6 +77,7 @@ When an attacker touches your honeypot, Honey-Scan automatically:
 *   **⚡ Real-Time Reaction**: Python sidecar monitors `hfish.db` and triggers scans within seconds of an attack.
 *   **🌍 Smart Geolocation**: Automatically resolves attacker location (Country, City, Lat/Lng) and embeds it in reports.
 *   **🧠 Intelligent Scanning**: Optimized logic prevents redundant scans and efficiently manages "Fail2Ban" and "Honey Cloud" placeholders.
+*   **🛡️ Strict Zero-Action Policy**: Hardened whitelist logic for internal ports (2222, 4435, 8888). Traffic to these ports is now completely ignored (no Nmap, no Geo, no bans) to prevent false positives from admin tools or bait ports.
 *   **📊 Automated Intel**: Generates detailed `.txt` reports for every unique attacker IP.
 *   **🚫 Network Shield**: Serves a dynamic `banned_ips.txt` list that your other servers can consume to preemptively block threats.
 *   **🖥️ Dashboard**: Simple web interface to browse scan reports and ban lists. Sorted by newest threats first.

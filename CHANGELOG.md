@@ -9,6 +9,8 @@
 - **Client Script**:
   - 📦 **Versioning**: Bumped `banned_ips.sh` to version `2.9.5`.
   - 🐜 **Fix**: Resolved loophole where known administrative IPs could be banned due to lack of scan data ("Unknown" state).
+  - 🔧 **Hotfix**: Restored missing database connection function in `monitor.py` preventing crash loop.
+  - 🏳️ **Feed Fix**: Added missing flag mapping for South Korea (KR).
 
 ## [8.11.0] - 2026-01-11
 
