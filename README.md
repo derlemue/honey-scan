@@ -39,10 +39,10 @@
 > *   **Retaliation**: Aggressively scanning attackers may provoke stronger attacks (DDoS) or expose your infrastructure.
 > *   **Usage**: Use strictly for educational purposes or within controlled environments where you accept all liability. **The authors are not responsible for any misuse or legal consequences.**
 
+---
+
 > [!NOTE]
 > **🗺️ Roadmap**: Check out our [ROADMAP.md](ROADMAP.md) to see planned features and future ideas.
-
----
 
 ## 🔴 Live Preview (Early Beta)
 
