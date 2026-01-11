@@ -157,6 +157,27 @@ signal.signal(signal.SIGTERM, signal_handler)
 DEFAULT_PASS_HASH_OLD = "$2a$04$9PBC6S/jB8w4jUZcMkbSs.8TkraTZxUU8ZCk2HIXW1l2Q1dEH84gu" # HFish2021
 DEFAULT_PASS_HASH_NEW = "$2y$04$qxgj8E6W/BhtiMmf4GO1t.2FsMD/96WYblQmGxaIko6P.0a9hIZsm" # HoneyScan2024!
 
+def get_db_connection():
+    try:
+        if DB_TYPE.lower() in ("mysql", "mariadb"):
+            # logger.info(f"Connecting with user={DB_USER}") # Reduce log noise
+            return pymysql.connect(
+                host=DB_HOST,
+                port=DB_PORT,
+                user=DB_USER,
+                password=DB_PASSWORD,
+                database=DB_NAME,
+                cursorclass=pymysql.cursors.DictCursor,
+                connect_timeout=10,
+                autocommit=True,
+                charset='utf8mb4'
+            )
+        else:
+            return sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        return None
+
 # Whitelisted Ports
 IGNORED_PORTS = {2222, 4435, 8888}
 
