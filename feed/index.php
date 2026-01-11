@@ -241,7 +241,7 @@ if (extension_loaded('zlib')) {
                     echo ' (' . number_format($reportCount) . ' Reports)';
                 }
             ?></h2>
-            <input type="text" id="searchInput" class="search-box" placeholder="Search reports (grouping starts at 3+ chars)..." onkeyup="filterReports()">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search reports (grouping starts at 3 octets)..." onkeyup="filterReports()">
             <div id="reportContainer">
                 <ul class="report-list" id="mainReportList">
                     <?php
@@ -279,10 +279,12 @@ if (extension_loaded('zlib')) {
 
         function filterReports() {
             const input = document.getElementById('searchInput');
-            const filter = input.value.toUpperCase();
+            const filter = input.value.trim().toUpperCase();
             const container = document.getElementById('reportContainer');
             
-            if (filter.length < 3) {
+            // Trigger grouping only if at least 3 blocks are present (e.g. 1.2.3)
+            const parts = filter.split('.').filter(p => p !== '');
+            if (parts.length < 3) {
                 // Normal plain list
                 container.innerHTML = '<ul class="report-list" id="mainReportList">' + originalList + '</ul>';
                 const li = container.getElementsByTagName('li');

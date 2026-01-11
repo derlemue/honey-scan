@@ -1,3 +1,8 @@
+## [8.8.2] - 2026-01-11
+
+### 🔧 Fix: Search Grouping Trigger
+- **Web**: Grouping by country in search results now only triggers after entering at least **3 octets** (e.g., `47.107.166`). Searching by only one or two octets (e.g., `47.`) now provides a plain, non-grouped list as requested.
+
 ## [8.8.1] - 2026-01-11
 
 ### 🔧 Fix: Dynamic Flags & Permissions
