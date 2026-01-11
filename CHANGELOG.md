@@ -1,3 +1,20 @@
+## [8.11.0] - 2026-01-11
+
+### 🚀 Minor Release: Search Engine & Roadmap Expansion
+- **Stable Milestone**: Updated project version to `8.11.0`.
+- **Search Engine**:
+  - ⚡ **Performance**: Implemented client-side caching and search, offloading logic from the backend.
+  - ⌨️ **UX**: Search now triggers on **Enter** (removing laggy live-typing).
+  - 🧩 **Wildcards**: Added support for `*` wildcards (e.g., `192.168.*`) for flexible IP filtering.
+  - 🔧 **Compatibility**: Removed `mb_convert_encoding` dependency in favor of `html_entity_decode`.
+- **Roadmap**:
+  - 🗺️ **New Goals**: Added 5 major strategic pillars to `ROADMAP.md`:
+    - 🐬 Flipper Zero Integration (Companion App & Sync).
+    - 🔄 Bidirectional API Synchronization.
+    - 🔬 Internal Node Consistency Checks.
+    - 🍓 Portable Raspberry Pi Edition (Mobile UI).
+    - 🥚 Community Easter Egg (CTF/Puzzle).
+
 ## [8.10.0] - 2026-01-11
 
 ### 🎨 Minor Release: Feed Layout & Mobile Polish
