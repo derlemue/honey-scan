@@ -99,6 +99,7 @@ services:
       - ./sidecar/monitor.py:/app/monitor.py
       - ./api:/app/api
       - ./sidecar/start.sh:/app/start.sh
+      - ./sidecar/scan-blacklist.conf:/app/scan-blacklist.conf:ro
       - ./hsec_ascii.logo:/app/hsec_ascii.logo:ro
     ports:
       - "4444:4444"

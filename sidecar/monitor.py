@@ -20,6 +20,7 @@ import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta, datetime
+import ipaddress
 
 # Configuration
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
@@ -41,6 +42,7 @@ SCANS_DIR = "/app/scans"
 FEED_DIR = "/app/feed"
 ASSETS_DIR = "/app/assets"
 BANNED_IPS_FILE = os.path.join(FEED_DIR, "banned_ips.txt")
+BLACKLIST_CONF_FILE = "/app/scan-blacklist.conf"
 INDEX_FILE = os.path.join(FEED_DIR, "index.html")
 LIVE_THREATS_FILE = os.path.join(ASSETS_DIR, "live_threats.json")
 STATS_FILE = os.path.join(ASSETS_DIR, "stats.json")
@@ -1054,6 +1056,91 @@ def fix_unknown_countries():
     finally:
         if conn: conn.close()
 
+def load_blacklist():
+    networks = []
+    if os.path.exists(BLACKLIST_CONF_FILE):
+        try:
+            with open(BLACKLIST_CONF_FILE, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    try:
+                        networks.append(ipaddress.ip_network(line, strict=False))
+                    except ValueError:
+                        logger.warning(f"Invalid blacklist entry: {line}")
+        except Exception as e:
+            logger.error(f"Error loading blacklist: {e}")
+    return networks
+
+def clean_blacklisted_ips():
+    """Removes blacklisted IPs from DB and Reports."""
+    networks = load_blacklist()
+    # Always include 1.2.3.4 for cleanup as requested
+    special_cleanup = {"1.2.3.4"}
+    
+    if not networks and not special_cleanup:
+        return
+
+    conn = get_db_connection()
+    if not conn: return
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT ip FROM ipaddress")
+        ips_in_db = [r['ip'] if isinstance(r, dict) else r[0] for r in cursor.fetchall()]
+        
+        ips_to_remove = set()
+        
+        for ip in ips_in_db:
+            if ip in special_cleanup:
+                ips_to_remove.add(ip)
+                continue
+            
+            try:
+                ip_obj = ipaddress.ip_address(ip)
+                # Check against networks
+                for net in networks:
+                    if ip_obj in net:
+                        ips_to_remove.add(ip)
+                        break
+            except ValueError:
+                continue
+
+        if ips_to_remove:
+            logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Found {len(ips_to_remove)} blacklisted IPs in DB. Removing...")
+            
+            # Batch delete
+            batch_list = list(ips_to_remove)
+            
+            # Chunking to avoid SQL packet limits
+            chunk_size = 1000
+            for i in range(0, len(batch_list), chunk_size):
+                chunk = batch_list[i:i + chunk_size]
+                format_strings = ','.join(['%s'] * len(chunk))
+                try:
+                    cursor.execute(f"DELETE FROM ipaddress WHERE ip IN ({format_strings})", tuple(chunk))
+                    cursor.execute(f"DELETE FROM infos WHERE source_ip IN ({format_strings})", tuple(chunk))
+                    conn.commit()
+                except Exception as e:
+                    logger.error(f"Error deleting chunk: {e}")
+
+            # Delete report files
+            for ip in batch_list:
+                report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
+                if os.path.exists(report_path):
+                    try:
+                        os.remove(report_path)
+                    except:
+                        pass
+            
+            logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Cleanup complete.")
+            
+    except Exception as e:
+        logger.error(f"Error checking blacklist cleanup: {e}")
+    finally:
+        if conn: conn.close()
+
 def init_env():
     if not os.path.exists(SCANS_DIR): os.makedirs(SCANS_DIR)
     if not os.path.exists(FEED_DIR): os.makedirs(FEED_DIR)
@@ -1098,6 +1185,9 @@ def main():
     
     # Fix insecure default password
     fix_default_password()
+
+    # Initial blacklist enforcement
+    clean_blacklisted_ips()
     
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     
@@ -1119,6 +1209,7 @@ def main():
                 # Optimization: Run heavy tasks roughly every 60s
                 # Using timestamp check is more robust than modulo 0 against loop drift
                     update_banned_list()
+                    clean_blacklisted_ips()
                     fix_missing_severity()
                     update_missing_geolocations() # Retroactively fix FAIL2BAN/Honey Cloud locations
                     fix_unknown_countries() # Moved to maintenance loop (60s) to reduce IO
