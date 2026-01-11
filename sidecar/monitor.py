@@ -82,7 +82,7 @@ handler.setFormatter(ColoredFormatter('%(asctime)s - %(levelname)s - %(message)s
 logging.basicConfig(level=logging.INFO, handlers=[handler])
 logger = logging.getLogger("HoneySidecar")
 # Prevent propagation to avoid double logging if root logger is active
-logger.propagate = False
+# logger.propagate = False
 
 def print_logo():
     logo_path = "/app/hsec_ascii.logo"
@@ -1236,8 +1236,12 @@ def main():
     
     last_maintenance = 0
     
+    logger.info(f"[{Colors.GREEN}INIT{Colors.RESET}] Starting main loop...")
+    
     try:
         while True:
+            # Heartbeat log every loop iteration to show activity
+            logger.info(f"[{Colors.BLUE}LOOP{Colors.RESET}] Monitor heartbeat - Loop iteration started")
             try:
                 attackers = get_new_attackers()
                 if attackers:
