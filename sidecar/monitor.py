@@ -8,11 +8,14 @@ import sys
 import logging
 import requests
 import json
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta, datetime
 
 # Configuration
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
+
+geo_lock = threading.Lock()
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
 DB_USER = os.getenv("DB_USER", "hfish") # User Request (Made configurable)
@@ -108,6 +111,11 @@ def ensure_db_schema():
             cursor.execute("ALTER TABLE ipaddress ADD COLUMN pushed_to_bridge TINYINT DEFAULT 0")
             cursor.execute("CREATE INDEX idx_pushed_to_bridge ON ipaddress(pushed_to_bridge)")
 
+        if 'scanned' not in ip_columns:
+            logger.info("Migrating DB (ipaddress): ADD COLUMN scanned")
+            cursor.execute("ALTER TABLE ipaddress ADD COLUMN scanned TINYINT DEFAULT 0")
+            cursor.execute("CREATE INDEX idx_scanned ON ipaddress(scanned)")
+
         # Fix "Data too long" for region
         try:
              cursor.execute("ALTER TABLE ipaddress MODIFY region VARCHAR(128) DEFAULT ''")
@@ -125,6 +133,27 @@ def ensure_db_schema():
             except: 
                 pass
 
+def get_ip_geolocation(ip):
+    try:
+        # Global Rate Limiting: 45 req/min => ~1.33s per req.
+        # We use a lock to ensure only one thread hits the API at a time.
+        with geo_lock:
+             time.sleep(1.5) # Enforce pause
+             geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=10).json()
+        
+        if geo.get('status') == 'success':
+            return {
+                'ip': ip,
+                'lat': geo.get('lat', 0.0),
+                'lng': geo.get('lon', 0.0),
+                'city': geo.get('city', 'Unknown'),
+                'country': geo.get('country', 'Unknown'),
+                'region': geo.get('regionName', '')
+            }
+    except Exception as e:
+        logger.error(f"Geolocation fetch failed for {ip}: {e}")
+    return None
+
 def get_geolocation():
     try:
         ip = None
@@ -138,18 +167,7 @@ def get_geolocation():
         if not ip: 
             logger.error("Could not determine public IP after retries.")
             return None
-        geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=10).json()
-        if geo.get('status') == 'success':
-            return {
-                'ip': ip,
-                'lat': geo.get('lat', 0.0),
-                'lng': geo.get('lon', 0.0),
-                'city': geo.get('city', 'Unknown'),
-                'country': geo.get('country', 'Unknown'),
-                'country': f"{geo.get('city')}, {geo.get('country')}"
-            }
-        else:
-            logger.warning(f"Geo API failed for {ip}: {geo.get('message')}")
+        return get_ip_geolocation(ip)
     except Exception as e:
         logger.error(f"Geolocation fetch failed: {e}")
     return None
@@ -414,10 +432,11 @@ def get_new_attackers():
     try:
         cursor = conn.cursor()
         # Filter for recent (last 14 days/336h) IPs to align with banned list policy and avoid reprocessing old IPs
+        # Also exclude already scanned IPs (scanned = 1)
         if DB_TYPE.lower() in ("mysql", "mariadb"):
-            query = "SELECT DISTINCT ip FROM ipaddress WHERE create_time >= DATE_SUB(NOW(), INTERVAL 336 HOUR) ORDER BY create_time DESC LIMIT 7500"
+            query = "SELECT DISTINCT ip FROM ipaddress WHERE scanned = 0 AND create_time >= DATE_SUB(NOW(), INTERVAL 336 HOUR) ORDER BY create_time DESC LIMIT 7500"
         else:
-            query = "SELECT DISTINCT ip FROM ipaddress WHERE create_time >= datetime('now', '-336 hours') ORDER BY create_time DESC LIMIT 7500"
+            query = "SELECT DISTINCT ip FROM ipaddress WHERE scanned = 0 AND create_time >= datetime('now', '-336 hours') ORDER BY create_time DESC LIMIT 7500"
         
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -460,16 +479,67 @@ def get_new_attackers():
 
 def scan_ip(ip):
     report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
-    if os.path.exists(report_path): return None
+    
+    # Check if report already exists
+    if os.path.exists(report_path): 
+        # Mark as scanned if file exists but DB says 0 (recovery)
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE ipaddress SET scanned = 1 WHERE ip = %s", (ip,))
+                conn.close()
+            except:
+                if conn: conn.close()
+        return None
+
+    # Mark as scanned immediately to prevent re-scanning by other threads or next loop
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE ipaddress SET scanned = 1 WHERE ip = %s", (ip,))
+            conn.close()
+        except:
+            if conn: conn.close()
+
     logger.info(f"Scanning {ip}...")
+    
+    geo_info = get_ip_geolocation(ip)
+    geo_header = ""
+    if geo_info:
+        geo_header = f"Geolocation: {geo_info['country']}, {geo_info['city']} ({geo_info['lat']}, {geo_info['lng']})\n"
+        
+        # Opportunistically update DB with found location
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s WHERE ip = %s", 
+                               (geo_info['country'], geo_info['city'], geo_info['region'], ip))
+                conn.close()
+            except:
+                if conn: conn.close()
+
     try:
-        command = ["nmap", "-A", "-T4", "-Pn", ip]  # Comprehensive scan: includes OS detection, version, scripts, and traceroute
+        command = ["nmap", "-A", "-T4", "-Pn", ip]  # Comprehensive scan
         result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+        
+        # Traceroute
+        trace_command = ["traceroute", "-m", "15", ip]
+        trace_result = subprocess.run(trace_command, capture_output=True, text=True, timeout=60)
+        
         with open(report_path, "w") as f:
+            if geo_header:
+                f.write(geo_header)
             f.write(f"Scan Time: {time.ctime()}\n")
             f.write(f"Target: {ip}\n")
             f.write("-" * 40 + "\n")
             f.write(result.stdout)
+            f.write("\n" + "-" * 40 + "\n")
+            f.write("Traceroute:\n")
+            f.write(trace_result.stdout)
+
         return ip
     except Exception as e:
         logger.error(f"Error scanning {ip}: {e}")
@@ -802,6 +872,62 @@ def restore_db_language():
     finally:
         if conn: conn.close()
 
+def update_missing_geolocations():
+    """Retroactively updates 'FAIL2BAN' or 'Honey Cloud' locations."""
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cursor = conn.cursor()
+        # Find IPs with placeholder locations
+        cursor.execute("SELECT ip, country FROM ipaddress WHERE country IN ('FAIL2BAN', 'Honey Cloud') LIMIT 5")
+        rows = cursor.fetchall()
+        
+        if not rows: return
+
+        for row in rows:
+            ip = row['ip'] if isinstance(row, dict) else row[0]
+            current_loc = row['country'] if isinstance(row, dict) else row[1]
+            
+            logger.info(f"Retroactively resolving location for {ip} ({current_loc})...")
+            geo = get_ip_geolocation(ip)
+            
+            if geo:
+                new_country = geo['country']
+                new_city = geo['city']
+                new_region = geo['region']
+                
+                # Update DB
+                cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s WHERE ip = %s", 
+                               (new_country, new_city, new_region, ip))
+                cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip = %s", (new_country, ip))
+                
+                # Update Report if exists
+                report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
+                if os.path.exists(report_path):
+                    try:
+                        with open(report_path, 'r') as f:
+                            content = f.read()
+                        
+                        if "Geolocation:" not in content:
+                            geo_header = f"Geolocation: {new_country}, {new_city} ({geo['lat']}, {geo['lng']})\n"
+                            with open(report_path, 'w') as f:
+                                f.write(geo_header + content)
+                            logger.info(f"Updated report for {ip}")
+                    except Exception as e:
+                        logger.error(f"Failed to update report for {ip}: {e}")
+                            
+                logger.info(f"Updated {ip} -> {new_country}")
+            else:
+                logger.warning(f"Could not resolve {ip}, keeping {current_loc}")
+                
+            time.sleep(1.5) # Rate limit
+            
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Error in retroactive geolocation update: {e}")
+    finally:
+        if conn: conn.close()
+
 def fix_unknown_countries():
     """Resolves 'Unknown' countries for IPs in the DB using background GeoIP lookup."""
     conn = get_db_connection()
@@ -813,39 +939,32 @@ def fix_unknown_countries():
         rows = cursor.fetchall()
         
         if not rows: return
-
+    
         for row in rows:
             ip = row['ip'] if isinstance(row, dict) else row[0]
             logger.info(f"Resolving location for {ip}...")
             
-            try:
-                geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=5).json()
-                if geo.get('status') == 'success':
-                    country = geo.get('country', 'Unknown')
-                    city = geo.get('city', 'Unknown')
-                    region = geo.get('regionName', '')
-
-                    # Truncate to avoid "Data too long" errors
-                    country = country[:64]
-                    city = city[:64]
-                    region = region[:128]
-                    
-                    # Update ipaddress table
-                    cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s WHERE ip = %s", 
-                                   (country, city, region, ip))
-                                   
-                    # Update infos table for historical accuracy in feed
-                    cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip = %s AND source_ip_country = 'Unknown'", 
-                                   (country, ip))
-                    
-                    logger.info(f"Resolved {ip} -> {country}")
-                else:
-                    pass
-            except Exception as e:
-                logger.warning(f"Geo lookup failed for {ip}: {e}")
+            geo = get_ip_geolocation(ip)
+            if geo:
+                country = geo['country'][:64]
+                city = geo['city'][:64]
+                region = geo['region'][:128]
+                
+                # Update ipaddress table
+                cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s WHERE ip = %s", 
+                               (country, city, region, ip))
+                               
+                # Update infos table for historical accuracy in feed
+                cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip = %s AND source_ip_country = 'Unknown'", 
+                               (country, ip))
+                
+                logger.info(f"Resolved {ip} -> {country}")
+            else:
+                logger.warning(f"Geo lookup failed for {ip}")
             
-            # Respect rate limit (45/min -> ~1.3s per req). 
-            time.sleep(1.5)
+                
+            # Respect rate limit (handled by get_ip_geolocation lock now)
+            # time.sleep(1.5) 
             
         conn.commit()
     except Exception as e:
@@ -918,6 +1037,7 @@ def main():
                 # Using timestamp check is more robust than modulo 0 against loop drift
                     update_banned_list()
                     fix_missing_severity()
+                    update_missing_geolocations() # Retroactively fix FAIL2BAN/Honey Cloud locations
                     fix_unknown_countries() # Moved to maintenance loop (60s) to reduce IO
                     last_maintenance = time.time()
 
