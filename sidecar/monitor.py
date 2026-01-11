@@ -26,6 +26,7 @@ import ipaddress
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
 
 geo_lock = threading.Lock()
+sync_lock = threading.Lock()
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
 DB_USER = os.getenv("DB_USER", "hfish") # User Request (Made configurable)
@@ -287,10 +288,17 @@ def sync_to_bridge():
     if not THREAT_BRIDGE_WEBHOOK_URL:
         return
     
-    logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Checking for unsynced IPs...")
-    conn = get_db_connection()
-    if not conn: return
+    if not sync_lock.acquire(blocking=False):
+        # logger.debug("Sync already in progress, skipping...")
+        return
+
+    conn = None
     try:
+        logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Checking for unsynced IPs...")
+        conn = get_db_connection()
+        if not conn:
+            return
+
         cursor = conn.cursor()
         # Fetch a batch of unsynced IPs
         cursor.execute("SELECT ip FROM ipaddress WHERE pushed_to_bridge = 0 AND ip NOT IN ('::1', '127.0.0.1', 'localhost') LIMIT 100")
@@ -313,7 +321,10 @@ def sync_to_bridge():
     except Exception as e:
         logger.error(f"Sync to bridge failed: {e}")
     finally:
-        if conn: conn.close()
+        if conn: 
+            try: conn.close()
+            except: pass
+        sync_lock.release()
 
 # query_threatbook_ip removed
 
@@ -622,6 +633,15 @@ def scan_ip(ip):
         return ip
     except Exception as e:
         logger.error(f"Error scanning {ip}: {e}")
+        # Ensure a report is written even on failure to prevent infinite re-scan loops
+        try:
+            with open(report_path, "w") as f:
+                f.write(f"Scan Time: {time.ctime()}\n")
+                f.write(f"Target: {ip}\n")
+                f.write("-" * 40 + "\n")
+                f.write(f"Scan Failed: {e}\n")
+        except:
+            pass
         return None
     finally:
         if ip in scanning_ips:
@@ -1250,8 +1270,8 @@ def main():
                     except Exception as e:
                         logger.warning(f"Node location update failed: {e}")
                 
-                # Run sync to bridge in the main loop
-                sync_to_bridge()
+                # Run sync to bridge in a background thread to prevent blocking
+                executor.submit(sync_to_bridge)
 
             except Exception as e:
                 logger.error(f"Loop error: {e}")
