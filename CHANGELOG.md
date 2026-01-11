@@ -1,3 +1,9 @@
+## [8.8.3] - 2026-01-11
+
+### ⚡ Performance: Caching Engine
+- **Web**: Explicitly enabled `mod_deflate`, `mod_expires`, and `mod_headers` in the Feed container. This ensures that the `.htaccess` rules for Gzip compression and browser caching are correctly enforced, significantly reducing load times for assets.
+- **Search**: Refined search grouping trigger to **2 octets** (e.g., `47.107` now groups by country).
+
 ## [8.8.2] - 2026-01-11
 
 ### 🔧 Fix: Search Grouping Trigger

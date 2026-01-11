@@ -121,7 +121,7 @@ services:
       - 1.0.0.1
     environment:
       - TZ=Europe/Amsterdam
-    command: /bin/bash -c "a2enmod proxy proxy_http && docker-php-entrypoint apache2-foreground"
+    command: /bin/bash -c "a2enmod proxy proxy_http deflate expires headers && docker-php-entrypoint apache2-foreground"
     ports:
       - "8888:80"
     volumes:
