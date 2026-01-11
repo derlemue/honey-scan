@@ -721,10 +721,61 @@ def update_banned_list():
             return
 
         banned_ips = set()
+        
+        # Ports to ignore (Whitelisted/Bait Ports)
+        # 2222: Admin SSH
+        # 4435: HFish Bait
+        # 8888: HFish Bait
+        IGNORED_PORTS = {2222, 4435, 8888}
+
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
-            if not is_loopback(ip):
+            if is_loopback(ip):
+                continue
+
+            # --- Port Whitelist Logic ---
+            try:
+                # 1. Check for Login Attempts (Passwords table)
+                # If they tried to login, they are malicious regardless of port.
+                cursor.execute("SELECT id FROM passwords WHERE source_ip = %s LIMIT 1", (ip,))
+                if cursor.fetchone():
+                    banned_ips.add(ip)
+                    continue # Malicious
+
+                # 2. Check detected Scans
+                # If they scanned, we check WHICH ports they scanned.
+                cursor.execute("SELECT dest_port FROM scans WHERE source_ip = %s", (ip,))
+                scan_rows = cursor.fetchall()
+                
+                if not scan_rows:
+                    # No detailed scan records found (e.g., just a BRIDGE_SYNC event from sidecar)
+                    # For safety, we treat unknown activity as bannable unless explicitly whitelisted globally.
+                    banned_ips.add(ip)
+                    continue
+
+                all_safe = True
+                for s_row in scan_rows:
+                    try:
+                        port = int(s_row['dest_port']) if isinstance(s_row, dict) else int(s_row[0])
+                        if port not in IGNORED_PORTS:
+                            all_safe = False
+                            break
+                    except (ValueError, TypeError):
+                        # Port is not a valid number (e.g. ICMP ping or None), treat as unsafe scan
+                        all_safe = False
+                        break
+                
+                if all_safe:
+                    # logger.info(f"[{Colors.YELLOW}IGNORE{Colors.RESET}] {ip} ignored (Targeted only whitelisted ports: {IGNORED_PORTS})")
+                    continue
+                else:
+                    banned_ips.add(ip)
+
+            except Exception as check_e:
+                logger.error(f"Error validating ban for {ip}: {check_e}")
+                # Default to ban on error to be safe
                 banned_ips.add(ip)
+            # -----------------------------
 
         with open(BANNED_IPS_FILE, "w") as f:
             for ip in sorted(banned_ips):
