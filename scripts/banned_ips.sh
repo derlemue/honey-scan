@@ -64,7 +64,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.1"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.2"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
     echo -e "${BLUE}[INFO]${NC} Backup Feed: ${YELLOW}$FEED_URL_BACKUP${NC}"
@@ -263,6 +263,50 @@ if [ "$NEED_RESTART" = true ]; then
 else
     echo -e "${GREEN}[OK]${NC} Fail2Ban is running and config is stable. Skipping restart."
 fi
+
+# --- PERSISTENCE SETUP ---
+setup_persistence() {
+    # Ensure script runs on boot and periodically
+    
+    # Get absolute path
+    ABS_PATH=$(realpath "$0" 2>/dev/null)
+    if [ -z "$ABS_PATH" ]; then
+        ABS_PATH=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
+    fi
+    
+    # Define Cron Jobs
+    JOB_REBOOT="@reboot $ABS_PATH >> /var/log/banned_ips.log 2>&1"
+    JOB_PERIODIC="*/15 * * * * $ABS_PATH >> /var/log/banned_ips.log 2>&1"
+    
+    # Check and Add
+    CURRENT_CRON=$(crontab -l 2>/dev/null)
+    NEW_CRON="$CURRENT_CRON"
+    CHANGED=false
+    
+    if ! echo "$CURRENT_CRON" | grep -Fq "$ABS_PATH"; then
+        echo -e "${BLUE}[INFO]${NC} Configuring persistence (Cron)..."
+    fi
+
+    if ! echo "$CURRENT_CRON" | grep -Fq "@reboot $ABS_PATH"; then
+        NEW_CRON="$NEW_CRON
+$JOB_REBOOT"
+        CHANGED=true
+        echo -e "${GREEN}[OK]${NC} Added @reboot job."
+    fi
+    
+    if ! echo "$CURRENT_CRON" | grep -Fq "*/15 * * * * $ABS_PATH"; then
+        NEW_CRON="$NEW_CRON
+$JOB_PERIODIC"
+        CHANGED=true
+        echo -e "${GREEN}[OK]${NC} Added periodic job (15 min)."
+    fi
+    
+    if [ "$CHANGED" = true ]; then
+        echo "$NEW_CRON" | crontab -
+        echo -e "${GREEN}[SUCCESS]${NC} Persistence configured."
+    fi
+}
+setup_persistence
 
 # Set Ban Time dynamically
 # Note: This affects new bans.
