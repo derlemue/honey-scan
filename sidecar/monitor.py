@@ -100,6 +100,52 @@ def is_loopback(ip):
     """Check if the IP is a loopback address."""
     return ip in ("127.0.0.1", "::1", "localhost")
 
+# Global blacklist cache
+cached_blacklist = []
+last_blacklist_load = 0
+
+def load_blacklist():
+    global cached_blacklist, last_blacklist_load
+    now = time.time()
+    if now - last_blacklist_load < 60 and cached_blacklist:
+        return cached_blacklist
+
+    networks = []
+    if os.path.exists(BLACKLIST_CONF_FILE):
+        try:
+            with open(BLACKLIST_CONF_FILE, 'r') as f:
+                for line in f:
+                    # Strip comments on the same line
+                    line = line.split('#')[0].strip()
+                    if not line:
+                        continue
+                    try:
+                        networks.append(ipaddress.ip_network(line, strict=False))
+                    except ValueError:
+                        logger.warning(f"Invalid blacklist entry: {line}")
+        except Exception as e:
+            logger.error(f"Error loading blacklist: {e}")
+    
+    cached_blacklist = networks
+    last_blacklist_load = now
+    return networks
+
+def is_blacklisted(ip):
+    """Check if IP is in the blacklist or loopback."""
+    if is_loopback(ip):
+        return True
+    
+    networks = load_blacklist()
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+        for net in networks:
+            if ip_obj in net:
+                return True
+    except ValueError:
+        pass
+    
+    return False
+
 def signal_handler(sig, frame):
     logger.info("Exiting...")
     sys.exit(0)
@@ -256,6 +302,9 @@ def update_node_location():
         if conn: conn.close()
 
 def push_intelligence(ip, is_new_hint=None):
+    if is_blacklisted(ip):
+        return False
+        
     if not THREAT_BRIDGE_WEBHOOK_URL:
         return False
 
@@ -529,7 +578,7 @@ def get_new_attackers():
         # Skip ban check - scan everything without reports
         new_ips = []
         for ip in ips:
-            if len(ip) < 7 or ip in scanning_ips or is_loopback(ip):
+            if len(ip) < 7 or ip in scanning_ips or is_blacklisted(ip):
                 continue
             report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
             if not os.path.exists(report_path):
@@ -548,7 +597,7 @@ def get_new_attackers():
         except Exception as e:
             logger.error(f"Error reading banned IPs: {e}")
     
-    new_ips = [ip for ip in ips if ip not in current_banned and ip not in scanning_ips and len(ip) >= 7 and not is_loopback(ip)]
+    new_ips = [ip for ip in ips if ip not in current_banned and ip not in scanning_ips and len(ip) >= 7 and not is_blacklisted(ip)]
     if new_ips:
         logger.info(f"[{Colors.BLUE}SCAN{Colors.RESET}] Found {len(new_ips)} new attacker IPs to process")
     return new_ips
@@ -587,6 +636,10 @@ def scan_ip(ip):
             conn.close()
         except:
             if conn: conn.close()
+
+    if is_blacklisted(ip):
+        logger.info(f"[{Colors.RED}SKIP{Colors.RESET}] {ip} is blacklisted. Skipping scan.")
+        return None
 
     logger.info(f"[{Colors.BLUE}SCAN{Colors.RESET}] Starting Nmap analysis for {ip}...")
     
@@ -1091,31 +1144,14 @@ def fix_unknown_countries():
     finally:
         if conn: conn.close()
 
-def load_blacklist():
-    networks = []
-    if os.path.exists(BLACKLIST_CONF_FILE):
-        try:
-            with open(BLACKLIST_CONF_FILE, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
-                        continue
-                    try:
-                        networks.append(ipaddress.ip_network(line, strict=False))
-                    except ValueError:
-                        logger.warning(f"Invalid blacklist entry: {line}")
-        except Exception as e:
-            logger.error(f"Error loading blacklist: {e}")
-    return networks
+    # Functionality moved to global load_blacklist() above
+    return load_blacklist()
 
 def clean_blacklisted_ips():
-    """Removes blacklisted IPs from DB and Reports."""
+    """Removes blacklisted IPs from DB, Reports, Banned list, and Live Threats."""
     networks = load_blacklist()
-    # Always include 1.2.3.4 for cleanup as requested
-    special_cleanup = {"1.2.3.4"}
     
-    if not networks and not special_cleanup:
-        logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Blacklist configuration is empty. Skipping cleanup.")
+    if not networks:
         return
 
     conn = get_db_connection()
@@ -1126,58 +1162,59 @@ def clean_blacklisted_ips():
         cursor.execute("SELECT ip FROM ipaddress")
         ips_in_db = [r['ip'] if isinstance(r, dict) else r[0] for r in cursor.fetchall()]
         
-        logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Comparing {len(ips_in_db)} database entries against blacklist...")
         ips_to_remove = set()
-        
         for ip in ips_in_db:
-            if ip in special_cleanup:
+            if is_blacklisted(ip):
                 ips_to_remove.add(ip)
-                continue
-            
-            try:
-                ip_obj = ipaddress.ip_address(ip)
-                # Check against networks
-                for net in networks:
-                    if ip_obj in net:
-                        ips_to_remove.add(ip)
-                        break
-            except ValueError:
-                continue
-
-        if not ips_to_remove:
-            logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] No blacklisted IPs found in current database snapshot.")
-            return
 
         if ips_to_remove:
             logger.info(f"[{Colors.RED}CLEAN:DB{Colors.RESET}] Found {len(ips_to_remove)} blacklisted IPs in DB. Processing removal...")
-            
-            # Batch delete
             batch_list = list(ips_to_remove)
-            
-            # Chunking to avoid SQL packet limits
             chunk_size = 1000
             for i in range(0, len(batch_list), chunk_size):
                 chunk = batch_list[i:i + chunk_size]
                 format_strings = ','.join(['%s'] * len(chunk))
-                try:
-                    cursor.execute(f"DELETE FROM ipaddress WHERE ip IN ({format_strings})", tuple(chunk))
-                    cursor.execute(f"DELETE FROM infos WHERE source_ip IN ({format_strings})", tuple(chunk))
-                    conn.commit()
-                    logger.info(f"[{Colors.RED}CLEAN:DB{Colors.RESET}] Purged chunk of {len(chunk)} IPs from database.")
-                except Exception as e:
-                    logger.error(f"Error deleting chunk: {e}")
+                cursor.execute(f"DELETE FROM ipaddress WHERE ip IN ({format_strings})", tuple(chunk))
+                cursor.execute(f"DELETE FROM infos WHERE source_ip IN ({format_strings})", tuple(chunk))
+                conn.commit()
 
-            # Delete report files
             for ip in batch_list:
                 report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
                 if os.path.exists(report_path):
-                    try:
-                        os.remove(report_path)
-                        logger.info(f"[{Colors.CYAN}CLEAN:FILE{Colors.RESET}] Deleted report for blacklisted IP: {ip}")
-                    except:
-                        pass
-            
-            logger.info(f"[{Colors.GREEN}CLEAN:DONE{Colors.RESET}] Blacklist enforcement finished. {len(ips_to_remove)} legacy records purged.")
+                    try: os.remove(report_path)
+                    except: pass
+
+        # Clean banned_ips.txt
+        if os.path.exists(BANNED_IPS_FILE):
+            try:
+                with open(BANNED_IPS_FILE, 'r') as f:
+                    lines = f.readlines()
+                new_lines = [l for l in lines if not is_blacklisted(l.strip())]
+                if len(lines) != len(new_lines):
+                    with open(BANNED_IPS_FILE, 'w') as f:
+                        f.writelines(new_lines)
+                    logger.info(f"[{Colors.RED}CLEAN:FILE{Colors.RESET}] Purged blacklisted IPs from {BANNED_IPS_FILE}")
+            except Exception as e:
+                logger.error(f"Error cleaning banned_ips.txt: {e}")
+
+        # Clean live_threats.json
+        if os.path.exists(LIVE_THREATS_FILE):
+            try:
+                with open(LIVE_THREATS_FILE, 'r') as f:
+                    data = json.load(f)
+                
+                orig_hackers_len = len(data.get('hackers', []))
+                orig_cs_len = len(data.get('cs', []))
+                
+                data['hackers'] = [h for h in data.get('hackers', []) if not is_blacklisted(h.get('ip'))]
+                data['cs'] = [c for c in data.get('cs', []) if not is_blacklisted(c.get('ip'))]
+                
+                if len(data['hackers']) != orig_hackers_len or len(data['cs']) != orig_cs_len:
+                    with open(LIVE_THREATS_FILE, 'w') as f:
+                        json.dump(data, f)
+                    logger.info(f"[{Colors.RED}CLEAN:JSON{Colors.RESET}] Purged blacklisted IPs from {LIVE_THREATS_FILE}")
+            except Exception as e:
+                logger.error(f"Error cleaning live_threats.json: {e}")
             
     except Exception as e:
         logger.error(f"Error checking blacklist cleanup: {e}")
