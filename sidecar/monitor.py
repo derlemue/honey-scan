@@ -836,9 +836,10 @@ def restore_db_language():
         cursor = conn.cursor()
         
         # Check for presence of key English country names (Sample check)
-        check_query = "SELECT COUNT(*) FROM ipaddress WHERE country IN ('United States', 'China', 'Germany', 'Russia', 'France')"
+        check_query = "SELECT COUNT(*) as cnt FROM ipaddress WHERE country IN ('United States', 'China', 'Germany', 'Russia', 'France')"
         cursor.execute(check_query)
-        count = cursor.fetchone()[0]
+        row = cursor.fetchone()
+        count = row['cnt'] if row else 0
         
         if count == 0:
             # DB seems clean, skip massive update
