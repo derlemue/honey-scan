@@ -64,7 +64,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.3"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.4"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 
@@ -274,36 +274,70 @@ setup_persistence() {
         ABS_PATH=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
     fi
     
-    # Define Cron Jobs
-    JOB_REBOOT="@reboot $ABS_PATH >> /var/log/banned_ips.log 2>&1"
-    JOB_PERIODIC="*/15 * * * * $ABS_PATH >> /var/log/banned_ips.log 2>&1"
-    
-    # Check and Add
+    # Get current crontab
     CURRENT_CRON=$(crontab -l 2>/dev/null)
-    NEW_CRON="$CURRENT_CRON"
+    NEW_CRON=""
     CHANGED=false
     
-    if ! echo "$CURRENT_CRON" | grep -Fq "$ABS_PATH"; then
-        echo -e "${BLUE}[INFO]${NC} Configuring persistence (Cron)..."
+    # 1. Filter and Clean (Remove stale paths)
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip empty lines in processing but preserve logic if needed (cron handles empty lines fine or ignores them)
+        if [[ -z "$line" ]]; then continue; fi
+        
+        if [[ "$line" == *"banned_ips.sh"* ]]; then
+             # If line contains script name but NOT the correct path -> cleanup
+             if [[ "$line" != *"$ABS_PATH"* ]]; then
+                 echo -e "${YELLOW}[CLEAN]${NC} Removing stale cron entry: $line"
+                 CHANGED=true
+                 continue
+             fi
+        fi
+        NEW_CRON+="$line"$'\n'
+    done <<< "$CURRENT_CRON"
+
+    # 2. Check & Add Missing Jobs
+    HAS_REBOOT=false
+    HAS_PERIODIC=false
+    
+    # Check for @reboot with correct path
+    if echo "$NEW_CRON" | grep -Fq "@reboot $ABS_PATH"; then
+        HAS_REBOOT=true
+    fi
+    
+    # Check for ANY periodic job with correct path (ignoring the specific time interval)
+    # Matches: numbers/stars/slashes followed by path
+    if echo "$NEW_CRON" | grep -E "^[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +.*$ABS_PATH" > /dev/null; then
+        HAS_PERIODIC=true
     fi
 
-    if ! echo "$CURRENT_CRON" | grep -Fq "@reboot $ABS_PATH"; then
-        NEW_CRON="$NEW_CRON
-$JOB_REBOOT"
+    # Add @reboot if missing
+    if [ "$HAS_REBOOT" = false ]; then
+        NEW_CRON+="@reboot $ABS_PATH >> /var/log/banned_ips.log 2>&1"$'\n'
         CHANGED=true
         echo -e "${GREEN}[OK]${NC} Added @reboot job."
+    else
+        [ "$DEBUG_UPDATE" = true ] && echo -e "${GREEN}[OK]${NC} @reboot job already exists."
     fi
-    
-    if ! echo "$CURRENT_CRON" | grep -Fq "*/15 * * * * $ABS_PATH"; then
-        NEW_CRON="$NEW_CRON
-$JOB_PERIODIC"
+
+    # Add default periodic (*/15) ONLY if no periodic job exists for this script
+    if [ "$HAS_PERIODIC" = false ]; then
+        NEW_CRON+="*/15 * * * * $ABS_PATH >> /var/log/banned_ips.log 2>&1"$'\n'
         CHANGED=true
         echo -e "${GREEN}[OK]${NC} Added periodic job (15 min)."
+    else
+        # Inform user that custom or existing interval is preserved
+        EXISTING_JOB=$(echo "$NEW_CRON" | grep -E "^[0-9*/,-]+ +.*$ABS_PATH" | head -n 1)
+        # Only show this if we are not just running quietly or if changed
+        if [ "$CHANGED" = true ] || [ "$DEBUG_UPDATE" = true ]; then
+             echo -e "${GREEN}[OK]${NC} Preserving existing periodic job: ${YELLOW}$EXISTING_JOB${NC}"
+        fi
     fi
     
+    # 3. Apply Changes
     if [ "$CHANGED" = true ]; then
-        echo "$NEW_CRON" | crontab -
-        echo -e "${GREEN}[SUCCESS]${NC} Persistence configured."
+        # Remove trailing newline for cleanliness if needed, but echo handles it
+        echo -n "$NEW_CRON" | crontab -
+        echo -e "${GREEN}[SUCCESS]${NC} Persistence configuration updated."
     fi
 }
 setup_persistence
