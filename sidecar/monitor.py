@@ -742,17 +742,60 @@ def update_banned_list():
                     banned_ips.add(ip)
                     continue # Malicious
 
-                # 2. Check detected Scans
+                # 2. Check for Explicit Threat Services (Fail2Ban, Cloud Feeds)
+                # User Feedback: IPs from FAIL2BAN or Global Threats might not have scan data yet, 
+                # but must still be banned.
+                # However, the Agent IP (185.24.11.174) is recorded as 'BRIDGE_SYNC' with info 'Internal Bridge Sync'.
+                # We need to distinguish real threats from the Sidecar's own sync noise.
+                
+                cursor.execute("SELECT service, info FROM infos WHERE source_ip = %s LIMIT 5", (ip,))
+                info_rows = cursor.fetchall()
+                
+                force_ban = False
+                is_internal_sync = False
+                
+                if info_rows:
+                    for i_row in info_rows:
+                        svc = i_row['service'] if isinstance(i_row, dict) else i_row[0]
+                        inf = i_row['info'] if isinstance(i_row, dict) else i_row[1]
+                        
+                        if svc == 'FAIL2BAN':
+                            force_ban = True
+                            break
+                        
+                        if svc == 'BRIDGE_SYNC':
+                            # Check if this is the Sidecar's own internal sync traffic (Agent)
+                            if inf == 'Internal Bridge Sync':
+                                is_internal_sync = True
+                            else:
+                                # Real Global Threat or other sync -> BAN
+                                force_ban = True
+                                break
+
+                if force_ban:
+                    banned_ips.add(ip)
+                    continue
+
+                # 3. Check detected Scans
                 # If they scanned, we check WHICH ports they scanned.
                 cursor.execute("SELECT dest_port FROM scans WHERE source_ip = %s", (ip,))
                 scan_rows = cursor.fetchall()
                 
                 if not scan_rows:
-                    # No detailed scan records found (e.g., just a BRIDGE_SYNC event from sidecar)
-                    # If HFish didn't log a specific target port, we can't be sure it was an attack.
-                    # Given the Agent (185.24.11.174) falls into this category, we act conservatively:
-                    # If no Password attempt AND no specific Port Scan recorded -> IGNORE.
-                    # to prevent false positives on admin traffic that triggers a sync but no scan.
+                    # No detailed scan records found.
+                    # If we reached here, it means:
+                    # - No Password attempts
+                    # - No Fail2Ban events
+                    # - No 'Real' Bridge Sync events
+                    # - (Possibly 'Internal Bridge Sync' or empty/unknown events)
+                    
+                    # Logic: If it was Internal Sync (Agent), we IGNORE.
+                    # If it was totally empty (unknown), we act conservatively:
+                    # Given the user's concern, if we don't know what it is, we ideally shouldn't ban 
+                    # UNLESS we are sure it's malicious. But if it has NO info, why is it in the list?
+                    # The list comes from `infos`. So it has `infos` rows.
+                    # If those rows weren't Fail2Ban or Real Bridge Sync, they are generic hits.
+                    # If they generated no Scans and no Passwords, they are likely low-level noise or Safe.
                     continue
 
                 all_safe = True
