@@ -7,7 +7,7 @@
 
 <br>
 
-[![stable](https://img.shields.io/badge/v8.9.1-green.svg)](https://github.com/derlemue/honey-scan)
+[![stable](https://img.shields.io/badge/v8.10.0-green.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)

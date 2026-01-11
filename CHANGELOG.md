@@ -1,3 +1,13 @@
+## [8.10.0] - 2026-01-11
+
+### 🎨 Minor Release: Feed Layout & Mobile Polish
+- **Stable Milestone**: Updated project version to `8.10.0`.
+- **Feed UI**:
+  - 📏 **Desktop**: Enforced explicit `1fr 2.5fr` grid layout and equal height for "Active Scans" and "Top 10" boxes.
+  - 📱 **Mobile**: Implemented responsive stacking (single column) for analytics boxes and country lists to prevent overlap.
+  - 🔠 **Typography**: Adjusted responsive font sizes for the main counter to prevent overflow on small screens.
+  - 🚩 **Flags**: Added support for **Reunion (RE)** flag.
+
 ## [8.9.1] - 2026-01-11
 
 ### 🔧 Fix: Dashboard Caching
