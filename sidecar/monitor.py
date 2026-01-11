@@ -1108,7 +1108,7 @@ def clean_blacklisted_ips():
                 continue
 
         if ips_to_remove:
-            logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Found {len(ips_to_remove)} blacklisted IPs in DB. Removing...")
+            logger.info(f"[{Colors.RED}CLEAN:DB{Colors.RESET}] Found {len(ips_to_remove)} blacklisted IPs in DB. Processing removal...")
             
             # Batch delete
             batch_list = list(ips_to_remove)
@@ -1122,6 +1122,7 @@ def clean_blacklisted_ips():
                     cursor.execute(f"DELETE FROM ipaddress WHERE ip IN ({format_strings})", tuple(chunk))
                     cursor.execute(f"DELETE FROM infos WHERE source_ip IN ({format_strings})", tuple(chunk))
                     conn.commit()
+                    logger.info(f"[{Colors.RED}CLEAN:DB{Colors.RESET}] Purged chunk of {len(chunk)} IPs from database.")
                 except Exception as e:
                     logger.error(f"Error deleting chunk: {e}")
 
@@ -1131,11 +1132,11 @@ def clean_blacklisted_ips():
                 if os.path.exists(report_path):
                     try:
                         os.remove(report_path)
-                        logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Removed report for blacklisted IP: {ip}")
+                        logger.info(f"[{Colors.CYAN}CLEAN:FILE{Colors.RESET}] Deleted report for blacklisted IP: {ip}")
                     except:
                         pass
             
-            logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Cleanup complete. Removed {len(ips_to_remove)} IPs and associated reports.")
+            logger.info(f"[{Colors.GREEN}CLEAN:DONE{Colors.RESET}] Blacklist enforcement finished. {len(ips_to_remove)} legacy records purged.")
             
     except Exception as e:
         logger.error(f"Error checking blacklist cleanup: {e}")
