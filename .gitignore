@@ -15,3 +15,4 @@ verification_credentials.json
 .env.apikeys
 .cursorrules
 .gitaccounts
+sidecar/scan-blacklist.conf
