@@ -1,3 +1,13 @@
+<?php
+// Performance & Security Headers
+header("Cache-Control: public, max-age=300");
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: SAMEORIGIN");
+header("X-XSS-Protection: 1; mode=block");
+if (extension_loaded('zlib')) {
+    ob_start('ob_gzhandler');
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
