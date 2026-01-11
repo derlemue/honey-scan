@@ -1,16 +1,13 @@
-## [0.6.0] - 2026-01-11
+## [8.1.0] - 2026-01-11
 
 ### Added
-- 🌍 **Geolocation**: Sidecar now automatically resolves IP locations (Country, City, Lat/Lng) using `ip-api.com` and includes this data in scan reports and the database.
-- 🛠️ **Roadmap**: Added `ROADMAP.md` to track future development plans.
-- 📊 **Dashboard**: Feed reports are now sorted by modification date (newest first).
-- 📱 **UI**: Detailed mobile optimization for the Feed, enforcing a list layout on small screens.
-
-### Changed
-- 🧠 **Scan Logic**: Separated scan status into `ipscan` and `geoscan` columns in the database for granular tracking.
-- 🚀 **Optimization**: Implemented smart skipping to prevent redundant Nmap scans if a valid report and location already exist.
-- 🔄 **Retroactive**: Enhanced the retroactive update loop to target IPs with "FAIL2BAN" or "Honey Cloud" placeholders and resolve their real location using the new `geoscan` tracker.
-- 🧹 **Cleanup**: Removed unused scripts (`setup_flags.py`, `process_new_logo.py`), deprecated backups (`.bak`), and obsolete documentation files to keep the repository clean.
+- 🌍 **Geolocation**: Sidecar now resolves attacker location (Country, City, Lat/Lng) and embeds it in scan reports.
+- 🚦 **Scan Logic**: Separated scan status into `ipscan` and `geoscan` columns for granular tracking.
+- ✨ **Optimization**: Intelligent logic to skip redundant scans if a valid report and location already exist.
+- 🗂️ **Feed Sorting**: Feed reports are now sorted by date (newest first) for better visibility.
+- 📱 **Mobile Layout**: Responsive list view for feed reports on mobile devices.
+- 🧹 **Cleanup**: Removed unused legacy scripts and docs to reduce repository size.
+- 🗺️ **Roadmap**: Added `ROADMAP.md` to track future ideas.
 
 ## [8.0.2] - 2026-01-10
 
