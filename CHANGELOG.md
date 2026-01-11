@@ -1,3 +1,9 @@
+## [8.2.2] - 2026-01-11
+
+### Fixed
+- 🐛 **Script**: Added timeout and improved error handling for feed download in `client_banned_ips.sh` to prevent hanging.
+- ⬆️ **Update**: Bumped client script version to `2.6.5`.
+
 ## [8.2.1] - 2026-01-11
 
 ### Changed

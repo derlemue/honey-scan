@@ -103,7 +103,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.4"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.5"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -253,9 +253,21 @@ fi
 # 1. Fetch Remote IPs
 echo -e "${BLUE}[STEP 1/3]${NC} Fetching remote ban list..."
 REMOTE_FILE=$(mktemp)
-curl -s "$FEED_URL" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'> "$REMOTE_FILE"
-REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
-echo -e "${GREEN}[OK]${NC} Received ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
+DOWNLOAD_FILE=$(mktemp)
+
+# Download first with timeout (30s max time, 10s connect timeout)
+if curl -s --max-time 30 --connect-timeout 10 -f "$FEED_URL" -o "$DOWNLOAD_FILE"; then
+    # Validate and Sanitize
+    grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' "$DOWNLOAD_FILE" > "$REMOTE_FILE"
+    REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
+    echo -e "${GREEN}[OK]${NC} Received ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
+    rm -f "$DOWNLOAD_FILE"
+else
+    echo -e "${RED}[ERROR]${NC} Failed to fetch feed from $FEED_URL (Timeout or HTTP Error)."
+    rm -f "$DOWNLOAD_FILE" "$REMOTE_FILE"
+    # Exit gracefully or retain old bans? For now, exit to avoid clearing bans if fetch fails (safe fail)
+    exit 1
+fi
 
 # 2. Sync IPs to Fail2Ban
 echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to Fail2Ban jail '$JAIL'..."
