@@ -1,7 +1,7 @@
-## [2.3.0] - 2026-01-11
+## [8.12.0] - 2026-01-11
 
 ### 🚀 Minor Release: Strict Whitelist & Logic Refinement
-- **Beta Release**: Updated project version to `v2.3.0 beta`.
+- **Beta Release**: Updated project version to `v8.12.0 beta`.
 - **Core Logic**:
   - 🛡️ **Strict Port Whitelist**: Implemented comprehensive "Zero-Action" policy for whitelisted ports (2222, 4435, 8888). IPs solely targeting these ports now bypass **all** actions: no Nmap scan, no Geolocation, no Traceroute, and no database enrichment. They are completely ignored.
   - 🧠 **Smart Banning**: Refined `monitor.py` logic to distinguish between "Internal Bridge Sync" (Sidecar/Agent noise) and real "Global Threats" (Bridge Sync).

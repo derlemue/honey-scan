@@ -8,7 +8,7 @@
 <br>
 
 [![Project Status](https://img.shields.io/badge/Status-Active-success)](https://github.com/derlemue/honey-scan)
-![Version](https://img.shields.io/badge/beta-v2.3.0-blue)
+![Version](https://img.shields.io/badge/beta-v8.12.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
