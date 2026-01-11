@@ -1,3 +1,13 @@
+## [8.5.0] - 2026-01-11
+
+### 🚀 Minor Release: Sidecar Resilience & Logging Fixes
+- **Stable Milestone**: Updated project version to `8.5.0`.
+- **Features**:
+  - 🛡️ **Sidecar Resilience**: Resolved an infinite re-scan loop by ensuring a report is written even on scan failure/timeout.
+  - 🔍 **Logging Restored**: Fixed a critical logging issue where monitor logs were silenced. Restored full visibility for `[SCAN]`, `[SYNC]`, and `[MAINTENANCE]` actions.
+  - 🚀 **Performance**: Moved bridge synchronization to an asynchronous background thread pool with concurrency locking to prevent main loop blocking.
+  - 🔧 **Git History**: Standardized repository commit history for consistent contributor identity.
+
 ## [8.4.0] - 2026-01-11
 
 ### 🚀 Minor Release: Enhanced Resilience
