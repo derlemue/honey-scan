@@ -133,7 +133,7 @@ if (extension_loaded('zlib')) {
             'Nauru' => 'NR', 'Nepal' => 'NP', 'Netherlands' => 'NL', 'The Netherlands' => 'NL', 'New Zealand' => 'NZ', 
             'Nicaragua' => 'NI', 'Niger' => 'NE', 'Nigeria' => 'NG', 'North Macedonia' => 'MK', 'Norway' => 'NO', 'Oman' => 'OM', 
             'Pakistan' => 'PK', 'Palau' => 'PW', 'Panama' => 'PA', 'Papua New Guinea' => 'PG', 'Paraguay' => 'PY', 'Peru' => 'PE', 
-            'Philippines' => 'PH', 'Poland' => 'PL', 'Portugal' => 'PT', 'Qatar' => 'QA', 'Romania' => 'RO', 'Russia' => 'RU', 
+            'Philippines' => 'PH', 'Poland' => 'PL', 'Portugal' => 'PT', 'Qatar' => 'QA', 'Reunion' => 'RE', 'Romania' => 'RO', 'Russia' => 'RU', 
             'Rwanda' => 'RW', 'Saint Kitts and Nevis' => 'KN', 'Saint Lucia' => 'LC', 'Saint Vincent and the Grenadines' => 'VC', 
             'Samoa' => 'WS', 'San Marino' => 'SM', 'Sao Tome and Principe' => 'ST', 'Saudi Arabia' => 'SA', 'Senegal' => 'SN', 
             'Serbia' => 'RS', 'Seychelles' => 'SC', 'Sierra Leone' => 'SL', 'Singapore' => 'SG', 'Slovakia' => 'SK', 'Slovenia' => 'SI', 
