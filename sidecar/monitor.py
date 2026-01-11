@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+# ------------------------------------------------------------------------------
+# Project:      Honey Scan
+# Description:  Active Defense Sidecar for HFish Honeypot
+# Authors:      derlemue, m3l1nda, Cipher-Pup, Ph0x
+# License:      MIT License
+# Copyright:    (c) 2026 Honey Scan Team
+# ------------------------------------------------------------------------------
+
 import sqlite3
 import pymysql
 import time

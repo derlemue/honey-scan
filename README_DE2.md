@@ -40,6 +40,11 @@
 
 ---
 
+> [!NOTE]
+> **🗺️ Roadmap**: In der Datei [ROADMAP.md](ROADMAP.md) steht, was wir als nächstes vorhaben.
+
+---
+
 ## 🔴 Live Vorschau (Early Beta)
 
 Probieren Sie es aus!

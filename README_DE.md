@@ -36,7 +36,10 @@
 > Dieses Tool führt **AKTIVE AUFKLÄRUNG** (Nmap-Scans) gegen IP-Adressen durch, die sich mit deinem Honeypot verbinden.
 > *   **Rechtliches Risiko**: Das Scannen von Systemen ohne Erlaubnis kann in deiner Gerichtsbarkeit illegal sein.
 > *   **Vergeltung**: Aggressives Scannen von Angreifern kann stärkere Angriffe (DDoS) provozieren oder deine Infrastruktur exponieren.
-> *   **Nutzung**: Nutzung streng für Bildungszwecke oder in kontrollierten Umgebungen, in denen du die volle Haftung übernimmst. **Die Autoren sind nicht verantwortlich für Missbrauch oder rechtliche Konsequenzen.**
+> *   **Nutzung**: Ausschließlich zu Bildungszwecken oder in kontrollierten Umgebungen verwenden. **Die Autoren haften nicht für Missbrauch oder rechtliche Konsequenzen.**
+
+> [!NOTE]
+> **🗺️ Roadmap**: Werfen Sie einen Blick in die [ROADMAP.md](ROADMAP.md) für geplante Funktionen und zukünftige Ideen.
 
 ---
 
