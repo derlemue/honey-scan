@@ -287,6 +287,7 @@ def sync_to_bridge():
     if not THREAT_BRIDGE_WEBHOOK_URL:
         return
     
+    logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Checking for unsynced IPs...")
     conn = get_db_connection()
     if not conn: return
     try:
@@ -368,10 +369,10 @@ def update_threat_feed():
             ORDER BY normalized_time DESC
             LIMIT 180
         """
-        # logger.info(f"Executing Query: {query}") # Silenced by user request
+        logger.info(f"[{Colors.GREEN}FEED{Colors.RESET}] Syncing threat data from local database...")
         cursor.execute(query)
         rows = cursor.fetchall()
-        # logger.info(f"Fetched {len(rows)} rows from DB") # Silenced to reduce noise
+        logger.info(f"[{Colors.GREEN}FEED{Colors.RESET}] Successfully integrated {len(rows)} threats into layout.")
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
@@ -441,6 +442,7 @@ def update_threat_feed():
         global last_stats_update
         if time.time() - last_stats_update > STATS_FILE_UPDATE_INTERVAL:
             last_stats_update = time.time()
+            logger.info(f"[{Colors.GREEN}STATS{Colors.RESET}] Recalculating global statistics...")
             stats = {
                 "total_attacks": 0,
                 "today_attacks": 0,
@@ -521,11 +523,12 @@ def get_new_attackers():
             report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
             if not os.path.exists(report_path):
                 new_ips.append(ip)
-        if new_ips:
-            logger.info(f"FORCE RESCAN: Found {len(new_ips)} IPs without reports (out of {len(ips)} total)")
+        
+        logger.info(f"[{Colors.BLUE}SCAN{Colors.RESET}] FORCE RESCAN: Checked {len(ips)} IPs, found {len(new_ips)} candidates.")
         return new_ips
     
     # Normal mode: Filter out IPs already in banned list or currently scanning
+    logger.info(f"[{Colors.BLUE}SCAN{Colors.RESET}] Checking for new attackers in database...")
     current_banned = set()
     if os.path.exists(BANNED_IPS_FILE):
         try:
@@ -625,6 +628,7 @@ def scan_ip(ip):
             scanning_ips.remove(ip)
 
 def update_banned_list():
+    logger.info(f"[{Colors.RED}BAN{Colors.RESET}] Periodically refreshing global banned list...")
     conn = get_db_connection()
     if not conn: return
     try:
@@ -905,6 +909,7 @@ def get_english_name(chinese_name):
 
 def restore_db_language():
     """Revert English location names to Chinese in DB to fix HFish dashboard"""
+    logger.info(f"[{Colors.YELLOW}DB{Colors.RESET}] Checking for English artifacts in location data...")
     # OPTIMIZATION: Check if there are ANY English names before hammering the DB
     conn = get_db_connection()
     if not conn: return
@@ -951,6 +956,7 @@ def restore_db_language():
 
 def update_missing_geolocations():
     """Retroactively updates 'FAIL2BAN' or 'Honey Cloud' locations."""
+    logger.info(f"[{Colors.BLUE}GEO{Colors.RESET}] Searching for placeholders (FAIL2BAN/Honey Cloud) to resolve...")
     conn = get_db_connection()
     if not conn: return
     try:
@@ -1014,6 +1020,7 @@ def update_missing_geolocations():
 
 def fix_unknown_countries():
     """Resolves 'Unknown' countries for IPs in the DB using background GeoIP lookup."""
+    logger.info(f"[{Colors.BLUE}GEO{Colors.RESET}] Investigating 'Unknown' origins in database...")
     conn = get_db_connection()
     if not conn: return
     try:
@@ -1090,6 +1097,7 @@ def clean_blacklisted_ips():
         cursor.execute("SELECT ip FROM ipaddress")
         ips_in_db = [r['ip'] if isinstance(r, dict) else r[0] for r in cursor.fetchall()]
         
+        logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Comparing {len(ips_in_db)} database entries against blacklist...")
         ips_to_remove = set()
         
         for ip in ips_in_db:
