@@ -52,6 +52,16 @@ if (extension_loaded('zlib')) {
 
         .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .analytics-card { background: rgba(255,255,255,0.03); border: 1px solid #334155; border-radius: 8px; padding: 15px; text-align: center; }
+        .card-center-content { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        .card-wide { grid-column: span 2; }
+        .top-countries-grid { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+
+        @media (max-width: 768px) {
+            .analytics-grid { grid-template-columns: 1fr; }
+            .card-wide { grid-column: auto; } /* or span 1 */
+            .top-countries-grid { grid-template-columns: 1fr; }
+        }
+
         .analytics-value { font-size: 4.5rem; color: var(--primary); font-weight: bold; margin: 10px 0; }
         .analytics-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
         .top-country-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
@@ -195,14 +205,14 @@ if (extension_loaded('zlib')) {
         <div class="section">
             <h2>Real-time Analytics (Last 30m)</h2>
             <div class="analytics-grid">
-                <div class="analytics-card" style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
+                <div class="analytics-card card-center-content">
                     <div class="analytics-label">Active Scans</div>
                     <div class="analytics-value"><?php echo number_format($totalRecent); ?></div>
                     <div class="analytics-label">Last 30 Minutes</div>
                 </div>
-                <div class="analytics-card" style="grid-column: span 2;">
+                <div class="analytics-card card-wide">
                     <div class="analytics-label">Top 10 Threat Origins</div>
-                    <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px;">
+                    <div class="top-countries-grid">
                         <?php if (empty($top10)): ?>
                             <div style="color: #64748b; font-style: italic; grid-column: span 2;">No recent scan data</div>
                         <?php else: ?>
