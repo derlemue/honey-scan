@@ -1,3 +1,9 @@
+## [8.2.4] - 2026-01-11
+
+### Security
+- 🛡️ **Script**: Implemented validation checks in `client_banned_ips.sh` to reject empty files during feed download and auto-update.
+- ⬆️ **Update**: Bumped client script version to `2.6.7`.
+
 ## [8.2.3] - 2026-01-11
 
 ### Fixed

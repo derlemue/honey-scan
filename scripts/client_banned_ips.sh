@@ -60,7 +60,7 @@ echo "██╔══██║██║   ██║██║╚██╗██�
 echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
 echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.6"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.7"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -90,6 +90,13 @@ self_update() {
     TEMP_FILE=$(mktemp)
     # Use cache-buster to avoid CDN issues. Added timeout for reliability.
     if curl -s --max-time 30 --connect-timeout 10 -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
+        # Security: Check if file is empty
+        if [ ! -s "$TEMP_FILE" ]; then
+            echo -e "${RED}[ERROR]${NC} Downloaded update is empty. Aborting."
+            rm -f "$TEMP_FILE"
+            return
+        fi
+
         if ! bash -n "$TEMP_FILE"; then
             rm -f "$TEMP_FILE"
             return
@@ -103,7 +110,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.6"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.7"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -257,6 +264,13 @@ DOWNLOAD_FILE=$(mktemp)
 
 # Download first with timeout (30s max time, 10s connect timeout)
 if curl -s --max-time 30 --connect-timeout 10 -f "$FEED_URL" -o "$DOWNLOAD_FILE"; then
+    # Security: Check if file is empty
+    if [ ! -s "$DOWNLOAD_FILE" ]; then
+         echo -e "${RED}[ERROR]${NC} Downloaded feed is empty. Aborting."
+         rm -f "$DOWNLOAD_FILE"
+         exit 1
+    fi
+
     # Validate and Sanitize
     grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' "$DOWNLOAD_FILE" > "$REMOTE_FILE"
     REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
