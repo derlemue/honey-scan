@@ -311,7 +311,7 @@ if (extension_loaded('zlib')) {
                     echo ' (' . number_format($reportCount) . ' Reports)';
                 }
             ?></h2>
-            <input type="text" id="searchInput" class="search-box" placeholder="Search reports (grouping starts at 2 octets)..." onkeyup="filterReports()">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search reports (use * for wildcards)..." onkeydown="if(event.key === 'Enter') filterReports()">
             <div id="reportContainer">
                 <ul class="report-list" id="mainReportList">
                     <!-- Client-side rendered -->
@@ -382,19 +382,48 @@ if (extension_loaded('zlib')) {
 
         function filterReports() {
             const input = document.getElementById('searchInput');
-            const filter = input.value.trim().toUpperCase();
+            const rawFilter = input.value.trim();
             
-            if (!filter) {
+            if (!rawFilter) {
                 renderReports(allReports);
                 return;
             }
 
-            // Filter the raw data array
-            const filteredItems = allReports.filter(rpt => rpt.file.toUpperCase().includes(filter));
+            // Wildcard Regex Logic
+            // 1. Split by '*'
+            // 2. Escape regex chars in each part
+            // 3. Join with '.*'
+            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const parts = rawFilter.split('*').map(escapeRegExp);
+            const pattern = '^' + parts.join('.*'); // Anchor to start? Maybe not necessary or stricter. User said "Accept * as placeholder".
+            // Let's allow partial match by default unless user specifies anchors, but for * behavior standard is usually "glob-like".
+            // If user types '192', they expect '192.168...', so simple contains is default.
+            // If user types '192.*', they expect '192.' followed by anything.
+            // My previous join('.*') logic works for '192.*.1' -> '192\..*\.1'.
+            // But we need to check if we should anchor. 
+            // The previous logic was `includes()`.
+            // So '192' -> '192' pattern. `regex.test` finds it anywhere.
+            
+            const regex = new RegExp(parts.join('.*'), 'i');
 
-            // Logic: if < 2 parts, show plain list, else grouped
-            const parts = filter.split('.').filter(p => p !== '');
-            if (parts.length < 2) {
+            // Filter the raw data array
+            const filteredItems = allReports.filter(rpt => regex.test(rpt.file));
+
+            const container = document.getElementById('reportContainer');
+
+            // Logic: if < 2 parts (and no wildcard), show plain list, else grouped
+            // NOTE: If wildcard is present, simple length check on split('.') might be misleading.
+            // Let's stick to the previous grouping heuristic: if "complex enough" query, group.
+            // Or just check result count?
+            // Let's keep the logic simple: if it looks like a specific IP search, maybe grouping is noisy.
+            // But the previous logic was: `const parts = filter.split('.').filter(p => p !== ''); if (parts.length < 2) ...`
+            // Let's adapt this.
+            
+            // If wildcard is used, we definitely want to see results. Grouping is good if many results.
+            const dotParts = rawFilter.split('.').filter(p => p !== '');
+            const hasWildcard = rawFilter.includes('*');
+
+            if (dotParts.length < 2 && !hasWildcard) {
                 renderReports(filteredItems);
                 return;
             }
