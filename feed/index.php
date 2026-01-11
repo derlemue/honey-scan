@@ -148,15 +148,80 @@ if (extension_loaded('zlib')) {
 
         <?php
         $scanDir = './scans';
+        $reportsCacheFile = './reports_cache.json';
+        $cachedData = null;
+        $CACHE_TTL = 300; // 5 minutes cache
+
+        // Check cache validity
+        if (file_exists($reportsCacheFile) && (time() - filemtime($reportsCacheFile) < $CACHE_TTL)) {
+            $cachedContent = file_get_contents($reportsCacheFile);
+            $cachedData = json_decode($cachedContent, true);
+        }
+
+        if (!$cachedData && is_dir($scanDir)) {
+            // Rebuild Cache
+            $files = scandir($scanDir);
+            $reports = [];
+            foreach ($files as $file) {
+                if (str_ends_with($file, '.txt')) {
+                    $filePath = $scanDir . '/' . $file;
+                    $mtime = filemtime($filePath);
+                    
+                    // Extract Country
+                    $country = "Unknown";
+                    $handle = @fopen($filePath, "r");
+                    if ($handle) {
+                        $firstLine = fgets($handle);
+                        fclose($handle);
+                        if (str_contains($firstLine, 'Geolocation:')) {
+                            $parts = explode(':', $firstLine);
+                            if (isset($parts[1])) {
+                                $geoContent = explode(',', $parts[1]);
+                                $country = trim($geoContent[0]);
+                            }
+                        }
+                    }
+                    
+                    $reports[] = [
+                        'file' => $file,
+                        'mtime' => $mtime,
+                        'country' => $country
+                    ];
+                }
+            }
+            // Sort by mtime DESC
+            usort($reports, function($a, $b) {
+                return $b['mtime'] - $a['mtime'];
+            });
+
+            $cachedData = ['timestamp' => time(), 'reports' => $reports];
+            
+            if (is_writable('.')) {
+                @file_put_contents($reportsCacheFile, json_encode($cachedData));
+            }
+        }
+
+        // --- Analytics Logic (using cached data) ---
         $topCountries = [];
         $totalRecent = 0;
         $thirtyMinsAgo = time() - (30 * 60);
-        $metaCacheFile = './reports_meta.json';
-        $metaCache = [];
 
-        if (file_exists($metaCacheFile)) {
-            $metaCache = json_decode(file_get_contents($metaCacheFile), true) ?: [];
+        if ($cachedData && isset($cachedData['reports'])) {
+            foreach ($cachedData['reports'] as $rpt) {
+                if ($rpt['mtime'] >= $thirtyMinsAgo) {
+                    $c = $rpt['country'];
+                    if ($c && $c !== "Unknown") {
+                        $topCountries[$c] = ($topCountries[$c] ?? 0) + 1;
+                        $totalRecent++;
+                    }
+                }
+            }
         }
+
+        arsort($topCountries);
+        $top10 = array_slice($topCountries, 0, 10, true);
+        $top10Sum = array_sum($top10);
+
 
         $countryEmojis = [
             'Afghanistan' => 'AF', 'Albania' => 'AL', 'Algeria' => 'DZ', 'Andorra' => 'AD', 'Angola' => 'AO', 'Antigua and Barbuda' => 'AG', 
@@ -200,53 +265,8 @@ if (extension_loaded('zlib')) {
             if (!$code) return '🏳️';
             
             // Convert ISO code to regional indicator emojis
-            return mb_convert_encoding('&#' . (127397 + ord($code[0])) . ';', 'UTF-8', 'HTML-ENTITIES') . 
-                   mb_convert_encoding('&#' . (127397 + ord($code[1])) . ';', 'UTF-8', 'HTML-ENTITIES');
-        }
-
-        if (is_dir($scanDir)) {
-            $files = scandir($scanDir);
-            $newMeta = false;
-            foreach ($files as $file) {
-                if (str_ends_with($file, '.txt')) {
-                    $filePath = $scanDir . '/' . $file;
-                    $mtime = filemtime($filePath);
-                    
-                    // Analytics logic (Recent only)
-                    if ($mtime >= $thirtyMinsAgo) {
-                        $country = "Unknown";
-                        if (isset($metaCache[$file]) && $metaCache[$file]['mtime'] == $mtime) {
-                            $country = $metaCache[$file]['country'];
-                        } else {
-                            $handle = fopen($filePath, "r");
-                            if ($handle) {
-                                $firstLine = fgets($handle);
-                                fclose($handle);
-                                if (str_contains($firstLine, 'Geolocation:')) {
-                                    $parts = explode(':', $firstLine);
-                                    if (isset($parts[1])) {
-                                        $geoContent = explode(',', $parts[1]);
-                                        $country = trim($geoContent[0]);
-                                    }
-                                }
-                            }
-                            $metaCache[$file] = ['country' => $country, 'mtime' => $mtime];
-                            $newMeta = true;
-                        }
-
-                        if ($country && $country != "Unknown") {
-                            $topCountries[$country] = ($topCountries[$country] ?? 0) + 1;
-                            $totalRecent++;
-                        }
-                    }
-                }
-            }
-            if ($newMeta && is_writable('.')) {
-                @file_put_contents($metaCacheFile, json_encode($metaCache));
-            }
-            arsort($topCountries);
-            $top10 = array_slice($topCountries, 0, 10, true);
-            $top10Sum = array_sum($top10);
+            return html_entity_decode('&#' . (127397 + ord($code[0])) . ';', ENT_COMPAT, 'UTF-8') . 
+                   html_entity_decode('&#' . (127397 + ord($code[1])) . ';', ENT_COMPAT, 'UTF-8');
         }
         ?>
 
@@ -286,35 +306,16 @@ if (extension_loaded('zlib')) {
 
         <div class="section">
             <h2>Scan Reports<?php
-                $scanDir = './scans';
-                if (is_dir($scanDir)) {
-                    $files = scandir($scanDir);
-                    $txtFiles = array();
-                    foreach ($files as $file) {
-                        if (str_ends_with($file, '.txt')) {
-                            $txtFiles[] = $file;
-                        }
-                    }
-                    $reportCount = count($txtFiles);
+                if ($cachedData && isset($cachedData['reports'])) {
+                    $reportCount = count($cachedData['reports']);
                     echo ' (' . number_format($reportCount) . ' Reports)';
                 }
             ?></h2>
             <input type="text" id="searchInput" class="search-box" placeholder="Search reports (grouping starts at 2 octets)..." onkeyup="filterReports()">
             <div id="reportContainer">
                 <ul class="report-list" id="mainReportList">
-                    <?php
-                    if (is_dir($scanDir)) {
-                        usort($txtFiles, function($a, $b) use ($scanDir) {
-                            return filemtime($scanDir . '/' . $b) - filemtime($scanDir . '/' . $a);
-                        });
-                        foreach ($txtFiles as $file) {
-                            $country = $metaCache[$file]['country'] ?? 'Unknown';
-                            echo '<li class="report-item" data-country="' . htmlspecialchars($country) . '"><a href="scans/' . htmlspecialchars($file) . '">' . htmlspecialchars($file) . '</a></li>';
-                        }
-                    } else {
-                        echo '<!-- Scans dir not found -->';
-                    }
-                    ?>
+                    <!-- Client-side rendered -->
+                    <li style="color: #94a3b8; padding: 20px; text-align: center;">Loading reports...</li>
                 </ul>
             </div>
         </div>
@@ -324,7 +325,13 @@ if (extension_loaded('zlib')) {
         </footer>
     </div>
     <script>
-        window.onload = checkStatus;
+        // Inject Reports Data efficiently
+        const allReports = <?php echo json_encode($cachedData['reports'] ?? []); ?>;
+
+        window.onload = function() {
+            checkStatus();
+            renderReports(allReports);
+        };
 
         const countryEmojis = <?php 
             $jsMap = [];
@@ -333,57 +340,73 @@ if (extension_loaded('zlib')) {
             }
             echo json_encode($jsMap); 
         ?>;
-        const originalList = document.getElementById('mainReportList').innerHTML;
 
-        function filterReports() {
-            const input = document.getElementById('searchInput');
-            const filter = input.value.trim().toUpperCase();
+        // Render functions use 'allReports' array instead of DOM parsing
+        function renderReports(items) {
             const container = document.getElementById('reportContainer');
-            
-            // Trigger grouping only if at least 2 blocks are present (e.g. 1.2)
-            const parts = filter.split('.').filter(p => p !== '');
-            if (parts.length < 2) {
-                // Normal plain list
-                container.innerHTML = '<ul class="report-list" id="mainReportList">' + originalList + '</ul>';
-                const li = container.getElementsByTagName('li');
-                for (let i = 0; i < li.length; i++) {
-                    const txtValue = li[i].textContent || li[i].innerText;
-                    li[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-                }
+            if (items.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; color: #64748b; text-align: center;">No reports found</div>';
                 return;
             }
-
-            // Grouped results (3+ chars)
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = originalList;
-            const items = Array.from(tempDiv.getElementsByTagName('li'));
             
-            const filteredItems = items.filter(li => {
-                const txtValue = li.textContent || li.innerText;
-                return txtValue.toUpperCase().indexOf(filter) > -1;
+            let html = '<ul class="report-list" id="mainReportList">';
+            items.forEach(rpt => {
+                html += `<li class="report-item" data-country="${rpt.country}"><a href="scans/${rpt.file}">${rpt.file}</a></li>`;
             });
+            html += '</ul>';
+            container.innerHTML = html;
+        }
 
-            const groups = {};
-            filteredItems.forEach(li => {
-                const country = li.getAttribute('data-country') || 'Unknown';
-                if (!groups[country]) groups[country] = [];
-                groups[country].push(li.outerHTML);
-            });
-
-            let html = '';
-            // Sort countries alphabetically
+        function renderGroupedReports(groups) {
+            const container = document.getElementById('reportContainer');
             const sortedCountries = Object.keys(groups).sort();
             
+            if (sortedCountries.length === 0) {
+                 container.innerHTML = '<div style="padding: 20px; color: #64748b; text-align: center;">No reports found for this query</div>';
+                 return;
+            }
+
+            let html = '';
             sortedCountries.forEach(country => {
                 const emoji = countryEmojis[country] || '🏳️';
                 html += `<div class="country-group">`;
                 html += `<div class="country-group-header"><span>${emoji}</span> ${country} (${groups[country].length})</div>`;
-                html += `<ul class="report-list">${groups[country].join('')}</ul>`;
-                html += `</div>`;
+                html += `<ul class="report-list">`;
+                groups[country].forEach(rpt => {
+                    html += `<li class="report-item" data-country="${rpt.country}"><a href="scans/${rpt.file}">${rpt.file}</a></li>`;
+                });
+                html += `</ul></div>`;
             });
-
-            if (html === '') html = '<div style="padding: 20px; color: #64748b; text-align: center;">No reports found for this query</div>';
             container.innerHTML = html;
+        }
+
+        function filterReports() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.trim().toUpperCase();
+            
+            if (!filter) {
+                renderReports(allReports);
+                return;
+            }
+
+            // Filter the raw data array
+            const filteredItems = allReports.filter(rpt => rpt.file.toUpperCase().includes(filter));
+
+            // Logic: if < 2 parts, show plain list, else grouped
+            const parts = filter.split('.').filter(p => p !== '');
+            if (parts.length < 2) {
+                renderReports(filteredItems);
+                return;
+            }
+
+            // Grouping
+            const groups = {};
+            filteredItems.forEach(rpt => {
+                const c = rpt.country || 'Unknown';
+                if (!groups[c]) groups[c] = [];
+                groups[c].push(rpt);
+            });
+            renderGroupedReports(groups);
         }
 
         let currentUserIp = '';
@@ -391,8 +414,6 @@ if (extension_loaded('zlib')) {
         async function checkStatus() {
             const btn = document.getElementById('statusBtn');
             const txt = document.getElementById('statusText');
-            
-            // txt.innerText = "Checking..."; // Don't show loading text on auto-check to avoid flicker
             
             try {
                 // 1. Get User IP
