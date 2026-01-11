@@ -187,13 +187,77 @@ sync_history() {
     echo "$ALL_IPS" | tr ' ' '\n' | grep -E "^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$" | sort -u > "$TEMP_LOCAL"
     LOCAL_COUNT=$(wc -l < "$TEMP_LOCAL")
 
+    # --- BLACKLIST FILTERING START ---
+    # Find scan-blacklist.conf
+    BLACKLIST_FILE=""
+    POSSIBLE_BLACKLIST_FILES=(
+        "$SCRIPT_DIR/scan-blacklist.conf"
+        "$SCRIPT_DIR/../sidecar/scan-blacklist.conf"
+        "/etc/honey-scan/scan-blacklist.conf"
+        "/root/honey-scan/sidecar/scan-blacklist.conf"
+    )
+    for f in "${POSSIBLE_BLACKLIST_FILES[@]}"; do
+        if [ -f "$f" ]; then
+            BLACKLIST_FILE="$f"
+            break
+        fi
+    done
+
+    if [ -n "$BLACKLIST_FILE" ]; then
+        echo "Using blacklist file: $BLACKLIST_FILE"
+        python3 -c "
+import sys
+import ipaddress
+
+def load_blacklist(filename):
+    blacklist = []
+    try:
+        with open(filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                try:
+                    blacklist.append(ipaddress.ip_network(line, strict=False))
+                except ValueError:
+                    continue
+    except Exception as e:
+        sys.stderr.write(f'Error reading blacklist: {e}\n')
+    return blacklist
+
+def is_blacklisted(ip_str, blacklist):
+    try:
+        ip = ipaddress.ip_address(ip_str)
+        for net in blacklist:
+            if ip in net:
+                return True
+    except ValueError:
+        return False
+    return False
+
+blacklist = load_blacklist('$BLACKLIST_FILE')
+for line in sys.stdin:
+    ip_str = line.strip()
+    if not ip_str:
+        continue
+    if not is_blacklisted(ip_str, blacklist):
+        print(ip_str)
+" < "$TEMP_LOCAL" > "${TEMP_LOCAL}.filtered"
+        mv "${TEMP_LOCAL}.filtered" "$TEMP_LOCAL"
+        FILTERED_LOCAL_COUNT=$(wc -l < "$TEMP_LOCAL")
+        echo "Filtered Local IPs (blacklist applied): $FILTERED_LOCAL_COUNT (was $LOCAL_COUNT)"
+    else
+        echo "Warning: scan-blacklist.conf not found. Skipping filtering."
+    fi
+    # --- BLACKLIST FILTERING END ---
+
     # 3. Calculate Difference (Local - Remote)
     # comm -23 suppresses col 2 (unique to file 2) and col 3 (common), leaving unique to file 1 (Local)
     comm -23 "$TEMP_LOCAL" "$TEMP_REMOTE" > "$TEMP_DIFF"
     
     DIFF_COUNT=$(wc -l < "$TEMP_DIFF")
     
-    echo "Local IPs: $LOCAL_COUNT | Remote IPs: $REMOTE_COUNT | New IPs to sync: $DIFF_COUNT"
+    echo "Local IPs: $LOCAL_COUNT | Filtered Local: ${FILTERED_LOCAL_COUNT:-$LOCAL_COUNT} | Remote IPs: $REMOTE_COUNT | New IPs to sync: $DIFF_COUNT"
 
     if [ "$DIFF_COUNT" -eq 0 ]; then
         echo "No new IPs to sync."
