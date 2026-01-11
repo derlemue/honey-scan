@@ -50,19 +50,67 @@ if (extension_loaded('zlib')) {
             .report-list { grid-template-columns: 1fr; }
         }
 
-        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .analytics-card { background: rgba(255,255,255,0.03); border: 1px solid #334155; border-radius: 8px; padding: 15px; text-align: center; }
-        .card-center-content { display: flex; flex-direction: column; justify-content: center; height: 100%; }
-        .card-wide { grid-column: span 2; }
-        .top-countries-grid { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+        /* Updated Grid Layout */
+        .analytics-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 2.5fr; /* Left box narrower, Right box wider */
+            gap: 20px; 
+            margin-bottom: 25px; 
+            align-items: stretch; 
+        }
+        
+        .analytics-card { 
+            background: rgba(255,255,255,0.03); 
+            border: 1px solid #334155; 
+            border-radius: 8px; 
+            padding: 15px; 
+            text-align: center; 
+            height: 100%; /* Fill the grid cell height */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
 
-        @media (max-width: 768px) {
-            .analytics-grid { grid-template-columns: 1fr; }
-            .card-wide { grid-column: auto; } /* or span 1 */
-            .top-countries-grid { grid-template-columns: 1fr; }
+        .card-center-content { 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            height: 100%; 
+        }
+
+        .card-wide { 
+            /* No longer needing span 2 logic with explicit columns, but keeping for safety/legacy if grid changes */ 
+            /* grid-column: span 2; */
+        }
+
+        .top-countries-grid { 
+            margin-top: 10px; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 0 20px; 
+            flex: 1; /* Take remaining space in flex container */
+        }
+
+        @media (max-width: 900px) {
+            .analytics-grid { 
+                grid-template-columns: 1fr; /* Stack vertically */
+                gap: 20px;
+            }
+            .analytics-card {
+                height: auto; /* Allow natural height on mobile */
+                margin-bottom: 0; /* Gap handles spacing */
+            }
+            .top-countries-grid { 
+                grid-template-columns: 1fr; 
+            }
         }
 
         .analytics-value { font-size: 4.5rem; color: var(--primary); font-weight: bold; margin: 10px 0; }
+        
+        @media (max-width: 480px) {
+            .analytics-value { font-size: 3rem; } /* Prevent overflow on small screens */
+        }
+
         .analytics-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
         .top-country-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
         .top-country-bar-bg { background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; width: 100%; margin-top: 4px; }
