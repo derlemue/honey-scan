@@ -429,14 +429,24 @@ def get_new_attackers():
     conn = get_db_connection()
     if not conn: return []
     ips = []
+    
+    # Check if force rescan is enabled
+    force_rescan = os.getenv('FORCE_RESCAN', 'false').lower() == 'true'
+
     try:
         cursor = conn.cursor()
         # Filter for recent (last 14 days/336h) IPs to align with banned list policy and avoid reprocessing old IPs
-        # Also exclude already scanned IPs (scanned = 1)
+        
+        # If FORCE_RESCAN is True, we fetch ALL recent IPs (ignoring scanned status) 
+        # and rely on file existence check later.
+        # If False, we strictly filter for scanned=0.
+        
+        scanned_filter = "" if force_rescan else "AND scanned = 0"
+        
         if DB_TYPE.lower() in ("mysql", "mariadb"):
-            query = "SELECT DISTINCT ip FROM ipaddress WHERE scanned = 0 AND create_time >= DATE_SUB(NOW(), INTERVAL 336 HOUR) ORDER BY create_time DESC LIMIT 7500"
+            query = f"SELECT DISTINCT ip FROM ipaddress WHERE create_time >= DATE_SUB(NOW(), INTERVAL 336 HOUR) {scanned_filter} ORDER BY create_time DESC LIMIT 7500"
         else:
-            query = "SELECT DISTINCT ip FROM ipaddress WHERE scanned = 0 AND create_time >= datetime('now', '-336 hours') ORDER BY create_time DESC LIMIT 7500"
+            query = f"SELECT DISTINCT ip FROM ipaddress WHERE create_time >= datetime('now', '-336 hours') {scanned_filter} ORDER BY create_time DESC LIMIT 7500"
         
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -446,9 +456,6 @@ def get_new_attackers():
     except Exception as e:
         logger.error(f"Error fetching attackers: {e}")
         if conn: conn.close()
-    
-    # Check if force rescan is enabled
-    force_rescan = os.getenv('FORCE_RESCAN', 'false').lower() == 'true'
     
     if force_rescan:
         # Skip ban check - scan everything without reports
