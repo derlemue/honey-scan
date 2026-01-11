@@ -749,8 +749,10 @@ def update_banned_list():
                 
                 if not scan_rows:
                     # No detailed scan records found (e.g., just a BRIDGE_SYNC event from sidecar)
-                    # For safety, we treat unknown activity as bannable unless explicitly whitelisted globally.
-                    banned_ips.add(ip)
+                    # If HFish didn't log a specific target port, we can't be sure it was an attack.
+                    # Given the Agent (185.24.11.174) falls into this category, we act conservatively:
+                    # If no Password attempt AND no specific Port Scan recorded -> IGNORE.
+                    # to prevent false positives on admin traffic that triggers a sync but no scan.
                     continue
 
                 all_safe = True
