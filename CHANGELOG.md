@@ -1,3 +1,13 @@
+## [8.3.0] - 2026-01-11
+
+### 🚀 Minor Release: Reliability & Standardization
+- **Stable Milestone**: This release consolidates all recent reliability fixes for the client banning script (`banned_ips.sh` v2.7.0).
+- **Features**:
+  - 🔄 **Reliable Auto-Update**: Fixed URL mismatches and added timeout/empty-file validation logic.
+  - 🎨 **Visuals**: Added periodic logo display and updated branding.
+  - 🧹 **Standardization**: Restored canonical filenames and cleaned up deprecated scripts.
+  - 🔍 **Debugging**: Enhanced logging capabilities for easier troubleshooting.
+
 ## [8.2.7] - 2026-01-11
 
 ### Changed
