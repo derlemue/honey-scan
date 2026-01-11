@@ -1,3 +1,8 @@
+## [8.8.4] - 2026-01-11
+
+### 🎨 UI Refinement: Active Scans
+- **Feed**: The "Active Scans" analytics box is now perfectly centered (vertically and horizontally) and the count font size has been **doubled** (3rem) for better visibility.
+
 ## [8.8.3] - 2026-01-11
 
 ### ⚡ Performance: Caching Engine
