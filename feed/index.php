@@ -1,6 +1,6 @@
 <?php
 // Performance & Security Headers
-header("Cache-Control: public, max-age=300");
+header("Cache-Control: no-cache, no-store, must-revalidate");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: SAMEORIGIN");
 header("X-XSS-Protection: 1; mode=block");

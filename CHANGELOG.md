@@ -1,3 +1,8 @@
+## [8.9.1] - 2026-01-11
+
+### 🔧 Fix: Dashboard Caching
+- **Web**: Disabled server-side caching for the main Feed dashboard (`index.php`) to ensure real-time updates and immediate visibility of code changes. Static assets remain optimized via `.htaccess`.
+
 ## [8.9.0] - 2026-01-11
 
 ### 🚀 Minor Release: UX & Performance Polish
