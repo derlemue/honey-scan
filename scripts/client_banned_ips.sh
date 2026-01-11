@@ -51,15 +51,16 @@ if ! command -v fail2ban-client &>/dev/null; then
 fi
 
 # --- BANNER ---
-echo -e "${CYAN}"
-echo "  _    _  ____  _   _ ______     __  _____  _____          _   _ "
-echo " | |  | |/ __ \| \ | |  ____|   / / / ____|/ ____|   /\   | \ | |"
-echo " | |__| | |  | |  \| | |__     / / | (___ | |       /  \  |  \| |"
-echo " |  __  | |  | | . \` |  __|   / /   \___ \| |      / /\ \ | . \` |"
-echo " | |  | | |__| | |\  | |____ / /    ____) | |____ / ____ \| |\  |"
-echo " |_|  |_|\____/|_| \_|______/_/    |_____/ \_____/_/    \_\_| \_|"
+# --- BANNER ---
+echo -e "${YELLOW}"
+echo "██╗  ██╗ ██████╗ ███╗   ██╗███████╗██╗   ██╗    ███████╗███████╗ ██████╗"
+echo "██║  ██║██╔═══██╗████╗  ██║██╔════╝╚██╗ ██╔╝    ██╔════╝██╔════╝██╔════╝"
+echo "███████║██║   ██║██╔██╗ ██║█████╗   ╚████╔╝     ███████╗█████╗  ██║     "
+echo "██╔══██║██║   ██║██║╚██╗██║██╔══╝    ╚██╔╝      ╚════██║██╔══╝  ██║     "
+echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
+echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.3"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.4"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -102,7 +103,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.3"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.4"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"

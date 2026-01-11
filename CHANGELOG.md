@@ -1,3 +1,9 @@
+## [8.2.1] - 2026-01-11
+
+### Changed
+- 🎨 **Visuals**: Updated `client_banned_ips.sh` logo to match the new "Honey Sec" design (Yellow).
+- ⬆️ **Update**: Bumped client script version to `2.6.4`.
+
 ## [8.2.0] - 2026-01-11
 
 ### Added
