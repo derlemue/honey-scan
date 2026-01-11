@@ -643,6 +643,10 @@ def update_banned_list():
         cursor.execute(query)
         rows = cursor.fetchall()
         
+        if not rows:
+            logger.info(f"[{Colors.RED}BAN{Colors.RESET}] No active threats found in database for the last 14 days.")
+            return
+
         banned_ips = set()
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
@@ -652,7 +656,7 @@ def update_banned_list():
         with open(BANNED_IPS_FILE, "w") as f:
             for ip in sorted(banned_ips):
                 f.write(f"{ip}\n")
-        logger.info(f"[{Colors.RED}BAN{Colors.RESET}] Updated banned list from DB (last 14 days). Total active: {len(banned_ips)}")
+        logger.info(f"[{Colors.RED}BAN{Colors.RESET}] Banned list updated. Total active: {len(banned_ips)} IPs.")
         
     except Exception as e:
         logger.error(f"Error updating banned list: {e}")
@@ -923,10 +927,10 @@ def restore_db_language():
         count = row['cnt'] if row else 0
         
         if count == 0:
-            # DB seems clean, skip massive update
+            logger.info(f"[{Colors.YELLOW}DB{Colors.RESET}] Location data is clean (all entries in correct format).")
             return
 
-        logger.info(f"Found {count} English entries. Restoring specific entries to Chinese...")
+        logger.info(f"[{Colors.YELLOW}DB{Colors.RESET}] Found {count} English entries. Restoring specific entries to Chinese for HFish compatibility...")
 
         if DB_TYPE == "mysql":
             # Create a reverse mapping
@@ -966,7 +970,9 @@ def update_missing_geolocations():
         cursor.execute("SELECT ip, country FROM ipaddress WHERE geoscan = 0 AND country IN ('FAIL2BAN', 'Honey Cloud') LIMIT 5")
         rows = cursor.fetchall()
         
-        if not rows: return
+        if not rows:
+            logger.info(f"[{Colors.BLUE}GEO{Colors.RESET}] No placeholder locations found to resolve.")
+            return
 
         for row in rows:
             ip = row['ip'] if isinstance(row, dict) else row[0]
@@ -1029,7 +1035,9 @@ def fix_unknown_countries():
         cursor.execute("SELECT DISTINCT ip FROM ipaddress WHERE country = 'Unknown' AND ip NOT IN ('::1', '127.0.0.1', 'localhost') LIMIT 2")
         rows = cursor.fetchall()
         
-        if not rows: return
+        if not rows:
+            logger.info(f"[{Colors.BLUE}GEO{Colors.RESET}] No 'Unknown' countries remaining in database.")
+            return
     
         for row in rows:
             ip = row['ip'] if isinstance(row, dict) else row[0]
@@ -1087,6 +1095,7 @@ def clean_blacklisted_ips():
     special_cleanup = {"1.2.3.4"}
     
     if not networks and not special_cleanup:
+        logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Blacklist configuration is empty. Skipping cleanup.")
         return
 
     conn = get_db_connection()
@@ -1114,6 +1123,10 @@ def clean_blacklisted_ips():
                         break
             except ValueError:
                 continue
+
+        if not ips_to_remove:
+            logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] No blacklisted IPs found in current database snapshot.")
+            return
 
         if ips_to_remove:
             logger.info(f"[{Colors.RED}CLEAN:DB{Colors.RESET}] Found {len(ips_to_remove)} blacklisted IPs in DB. Processing removal...")
@@ -1217,13 +1230,15 @@ def main():
                         executor.submit(push_intelligence, ip, is_new_hint=True)
                 
                 # Optimization: Run heavy tasks roughly every 60s
-                # Using timestamp check is more robust than modulo 0 against loop drift
+                if time.time() - last_maintenance > 60:
+                    logger.info(f"[{Colors.HEADER}MAINTENANCE{Colors.RESET}] Starting periodic system cleanup and optimization...")
                     update_banned_list()
                     clean_blacklisted_ips()
                     fix_missing_severity()
                     update_missing_geolocations() # Retroactively fix FAIL2BAN/Honey Cloud locations
-                    fix_unknown_countries() # Moved to maintenance loop (60s) to reduce IO
+                    fix_unknown_countries() # Background GeoIP resolution
                     last_maintenance = time.time()
+                    logger.info(f"[{Colors.HEADER}MAINTENANCE{Colors.RESET}] Periodic system optimization complete.")
 
                 # Run background tasks
                 # fix_unknown_countries() # Moved above
