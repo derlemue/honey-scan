@@ -7,7 +7,7 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-8.0.2-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-0.6.0-green.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -69,9 +69,11 @@ Wenn ein Angreifer deinen Honeypot berührt, wird Honey-Scan automatisch:
 ## 🚀 Hauptfunktionen
 
 *   **⚡ Echtzeit-Reaktion**: Python-Sidecar überwacht `hfish.db` und löst Sekunden nach einem Angriff Scans aus.
+*   **🌍 Smart Geolocation**: Löst den Standort des Angreifers (Land, Stadt, Koordinaten) automatisch auf und fügt ihn in Berichte ein.
+*   **🧠 Intelligentes Scannen**: Optimierte Logik verhindert redundante Scans und verwaltet effizient Platzhalter.
 *   **📊 Automatisierte Intel**: Generiert detaillierte `.txt`-Berichte für jede eindeutige Angreifer-IP.
 *   **🚫 Netzwerk-Schutzschild**: Stellt eine dynamische `banned_ips.txt`-Liste bereit, die andere Server nutzen können, um Bedrohungen präventiv zu blockieren.
-*   **🖥️ Dashboard**: Einfache Weboberfläche zum Durchsuchen von Scan-Berichten und Bannlisten.
+*   **🖥️ Dashboard**: Einfache Weboberfläche zum Durchsuchen von Scan-Berichten und Bannlisten. Sortiert nach den neuesten Bedrohungen.
 *   **🖼️ Visualisierungen**:
     *   **Login Interface**:
         <br>

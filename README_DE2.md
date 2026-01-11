@@ -7,7 +7,7 @@
 
 <br>
 
-![Version](https://img.shields.io/badge/version-8.0.2-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.0-green.svg)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -70,9 +70,11 @@ Wenn dich jemand angreift:
 ## 🚀 Haupt-Funktionen
 
 *   **⚡ Schnell**: Es reagiert in Sekunden. Ein Python-Programm passt auf.
+*   **🌍 Kluger Standort**: Es findet heraus, wo der Angreifer wohnt (Land, Stadt).
+*   **🧠 Schlaues Scannen**: Es scannt nicht doppelt und arbeitet effizient.
 *   **📊 Berichte**: Es macht Text-Dateien mit Infos über den Angreifer.
 *   **🚫 Schutz-Liste**: Es gibt eine Liste mit bösen IPs (`banned_ips.txt`). Deine Server können diese Liste nutzen, um sich zu schützen.
-*   **🖥️ Übersicht**: Es gibt eine Webseite. Da sieht man die Berichte.
+*   **🖥️ Übersicht**: Es gibt eine Webseite. Da sieht man die Berichte. Die neusten sind oben.
 *   **🖼️ Bilder**:
     *   **Login Seite**:
         <br>

@@ -3,7 +3,7 @@
     <h1>Honey Scan</h1>
     <p><b>Active Defense & Threat Intelligence Platform</b></p>
     
-[![Version](https://img.shields.io/badge/version-8.0.2-blue.svg)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/version-0.6.0-green.svg)](https://github.com/derlemue/honey-scan)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
@@ -65,9 +65,11 @@ When an attacker touches your honeypot, Honey-Scan automatically:
 ## 🚀 Key Features
 
 *   **⚡ Real-Time Reaction**: Python sidecar monitors `hfish.db` and triggers scans within seconds of an attack.
+*   **🌍 Smart Geolocation**: Automatically resolves attacker location (Country, City, Lat/Lng) and embeds it in reports.
+*   **🧠 Intelligent Scanning**: Optimized logic prevents redundant scans and efficiently manages "Fail2Ban" and "Honey Cloud" placeholders.
 *   **📊 Automated Intel**: Generates detailed `.txt` reports for every unique attacker IP.
 *   **🚫 Network Shield**: Serves a dynamic `banned_ips.txt` list that your other servers can consume to preemptively block threats.
-*   **🖥️ Dashboard**: Simple web interface to browse scan reports and ban lists.
+*   **🖥️ Dashboard**: Simple web interface to browse scan reports and ban lists. Sorted by newest threats first.
 *   **🖼️ Visuals**:
     *   **Login Interface**:
         <br>
