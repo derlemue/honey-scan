@@ -1,3 +1,9 @@
+## [8.2.5] - 2026-01-11
+
+### Changed
+- 🎨 **Visuals**: Implemented periodic logo display in `client_banned_ips.sh` (appears every 50 IPs during banning loop).
+- ⬆️ **Update**: Bumped client script version to `2.6.8`.
+
 ## [8.2.4] - 2026-01-11
 
 ### Security

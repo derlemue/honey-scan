@@ -52,19 +52,23 @@ fi
 
 # --- BANNER ---
 # --- BANNER ---
-echo -e "${YELLOW}"
-echo "██╗  ██╗ ██████╗ ███╗   ██╗███████╗██╗   ██╗    ███████╗███████╗ ██████╗"
-echo "██║  ██║██╔═══██╗████╗  ██║██╔════╝╚██╗ ██╔╝    ██╔════╝██╔════╝██╔════╝"
-echo "███████║██║   ██║██╔██╗ ██║█████╗   ╚████╔╝     ███████╗█████╗  ██║     "
-echo "██╔══██║██║   ██║██║╚██╗██║██╔══╝    ╚██╔╝      ╚════██║██╔══╝  ██║     "
-echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
-echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
-echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.7"
-echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
-echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
-echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
-echo "----------------------------------------------------------------"
+print_banner() {
+    echo -e "${YELLOW}"
+    echo "██╗  ██╗ ██████╗ ███╗   ██╗███████╗██╗   ██╗    ███████╗███████╗ ██████╗"
+    echo "██║  ██║██╔═══██╗████╗  ██║██╔════╝╚██╗ ██╔╝    ██╔════╝██╔════╝██╔════╝"
+    echo "███████║██║   ██║██╔██╗ ██║█████╗   ╚████╔╝     ███████╗█████╗  ██║     "
+    echo "██╔══██║██║   ██║██║╚██╗██║██╔══╝    ╚██╔╝      ╚════██║██╔══╝  ██║     "
+    echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
+    echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
+    echo -e "${NC}"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.8"
+    echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
+    echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
+    echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
+    echo "----------------------------------------------------------------"
+}
+
+print_banner
 
 # --- SINGLETON CHECK ---
 # Legacy fix: Remove old lock directory if it exists
@@ -110,7 +114,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.7"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.8"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -310,6 +314,8 @@ else
         
         # Progress bar every 50 IPs
         if ((CURRENT % 50 == 0)); then
+             # Periodic Logo Display (Aesthetics)
+             print_banner
              echo -ne "\r${BLUE}[INFO]${NC} Banning progress: $CURRENT / $COUNT_TO_BAN"
         fi
     done < "$IPS_TO_BAN_FILE"
