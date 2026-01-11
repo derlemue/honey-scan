@@ -1131,10 +1131,11 @@ def clean_blacklisted_ips():
                 if os.path.exists(report_path):
                     try:
                         os.remove(report_path)
+                        logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Removed report for blacklisted IP: {ip}")
                     except:
                         pass
             
-            logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Cleanup complete.")
+            logger.info(f"[{Colors.RED}CLEAN{Colors.RESET}] Cleanup complete. Removed {len(ips_to_remove)} IPs and associated reports.")
             
     except Exception as e:
         logger.error(f"Error checking blacklist cleanup: {e}")
