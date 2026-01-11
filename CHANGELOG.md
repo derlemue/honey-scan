@@ -8,6 +8,9 @@
   - ⚡ **Performance Engine**: Implemented server-side metadata caching and web server optimization via `.htaccess` (Gzip, Expires headers).
   - 🚩 **Global Flags**: Comprehensive country-to-emoji mapping for real-time visibility.
 
+### 🛡️ Banning Client v2.9.1
+- **Proactive Whitelisting**: The client script now automatically removes (unbans) IPs from the Fail2Ban jail if they are no longer present in the remote threat feed. This ensures immediate propagation of whitelisting decisions to all standalone nodes like `lemue-io`.
+
 ## [8.7.1] - 2026-01-11
 
 ### 🚀 Minor Release: Feed Intelligence & Analytics

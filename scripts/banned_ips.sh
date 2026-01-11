@@ -64,7 +64,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.0"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.1"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
     echo -e "${BLUE}[INFO]${NC} Backup Feed: ${YELLOW}$FEED_URL_BACKUP${NC}"
@@ -341,7 +341,32 @@ else
     echo -e "${GREEN}[OK]${NC} Finished banning new IPs."
 fi
 
-rm -f "$EXISTING_BANS_FILE" "$IPS_TO_BAN_FILE" "$REMOTE_FILE"
+# New: Remove IPs that are no longer in the feed (Unban logic)
+echo -e "${BLUE}[INFO]${NC} Checking for IPs to unban (no longer in feed)..."
+IPS_TO_UNBAN_FILE=$(mktemp)
+sort -u "$REMOTE_FILE" | comm -13 - "$EXISTING_BANS_FILE" > "$IPS_TO_UNBAN_FILE"
+
+COUNT_TO_UNBAN=$(wc -l < "$IPS_TO_UNBAN_FILE")
+
+if [ "$COUNT_TO_UNBAN" -eq 0 ]; then
+    echo -e "${GREEN}[OK]${NC} No stale bans found."
+else
+    echo -e "${YELLOW}[INFO]${NC} Found ${YELLOW}$COUNT_TO_UNBAN${NC} stale IPs to unban."
+    UNBANNED=0
+    while IFS= read -r ip; do
+        if [[ -z "$ip" ]]; then continue; fi
+        fail2ban-client set "$JAIL" unbanip "$ip" &>/dev/null
+        ((UNBANNED++))
+        
+        if ((UNBANNED % 50 == 0)); then
+             echo -ne "\r${BLUE}[INFO]${NC} Unbanning progress: $UNBANNED / $COUNT_TO_UNBAN"
+        fi
+    done < "$IPS_TO_UNBAN_FILE"
+    echo "" # Newline
+    echo -e "${GREEN}[OK]${NC} Finished unbanning stale IPs."
+fi
+
+rm -f "$EXISTING_BANS_FILE" "$IPS_TO_BAN_FILE" "$REMOTE_FILE" "$IPS_TO_UNBAN_FILE"
 
 # 3. Summary
 echo -e "${BLUE}[STEP 3/3]${NC} Verification..."
