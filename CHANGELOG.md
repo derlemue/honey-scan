@@ -1,3 +1,12 @@
+## [8.7.0] - 2026-01-11
+
+### 🚀 Minor Release: Feed Intelligence & Analytics
+- **Stable Milestone**: Updated project version to `8.7.0`.
+- **Features**:
+  - 📊 **Feed Analytics**: Added a new "Real-time Analytics" box to the `/feed` page, showing the Top 3 threat origin countries from the last 30 minutes with counts and percentages.
+  - 🛡️ **Status Accuracy**: Improved the "Check My Status" logic in the feed to use exact line matching against `banned_ips.txt`, preventing partial IP match false positives.
+  - 🔍 **Audit**: Verified scan and geolocation coverage across sensor nodes (`lemue-sec`, `lemue-sec-2`).
+
 ## [8.6.0] - 2026-01-11
 
 ### 🚀 Minor Release: Feed & Update Resilience

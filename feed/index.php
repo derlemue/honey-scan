@@ -39,6 +39,14 @@
         @media (max-width: 600px) {
             .report-list { grid-template-columns: 1fr; }
         }
+
+        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .analytics-card { background: rgba(255,255,255,0.03); border: 1px solid #334155; border-radius: 8px; padding: 15px; text-align: center; }
+        .analytics-value { font-size: 1.5rem; color: var(--primary); font-weight: bold; margin: 10px 0; }
+        .analytics-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+        .top-country-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+        .top-country-bar-bg { background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; width: 100%; margin-top: 4px; }
+        .top-country-bar-fg { background: var(--primary); height: 100%; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -64,6 +72,84 @@
                 }
             ?></h2>
             <a href="banned_ips.txt" class="resource-link">banned_ips.txt <span class="resource-desc">List of unique attacker IPs (Fail2Ban Compatible)</span></a>
+        </div>
+
+        <?php
+        $scanDir = './scans';
+        $topCountries = [];
+        $totalRecent = 0;
+        $thirtyMinsAgo = time() - (30 * 60);
+
+        if (is_dir($scanDir)) {
+            $files = scandir($scanDir);
+            foreach ($files as $file) {
+                if (str_ends_with($file, '.txt')) {
+                    $filePath = $scanDir . '/' . $file;
+                    if (filemtime($filePath) >= $thirtyMinsAgo) {
+                        $handle = fopen($filePath, "r");
+                        if ($handle) {
+                            $firstLine = fgets($handle);
+                            fclose($handle);
+                            if (str_contains($firstLine, 'Geolocation:')) {
+                                $parts = explode(':', $firstLine);
+                                if (isset($parts[1])) {
+                                    $geoContent = explode(',', $parts[1]);
+                                    $country = trim($geoContent[0]);
+                                    if ($country) {
+                                        $topCountries[$country] = ($topCountries[$country] ?? 0) + 1;
+                                        $totalRecent++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            arsort($topCountries);
+            $top3 = array_slice($topCountries, 0, 3, true);
+            $top3Sum = array_sum($top3);
+        }
+
+        $countryEmojis = [
+            'Germany' => '🇩🇪', 'United States' => '🇺🇸', 'China' => '🇨🇳', 'Russia' => '🇷🇺',
+            'France' => '🇫🇷', 'United Kingdom' => '🇬🇧', 'Japan' => '🇯🇵', 'Brazil' => '🇧🇷',
+            'Canada' => '🇨🇦', 'India' => '🇮🇳', 'Netherlands' => '🇳🇱', 'Ukraine' => '🇺🇦',
+            'Cyprus' => '🇨🇾', 'Seychelles' => '🇸🇨', 'Singapore' => '🇸🇬', 'Hong Kong' => '🇭🇰'
+        ];
+        ?>
+
+        <div class="section">
+            <h2>Real-time Analytics (Last 30m)</h2>
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="analytics-label">Active Scans</div>
+                    <div class="analytics-value"><?php echo number_format($totalRecent); ?></div>
+                    <div class="analytics-label">Last 30 Minutes</div>
+                </div>
+                <div class="analytics-card" style="grid-column: span 2;">
+                    <div class="analytics-label">Top 3 Threat Origins</div>
+                    <div style="margin-top: 10px;">
+                        <?php if (empty($top3)): ?>
+                            <div style="color: #64748b; font-style: italic;">No recent scan data</div>
+                        <?php else: ?>
+                            <?php foreach ($top3 as $country => $count): 
+                                $pct = $top3Sum > 0 ? round(($count / $top3Sum) * 100) : 0;
+                                $emoji = $countryEmojis[$country] ?? '🏳️';
+                            ?>
+                                <div style="margin-bottom: 8px;">
+                                    <div class="top-country-item">
+                                        <span><?php echo $emoji . ' ' . htmlspecialchars($country); ?></span>
+                                        <span><?php echo $count; ?> (<?php echo $pct; ?>%)</span>
+                                    </div>
+                                    <div class="top-country-bar-bg">
+                                        <div class="top-country-bar-fg" style="width: <?php echo $pct; ?>%;"></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="section">
@@ -140,7 +226,9 @@
                 const listResp = await fetch('banned_ips.txt');
                 const listText = await listResp.text();
                 
-                const isBanned = listText.includes(currentUserIp);
+                // Use exact matching to avoid false positives (e.g. 1.2.3.4 matching 11.2.3.4)
+                const bannedIps = listText.split('\n').map(ip => ip.trim()).filter(ip => ip !== '');
+                const isBanned = bannedIps.includes(currentUserIp);
                 
                 if (isBanned) {
                     btn.className = "status-btn status-banned";
