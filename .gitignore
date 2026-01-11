@@ -4,6 +4,7 @@ feed/*
 !feed/index.html
 !feed/index.php
 !feed/.gitkeep
+!feed/banned_ips.txt
 __pycache__/
 *.pyc
 .DS_Store

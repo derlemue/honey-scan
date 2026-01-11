@@ -1,3 +1,12 @@
+## [8.6.0] - 2026-01-11
+
+### 🚀 Minor Release: Feed & Update Resilience
+- **Stable Milestone**: Updated project version to `8.6.0` (Client v2.9.0).
+- **Features**:
+  - 🔄 **Backup Sources**: Added GitHub repository as a fallback source for both the IP feed and the client script itself, ensuring continuity even if `feed.sec.lemue.org` is unreachable.
+  - 🛡️ **Failover Logic**: Intelligently retry-and-fallback logic in `banned_ips.sh` that automatically switches to the backup source after primary failure.
+  - 📂 **Repository Feed**: Integrated `feed/banned_ips.txt` into the repository to serve as a high-availability backup source.
+
 ## [8.5.0] - 2026-01-11
 
 ### 🚀 Minor Release: Sidecar Resilience & Logging Fixes

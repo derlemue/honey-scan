@@ -1,0 +1,3 @@
+# Backup IP Feed Placeholder
+# This file serves as a fallback when the primary feed is unavailable.
+127.0.0.1
