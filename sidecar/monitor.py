@@ -111,10 +111,15 @@ def ensure_db_schema():
             cursor.execute("ALTER TABLE ipaddress ADD COLUMN pushed_to_bridge TINYINT DEFAULT 0")
             cursor.execute("CREATE INDEX idx_pushed_to_bridge ON ipaddress(pushed_to_bridge)")
 
-        if 'scanned' not in ip_columns:
-            logger.info("Migrating DB (ipaddress): ADD COLUMN scanned")
-            cursor.execute("ALTER TABLE ipaddress ADD COLUMN scanned TINYINT DEFAULT 0")
-            cursor.execute("CREATE INDEX idx_scanned ON ipaddress(scanned)")
+        if 'ipscan' not in ip_columns:
+            logger.info("Migrating DB (ipaddress): ADD COLUMN ipscan")
+            cursor.execute("ALTER TABLE ipaddress ADD COLUMN ipscan TINYINT DEFAULT 0")
+            cursor.execute("CREATE INDEX idx_ipscan ON ipaddress(ipscan)")
+
+        if 'geoscan' not in ip_columns:
+            logger.info("Migrating DB (ipaddress): ADD COLUMN geoscan")
+            cursor.execute("ALTER TABLE ipaddress ADD COLUMN geoscan TINYINT DEFAULT 0")
+            cursor.execute("CREATE INDEX idx_geoscan ON ipaddress(geoscan)")
 
         # Fix "Data too long" for region
         try:
@@ -439,9 +444,9 @@ def get_new_attackers():
         
         # If FORCE_RESCAN is True, we fetch ALL recent IPs (ignoring scanned status) 
         # and rely on file existence check later.
-        # If False, we strictly filter for scanned=0.
+        # If False, we strictly filter for ipscan=0.
         
-        scanned_filter = "" if force_rescan else "AND scanned = 0"
+        scanned_filter = "" if force_rescan else "AND ipscan = 0"
         
         if DB_TYPE.lower() in ("mysql", "mariadb"):
             query = f"SELECT DISTINCT ip FROM ipaddress WHERE create_time >= DATE_SUB(NOW(), INTERVAL 336 HOUR) {scanned_filter} ORDER BY create_time DESC LIMIT 7500"
@@ -487,25 +492,34 @@ def get_new_attackers():
 def scan_ip(ip):
     report_path = os.path.join(REPORT_DIR, f"{ip}.txt")
     
-    # Check if report already exists
-    if os.path.exists(report_path): 
-        # Mark as scanned if file exists but DB says 0 (recovery)
+    # OPTIMIZATION: Check if report already exists and we have valid location data
+    if os.path.exists(report_path):
         conn = get_db_connection()
         if conn:
             try:
                 cursor = conn.cursor()
-                cursor.execute("UPDATE ipaddress SET scanned = 1 WHERE ip = %s", (ip,))
-                conn.close()
-            except:
+                # Check current country status
+                cursor.execute("SELECT country FROM ipaddress WHERE ip = %s", (ip,))
+                row = cursor.fetchone()
+                country = row['country'] if isinstance(row, dict) else row[0]
+                
+                if country and country not in ('FAIL2BAN', 'Honey Cloud', 'Unknown', ''):
+                    # We have a report and a valid country. Mark everything as done.
+                    logger.info(f"Skipping scan for {ip} (Report exists + Valid Location). Marking complete.")
+                    cursor.execute("UPDATE ipaddress SET ipscan = 1, geoscan = 1 WHERE ip = %s", (ip,))
+                    conn.close()
+                    return None
+            except Exception as e:
+                pass # Continue to standard scan if check fails
+            finally:
                 if conn: conn.close()
-        return None
 
-    # Mark as scanned immediately to prevent re-scanning by other threads or next loop
+    # Mark as scanned immediately (ipscan=1) to prevent re-scanning by other threads
     conn = get_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute("UPDATE ipaddress SET scanned = 1 WHERE ip = %s", (ip,))
+            cursor.execute("UPDATE ipaddress SET ipscan = 1 WHERE ip = %s", (ip,))
             conn.close()
         except:
             if conn: conn.close()
@@ -517,12 +531,12 @@ def scan_ip(ip):
     if geo_info:
         geo_header = f"Geolocation: {geo_info['country']}, {geo_info['city']} ({geo_info['lat']}, {geo_info['lng']})\n"
         
-        # Opportunistically update DB with found location
+        # Opportunistically update DB with found location AND mark geoscan=1
         conn = get_db_connection()
         if conn:
             try:
                 cursor = conn.cursor()
-                cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s WHERE ip = %s", 
+                cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s, geoscan = 1 WHERE ip = %s", 
                                (geo_info['country'], geo_info['city'], geo_info['region'], ip))
                 conn.close()
             except:
@@ -886,8 +900,9 @@ def update_missing_geolocations():
     if not conn: return
     try:
         cursor = conn.cursor()
-        # Find IPs with placeholder locations
-        cursor.execute("SELECT ip, country FROM ipaddress WHERE country IN ('FAIL2BAN', 'Honey Cloud') LIMIT 5")
+        # Find IPs with placeholder locations OR where geoscan=0 (and location is placeholder)
+        # We target specific placeholders to avoid overwriting valid data
+        cursor.execute("SELECT ip, country FROM ipaddress WHERE geoscan = 0 AND country IN ('FAIL2BAN', 'Honey Cloud') LIMIT 5")
         rows = cursor.fetchall()
         
         if not rows: return
@@ -904,8 +919,8 @@ def update_missing_geolocations():
                 new_city = geo['city']
                 new_region = geo['region']
                 
-                # Update DB
-                cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s WHERE ip = %s", 
+                # Update DB and mark geoscan=1
+                cursor.execute("UPDATE ipaddress SET country = %s, city = %s, region = %s, geoscan = 1 WHERE ip = %s", 
                                (new_country, new_city, new_region, ip))
                 cursor.execute("UPDATE infos SET source_ip_country = %s WHERE source_ip = %s", (new_country, ip))
                 
@@ -926,7 +941,13 @@ def update_missing_geolocations():
                             
                 logger.info(f"Updated {ip} -> {new_country}")
             else:
+                # If API call failed but returned None, we skip for now.
+                # If we want to mark it as 'scanned but failed', we could set geoscan=1 here too.
+                # But user requested "only if location is FAIL2BAN or Honey Cloud", so we keep retrying?
+                # Let's keep geoscan=0 so it retries later, or maybe increment a retry counter?
+                # For now, keep as is (will retry).
                 logger.warning(f"Could not resolve {ip}, keeping {current_loc}")
+                pass
                 
             time.sleep(1.5) # Rate limit
             
