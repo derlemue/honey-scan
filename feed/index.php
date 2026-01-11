@@ -35,6 +35,10 @@
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        @media (max-width: 600px) {
+            .report-list { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -81,7 +85,9 @@
             <ul class="report-list">
                 <?php
                 if (is_dir($scanDir)) {
-                    sort($txtFiles);
+                    usort($txtFiles, function($a, $b) use ($scanDir) {
+                        return filemtime($scanDir . '/' . $b) - filemtime($scanDir . '/' . $a);
+                    });
                     foreach ($txtFiles as $file) {
                         echo '<li class="report-item"><a href="scans/' . htmlspecialchars($file) . '">' . htmlspecialchars($file) . '</a></li>';
                     }
