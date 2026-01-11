@@ -1,3 +1,9 @@
+## [8.2.3] - 2026-01-11
+
+### Fixed
+- 🐛 **Script**: Extended timeout logic to the self-update mechanism in `client_banned_ips.sh` for higher reliability.
+- ⬆️ **Update**: Bumped client script version to `2.6.6`.
+
 ## [8.2.2] - 2026-01-11
 
 ### Fixed

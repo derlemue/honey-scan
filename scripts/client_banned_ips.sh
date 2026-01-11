@@ -60,7 +60,7 @@ echo "██╔══██║██║   ██║██║╚██╗██�
 echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
 echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
 echo -e "${NC}"
-echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.4"
+echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.6"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -88,8 +88,8 @@ self_update() {
     if ! command -v curl &> /dev/null || ! command -v md5sum &> /dev/null; then return; fi
 
     TEMP_FILE=$(mktemp)
-    # Use cache-buster to avoid CDN issues
-    if curl -s -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
+    # Use cache-buster to avoid CDN issues. Added timeout for reliability.
+    if curl -s --max-time 30 --connect-timeout 10 -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
         if ! bash -n "$TEMP_FILE"; then
             rm -f "$TEMP_FILE"
             return
@@ -103,7 +103,7 @@ self_update() {
             cp "$TEMP_FILE" "$0"
             chmod +x "$0"
             rm -f "$TEMP_FILE"
-            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.5"
+            echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.6.6"
 echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
 echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
