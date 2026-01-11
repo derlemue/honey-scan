@@ -1,3 +1,11 @@
+## [8.9.0] - 2026-01-11
+
+### 🚀 Minor Release: UX & Performance Polish
+- **Stable Milestone**: Consolidated all recent Feed enhancements into a stable minor release.
+- **UI Finalization**: Active Scans counter is now supersized (**4.5rem**) and perfectly centered.
+- **Search Experience**: Smart grouping logic (triggers at 2 octets) and comprehensive flag support (200+ countries).
+- **Core Optimization**: Enabled Apache-level caching and compression for maximum performance.
+
 ## [8.8.5] - 2026-01-11
 
 ### 🎨 UI Refinement: Active Scans Size
