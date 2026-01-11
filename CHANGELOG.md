@@ -1,3 +1,10 @@
+## [8.2.7] - 2026-01-11
+
+### Changed
+- ♻️ **Refactor**: Renamed `scripts/client_banned_ips.sh` back to the standard `scripts/banned_ips.sh` to match the canonical filename.
+- 🐛 **Auto-Update**: Updated `SCRIPT_URL` to correctly point to `banned_ips.sh`.
+- ⬆️ **Update**: Bumped client script version to `2.7.0`.
+
 ## [8.2.6] - 2026-01-11
 
 ### Fixed
