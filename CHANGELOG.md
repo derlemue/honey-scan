@@ -1,3 +1,10 @@
+## [8.8.1] - 2026-01-11
+
+### 🔧 Fix: Dynamic Flags & Permissions
+- **Web**: Resolved "Permission denied" error for report metadata caching.
+- **Web**: Added comprehensive support for **200+ country flags** using Regional Indicator symbols.
+- **Web**: Improved "The Netherlands" mapping and other regional identification.
+
 ## [8.8.0] - 2026-01-11
 
 ### 🚀 Minor Release: Feed Analytics & UX Overhaul
