@@ -1,3 +1,9 @@
+## [8.8.5] - 2026-01-11
+
+### 🎨 UI Refinement: Active Scans Size
+- **Feed**: Increased the "Active Scans" font size by another 50% (to **4.5rem**) for even greater visibility.
+- **Feed**: Corrected a CSS typo in the analytics card styles.
+
 ## [8.8.4] - 2026-01-11
 
 ### 🎨 UI Refinement: Active Scans
