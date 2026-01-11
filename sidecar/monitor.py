@@ -43,8 +43,46 @@ MAX_WORKERS = 16  # Optimized concurrency (User Request: 16)
 last_stats_update = 0
 
 # Setup Logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Colors
+class Colors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+
+class ColoredFormatter(logging.Formatter):
+    def format(self, record):
+        if record.levelno == logging.INFO:
+            record.msg = f"{Colors.GREEN}{record.msg}{Colors.RESET}"
+        elif record.levelno == logging.WARNING:
+            record.msg = f"{Colors.YELLOW}{record.msg}{Colors.RESET}"
+        elif record.levelno == logging.ERROR:
+            record.msg = f"{Colors.RED}{record.msg}{Colors.RESET}"
+        return super().format(record)
+
+# Setup Logging
+handler = logging.StreamHandler()
+handler.setFormatter(ColoredFormatter('%(asctime)s - %(levelname)s - %(message)s'))
+logging.basicConfig(level=logging.INFO, handlers=[handler])
 logger = logging.getLogger("HoneySidecar")
+# Prevent propagation to avoid double logging if root logger is active
+logger.propagate = False
+
+def print_logo():
+    logo_path = "/app/hsec_ascii.logo"
+    if os.path.exists(logo_path):
+        try:
+            with open(logo_path, "r") as f:
+                logo = f.read()
+                print(f"{Colors.YELLOW}{logo}{Colors.RESET}")
+        except:
+            pass
+    else:
+        logger.warning("Logo file not found.")
 
 def is_loopback(ip):
     """Check if the IP is a loopback address."""
@@ -112,12 +150,12 @@ def ensure_db_schema():
             cursor.execute("CREATE INDEX idx_pushed_to_bridge ON ipaddress(pushed_to_bridge)")
 
         if 'ipscan' not in ip_columns:
-            logger.info("Migrating DB (ipaddress): ADD COLUMN ipscan")
+            logger.info(f"[{Colors.YELLOW}DB{Colors.RESET}] Migrating DB (ipaddress): ADD COLUMN ipscan")
             cursor.execute("ALTER TABLE ipaddress ADD COLUMN ipscan TINYINT DEFAULT 0")
             cursor.execute("CREATE INDEX idx_ipscan ON ipaddress(ipscan)")
 
         if 'geoscan' not in ip_columns:
-            logger.info("Migrating DB (ipaddress): ADD COLUMN geoscan")
+            logger.info(f"[{Colors.YELLOW}DB{Colors.RESET}] Migrating DB (ipaddress): ADD COLUMN geoscan")
             cursor.execute("ALTER TABLE ipaddress ADD COLUMN geoscan TINYINT DEFAULT 0")
             cursor.execute("CREATE INDEX idx_geoscan ON ipaddress(geoscan)")
 
@@ -127,9 +165,9 @@ def ensure_db_schema():
         except Exception as e:
              pass
             
-        logger.info("Schema migration completed successfully")
+        logger.info(f"[{Colors.GREEN}DB{Colors.RESET}] Schema migration completed successfully")
     except Exception as e:
-        logger.warning(f"Schema migration skipped due to error: {e}")
+        logger.warning(f"[{Colors.RED}DB{Colors.RESET}] Schema migration skipped due to error: {e}")
         # Non-fatal - allow monitor to continue
     finally:
         if conn: 
@@ -181,9 +219,9 @@ def update_node_location():
     # check_cloud_connectivity() removed 
     data = get_geolocation()
     if not data:
-        logger.warning("Could not determine dynamic location.")
+        logger.warning(f"[{Colors.YELLOW}NODE{Colors.RESET}] Could not determine dynamic location.")
         return
-    logger.info(f"Detected Public IP: {data['ip']}, Location: {data['country']} ({data['lat']}, {data['lng']})")
+    logger.info(f"[{Colors.GREEN}NODE{Colors.RESET}] Detected Public IP: {data['ip']} -> {data['country']} ({data['lat']}, {data['lng']})")
     try:
         json_path = "/app/assets/location.json"
         if not os.path.exists(os.path.dirname(json_path)):
@@ -224,12 +262,12 @@ def push_intelligence(ip, is_new_hint=None):
             
             resp = requests.post(url, json=payload, timeout=5)
             if resp.status_code == 200:
-                logger.info(f"✅ Synced {ip} to {url}")
+                logger.info(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [200 OK]")
                 success_count += 1
             else:
-                logger.error(f"❌ Failed to sync {ip} to {url}: HTTP {resp.status_code}")
+                logger.error(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [{Colors.RED}FAILED{Colors.RESET}: {resp.status_code}]")
         except Exception as e:
-            logger.error(f"❌ Error syncing {ip} to {url}: {e}")
+            logger.error(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [{Colors.RED}ERROR{Colors.RESET}: {e}]")
             
     return success_count > 0
 
@@ -248,7 +286,7 @@ def sync_to_bridge():
         if not rows:
             return
 
-        logger.info(f"Syncing {len(rows)} IPs to bridge...")
+        logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Processing batch sync for {len(rows)} IPs...")
         for row in rows:
             ip = row['ip']
             # During full sync, they are technically 'new' for the bridge status check
@@ -267,8 +305,9 @@ def sync_to_bridge():
 
 # query_threatbook_ip removed
 
+
 def update_threat_feed():
-    logger.info("Updating Threat Feed...")
+    logger.info(f"[{Colors.GREEN}FEED{Colors.RESET}] Updating Threat Feed...")
     conn = get_db_connection()
     if not conn: return
     recent_hackers = []
@@ -318,10 +357,10 @@ def update_threat_feed():
             ORDER BY normalized_time DESC
             LIMIT 180
         """
-        logger.info(f"Executing Query: {query}")
+        # logger.info(f"Executing Query: {query}") # Silenced by user request
         cursor.execute(query)
         rows = cursor.fetchall()
-        logger.info(f"Fetched {len(rows)} rows from DB")
+        # logger.info(f"Fetched {len(rows)} rows from DB") # Silenced to reduce noise
         for row in rows:
             ip = row['source_ip'] if isinstance(row, dict) else row[0]
             country = row.get('source_ip_country', 'Unknown') if isinstance(row, dict) else "Unknown"
@@ -486,7 +525,7 @@ def get_new_attackers():
     
     new_ips = [ip for ip in ips if ip not in current_banned and ip not in scanning_ips and len(ip) >= 7 and not is_loopback(ip)]
     if new_ips:
-        logger.info(f"Found {len(new_ips)} new attacker IPs to process")
+        logger.info(f"[{Colors.BLUE}SCAN{Colors.RESET}] Found {len(new_ips)} new attacker IPs to process")
     return new_ips
 
 def scan_ip(ip):
@@ -505,7 +544,7 @@ def scan_ip(ip):
                 
                 if country and country not in ('FAIL2BAN', 'Honey Cloud', 'Unknown', ''):
                     # We have a report and a valid country. Mark everything as done.
-                    logger.info(f"Skipping scan for {ip} (Report exists + Valid Location). Marking complete.")
+                    logger.info(f"[{Colors.BLUE}SCAN{Colors.RESET}] {ip} -> Skipped (Report exists + Valid Location: {country})")
                     cursor.execute("UPDATE ipaddress SET ipscan = 1, geoscan = 1 WHERE ip = %s", (ip,))
                     conn.close()
                     return None
@@ -524,11 +563,12 @@ def scan_ip(ip):
         except:
             if conn: conn.close()
 
-    logger.info(f"Scanning {ip}...")
+    logger.info(f"[{Colors.BLUE}SCAN{Colors.RESET}] Starting Nmap analysis for {ip}...")
     
     geo_info = get_ip_geolocation(ip)
     geo_header = ""
     if geo_info:
+        logger.info(f"[{Colors.BLUE}GEO{Colors.RESET}] Resolved {ip} -> {Colors.YELLOW}{geo_info['country']}, {geo_info['city']}{Colors.RESET}")
         geo_header = f"Geolocation: {geo_info['country']}, {geo_info['city']} ({geo_info['lat']}, {geo_info['lng']})\n"
         
         # Opportunistically update DB with found location AND mark geoscan=1
@@ -541,12 +581,15 @@ def scan_ip(ip):
                 conn.close()
             except:
                 if conn: conn.close()
+    else:
+        logger.warning(f"[{Colors.BLUE}GEO{Colors.RESET}] Failed to resolve location for {ip}")
 
     try:
         command = ["nmap", "-A", "-T4", "-Pn", ip]  # Comprehensive scan
         result = subprocess.run(command, capture_output=True, text=True, timeout=120)
         
         # Traceroute
+        logger.info(f"[{Colors.BLUE}TRACE{Colors.RESET}] Tracing route to {ip}...")
         trace_command = ["traceroute", "-m", "15", ip]
         trace_result = subprocess.run(trace_command, capture_output=True, text=True, timeout=60)
         
@@ -561,6 +604,7 @@ def scan_ip(ip):
             f.write("Traceroute:\n")
             f.write(trace_result.stdout)
 
+        logger.info(f"[{Colors.BLUE}SCAN{Colors.RESET}] {ip} analysis complete. Report saved.")
         return ip
     except Exception as e:
         logger.error(f"Error scanning {ip}: {e}")
@@ -593,7 +637,7 @@ def update_banned_list():
         with open(BANNED_IPS_FILE, "w") as f:
             for ip in sorted(banned_ips):
                 f.write(f"{ip}\n")
-        logger.info(f"Updated banned list from DB (last 14 days). Total active: {len(banned_ips)}")
+        logger.info(f"[{Colors.RED}BAN{Colors.RESET}] Updated banned list from DB (last 14 days). Total active: {len(banned_ips)}")
         
     except Exception as e:
         logger.error(f"Error updating banned list: {e}")
@@ -1024,24 +1068,15 @@ def reset_sync_status():
 
 
 def main():
-    print("""
-\033[32m╔══════════════════════════════════════════════════════════════════════════════╗
-║  ██╗  ██╗ ██████╗ ███╗   ██╗███████╗██╗   ██╗    ███████╗███████╗ ██████╗  ║
-║  ██║  ██║██╔═══██╗████╗  ██║██╔════╝╚██╗ ██╔╝    ██╔════╝██╔════╝██╔════╝  ║
-║  ███████║██║   ██║██╔██╗ ██║█████╗   ╚████╔╝     ███████╗█████╗  ██║       ║
-║  ██╔══██║██║   ██║██║╚██╗██║██╔══╝    ╚██╔╝      ╚════██║██╔══╝  ██║       ║
-║  ██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗  ║
-║  ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝  ║
-╚══════════════════════════════════════════════════════════════════════════════╝\033[0m
-""")
     init_env()
+    print_logo()
     logger.info(f"Monitor started (DB_TYPE={DB_TYPE}).")
     logger.info(f"DEBUG: DB_USER={DB_USER}, DB_HOST={DB_HOST}, DB_NAME={DB_NAME}")
 
     if THREAT_BRIDGE_WEBHOOK_URL:
-        logger.info(f"Threat Intelligence Bridge ENABLED. Target: {THREAT_BRIDGE_WEBHOOK_URL}")
+        logger.info(f"{Colors.CYAN}[CONFIG] Threat Intelligence Bridge ENABLED.{Colors.RESET} Target: {THREAT_BRIDGE_WEBHOOK_URL}")
     else:
-        logger.warning("Threat Intelligence Bridge DISABLED (URL not set).")
+        logger.warning("[CONFIG] Threat Intelligence Bridge DISABLED (URL not set).")
 
     logger.info("Waiting 30s for DB to be ready...")
     time.sleep(30) 
