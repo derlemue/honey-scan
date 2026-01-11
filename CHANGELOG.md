@@ -1,3 +1,14 @@
+## [8.2.0] - 2026-01-11
+
+### Added
+- 🎨 **Logging**: Enhanced sidecar logging with ANSI colors (`[SCAN]`, `[SYNC]`, `[GEO]`) replacing emojis.
+- 💛 **Visuals**: Added yellow "Honey Sec" ASCII logo on startup (`hsec_ascii.logo`).
+- 🔇 **Silence**: Silenced verbose SQL query logging in sidecar logic.
+- 🚦 **Status**: Added granular status tracking and detailed logs for all major operations.
+
+### Changed
+- 🔧 **Git**: Corrected repository commit history author.
+
 ## [8.1.0] - 2026-01-11
 
 ### Added

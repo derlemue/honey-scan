@@ -36,6 +36,14 @@ The goal is to enrich this payload with the geolocation data that the Sidecar ha
 - **Consistency**: Ensures the API DB and Sidecar DB have identical location data.
 - **Speed**: Faster processing of threat signals on the API side.
 
+### 🔑 API Key Identity Source
+**Status**: 📝 Idea
+**Priority**: Low
+
+**Description**
+Allow linking individual names/identities to API keys within the `.env` file (e.g., `API_KEY_1_NAME=Sidecar-Sec`, `API_KEY_2_NAME=Sidecar-Cloud`). This would allow the API to log the exact source name instead of just validating the key, providing better granularity in audit logs.
+
+
 ---
 
 ## ✅ Completed
