@@ -1,4 +1,14 @@
-## [8.7.0] - 2026-01-11
+## [8.8.0] - 2026-01-11
+
+### 🚀 Minor Release: Feed Analytics & UX Overhaul
+- **Stable Milestone**: Updated project version to `8.8.0`.
+- **Features**:
+  - 📊 **Deep Analytics**: Expanded Top 3 to **Top 10** threats in the feed, with improved percentage tracking and grid layout.
+  - 🌍 **Categorized Search**: Reports are now automatically grouped by country when searching (3+ characters), featuring flag emojis for each origin.
+  - ⚡ **Performance Engine**: Implemented server-side metadata caching and web server optimization via `.htaccess` (Gzip, Expires headers).
+  - 🚩 **Global Flags**: Comprehensive country-to-emoji mapping for real-time visibility.
+
+## [8.7.1] - 2026-01-11
 
 ### 🚀 Minor Release: Feed Intelligence & Analytics
 - **Stable Milestone**: Updated project version to `8.7.0`.

@@ -47,6 +47,10 @@
         .top-country-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
         .top-country-bar-bg { background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; width: 100%; margin-top: 4px; }
         .top-country-bar-fg { background: var(--primary); height: 100%; border-radius: 2px; }
+        
+        /* Grouping Styles */
+        .country-group { margin-top: 20px; }
+        .country-group-header { display: flex; align-items: center; gap: 10px; font-size: 1rem; color: var(--primary); font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid rgba(74, 222, 128, 0.2); padding-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -79,43 +83,73 @@
         $topCountries = [];
         $totalRecent = 0;
         $thirtyMinsAgo = time() - (30 * 60);
+        $metaCacheFile = './reports_meta.json';
+        $metaCache = [];
 
-        if (is_dir($scanDir)) {
-            $files = scandir($scanDir);
-            foreach ($files as $file) {
-                if (str_ends_with($file, '.txt')) {
-                    $filePath = $scanDir . '/' . $file;
-                    if (filemtime($filePath) >= $thirtyMinsAgo) {
-                        $handle = fopen($filePath, "r");
-                        if ($handle) {
-                            $firstLine = fgets($handle);
-                            fclose($handle);
-                            if (str_contains($firstLine, 'Geolocation:')) {
-                                $parts = explode(':', $firstLine);
-                                if (isset($parts[1])) {
-                                    $geoContent = explode(',', $parts[1]);
-                                    $country = trim($geoContent[0]);
-                                    if ($country) {
-                                        $topCountries[$country] = ($topCountries[$country] ?? 0) + 1;
-                                        $totalRecent++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            arsort($topCountries);
-            $top3 = array_slice($topCountries, 0, 3, true);
-            $top3Sum = array_sum($top3);
+        if (file_exists($metaCacheFile)) {
+            $metaCache = json_decode(file_get_contents($metaCacheFile), true) ?: [];
         }
 
         $countryEmojis = [
             'Germany' => '🇩🇪', 'United States' => '🇺🇸', 'China' => '🇨🇳', 'Russia' => '🇷🇺',
             'France' => '🇫🇷', 'United Kingdom' => '🇬🇧', 'Japan' => '🇯🇵', 'Brazil' => '🇧🇷',
             'Canada' => '🇨🇦', 'India' => '🇮🇳', 'Netherlands' => '🇳🇱', 'Ukraine' => '🇺🇦',
-            'Cyprus' => '🇨🇾', 'Seychelles' => '🇸🇨', 'Singapore' => '🇸🇬', 'Hong Kong' => '🇭🇰'
+            'Cyprus' => '🇨🇾', 'Seychelles' => '🇸🇨', 'Singapore' => '🇸🇬', 'Hong Kong' => '🇭🇰',
+            'Italy' => '🇮🇹', 'Spain' => '🇪🇸', 'Poland' => '🇵🇱', 'Turkey' => '🇹🇷',
+            'Israel' => '🇮🇱', 'Ireland' => '🇮🇪', 'Japan' => '🇯🇵', 'Korea' => '🇰🇷',
+            'Australia' => '🇦🇺', 'Switzerland' => '🇨🇭', 'Austria' => '🇦🇹', 'Sweden' => '🇸🇪',
+            'Norway' => '🇳🇴', 'Finland' => '🇫🇮', 'Denmark' => '🇩🇰', 'Bulgaria' => '🇧🇬'
         ];
+
+        function getEmoji($country) {
+            global $countryEmojis;
+            return $countryEmojis[$country] ?? '🏳️';
+        }
+
+        if (is_dir($scanDir)) {
+            $files = scandir($scanDir);
+            $newMeta = false;
+            foreach ($files as $file) {
+                if (str_ends_with($file, '.txt')) {
+                    $filePath = $scanDir . '/' . $file;
+                    $mtime = filemtime($filePath);
+                    
+                    // Analytics logic (Recent only)
+                    if ($mtime >= $thirtyMinsAgo) {
+                        $country = "Unknown";
+                        if (isset($metaCache[$file]) && $metaCache[$file]['mtime'] == $mtime) {
+                            $country = $metaCache[$file]['country'];
+                        } else {
+                            $handle = fopen($filePath, "r");
+                            if ($handle) {
+                                $firstLine = fgets($handle);
+                                fclose($handle);
+                                if (str_contains($firstLine, 'Geolocation:')) {
+                                    $parts = explode(':', $firstLine);
+                                    if (isset($parts[1])) {
+                                        $geoContent = explode(',', $parts[1]);
+                                        $country = trim($geoContent[0]);
+                                    }
+                                }
+                            }
+                            $metaCache[$file] = ['country' => $country, 'mtime' => $mtime];
+                            $newMeta = true;
+                        }
+
+                        if ($country && $country != "Unknown") {
+                            $topCountries[$country] = ($topCountries[$country] ?? 0) + 1;
+                            $totalRecent++;
+                        }
+                    }
+                }
+            }
+            if ($newMeta) {
+                file_put_contents($metaCacheFile, json_encode($metaCache));
+            }
+            arsort($topCountries);
+            $top10 = array_slice($topCountries, 0, 10, true);
+            $top10Sum = array_sum($top10);
+        }
         ?>
 
         <div class="section">
@@ -127,14 +161,14 @@
                     <div class="analytics-label">Last 30 Minutes</div>
                 </div>
                 <div class="analytics-card" style="grid-column: span 2;">
-                    <div class="analytics-label">Top 3 Threat Origins</div>
-                    <div style="margin-top: 10px;">
-                        <?php if (empty($top3)): ?>
-                            <div style="color: #64748b; font-style: italic;">No recent scan data</div>
+                    <div class="analytics-label">Top 10 Threat Origins</div>
+                    <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px;">
+                        <?php if (empty($top10)): ?>
+                            <div style="color: #64748b; font-style: italic; grid-column: span 2;">No recent scan data</div>
                         <?php else: ?>
-                            <?php foreach ($top3 as $country => $count): 
-                                $pct = $top3Sum > 0 ? round(($count / $top3Sum) * 100) : 0;
-                                $emoji = $countryEmojis[$country] ?? '🏳️';
+                            <?php foreach ($top10 as $country => $count): 
+                                $pct = $top10Sum > 0 ? round(($count / $top10Sum) * 100) : 0;
+                                $emoji = getEmoji($country);
                             ?>
                                 <div style="margin-bottom: 8px;">
                                     <div class="top-country-item">
@@ -167,21 +201,24 @@
                     echo ' (' . number_format($reportCount) . ' Reports)';
                 }
             ?></h2>
-            <input type="text" id="searchInput" class="search-box" placeholder="Search reports..." onkeyup="filterReports()">
-            <ul class="report-list">
-                <?php
-                if (is_dir($scanDir)) {
-                    usort($txtFiles, function($a, $b) use ($scanDir) {
-                        return filemtime($scanDir . '/' . $b) - filemtime($scanDir . '/' . $a);
-                    });
-                    foreach ($txtFiles as $file) {
-                        echo '<li class="report-item"><a href="scans/' . htmlspecialchars($file) . '">' . htmlspecialchars($file) . '</a></li>';
+            <input type="text" id="searchInput" class="search-box" placeholder="Search reports (grouping starts at 3+ chars)..." onkeyup="filterReports()">
+            <div id="reportContainer">
+                <ul class="report-list" id="mainReportList">
+                    <?php
+                    if (is_dir($scanDir)) {
+                        usort($txtFiles, function($a, $b) use ($scanDir) {
+                            return filemtime($scanDir . '/' . $b) - filemtime($scanDir . '/' . $a);
+                        });
+                        foreach ($txtFiles as $file) {
+                            $country = $metaCache[$file]['country'] ?? 'Unknown';
+                            echo '<li class="report-item" data-country="' . htmlspecialchars($country) . '"><a href="scans/' . htmlspecialchars($file) . '">' . htmlspecialchars($file) . '</a></li>';
+                        }
+                    } else {
+                        echo '<!-- Scans dir not found -->';
                     }
-                } else {
-                    echo '<!-- Scans dir not found -->';
-                }
-                ?>
-            </ul>
+                    ?>
+                </ul>
+            </div>
         </div>
         
         <footer style="margin-top: 50px; text-align: center; color: #64748b; font-size: 0.8rem;">
@@ -191,21 +228,56 @@
     <script>
         window.onload = checkStatus;
 
+        const countryEmojis = <?php echo json_encode($countryEmojis); ?>;
+        const originalList = document.getElementById('mainReportList').innerHTML;
+
         function filterReports() {
-            var input, filter, ul, li, a, i, txtValue;
-            input = document.getElementById('searchInput');
-            filter = input.value.toUpperCase();
-            ul = document.querySelector('.report-list');
-            li = ul.getElementsByTagName('li');
-            for (i = 0; i < li.length; i++) {
-                a = li[i].getElementsByTagName("a")[0];
-                txtValue = a.textContent || a.innerText;
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    li[i].style.display = "";
-                } else {
-                    li[i].style.display = "none";
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toUpperCase();
+            const container = document.getElementById('reportContainer');
+            
+            if (filter.length < 3) {
+                // Normal plain list
+                container.innerHTML = '<ul class="report-list" id="mainReportList">' + originalList + '</ul>';
+                const li = container.getElementsByTagName('li');
+                for (let i = 0; i < li.length; i++) {
+                    const txtValue = li[i].textContent || li[i].innerText;
+                    li[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
                 }
+                return;
             }
+
+            // Grouped results (3+ chars)
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalList;
+            const items = Array.from(tempDiv.getElementsByTagName('li'));
+            
+            const filteredItems = items.filter(li => {
+                const txtValue = li.textContent || li.innerText;
+                return txtValue.toUpperCase().indexOf(filter) > -1;
+            });
+
+            const groups = {};
+            filteredItems.forEach(li => {
+                const country = li.getAttribute('data-country') || 'Unknown';
+                if (!groups[country]) groups[country] = [];
+                groups[country].push(li.outerHTML);
+            });
+
+            let html = '';
+            // Sort countries alphabetically
+            const sortedCountries = Object.keys(groups).sort();
+            
+            sortedCountries.forEach(country => {
+                const emoji = countryEmojis[country] || '🏳️';
+                html += `<div class="country-group">`;
+                html += `<div class="country-group-header"><span>${emoji}</span> ${country} (${groups[country].length})</div>`;
+                html += `<ul class="report-list">${groups[country].join('')}</ul>`;
+                html += `</div>`;
+            });
+
+            if (html === '') html = '<div style="padding: 20px; color: #64748b; text-align: center;">No reports found for this query</div>';
+            container.innerHTML = html;
         }
 
         let currentUserIp = '';
