@@ -8,7 +8,7 @@
 # --- KONFIGURATION ---
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
-FEED_URL_BACKUP="https://raw.githubusercontent.com/derlemue/honey-scan/main/feed/banned_ips.txt"
+
 BAN_TIME=1209600 # 14 Tage
 AUTO_UPDATE=true 
 SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/banned_ips.sh"
@@ -64,10 +64,10 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.2"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.3"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
-    echo -e "${BLUE}[INFO]${NC} Backup Feed: ${YELLOW}$FEED_URL_BACKUP${NC}"
+
     echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
     echo "----------------------------------------------------------------"
 }
@@ -327,11 +327,8 @@ DOWNLOAD_FILE=$(mktemp)
 if curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "$FEED_URL" -o "$DOWNLOAD_FILE"; then
     echo -e "${GREEN}[OK]${NC} Received IPs from primary feed."
 # Fallback to backup feed if primary fails
-elif curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "$FEED_URL_BACKUP" -o "$DOWNLOAD_FILE"; then
-    echo -e "${YELLOW}[WARN]${NC} Primary feed failed. Falling back to backup feed..."
-    echo -e "${GREEN}[OK]${NC} Received IPs from backup feed."
 else
-    echo -e "${RED}[ERROR]${NC} Failed to fetch feed from both primary and backup sources."
+    echo -e "${RED}[ERROR]${NC} Failed to fetch feed from primary source."
     rm -f "$DOWNLOAD_FILE" "$REMOTE_FILE"
     exit 1
 fi
