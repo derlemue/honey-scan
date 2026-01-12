@@ -39,7 +39,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Dynamic Manager - Version 4.0.1"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Dynamic Manager - Version 4.0.2"
 }
 
 print_banner
