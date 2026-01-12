@@ -15,6 +15,7 @@ SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/b
 SCRIPT_URL_BACKUP="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/banned_ips.sh" # Same for now, can be adjusted if needed
 DEBUG_UPDATE=true # Set to true for verbose update logs
 JAIL="sshd"
+FEED_JAIL="honey-feed"
 
 # --- COLORS & AESTHETICS ---
 GREEN='\033[0;32m'
@@ -65,7 +66,7 @@ print_banner() {
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
     echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.5"
-    echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$JAIL${NC}"
+    echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$FEED_JAIL${NC} (Legacy/Cleanup: $JAIL)"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 
     echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
@@ -242,9 +243,39 @@ else
     echo -e "${GREEN}[OK]${NC} Configuration up to date."
 fi
 
-# 3. Ensure Service is Running
+# 2b. Feed Jail Configuration (honey-feed - NO WEBHOOKS)
+FEED_CONF="/etc/fail2ban/jail.d/honey-feed.conf"
+TEMP_FEED_CONFIG=$(mktemp)
+
+cat > "$TEMP_FEED_CONFIG" <<EOF
+[$FEED_JAIL]
+enabled = true
+# Persist Ban Time (14 Days)
+bantime = $BAN_TIME
+# Redundantly set banaction
+banaction = $NFT_ACTION
+# Whitelist
+ignoreip = $CURRENT_WHITELIST
+# ONLY Firewall Action, NO REPORTING (hfish-client)
+action = $NFT_ACTION
+EOF
+
+if [ ! -f "$FEED_CONF" ] || ! cmp -s "$TEMP_FEED_CONFIG" "$FEED_CONF"; then
+    echo -e "${BLUE}[INFO]${NC} Creating/Updating Feed Jail configuration ($FEED_CONF)..."
+    mv "$TEMP_FEED_CONFIG" "$FEED_CONF"
+    NEED_RESTART=true
+else
+    rm -f "$TEMP_FEED_CONFIG"
+    echo -e "${GREEN}[OK]${NC} Feed Jail configuration up to date."
+fi
+
+# 3. Ensure Services are Running
 if ! fail2ban-client status "$JAIL" &>/dev/null; then
     echo -e "${YELLOW}[WARN]${NC} Jail '$JAIL' is not active. Restart required."
+    NEED_RESTART=true
+fi
+if ! fail2ban-client status "$FEED_JAIL" &>/dev/null; then
+    echo -e "${YELLOW}[WARN]${NC} Jail '$FEED_JAIL' is not active. Restart required."
     NEED_RESTART=true
 fi
 
@@ -344,8 +375,8 @@ setup_persistence
 
 # Set Ban Time dynamically
 # Note: This affects new bans.
-if fail2ban-client set "$JAIL" bantime "$BAN_TIME" &>/dev/null; then
-    echo -e "${GREEN}[OK]${NC} Jail '$JAIL' bantime set to ${YELLOW}$BAN_TIME${NC} seconds."
+if fail2ban-client set "$FEED_JAIL" bantime "$BAN_TIME" &>/dev/null; then
+    echo -e "${GREEN}[OK]${NC} Jail '$FEED_JAIL' bantime set to ${YELLOW}$BAN_TIME${NC} seconds."
 else
     echo -e "${RED}[WARN]${NC} Could not set bantime dynamically. Using jail defaults."
 fi
@@ -381,11 +412,11 @@ echo -e "${GREEN}[OK]${NC} Validated ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
 rm -f "$DOWNLOAD_FILE"
 
 # 2. Sync IPs to Fail2Ban
-echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to Fail2Ban jail '$JAIL'..."
+echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to Fail2Ban jail '$FEED_JAIL'..."
 
 # Get currently banned IPs to avoid redundant calls (Optimization)
 EXISTING_BANS_FILE=$(mktemp)
-fail2ban-client status "$JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -s ' ' '\n' | sort -u > "$EXISTING_BANS_FILE"
+fail2ban-client status "$FEED_JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -s ' ' '\n' | sort -u > "$EXISTING_BANS_FILE"
 
 # Prepare IPs to ban: Remote IPs minus Existing Bans
 IPS_TO_BAN_FILE=$(mktemp)
@@ -402,7 +433,7 @@ else
     CURRENT=0
     
     while IFS= read -r ip; do
-        fail2ban-client set "$JAIL" banip "$ip" &>/dev/null
+        fail2ban-client set "$FEED_JAIL" banip "$ip" &>/dev/null
         ((CURRENT++))
         
         # Progress bar every 50 IPs
@@ -430,7 +461,7 @@ else
     UNBANNED=0
     while IFS= read -r ip; do
         if [[ -z "$ip" ]]; then continue; fi
-        fail2ban-client set "$JAIL" unbanip "$ip" &>/dev/null
+        fail2ban-client set "$FEED_JAIL" unbanip "$ip" &>/dev/null
         ((UNBANNED++))
         
         if ((UNBANNED % 50 == 0)); then
@@ -445,8 +476,8 @@ rm -f "$EXISTING_BANS_FILE" "$IPS_TO_BAN_FILE" "$REMOTE_FILE" "$IPS_TO_UNBAN_FIL
 
 # 3. Summary
 echo -e "${BLUE}[STEP 3/3]${NC} Verification..."
-TOTAL_BANS=$(fail2ban-client status "$JAIL" | grep "Currently banned:" | sed 's/.*Currently banned://' | tr -d ' ')
-echo -e "${BLUE}[INFO]${NC} Total currently banned IPs in jail '$JAIL': ${YELLOW}$TOTAL_BANS${NC}"
+TOTAL_BANS=$(fail2ban-client status "$FEED_JAIL" | grep "Currently banned:" | sed 's/.*Currently banned://' | tr -d ' ')
+echo -e "${BLUE}[INFO]${NC} Total currently banned IPs in jail '$FEED_JAIL': ${YELLOW}$TOTAL_BANS${NC}"
 
 echo "----------------------------------------------------------------"
 echo -e "${GREEN}[SUCCESS]${NC} Sync completed at $(date)"
