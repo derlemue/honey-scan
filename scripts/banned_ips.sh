@@ -65,7 +65,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 2.9.5"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 3.0.0"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$FEED_JAIL${NC} (Legacy/Cleanup: $JAIL)"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
 
@@ -275,6 +275,7 @@ banaction = $NFT_ACTION
 ignoreip = $CURRENT_WHITELIST
 # ONLY Firewall Action, NO REPORTING (hfish-client)
 action = $NFT_ACTION
+         hfish-client
 EOF
 
 if [ ! -f "$FEED_CONF" ] || ! cmp -s "$TEMP_FEED_CONFIG" "$FEED_CONF"; then
@@ -449,7 +450,20 @@ else
     # Process in chunks to give feedback
     CURRENT=0
     
+    # Safety: Add timeout loop for very large imports to prevent script hang
+    START_TIME=$(date +%s)
+    MAX_RUNTIME=600 # 10 Minutes max for the banning loop
+
     while IFS= read -r ip; do
+        # Check runtime
+        NOW=$(date +%s)
+        ELAPSED=$((NOW - START_TIME))
+        if [ "$ELAPSED" -gt "$MAX_RUNTIME" ]; then
+             echo ""
+             echo -e "${RED}[WARN]${NC} Max runtime exceeded ($MAX_RUNTIME s). Stopping import to allow next run to continue."
+             break
+        fi
+
         fail2ban-client set "$FEED_JAIL" banip "$ip" &>/dev/null
         ((CURRENT++))
         
