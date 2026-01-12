@@ -80,7 +80,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 3.1.0"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 3.1.1"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$FEED_JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
     echo "----------------------------------------------------------------"
@@ -214,6 +214,21 @@ fi
 FEED_CONF="/etc/fail2ban/jail.d/honey-feed.conf"
 TEMP_FEED_CONFIG=$(mktemp)
 
+# Conditional Reporting: Check if hfish-client exists
+REPORTING_ACTION=""
+# Check for hfish-client in PATH or standard locations
+if command -v hfish-client &>/dev/null; then
+    REPORTING_ACTION="hfish-client"
+    # Note: We assume if the binary exists, the action config is either present 
+    # or the user is responsible for it on a custom setup. 
+    # For a purely clean install, reporting is disabled unless hfish-client is pre-installed.
+elif [ -f "/usr/local/bin/hfish-client" ]; then
+     # Fallback check if not in PATH
+     REPORTING_ACTION="hfish-client"
+fi
+
+[ -n "$REPORTING_ACTION" ] && echo -e "${BLUE}[INFO]${NC} Reporting enabled (found hfish-client)." || echo -e "${YELLOW}[INFO]${NC} Reporting disabled (hfish-client not found)."
+
 cat > "$TEMP_FEED_CONFIG" <<EOF
 [$FEED_JAIL]
 enabled = true
@@ -223,9 +238,9 @@ bantime = $BAN_TIME
 banaction = $NFT_ACTION
 # Whitelist
 ignoreip = $CURRENT_WHITELIST
-# Firewall Action AND Reporting
+# Firewall Action AND Reporting (if available)
 action = $NFT_ACTION
-         hfish-client
+         $REPORTING_ACTION
 EOF
 
 if [ ! -f "$FEED_CONF" ] || ! cmp -s "$TEMP_FEED_CONFIG" "$FEED_CONF"; then
