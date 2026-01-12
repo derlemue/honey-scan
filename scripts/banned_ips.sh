@@ -54,7 +54,7 @@ if ! command -v fail2ban-client &>/dev/null; then
     
     # Check for interactive flag or assume headless if no tty
     if [ -t 0 ]; then
-        echo -ne "${CYAN}[PROMPT]${NC} Would you like to install fail2ban now? (y/N) [15s timeout]: "
+        echo -ne "${CYAN}[PROMPT]${NC} Would you like to install fail2ban now? (Y/n) [15s timeout]: "
         read -t 15 -n 1 user_input
         echo "" 
         if [[ "$user_input" =~ ^[Yy]$ || -z "$user_input" ]]; then
@@ -80,7 +80,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 3.1.1"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 3.1.2"
     echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$FEED_JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
     echo "----------------------------------------------------------------"
