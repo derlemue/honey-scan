@@ -2,7 +2,10 @@
 
 # ==============================================================================
 # Script: client_banned_ips.sh
-# Funktion: Efficient Sync Feed -> Local F2B (sshd) & TCP/UDP Dual-Block
+# Funktion: Efficient Sync Feed -> Local F2B (honey-feed jail)
+#           - Headless Installation Support
+#           - Persistence Configuration (15 Days DB)
+#           - No interference with standard/legacy Jails
 # ==============================================================================
 
 # --- KONFIGURATION ---
@@ -10,11 +13,12 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 FEED_URL="https://feed.sec.lemue.org/banned_ips.txt"
 
 BAN_TIME=1209600 # 14 Tage
+DB_PURGE_AGE=1296000 # 15 Tage (slightly longer than ban time to ensure persistence)
 AUTO_UPDATE=true 
 SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/banned_ips.sh"
-SCRIPT_URL_BACKUP="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/banned_ips.sh" # Same for now, can be adjusted if needed
-DEBUG_UPDATE=true # Set to true for verbose update logs
-JAIL="sshd"
+SCRIPT_URL_BACKUP="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/banned_ips.sh" 
+DEBUG_UPDATE=true 
+
 FEED_JAIL="honey-feed"
 
 # --- COLORS & AESTHETICS ---
@@ -26,35 +30,46 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # --- DEPENDENCY CHECK (Fail2Ban) ---
+install_fail2ban() {
+    echo -e "${BLUE}[INFO]${NC} Installing Fail2Ban (Headless/Auto)..."
+    export DEBIAN_FRONTEND=noninteractive
+    if command -v apt-get &>/dev/null; then
+        apt-get update -q && apt-get install -y -q fail2ban
+    elif command -v yum &>/dev/null; then
+        yum install -y fail2ban
+    else
+        echo -e "${RED}[ERROR]${NC} No compatible package manager found. Please install fail2ban manually."
+        exit 1
+    fi
+    
+    if ! command -v fail2ban-client &>/dev/null; then
+        echo -e "${RED}[ERROR]${NC} Installation failed. Exiting."
+        exit 1
+    fi
+    echo -e "${GREEN}[SUCCESS]${NC} Fail2Ban installed successfully."
+}
+
 if ! command -v fail2ban-client &>/dev/null; then
     echo -e "${YELLOW}[WARN]${NC} Fail2Ban is not installed but required."
-    echo -ne "${CYAN}[PROMPT]${NC} Would you like to install fail2ban now? (y/N) [15s timeout]: "
-    read -t 15 -n 1 user_input
-    echo "" # Newline after input
-
-    if [[ "$user_input" =~ ^[Yy]$ ]]; then
-        echo -e "${BLUE}[INFO]${NC} Installing Fail2Ban..."
-        if command -v apt-get &>/dev/null; then
-            apt-get update && apt-get install -y fail2ban
-        elif command -v yum &>/dev/null; then
-            yum install -y fail2ban
+    
+    # Check for interactive flag or assume headless if no tty
+    if [ -t 0 ]; then
+        echo -ne "${CYAN}[PROMPT]${NC} Would you like to install fail2ban now? (y/N) [15s timeout]: "
+        read -t 15 -n 1 user_input
+        echo "" 
+        if [[ "$user_input" =~ ^[Yy]$ || -z "$user_input" ]]; then
+            install_fail2ban
         else
-            echo -e "${RED}[ERROR]${NC} No compatible package manager found. Please install fail2ban manually."
-            exit 1
+             echo -e "${RED}[ERROR]${NC} Fail2Ban is required. Exiting."
+             exit 1
         fi
-        
-        if ! command -v fail2ban-client &>/dev/null; then
-            echo -e "${RED}[ERROR]${NC} Installation failed. Exiting."
-            exit 1
-        fi
-        echo -e "${GREEN}[SUCCESS]${NC} Fail2Ban installed successfully."
     else
-        echo -e "${RED}[ERROR]${NC} Fail2Ban is required for this script. Exiting."
-        exit 1
+        # Headless mode: Auto-install
+        echo -e "${BLUE}[INFO]${NC} Running in headless mode. Proceeding with auto-installation."
+        install_fail2ban
     fi
 fi
 
-# --- BANNER ---
 # --- BANNER ---
 print_banner() {
     echo -e "${YELLOW}"
@@ -65,11 +80,9 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 3.0.0"
-    echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$FEED_JAIL${NC} (Legacy/Cleanup: $JAIL)"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Banning Client - Version 3.1.0"
+    echo -e "${BLUE}[INFO]${NC} Target Jail: ${YELLOW}$FEED_JAIL${NC}"
     echo -e "${BLUE}[INFO]${NC} Feed URL: ${YELLOW}$FEED_URL${NC}"
-
-    echo -e "${BLUE}[INFO]${NC} Auto-Update: ${YELLOW}${AUTO_UPDATE}${NC}"
     echo "----------------------------------------------------------------"
 }
 
@@ -100,7 +113,6 @@ self_update() {
     # Primary update attempt
     if curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
         [ "$DEBUG_UPDATE" = true ] && echo -e "${CYAN}[DEBUG]${NC} Primary update download successful."
-    # Backup update attempt if primary fails
     elif curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "${SCRIPT_URL_BACKUP}?v=$(date +%s)" -o "$TEMP_FILE"; then
         [ "$DEBUG_UPDATE" = true ] && echo -e "${CYAN}[DEBUG]${NC} Backup update download successful."
     else
@@ -145,46 +157,24 @@ echo -e "${BLUE}[INFO]${NC} Checking Fail2Ban configuration..."
 
 NEED_RESTART=false
 
-# 1. Custom Action Content (Idempotent Check)
+# 1. Custom Action Content
 ACTION_FILE="/etc/fail2ban/action.d/honey-nftables.conf"
 TEMP_ACTION=$(mktemp)
 cat > "$TEMP_ACTION" <<'EOF'
 [Definition]
 # Option:  actionstart
-# Notes.:  command executed once at the start of Fail2Ban.
-# Values:  CMD
-#
 actionstart = nft add table inet f2b-table
               nft add chain inet f2b-table f2b-chain { type filter hook input priority filter - 1\; }
               nft add set inet f2b-table addr-set-<name> { type ipv4_addr\; }
               nft add rule inet f2b-table f2b-chain ip saddr @addr-set-<name> reject
 
 # Option:  actionstop
-# Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD
-#
 actionstop = nft delete set inet f2b-table addr-set-<name>
-             # We do not flush the chain/table as other jails might use it
-             # nft delete chain inet f2b-table f2b-chain
 
 # Option:  actionban
-# Notes.:  command executed when banning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <failures>  number of failures
-#          <time>  unix timestamp of the ban time
-# Values:  CMD
-#
 actionban = nft add element inet f2b-table addr-set-<name> { <ip> }
 
 # Option:  actionunban
-# Notes.:  command executed when unbanning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <failures>  number of failures
-#          <time>  unix timestamp of the ban time
-# Values:  CMD
-#
 actionunban = nft delete element inet f2b-table addr-set-<name> { <ip> }
 
 [Init]
@@ -199,49 +189,9 @@ else
     rm -f "$TEMP_ACTION"
 fi
 
-# 2. Jail Configuration Content (Idempotent Check)
-OVERRIDE_CONF="/etc/fail2ban/jail.d/defaults-debian.conf"
+# 2. Jail Configuration
 NFT_ACTION="honey-nftables"
-ACTION_SPEC="action = $NFT_ACTION"
-
-# Check if hfish-client action exists
-if [ -f "/etc/fail2ban/action.d/hfish-client.conf" ]; then
-    ACTION_SPEC="$ACTION_SPEC
-         hfish-client"
-fi
-
-# PRESERVE WHITELIST
 CURRENT_WHITELIST="127.0.0.1/8 ::1"
-if [ -f "$OVERRIDE_CONF" ]; then
-    # Extract existing ignoreip if found
-    EXISTING_IP=$(grep "^ignoreip =" "$OVERRIDE_CONF" | cut -d'=' -f2- | xargs)
-    if [ ! -z "$EXISTING_IP" ]; then
-        CURRENT_WHITELIST="$EXISTING_IP"
-    fi
-fi
-
-TEMP_CONFIG=$(mktemp)
-cat > "$TEMP_CONFIG" <<EOF
-[sshd]
-enabled = true
-# Persist Ban Time (14 Days)
-bantime = $BAN_TIME
-# Redundantly set banaction to ensure Fail2Ban knows what to use for banning itself
-banaction = $NFT_ACTION
-# Hier die Whitelist einfügen:
-ignoreip = $CURRENT_WHITELIST
-# Enforce our detected action (All Ports)
-$ACTION_SPEC
-EOF
-
-if [ ! -f "$OVERRIDE_CONF" ] || ! cmp -s "$TEMP_CONFIG" "$OVERRIDE_CONF"; then
-    echo -e "${BLUE}[INFO]${NC} Updating Fail2Ban configuration ($OVERRIDE_CONF)..."
-    mv "$TEMP_CONFIG" "$OVERRIDE_CONF"
-    NEED_RESTART=true
-else
-    rm -f "$TEMP_CONFIG"
-    echo -e "${GREEN}[OK]${NC} Configuration up to date."
-fi
 
 # 2a. Feed Jail Filter (Dummy)
 FEED_FILTER="/etc/fail2ban/filter.d/honey-feed.conf"
@@ -260,7 +210,7 @@ else
     rm -f "$TEMP_FEED_FILTER"
 fi
 
-# 2b. Feed Jail Configuration (honey-feed - NO WEBHOOKS)
+# 2b. Feed Jail Configuration
 FEED_CONF="/etc/fail2ban/jail.d/honey-feed.conf"
 TEMP_FEED_CONFIG=$(mktemp)
 
@@ -273,7 +223,7 @@ bantime = $BAN_TIME
 banaction = $NFT_ACTION
 # Whitelist
 ignoreip = $CURRENT_WHITELIST
-# ONLY Firewall Action, NO REPORTING (hfish-client)
+# Firewall Action AND Reporting
 action = $NFT_ACTION
          hfish-client
 EOF
@@ -287,22 +237,45 @@ else
     echo -e "${GREEN}[OK]${NC} Feed Jail configuration up to date."
 fi
 
-# 3. Ensure Services are Running
-if ! fail2ban-client status "$JAIL" &>/dev/null; then
-    echo -e "${YELLOW}[WARN]${NC} Jail '$JAIL' is not active. Restart required."
+# 3. Persistence Configuration (fail2ban.local)
+# Ensure clean overrides for persistence
+F2B_LOCAL="/etc/fail2ban/fail2ban.local"
+if [ ! -f "$F2B_LOCAL" ]; then
+    echo -e "${BLUE}[INFO]${NC} Creating persistence configuration ($F2B_LOCAL)..."
+    echo "[Definition]" > "$F2B_LOCAL"
+    echo "dbpurgeage = $DB_PURGE_AGE" >> "$F2B_LOCAL"
     NEED_RESTART=true
+else
+    # Check if correct value is set
+    if ! grep -q "dbpurgeage = $DB_PURGE_AGE" "$F2B_LOCAL"; then
+         echo -e "${BLUE}[INFO]${NC} Updating persistence configuration to 15 days..."
+         # Use sed to replace or append
+         if grep -q "dbpurgeage" "$F2B_LOCAL"; then
+             sed -i "s/^dbpurgeage = .*/dbpurgeage = $DB_PURGE_AGE/" "$F2B_LOCAL"
+         else
+             # Append under Definition if exists, or just append
+             echo "dbpurgeage = $DB_PURGE_AGE" >> "$F2B_LOCAL"
+         fi
+         NEED_RESTART=true
+    fi
 fi
+
+
+# 4. Service Maintenance
 if ! fail2ban-client status "$FEED_JAIL" &>/dev/null; then
     echo -e "${YELLOW}[WARN]${NC} Jail '$FEED_JAIL' is not active. Restart required."
     NEED_RESTART=true
 fi
 
-# 4. Restart Logic
+# 5. Restart Logic
 if [ "$NEED_RESTART" = true ]; then
     echo -e "${BLUE}[INFO]${NC} Configuration changed or service down. Restarting Fail2Ban..."
     service fail2ban restart &>/dev/null || systemctl restart fail2ban &>/dev/null
-    # Ensure service starts on boot
     systemctl enable fail2ban &>/dev/null
+    
+    # Wait for service to come up
+    sleep 2
+    
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}[OK]${NC} Fail2Ban restarted and enabled successfully."
     else
@@ -313,53 +286,33 @@ else
     echo -e "${GREEN}[OK]${NC} Fail2Ban is running and config is stable. Skipping restart."
 fi
 
-# --- PERSISTENCE SETUP ---
+# --- PERSISTENCE SETUP (Cron) ---
 setup_persistence() {
-    # Ensure script runs on boot and periodically
-    
-    # Get absolute path
     ABS_PATH=$(realpath "$0" 2>/dev/null)
     if [ -z "$ABS_PATH" ]; then
         ABS_PATH=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
     fi
     
-    # Get current crontab
     CURRENT_CRON=$(crontab -l 2>/dev/null)
     NEW_CRON=""
     CHANGED=false
     
-    # 1. Filter and Clean (Remove stale paths)
     while IFS= read -r line || [ -n "$line" ]; do
-        # Skip empty lines in processing but preserve logic if needed (cron handles empty lines fine or ignores them)
         if [[ -z "$line" ]]; then continue; fi
-        
-        if [[ "$line" == *"banned_ips.sh"* ]]; then
-             # If line contains script name but NOT the correct path -> cleanup
-             if [[ "$line" != *"$ABS_PATH"* ]]; then
-                 echo -e "${YELLOW}[CLEAN]${NC} Removing stale cron entry: $line"
-                 CHANGED=true
-                 continue
-             fi
+        if [[ "$line" == *"banned_ips.sh"* && "$line" != *"$ABS_PATH"* ]]; then
+             echo -e "${YELLOW}[CLEAN]${NC} Removing stale cron entry: $line"
+             CHANGED=true
+             continue
         fi
         NEW_CRON+="$line"$'\n'
     done <<< "$CURRENT_CRON"
 
-    # 2. Check & Add Missing Jobs
     HAS_REBOOT=false
     HAS_PERIODIC=false
     
-    # Check for @reboot with correct path
-    if echo "$NEW_CRON" | grep -Fq "@reboot $ABS_PATH"; then
-        HAS_REBOOT=true
-    fi
-    
-    # Check for ANY periodic job with correct path (ignoring the specific time interval)
-    # Matches: numbers/stars/slashes followed by path
-    if echo "$NEW_CRON" | grep -E "^[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +.*$ABS_PATH" > /dev/null; then
-        HAS_PERIODIC=true
-    fi
+    if echo "$NEW_CRON" | grep -Fq "@reboot $ABS_PATH"; then HAS_REBOOT=true; fi
+    if echo "$NEW_CRON" | grep -E "^[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +[0-9*/,-]+ +.*$ABS_PATH" > /dev/null; then HAS_PERIODIC=true; fi
 
-    # Add @reboot if missing
     if [ "$HAS_REBOOT" = false ]; then
         NEW_CRON+="@reboot $ABS_PATH >> /var/log/banned_ips.log 2>&1"$'\n'
         CHANGED=true
@@ -368,62 +321,49 @@ setup_persistence() {
         [ "$DEBUG_UPDATE" = true ] && echo -e "${GREEN}[OK]${NC} @reboot job already exists."
     fi
 
-    # Add default periodic (*/15) ONLY if no periodic job exists for this script
     if [ "$HAS_PERIODIC" = false ]; then
         NEW_CRON+="*/15 * * * * $ABS_PATH >> /var/log/banned_ips.log 2>&1"$'\n'
         CHANGED=true
         echo -e "${GREEN}[OK]${NC} Added periodic job (15 min)."
     else
-        # Inform user that custom or existing interval is preserved
         EXISTING_JOB=$(echo "$NEW_CRON" | grep -E "^[0-9*/,-]+ +.*$ABS_PATH" | head -n 1)
-        # Only show this if we are not just running quietly or if changed
         if [ "$CHANGED" = true ] || [ "$DEBUG_UPDATE" = true ]; then
              echo -e "${GREEN}[OK]${NC} Preserving existing periodic job: ${YELLOW}$EXISTING_JOB${NC}"
         fi
     fi
     
-    # 3. Apply Changes
     if [ "$CHANGED" = true ]; then
-        # Remove trailing newline for cleanliness if needed, but echo handles it
         echo -n "$NEW_CRON" | crontab -
         echo -e "${GREEN}[SUCCESS]${NC} Persistence configuration updated."
     fi
 }
 setup_persistence
 
-# Set Ban Time dynamically
-# Note: This affects new bans.
+# Set Ban Time dynamically (Best Effort)
 if fail2ban-client set "$FEED_JAIL" bantime "$BAN_TIME" &>/dev/null; then
     echo -e "${GREEN}[OK]${NC} Jail '$FEED_JAIL' bantime set to ${YELLOW}$BAN_TIME${NC} seconds."
-else
-    echo -e "${RED}[WARN]${NC} Could not set bantime dynamically. Using jail defaults."
 fi
 
-# --- CORE LOGIC ---
-
+# --- CORE SET FOR PROCESSING ---
 # 1. Fetch Remote IPs
 echo -e "${BLUE}[STEP 1/3]${NC} Fetching remote ban list..."
 REMOTE_FILE=$(mktemp)
 DOWNLOAD_FILE=$(mktemp)
 
-# Download first with timeout (30s max time, 10s connect timeout) and retries (3 attempts, 5s delay)
 if curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "$FEED_URL" -o "$DOWNLOAD_FILE"; then
     echo -e "${GREEN}[OK]${NC} Received IPs from primary feed."
-# Fallback to backup feed if primary fails
 else
     echo -e "${RED}[ERROR]${NC} Failed to fetch feed from primary source."
     rm -f "$DOWNLOAD_FILE" "$REMOTE_FILE"
     exit 1
 fi
 
-# Security: Check if file is empty
 if [ ! -s "$DOWNLOAD_FILE" ]; then
      echo -e "${RED}[ERROR]${NC} Downloaded feed is empty. Aborting."
      rm -f "$DOWNLOAD_FILE" "$REMOTE_FILE"
      exit 1
 fi
 
-# Validate and Sanitize
 grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' "$DOWNLOAD_FILE" > "$REMOTE_FILE"
 REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
 echo -e "${GREEN}[OK]${NC} Validated ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
@@ -432,11 +372,9 @@ rm -f "$DOWNLOAD_FILE"
 # 2. Sync IPs to Fail2Ban
 echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to Fail2Ban jail '$FEED_JAIL'..."
 
-# Get currently banned IPs to avoid redundant calls (Optimization)
 EXISTING_BANS_FILE=$(mktemp)
 fail2ban-client status "$FEED_JAIL" | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -s ' ' '\n' | sort -u > "$EXISTING_BANS_FILE"
 
-# Prepare IPs to ban: Remote IPs minus Existing Bans
 IPS_TO_BAN_FILE=$(mktemp)
 sort -u "$REMOTE_FILE" | comm -23 - "$EXISTING_BANS_FILE" > "$IPS_TO_BAN_FILE"
 
@@ -446,8 +384,6 @@ if [ "$COUNT_TO_BAN" -eq 0 ]; then
     echo -e "${GREEN}[OK]${NC} No new IPs to ban. All feed IPs are already jailed."
 else
     echo -e "${BLUE}[INFO]${NC} Found ${YELLOW}$COUNT_TO_BAN${NC} new IPs to ban."
-    
-    # Process in chunks to give feedback
     CURRENT=0
     
     # Safety: Add timeout loop for very large imports to prevent script hang
@@ -455,7 +391,6 @@ else
     MAX_RUNTIME=600 # 10 Minutes max for the banning loop
 
     while IFS= read -r ip; do
-        # Check runtime
         NOW=$(date +%s)
         ELAPSED=$((NOW - START_TIME))
         if [ "$ELAPSED" -gt "$MAX_RUNTIME" ]; then
@@ -467,9 +402,7 @@ else
         fail2ban-client set "$FEED_JAIL" banip "$ip" &>/dev/null
         ((CURRENT++))
         
-        # Progress bar every 50 IPs
         if ((CURRENT % 50 == 0)); then
-             # Periodic Logo Display (Aesthetics)
              print_banner
              echo -ne "\r${BLUE}[INFO]${NC} Banning progress: $CURRENT / $COUNT_TO_BAN"
         fi
@@ -478,7 +411,7 @@ else
     echo -e "${GREEN}[OK]${NC} Finished banning new IPs."
 fi
 
-# New: Remove IPs that are no longer in the feed (Unban logic)
+# New: Remove IPs that are no longer in the feed
 echo -e "${BLUE}[INFO]${NC} Checking for IPs to unban (no longer in feed)..."
 IPS_TO_UNBAN_FILE=$(mktemp)
 sort -u "$REMOTE_FILE" | comm -13 - "$EXISTING_BANS_FILE" > "$IPS_TO_UNBAN_FILE"
