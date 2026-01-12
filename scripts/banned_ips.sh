@@ -39,10 +39,62 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Dynamic Manager - Version 4.0.0"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Dynamic Manager - Version 4.0.1"
 }
 
 print_banner
+
+# --- SINGLETON CHECK ---
+LOCK_FILE="/var/lock/honey_client_bans.lock"
+[ -d "$LOCK_FILE" ] && rm -rf "$LOCK_FILE"
+
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+    echo -e "${RED}[ERROR]${NC} Another instance is already running. Exiting."
+    exit 1
+fi
+
+# --- AUTO UPDATE ---
+self_update() {
+    if [ "$AUTO_UPDATE" != "true" ]; then return; fi
+    # Break loop if already restarted
+    for arg in "$@"; do
+        if [ "$arg" == "--restarted" ]; then return; fi
+    done
+
+    if ! command -v curl &> /dev/null || ! command -v md5sum &> /dev/null; then return; fi
+
+    TEMP_FILE=$(mktemp)
+    # Primary update attempt
+    if curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "${SCRIPT_URL}?v=$(date +%s)" -o "$TEMP_FILE"; then
+         : # Success
+    else
+        echo -e "${RED}[ERROR]${NC} Failed to check for updates."
+        rm -f "$TEMP_FILE"
+        return
+    fi
+    
+    # Security: Check if file is empty or invalid
+    if [ ! -s "$TEMP_FILE" ] || ! bash -n "$TEMP_FILE"; then
+        echo -e "${RED}[ERROR]${NC} Invalid update file. Aborting."
+        rm -f "$TEMP_FILE"
+        return
+    fi
+    
+    LOCAL_HASH=$(md5sum "$0" | awk '{print $1}')
+    REMOTE_HASH=$(md5sum "$TEMP_FILE" | awk '{print $1}')
+    
+    if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+        echo -e "${YELLOW}[UPDATE]${NC} New version found. Updating..."
+        cp "$TEMP_FILE" "$0"
+        chmod +x "$0"
+        rm -f "$TEMP_FILE"
+        echo -e "----------------------------------------------------------------"
+        exec bash "$0" "--restarted" "$@"
+    fi
+    rm -f "$TEMP_FILE"
+}
+self_update "$@"
 
 # --- DEPENDENCIES ---
 install_deps() {
@@ -90,9 +142,15 @@ setup_components() {
         cp "$CLIENT_SCRIPT_SOURCE" "/usr/local/bin/honey-client.sh"
         chmod +x "/usr/local/bin/honey-client.sh"
     elif [ ! -f "/usr/local/bin/honey-client.sh" ]; then
-         # TODO: Download fallback could go here
-         echo -e "${RED}[ERROR]${NC} honey-client.sh not found (checked scripts/, ./, /root/)!"
-         exit 1
+         echo -e "${YELLOW}[DOWNLOAD]${NC} honey-client.sh not found. Downloading..."
+         CLIENT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/honey-client.sh"
+         if curl -s -f "$CLIENT_URL" -o "/usr/local/bin/honey-client.sh"; then
+             chmod +x "/usr/local/bin/honey-client.sh"
+             echo -e "${GREEN}[OK]${NC} Downloaded honey-client.sh."
+         else
+             echo -e "${RED}[ERROR]${NC} Failed to download honey-client.sh!"
+             exit 1
+         fi
     fi
     
     # 2. Install Action Config
@@ -103,14 +161,22 @@ setup_components() {
     
     if [ -n "$ACTION_CONF_SOURCE" ]; then
         cp "$ACTION_CONF_SOURCE" "/etc/fail2ban/action.d/honey-client.conf"
-    else
-        # Fallback creation
-        cat > "/etc/fail2ban/action.d/honey-client.conf" <<EOF
+    elif [ ! -f "/etc/fail2ban/action.d/honey-client.conf" ]; then
+        # Try Download
+        echo -e "${YELLOW}[DOWNLOAD]${NC} honey-client.conf not found. Downloading..."
+        CONF_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/config/honey-client.conf"
+        if curl -s -f "$CONF_URL" -o "/etc/fail2ban/action.d/honey-client.conf"; then
+             echo -e "${GREEN}[OK]${NC} Downloaded honey-client.conf."
+        else
+            # Fallback creation
+            echo -e "${YELLOW}[WARN]${NC} Download failed. Using internal fallback."
+            cat > "/etc/fail2ban/action.d/honey-client.conf" <<EOF
 [Definition]
 actionban = /usr/local/bin/honey-client.sh <ip>
 actionunban = 
 [Init]
 EOF
+        fi
     fi
 
     # 3. Honey-Firewall Action
