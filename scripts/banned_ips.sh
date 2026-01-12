@@ -243,6 +243,23 @@ else
     echo -e "${GREEN}[OK]${NC} Configuration up to date."
 fi
 
+# 2a. Feed Jail Filter (Dummy)
+FEED_FILTER="/etc/fail2ban/filter.d/honey-feed.conf"
+TEMP_FEED_FILTER=$(mktemp)
+cat > "$TEMP_FEED_FILTER" <<EOF
+[Definition]
+failregex =
+ignoreregex =
+EOF
+
+if [ ! -f "$FEED_FILTER" ] || ! cmp -s "$TEMP_FEED_FILTER" "$FEED_FILTER"; then
+    echo -e "${BLUE}[INFO]${NC} Creating/Updating Feed Filter ($FEED_FILTER)..."
+    mv "$TEMP_FEED_FILTER" "$FEED_FILTER"
+    NEED_RESTART=true
+else
+    rm -f "$TEMP_FEED_FILTER"
+fi
+
 # 2b. Feed Jail Configuration (honey-feed - NO WEBHOOKS)
 FEED_CONF="/etc/fail2ban/jail.d/honey-feed.conf"
 TEMP_FEED_CONFIG=$(mktemp)
