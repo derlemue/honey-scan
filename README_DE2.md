@@ -7,7 +7,7 @@
 
 <br>
 
-[![Project Status](https://img.shields.io/badge/Status-Active-success)
+![Project Status](https://img.shields.io/badge/Status-Active-success)
 ![Version](https://img.shields.io/badge/beta-v8.13.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
