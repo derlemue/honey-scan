@@ -27,6 +27,7 @@ DB_TYPE = os.getenv("DB_TYPE", "mysql")
 
 geo_lock = threading.Lock()
 sync_lock = threading.Lock()
+queue_lock = threading.Lock()
 DB_HOST = os.getenv("DB_HOST", "mariadb")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
 DB_USER = os.getenv("DB_USER", "hfish") # User Request (Made configurable)
@@ -401,44 +402,56 @@ def process_queue():
     if not os.path.exists(QUEUE_DIR):
         return
 
-    # 1. Cleanup Old Files (TTL 72h)
-    now = time.time()
-    ttl = 72 * 3600
-    files = sorted([os.path.join(QUEUE_DIR, f) for f in os.listdir(QUEUE_DIR) if f.endswith('.json')])
-    
-    for f_path in files:
-        try:
-            # Check age based on filename (timestamp_ip.json)
-            basename = os.path.basename(f_path)
-            ts_str = basename.split('_')[0]
-            if ts_str.isdigit():
-                file_ts = int(ts_str)
-                if now - file_ts > ttl:
-                    os.remove(f_path)
-                    logger.info(f"[{Colors.YELLOW}PRUNE{Colors.RESET}] Removed expired queue file: {basename}")
+    # Non-blocking lock to prevent multiple threads from processing the queue simultaneously
+    # If locked, we assume another thread is already handling it or will handle it soon.
+    if not queue_lock.acquire(blocking=False):
+        return
+
+    try:
+        # 1. Cleanup Old Files (TTL 72h)
+        now = time.time()
+        ttl = 72 * 3600
+        files = sorted([os.path.join(QUEUE_DIR, f) for f in os.listdir(QUEUE_DIR) if f.endswith('.json')])
+        
+        for f_path in files:
+            try:
+                # Check existance again to be safe (though lock should prevent most races)
+                if not os.path.exists(f_path):
                     continue
-            
-            # 2. Process valid file
-            with open(f_path, 'r') as f:
-                data = json.load(f)
-            
-            ip = data.get('attack_ip')
-            if not ip:
-                os.remove(f_path) # Corrupt
-                continue
+
+                # Check age based on filename (timestamp_ip.json)
+                basename = os.path.basename(f_path)
+                ts_str = basename.split('_')[0]
+                if ts_str.isdigit():
+                    file_ts = int(ts_str)
+                    if now - file_ts > ttl:
+                        os.remove(f_path)
+                        logger.info(f"[{Colors.YELLOW}PRUNE{Colors.RESET}] Removed expired queue file: {basename}")
+                        continue
                 
-            # Attempt sync
-            if _push_single_ip(ip, is_retry=True):
-                os.remove(f_path)
-                logger.info(f"[{Colors.GREEN}RETRY{Colors.RESET}] Successfully synced queued IP: {ip}")
-                time.sleep(0.5) # Flood protection
-            else:
-                # Still failing, stop processing queue to avoid spam/load
-                # logger.warning(f"[{Colors.YELLOW}RETRY{Colors.RESET}] Retry failed for {ip}. Pausing queue.")
-                break 
+                # 2. Process valid file
+                with open(f_path, 'r') as f:
+                    data = json.load(f)
                 
-        except Exception as e:
-            logger.error(f"Error processing queue file {f_path}: {e}")
+                ip = data.get('attack_ip')
+                if not ip:
+                    os.remove(f_path) # Corrupt
+                    continue
+                    
+                # Attempt sync
+                if _push_single_ip(ip, is_retry=True):
+                    os.remove(f_path)
+                    logger.info(f"[{Colors.GREEN}RETRY{Colors.RESET}] Successfully synced queued IP: {ip}")
+                    time.sleep(0.5) # Flood protection
+                else:
+                    # Still failing, stop processing queue to avoid spam/load
+                    # logger.warning(f"[{Colors.YELLOW}RETRY{Colors.RESET}] Retry failed for {ip}. Pausing queue.")
+                    break 
+                    
+            except Exception as e:
+                logger.error(f"Error processing queue file {f_path}: {e}")
+    finally:
+        queue_lock.release()
 
 def _push_single_ip(ip, is_retry=False):
     """Helper to push a single IP to all configured webhooks."""
