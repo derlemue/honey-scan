@@ -468,22 +468,37 @@ sync_feed() {
     echo -e "${BLUE}[STEP 1/3]${NC} Fetching remote ban list..."
     REMOTE_FILE=$(mktemp)
     DOWNLOAD_FILE=$(mktemp)
+    CACHE_FILE="/root/banned_ips.txt"
 
     if curl -s --max-time 30 --connect-timeout 10 --retry 3 --retry-delay 5 --retry-connrefused -f "$FEED_URL" -o "$DOWNLOAD_FILE"; then
         echo -e "${GREEN}[OK]${NC} Received IPs from primary feed."
+        
+        if [ ! -s "$DOWNLOAD_FILE" ]; then
+             echo -e "${RED}[ERROR]${NC} Downloaded feed is empty."
+             if [ -f "$CACHE_FILE" ]; then
+                 echo -e "${YELLOW}[WARN]${NC} Falling back to local cache: $CACHE_FILE"
+                 cat "$CACHE_FILE" | tr -s ' ' '\n' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' > "$REMOTE_FILE"
+             else
+                 rm -f "$DOWNLOAD_FILE" "$REMOTE_FILE"
+                 exit 1
+             fi
+        else
+             grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' "$DOWNLOAD_FILE" > "$REMOTE_FILE"
+             # Update Cache
+             cp "$REMOTE_FILE" "$CACHE_FILE"
+             echo -e "${GREEN}[CACHE]${NC} Updated local cache ($CACHE_FILE)."
+        fi
     else
         echo -e "${RED}[ERROR]${NC} Failed to fetch feed from primary source."
-        rm -f "$DOWNLOAD_FILE" "$REMOTE_FILE"
-        exit 1
+        if [ -f "$CACHE_FILE" ]; then
+             echo -e "${YELLOW}[WARN]${NC} Falling back to local cache: $CACHE_FILE"
+             cat "$CACHE_FILE" | tr -s ' ' '\n' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' > "$REMOTE_FILE"
+        else
+             rm -f "$DOWNLOAD_FILE" "$REMOTE_FILE"
+             exit 1
+        fi
     fi
 
-    if [ ! -s "$DOWNLOAD_FILE" ]; then
-         echo -e "${RED}[ERROR]${NC} Downloaded feed is empty. Aborting."
-         rm -f "$DOWNLOAD_FILE" "$REMOTE_FILE"
-         exit 1
-    fi
-
-    grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' "$DOWNLOAD_FILE" > "$REMOTE_FILE"
     REMOTE_COUNT=$(wc -l < "$REMOTE_FILE")
     echo -e "${GREEN}[OK]${NC} Validated ${YELLOW}$REMOTE_COUNT${NC} IPs from feed."
     rm -f "$DOWNLOAD_FILE"
