@@ -562,7 +562,7 @@ def sync_to_bridge():
             return
 
         logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Loading pending webhooks from cache (unsynced IPs)...")
-        # logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Processing batch sync for {len(rows)} IPs...")
+        logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Processing batch sync for {len(rows)} IPs...")
         for row in rows:
             ip = row['ip']
             # During full sync, they are technically 'new' for the bridge status check
