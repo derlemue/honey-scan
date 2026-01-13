@@ -377,36 +377,109 @@ def update_node_location():
         logger.error(f"Database update failed: {e}")
         if conn: conn.close()
 
-def push_intelligence(ip, is_new_hint=None):
-    if is_blacklisted(ip):
-        return False
+QUEUE_DIR = "/app/queue"
+
+def save_to_queue(ip):
+    """Save failed IP report to queue file with timestamp."""
+    try:
+        if not os.path.exists(QUEUE_DIR):
+            os.makedirs(QUEUE_DIR, exist_ok=True)
+            
+        timestamp = int(time.time())
+        filename = f"{QUEUE_DIR}/{timestamp}_{ip}.json"
         
+        # Don't overwrite if exists (rare collision)
+        if not os.path.exists(filename):
+            with open(filename, 'w') as f:
+                json.dump({"attack_ip": ip, "timestamp": timestamp}, f)
+            logger.info(f"[{Colors.YELLOW}QUEUE{Colors.RESET}] Saved {ip} to offline queue.")
+    except Exception as e:
+        logger.error(f"Failed to save to queue: {e}")
+
+def process_queue():
+    """Process queued files: Oldest first, max age 72h."""
+    if not os.path.exists(QUEUE_DIR):
+        return
+
+    # 1. Cleanup Old Files (TTL 72h)
+    now = time.time()
+    ttl = 72 * 3600
+    files = sorted([os.path.join(QUEUE_DIR, f) for f in os.listdir(QUEUE_DIR) if f.endswith('.json')])
+    
+    for f_path in files:
+        try:
+            # Check age based on filename (timestamp_ip.json)
+            basename = os.path.basename(f_path)
+            ts_str = basename.split('_')[0]
+            if ts_str.isdigit():
+                file_ts = int(ts_str)
+                if now - file_ts > ttl:
+                    os.remove(f_path)
+                    logger.info(f"[{Colors.YELLOW}PRUNE{Colors.RESET}] Removed expired queue file: {basename}")
+                    continue
+            
+            # 2. Process valid file
+            with open(f_path, 'r') as f:
+                data = json.load(f)
+            
+            ip = data.get('attack_ip')
+            if not ip:
+                os.remove(f_path) # Corrupt
+                continue
+                
+            # Attempt sync
+            if _push_single_ip(ip, is_retry=True):
+                os.remove(f_path)
+                logger.info(f"[{Colors.GREEN}RETRY{Colors.RESET}] Successfully synced queued IP: {ip}")
+                time.sleep(0.5) # Flood protection
+            else:
+                # Still failing, stop processing queue to avoid spam/load
+                # logger.warning(f"[{Colors.YELLOW}RETRY{Colors.RESET}] Retry failed for {ip}. Pausing queue.")
+                break 
+                
+        except Exception as e:
+            logger.error(f"Error processing queue file {f_path}: {e}")
+
+def _push_single_ip(ip, is_retry=False):
+    """Helper to push a single IP to all configured webhooks."""
     if not THREAT_BRIDGE_WEBHOOK_URL:
         return False
-
+        
     urls = [u.strip() for u in THREAT_BRIDGE_WEBHOOK_URL.split(',') if u.strip()]
     if not urls:
         return False
         
-    success_count = 0
+    success = False
     for url in urls:
         try:
-            # Prepare payload
             payload = {"attack_ip": ip}
-            
-            # Simple logging for first url only if hint provided? No, log per URL.
-            # But avoid spam.
-            
             resp = requests.post(url, json=payload, timeout=5)
             if resp.status_code == 200:
-                logger.info(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [200 OK]")
-                success_count += 1
+                if not is_retry:
+                    logger.info(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [200 OK]")
+                success = True
             else:
-                logger.error(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [{Colors.RED}FAILED{Colors.RESET}: {resp.status_code}]")
+                if not is_retry:
+                    logger.error(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [{Colors.RED}FAILED{Colors.RESET}: {resp.status_code}]")
         except Exception as e:
-            logger.error(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [{Colors.RED}ERROR{Colors.RESET}: {e}]")
-            
-    return success_count > 0
+            if not is_retry:
+                logger.error(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [{Colors.RED}ERROR{Colors.RESET}: {e}]")
+    
+    return success
+
+def push_intelligence(ip, is_new_hint=None):
+    if is_blacklisted(ip):
+        return False
+        
+    # Attempt Primary Sync
+    if _push_single_ip(ip):
+        # On success, trigger queue processing (connection is alive)
+        process_queue() 
+        return True
+    else:
+        # On failure, queue for later
+        save_to_queue(ip)
+        return False
 
 def sync_to_bridge():
     """Sync unsynced IPs to the bridge with a 50ms delay."""
@@ -419,6 +492,10 @@ def sync_to_bridge():
 
     conn = None
     try:
+        # Check queue first if we are in a maintenance/recovery cycle
+        # process_queue() # Optional: Run periodically? It runs on_success of push_intelligence.
+        pass
+
         logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Checking for unsynced IPs...")
         conn = get_db_connection()
         if not conn:
