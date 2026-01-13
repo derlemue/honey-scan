@@ -305,6 +305,33 @@ EOF
         fi
     done
     
+    # 3.1 Docker-Specific Discovery (lemue-io special case)
+    if [ -f "/root/nginx/logs/access.log" ]; then
+        JAIL_NAME="honey-nginx-docker"
+        ACTIVE_HONEY_JAILS="$ACTIVE_HONEY_JAILS $JAIL_NAME"
+        echo -e "${BLUE}[INFO]${NC} Detected Docker Nginx logs."
+        
+        CONF="/etc/fail2ban/jail.d/$JAIL_NAME.conf"
+        cat > "$CONF.tmp" <<EOF
+[$JAIL_NAME]
+enabled = true
+# Use standard nginx-botsearch or nginx-http-auth filter
+filter = nginx-botsearch
+logpath = /root/nginx/logs/access.log
+bantime = $TACTICAL_BANTIME
+banaction = honey-nftables
+action = honey-nftables
+         honey-client
+EOF
+        if [ ! -f "$CONF" ] || ! cmp -s "$CONF.tmp" "$CONF"; then
+            mv "$CONF.tmp" "$CONF"
+            echo -e "${GREEN}[NEW]${NC} Created Dynamic Jail: $JAIL_NAME"
+            NEED_RESTART=true
+        else
+            rm "$CONF.tmp"
+        fi
+    fi
+
     # 4. Cleanup Stale Honey Jails
     # Find all honey-*.conf, if not in ACTIVE_HONEY_JAILS and not honey-feed, delete.
     for f in /etc/fail2ban/jail.d/honey-*.conf; do
