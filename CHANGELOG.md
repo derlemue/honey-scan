@@ -1,3 +1,19 @@
+## [8.13.0] - 2026-01-13
+
+### 🚀 Minor Release: Expanded Monitoring & Sidecar Reliability
+- **Stable Milestone**: Updated project version to `8.13.0`.
+- **Client Shield (v4.1.0)**:
+  - 👁️ **Omniscient Monitoring**: `banned_ips.sh` now automatically detects and monitors logs from:
+    - **Nginx Proxy Manager** (Docker): Standard `/data/logs/` paths.
+    - **FRPS** (Native): `/var/log/frps.log`.
+    - **Nginx** (Docker): Standard access logs.
+  - 📊 **Dynamic Reporting**: The status summary now dynamically lists ALL active Fail2Ban jails (including default `sshd`, `honey-frps`, `honey-npm`, etc.) with perfect column alignment.
+  - 🎨 **UX**: Improved CLI output with `printf` alignment for a cleaner status report.
+- **Sidecar (Reliability)**:
+  - 💾 **Offline Caching**: Implemented a robust "Store-and-Forward" queue mechanism. If the Remote API or Webhook is down, threat data is saved to disk (`./queue`) with a 72h TTL.
+  - 🔄 **Auto-Retry**: The Sidecar automatically processes the offline queue when connectivity is restored, ensuring zero data loss during outages.
+  - 🛡️ **Flood Protection**: Added throttling to the retry mechanism to prevent API swamping after downtime.
+
 ## [8.12.0] - 2026-01-11
 
 ### 🚀 Minor Release: Strict Whitelist & Logic Refinement
