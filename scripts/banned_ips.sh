@@ -39,7 +39,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Dynamic Manager - Version 4.0.4"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Dynamic Manager - Version 4.0.6"
 }
 
 print_banner
@@ -555,14 +555,14 @@ sync_feed() {
     
     for jail in $ALL_JAILS; do
         COUNT=$(fail2ban-client status "$jail" 2>/dev/null | grep "Currently banned:" | sed 's/.*Currently banned://' | tr -d ' ')
-        
-        # Formatting
         jail_clean=$(echo "$jail" | xargs)
+        
+        TYPE="(Sensor)"
         if [[ "$jail_clean" == "$FEED_JAIL" ]]; then
-             echo -e "${BLUE}[INFO]${NC} Jail '${CYAN}$jail_clean${NC}' (Feed):   \t${YELLOW}$COUNT${NC} IPs"
-        else
-             echo -e "${BLUE}[INFO]${NC} Jail '${CYAN}$jail_clean${NC}' (Sensor): \t${YELLOW}$COUNT${NC} IPs"
+            TYPE="(Feed)"
         fi
+        
+        printf "${BLUE}[INFO]${NC} Jail '${CYAN}%-25s${NC}' %-8s : ${YELLOW}%5s${NC} IPs\n" "$jail_clean" "$TYPE" "$COUNT"
     done
 }
 
