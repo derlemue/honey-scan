@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honey-Scan | Audio Reports</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-color: #e93636;
+            --accent-hover: #ff5656;
+            --border-color: #30363d;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        /* HEADER SECTION (Matching README) */
+        .header-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo {
+            width: 300px;
+            height: auto;
+            border-radius: 50%;
+            padding: 10px;
+            margin-bottom: 20px;
+            /* In README it says "width=300" */
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            margin: 10px 0 5px 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .badges img {
+            height: 20px;
+        }
+
+        .avatars {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 40px;
+        }
+
+        .avatars img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .avatars img:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-color);
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 40px 0;
+            width: 100%;
+        }
+
+        /* CONTENT SECTION */
+        .content-section {
+            text-align: left;
+            animation: fadeInUp 0.6s ease-out backwards;
+            animation-delay: 0.2s;
+        }
+
+        .audio-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .audio-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .audio-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            border-color: var(--accent-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .badge-tag {
+            background-color: rgba(233, 54, 54, 0.15);
+            color: var(--accent-color);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+
+        audio::-webkit-media-controls-panel {
+            background-color: var(--bg-color);
+        }
+
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display {
+            color: var(--text-primary);
+        }
+
+        footer {
+            margin-top: 60px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header-section">
+            <!-- Logo -->
+            <img src="../web/assets/logo_bear.png" alt="Honey Scan Bear" class="logo">
+
+            <!-- Title -->
+            <h1 class="main-title">Honey Scan</h1>
+            <p class="subtitle">Active Defense & Threat Intelligence Platform</p>
+
+            <!-- Badges (Matching README) -->
+            <div class="badges">
+                <img src="https://img.shields.io/badge/Status-Active-success" alt="Status">
+                <img src="https://img.shields.io/badge/beta-v8.13.0-blue" alt="Version">
+                <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
+                <!-- Additional badges can be added here -->
+            </div>
+
+            <!-- Avatars (The "4 Developers" Requirement) -->
+            <div class="avatars">
+                <a href="https://github.com/osint-inc" title="Ph0x"><img
+                        src="https://avatars.githubusercontent.com/u/203046536?v=4" alt="Ph0x"></a>
+                <a href="https://github.com/derlemue" title="derlemue"><img
+                        src="https://avatars.githubusercontent.com/u/70407742?v=4" alt="derlemue"></a>
+                <a href="https://github.com/m3l1nda" title="m3l"><img
+                        src="https://avatars.githubusercontent.com/u/209894942?v=4" alt="m3l"></a>
+                <a href="https://github.com/Cipher-Pup" title="Cipher-Pup"><img
+                        src="https://avatars.githubusercontent.com/u/252939174?v=4" alt="Cipher-Pup"></a>
+            </div>
+
+            <p style="margin-top: 10px; font-style: italic; color: #8b949e;">Turn your honeypot into an active defense
+                system that bites back.</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="content-section">
+            <h2
+                style="margin-bottom: 30px; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
+                AUDIO INTELLIGENCE</h2>
+
+            <div class="audio-list">
+                <!-- Deep Research Report -->
+                <div class="audio-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Deep Research Report #5</h2>
+                        <span class="badge-tag">LATEST</span>
+                    </div>
+                    <audio controls>
+                        <source
+                            src="https://derlemue.github.io/assets/docs/reports/honey-scan-deepresearch-report-5.mp3"
+                            type="audio/mpeg">
+                    </audio>
+                </div>
+
+                <!-- Essay Analysis -->
+                <div class="audio-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Analysis Essay #1</h2>
+                        <span class="badge-tag">ARCHIVE</span>
+                    </div>
+                    <audio controls>
+                        <source src="https://derlemue.github.io/assets/docs/reports/derlemue-essay-1.mp3"
+                            type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Honey-Scan Active Defense.</p>
+        </footer>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honey-Scan | Video Vault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-color: #e93636;
+            --accent-hover: #ff5656;
+            --border-color: #30363d;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        /* HEADER SECTION (Matching README) */
+        .header-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo {
+            width: 300px;
+            height: auto;
+            border-radius: 50%;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            margin: 10px 0 5px 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .badges img {
+            height: 20px;
+        }
+
+        .avatars {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 40px;
+        }
+
+        .avatars img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .avatars img:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-color);
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 40px 0;
+            width: 100%;
+        }
+
+        /* CONTENT SECTION */
+        .content-section {
+            text-align: left;
+            animation: fadeInUp 0.6s ease-out backwards;
+            animation-delay: 0.2s;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .video-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            border-color: var(--accent-color);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 180px;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 3rem;
+            position: relative;
+        }
+
+        .play-icon {
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .video-card:hover .play-icon {
+            opacity: 1;
+            color: var(--accent-color);
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            color: var(--text-primary);
+        }
+
+        .card-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        footer {
+            margin-top: 60px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header-section">
+            <!-- Logo -->
+            <img src="../web/assets/logo_bear.png" alt="Honey Scan Bear" class="logo">
+
+            <!-- Title -->
+            <h1 class="main-title">Honey Scan</h1>
+            <p class="subtitle">Active Defense & Threat Intelligence Platform</p>
+
+            <!-- Badges -->
+            <div class="badges">
+                <img src="https://img.shields.io/badge/Status-Active-success" alt="Status">
+                <img src="https://img.shields.io/badge/beta-v8.13.0-blue" alt="Version">
+                <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
+            </div>
+
+            <!-- Avatars -->
+            <div class="avatars">
+                <a href="https://github.com/osint-inc" title="Ph0x"><img
+                        src="https://avatars.githubusercontent.com/u/203046536?v=4" alt="Ph0x"></a>
+                <a href="https://github.com/derlemue" title="derlemue"><img
+                        src="https://avatars.githubusercontent.com/u/70407742?v=4" alt="derlemue"></a>
+                <a href="https://github.com/m3l1nda" title="m3l"><img
+                        src="https://avatars.githubusercontent.com/u/209894942?v=4" alt="m3l"></a>
+                <a href="https://github.com/Cipher-Pup" title="Cipher-Pup"><img
+                        src="https://avatars.githubusercontent.com/u/252939174?v=4" alt="Cipher-Pup"></a>
+            </div>
+
+            <p style="margin-top: 10px; font-style: italic; color: #8b949e;">Turn your honeypot into an active defense
+                system that bites back.</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="content-section">
+            <h2
+                style="margin-bottom: 30px; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
+                VIDEO EVIDENCE VAULT</h2>
+
+            <div class="video-grid">
+                <!-- Placeholder for future videos -->
+                <div class="video-card">
+                    <div class="video-thumbnail">
+                        <span class="play-icon">▶</span>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">System Overview</h3>
+                        <div class="card-meta">
+                            <span>Coming Soon</span>
+                            <span>--:--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="video-card">
+                    <div class="video-thumbnail">
+                        <span class="play-icon">▶</span>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">Incident Analysis #1</h3>
+                        <div class="card-meta">
+                            <span>Coming Soon</span>
+                            <span>--:--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="video-card">
+                    <div class="video-thumbnail">
+                        <span class="play-icon">▶</span>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">Deployment Guide</h3>
+                        <div class="card-meta">
+                            <span>Coming Soon</span>
+                            <span>--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Honey-Scan Active Defense.</p>
+        </footer>
+    </div>
+
+</body>
+
+</html>

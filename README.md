@@ -33,6 +33,83 @@
 
 ---
 
+## 🌐 The Honey Ecosystem
+
+This repository (`honey-scan`) is the **SENSOR** component of the Honey Ecosystem. It works in tandem with [**honey-api**](https://github.com/lemueIO/honey-api) (the **AGGREGATOR**).
+
+### System Architecture
+
+The ecosystem relies on a distributed sensor network:
+1.  **Honey-Scan (Sensor)**: Deployed on the edge. Detects attacks, performs active reconnaissance (Nmap), and pushes raw intelligence to the API.
+2.  **Honey-API (Bridge)**: Centralizes data from multiple sensors, normalizes it into ThreatBook v3 format, and feeds SIEM/SOAR systems.
+
+```mermaid
+graph LR
+    subgraph "Edge Node (honey-scan)"
+        A[👹 Attacker] -- Hacks --> B(🍯 HFish Core)
+        B -- Logs --> C[(Local DB)]
+        D[🐍 Sidecar] -- Watches --> C
+        D -- Scans --> A
+    end
+    
+    subgraph "Core Cloud (honey-api)"
+        E[API Bridge]
+    end
+
+    D -- "POST /webhook" --> E
+    E --> F[SIEM / SOAR]
+    E --> G[Global Threat Feed]
+```
+
+### 🧠 Data Flow & API Contract (Deep Dive)
+
+When `honey-scan` detects a new attacker, the **Sidecar** (`monitor.py`) asynchronously triggers a webhook to `honey-api`.
+
+#### 1. The Trigger
+*   **Source**: `honey-scan/sidecar/monitor.py`
+*   **Method**: `POST`
+*   **Destination**: Defined by `THREAT_BRIDGE_WEBHOOK_URL` (see Integration below).
+
+#### 2. The Payload
+The sensor sends a lightweight JSON payload containing the detected IP. The API is responsible for further enrichment (Reputation, Geo, etc.).
+
+```json
+{
+  "attack_ip": "192.0.2.1"
+}
+```
+
+#### 3. The Endpoint
+The partner project `honey-api` listens on:
+*   **Endpoint**: `/webhook`
+*   **Method**: `POST`
+*   **Response**: `200 OK` (Acknowledged)
+
+---
+
+## 🔌 Integration Guide
+
+To link this **Sensor** (`honey-scan`) with the **API** (`honey-api`):
+
+1.  **Deploy Honey-API**: Ensure the partner project is running (e.g., at `https://api.yourdomain.com`).
+2.  **Configure Honey-Scan**:
+    Edit your `.env.apikeys` file in the `honey-scan` root directory.
+    
+    ```bash
+    # .env.apikeys
+    
+    # URL to your Honey-API instance webhook endpoint
+    THREAT_BRIDGE_WEBHOOK_URL=https://api.yourdomain.com/webhook
+    ```
+3.  **Restart Sidecar**:
+    ```bash
+    docker compose restart sidecar
+    ```
+    
+The sidecar will now automatically push every detected attacker IP to your central API.
+
+---
+
 > [!WARNING]
 > **⚠️ DISCLAIMER: HIGH RISK TOOL ⚠️**
 >
@@ -42,9 +119,6 @@
 > *   **Usage**: Use strictly for educational purposes or within controlled environments where you accept all liability. **The authors are not responsible for any misuse or legal consequences.**
 
 ---
-
-> [!NOTE]
-> **🗺️ Roadmap**: Check out our [ROADMAP.md](ROADMAP.md) to see planned features and future ideas.
 
 ## 🔴 Live Preview (Early Beta)
 
@@ -109,41 +183,14 @@ When an attacker touches your honeypot, Honey-Scan automatically:
 
 ---
 
-## 🏗️ Architecture
+## 🎥 Media Intelligence
 
-The system runs as a set of Docker containers extension to the core HFish binary:
+Access our exclusive audio reports and video evidence vaults directly:
 
-| Service | Type | Description |
-| :--- | :--- | :--- |
-| **HFish** | 🍯 Core | The base honeypot platform (Management & Nodes). (Standard ports `80`/`443`) |
-| **Sidecar** | 🐍 Python | The brain. Watches DB, orchestrates Nmap, updates feeds. |
-| **Feed** | 🌐 Nginx | Serves reports and banlists on port `8888`. |
+*   **🎧 [Audio Intelligence Portal](docs/audio-player.html)**: Listen to deep research reports and analysis essays.
+*   **🎬 [Video Evidence Vault](docs/video-vault.html)**: View recorded attack sessions and system demonstrations.
 
-```mermaid
-graph LR
-    A[👹 Attacker] -- 1. Hacks --> B(🍯 HFish)
-    B -- 2. Logs --> C[(💽 DB)]
-    D[🐍 Sidecar] -- 3. Watches --> C
-    D -- 4. Nmap Scan --> A
-    D -- 5. Updates --> E[📂 Feed]
-    F[💻 Dashboard] -- Reads --> E
-    G[🛡️ Prod Server] -- 6. Feeds & Blocks --> E
-```
-
-## 🔌 API Reference
-
-The system allows interaction via a REST API (Port 4444).
-
-| Endpoint | Method | Description |
-| :--- | :--- | :--- |
-| `/api/v1/hfish/sys_info` | `GET` | Returns system health, attack stats, and uptime. |
-| `/api/v1/config/black_list/add` | `POST` | Manually bans an IP by simulating an attack (Fail2Ban integration). |
-
-**Example (Ban IP):**
-```bash
-curl -X POST "https://sec.lemue.org/api/v1/config/black_list/add?api_key=YOUR_KEY" \
-     -d '{"ip": "1.2.3.4", "memo": "Manual Ban"}'
-```
+---
 
 ## 🛠️ Installation
 
