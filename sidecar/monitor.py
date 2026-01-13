@@ -44,6 +44,7 @@ FEED_DIR = "/app/feed"
 ASSETS_DIR = "/app/assets"
 BANNED_IPS_FILE = os.path.join(FEED_DIR, "banned_ips.txt")
 BLACKLIST_CONF_FILE = "/app/scan-blacklist.conf"
+BLACKLIST_CUSTOM_CONF_FILE = "/app/scan-blacklist-custom.conf"
 INDEX_FILE = os.path.join(FEED_DIR, "index.html")
 LIVE_THREATS_FILE = os.path.join(ASSETS_DIR, "live_threats.json")
 STATS_FILE = os.path.join(ASSETS_DIR, "stats.json")
@@ -111,20 +112,29 @@ def load_blacklist():
         return cached_blacklist
 
     networks = []
-    if os.path.exists(BLACKLIST_CONF_FILE):
-        try:
-            with open(BLACKLIST_CONF_FILE, 'r') as f:
-                for line in f:
-                    # Strip comments on the same line
-                    line = line.split('#')[0].strip()
-                    if not line:
-                        continue
-                    try:
-                        networks.append(ipaddress.ip_network(line, strict=False))
-                    except ValueError:
-                        logger.warning(f"Invalid blacklist entry: {line}")
-        except Exception as e:
-            logger.error(f"Error loading blacklist: {e}")
+    
+    # Helper to load a file
+    def parse_file(filepath):
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, 'r') as f:
+                    for line in f:
+                        # Strip comments on the same line
+                        line = line.split('#')[0].strip()
+                        if not line:
+                            continue
+                        try:
+                            networks.append(ipaddress.ip_network(line, strict=False))
+                        except ValueError:
+                            logger.warning(f"Invalid blacklist entry in {filepath}: {line}")
+            except Exception as e:
+                logger.error(f"Error loading blacklist {filepath}: {e}")
+
+    # Load Standard List
+    parse_file(BLACKLIST_CONF_FILE)
+    
+    # Load Custom List
+    parse_file(BLACKLIST_CUSTOM_CONF_FILE)
     
     cached_blacklist = networks
     last_blacklist_load = now
