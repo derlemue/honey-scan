@@ -12,7 +12,7 @@ The system operates on a **Split Defense Strategy**:
 graph TD
     subgraph "External World"
         Attacker[🔴 Attacker]
-        FeedServer[🟢 Feed Server (Lemue-Sec)]
+        FeedServer["🟢 Feed Server (Lemue-Sec)"]
         API[🔵 Report API (Lemue-Sec)]
     end
 
