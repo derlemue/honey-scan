@@ -1,33 +1,22 @@
 <div align="center">
-    <img src="web/assets/logo_bear.png" alt="Honey Scan Bear" width="300" style="border-radius: 50%; padding: 10px;">
-    <h1>Honey Scan</h1>
-    <p><b>Active Defense & Threat Intelligence Platform</b></p>
-    
-[![Project Status](https://img.shields.io/badge/Status-Active-success)](https://github.com/derlemue/honey-scan)
-![Version](https://img.shields.io/badge/beta-v8.13.0-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
-![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
-![Shell](https://img.shields.io/badge/Shell_Script-121011?style=flat&logo=gnu-bash&logoColor=white)
-![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=flat&logo=nginx&logoColor=white)
-![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=flat&logo=mariadb&logoColor=white)
-<br>
-![Repo Size](https://img.shields.io/github/repo-size/derlemue/honey-scan?style=flat&logo=github&label=Repo%20Size)
-![License](https://img.shields.io/github/license/derlemue/honey-scan?style=flat&logo=github&label=License)
-![Last Commit](https://img.shields.io/github/last-commit/derlemue/honey-scan?style=flat&logo=github&label=Last%20Commit)
-![Issues](https://img.shields.io/github/issues/derlemue/honey-scan?style=flat&logo=github&label=Open%20Issues)
 
-<p align="center">
-  <a href="https://github.com/osint-inc" title="Ph0x"><img src="https://avatars.githubusercontent.com/u/203046536?v=4" width="40" height="40" alt="Ph0x" style="border-radius: 50%;"></a>
-  <a href="https://github.com/derlemue" title="derlemue"><img src="https://avatars.githubusercontent.com/u/70407742?v=4" width="40" height="40" alt="derlemue" style="border-radius: 50%;"></a>
-  <a href="https://github.com/m3l1nda" title="m3l"><img src="https://avatars.githubusercontent.com/u/209894942?v=4" width="40" height="40" alt="m3l" style="border-radius: 50%;"></a>
-  <a href="https://github.com/Cipher-Pup" title="Cipher-Pup"><img src="https://avatars.githubusercontent.com/u/252939174?v=4" width="40" height="40" alt="Cipher-Pup" style="border-radius: 50%;"></a>
-</p>
+# Honey Scan
 
-*Turn your honeypot into an active defense system that bites back.*
+### The Sensor of the Honey-Ecosystem
 
-[🇬🇧 English](README.md) | [🇩🇪 Deutsch](README_DE.md) | [🇩🇪 Einfache Sprache](README_DE2.md) | [🇺🇦 Українська](README_UA.md)
+[![Version](https://img.shields.io/badge/VERSION-v8.13.0-blueviolet?style=for-the-badge)](https://github.com/derlemue/honey-scan)
+[![Python](https://img.shields.io/badge/PYTHON-3.9%2B-grey?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/DOCKER-ENABLED-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Status](https://img.shields.io/badge/STATUS-ACTIVE-success?style=for-the-badge)](https://github.com/derlemue/honey-scan)
+
+[![Repo Size](https://img.shields.io/github/repo-size/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
+[![License](https://img.shields.io/github/license/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
+[![Last Commit](https://img.shields.io/github/last-commit/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
+[![Issues](https://img.shields.io/github/issues/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
+
+<br/>
+
+🇬🇧 [English](README.md) • 🇩🇪 [Deutsch](README_DE.md) • 🇩🇪 [Einfache Sprache](README_DE2.md) • 🇺🇦 [Українська](README_UA.md)
 
 </div>
 
