@@ -1,26 +1,21 @@
 <div align="center">
+    <img src="web/assets/logo_bear.png" alt="Honey Scan Bear" width="300" style="border-radius: 50%; padding: 10px;">
+    <h1>Honey Scan</h1>
+    <h3>Aktives Verteidigungs-Ökosystem</h3>
 
-# 🍯 Honey-Scan
-### Aktives Verteidigungs-Ökosystem
-
-<img src="docs/img/logo.png" width="200">
-
+[![Project Status](https://img.shields.io/badge/STATUS-ACTIVE-success?style=for-the-badge)](https://github.com/derlemue/honey-scan)
+[![Version](https://img.shields.io/badge/VERSION-v8.13.0-blueviolet?style=for-the-badge)](https://github.com/derlemue/honey-scan)
+[![License](https://img.shields.io/badge/LICENSE-MIT-yellow?style=for-the-badge)](https://github.com/derlemue/honey-scan)
+[![Fork](https://img.shields.io/badge/FORKED%20FROM-HACKLCX%2FHFISH-9cf?style=for-the-badge&logo=github)](https://github.com/hacklcx/HFish)
+[![Docker](https://img.shields.io/badge/DOCKER-ENABLED-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Python](https://img.shields.io/badge/PYTHON-3.9%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Shell](https://img.shields.io/badge/SHELL-SCRIPT-121011?style=for-the-badge&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
+[![Nginx](https://img.shields.io/badge/NGINX-ENABLED-009639?style=for-the-badge&logo=nginx&logoColor=white)](https://nginx.org)
+[![MariaDB](https://img.shields.io/badge/MARIADB-BACKEND-003545?style=for-the-badge&logo=mariadb&logoColor=white)](https://mariadb.org)
 <br>
-
-[![Project Status](https://img.shields.io/badge/Status-Active-success)](https://github.com/derlemue/honey-scan)
-![Version](https://img.shields.io/badge/beta-v8.13.0-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
-![Fork](https://img.shields.io/badge/Forked%20from-hacklcx%2FHFish-9cf?style=flat&logo=github)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
-![Shell](https://img.shields.io/badge/Shell_Script-121011?style=flat&logo=gnu-bash&logoColor=white)
-![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=flat&logo=nginx&logoColor=white)
-![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=flat&logo=mariadb&logoColor=white)
-<br>
-![Repo Size](https://img.shields.io/github/repo-size/derlemue/honey-scan?style=flat&logo=github&label=Repo%20Size)
-![License](https://img.shields.io/github/license/derlemue/honey-scan?style=flat&logo=github&label=License)
-![Last Commit](https://img.shields.io/github/last-commit/derlemue/honey-scan?style=flat&logo=github&label=Last%20Commit)
-![Issues](https://img.shields.io/github/issues/derlemue/honey-scan?style=flat&logo=github&label=Open%20Issues)
+[![Repo Size](https://img.shields.io/github/repo-size/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
+[![Last Commit](https://img.shields.io/github/last-commit/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
+[![Issues](https://img.shields.io/github/issues/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
 
 <p align="center">
   <a href="https://github.com/osint-inc" title="Ph0x"><img src="https://avatars.githubusercontent.com/u/203046536?v=4" width="40" height="40" alt="Ph0x" style="border-radius: 50%;"></a>
@@ -31,7 +26,7 @@
 
 *Verwandle deinen Honeypot in ein aktives Verteidigungssystem, das zurück beißt.*
 
-[🇬🇧 English](README.md) | [🇩🇪 Deutsch](README_DE.md) | [🇩🇪 Einfache Sprache](README_DE2.md) | [🇺🇦 Українська](README_UA.md)
+🇬🇧 [English](README.md) • 🇩🇪 [Deutsch](README_DE.md) • 🇩🇪 [Einfache Sprache](README_DE2.md) • 🇺🇦 [Українська](README_UA.md)
 
 </div>
 

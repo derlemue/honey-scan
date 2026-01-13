@@ -1,20 +1,30 @@
 <div align="center">
+    <img src="web/assets/logo_bear.png" alt="Honey Scan Bear" width="300" style="border-radius: 50%; padding: 10px;">
+    <h1>Honey Scan</h1>
+    <h3>The Sensor of the Honey-Ecosystem</h3>
 
-# Honey Scan
-
-### The Sensor of the Honey-Ecosystem
-
+[![Project Status](https://img.shields.io/badge/STATUS-ACTIVE-success?style=for-the-badge)](https://github.com/derlemue/honey-scan)
 [![Version](https://img.shields.io/badge/VERSION-v8.13.0-blueviolet?style=for-the-badge)](https://github.com/derlemue/honey-scan)
-[![Python](https://img.shields.io/badge/PYTHON-3.9%2B-grey?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/LICENSE-MIT-yellow?style=for-the-badge)](https://github.com/derlemue/honey-scan)
+[![Fork](https://img.shields.io/badge/FORKED%20FROM-HACKLCX%2FHFISH-9cf?style=for-the-badge&logo=github)](https://github.com/hacklcx/HFish)
 [![Docker](https://img.shields.io/badge/DOCKER-ENABLED-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Status](https://img.shields.io/badge/STATUS-ACTIVE-success?style=for-the-badge)](https://github.com/derlemue/honey-scan)
-
+[![Python](https://img.shields.io/badge/PYTHON-3.9%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Shell](https://img.shields.io/badge/SHELL-SCRIPT-121011?style=for-the-badge&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
+[![Nginx](https://img.shields.io/badge/NGINX-ENABLED-009639?style=for-the-badge&logo=nginx&logoColor=white)](https://nginx.org)
+[![MariaDB](https://img.shields.io/badge/MARIADB-BACKEND-003545?style=for-the-badge&logo=mariadb&logoColor=white)](https://mariadb.org)
+<br>
 [![Repo Size](https://img.shields.io/github/repo-size/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
-[![License](https://img.shields.io/github/license/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
 [![Last Commit](https://img.shields.io/github/last-commit/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
 [![Issues](https://img.shields.io/github/issues/derlemue/honey-scan?style=for-the-badge&color=4b0082)](https://github.com/derlemue/honey-scan)
 
-<br/>
+<p align="center">
+  <a href="https://github.com/osint-inc" title="Ph0x"><img src="https://avatars.githubusercontent.com/u/203046536?v=4" width="40" height="40" alt="Ph0x" style="border-radius: 50%;"></a>
+  <a href="https://github.com/derlemue" title="derlemue"><img src="https://avatars.githubusercontent.com/u/70407742?v=4" width="40" height="40" alt="derlemue" style="border-radius: 50%;"></a>
+  <a href="https://github.com/m3l1nda" title="m3l"><img src="https://avatars.githubusercontent.com/u/209894942?v=4" width="40" height="40" alt="m3l" style="border-radius: 50%;"></a>
+  <a href="https://github.com/Cipher-Pup" title="Cipher-Pup"><img src="https://avatars.githubusercontent.com/u/252939174?v=4" width="40" height="40" alt="Cipher-Pup" style="border-radius: 50%;"></a>
+</p>
+
+*Turn your honeypot into an active defense system that bites back.*
 
 🇬🇧 [English](README.md) • 🇩🇪 [Deutsch](README_DE.md) • 🇩🇪 [Einfache Sprache](README_DE2.md) • 🇺🇦 [Українська](README_UA.md)
 
