@@ -18,7 +18,7 @@ STRATEGIC_BANTIME=1209600 # 14 Days (Feed)
 TACTICAL_BANTIME=172800   # 48 Hours (Tactical/Dynamic Jails)
 DB_PURGE_AGE=1296000      # 15 Days
 
-AUTO_UPDATE=true 
+AUTO_UPDATE="${AUTO_UPDATE:-true}"
 SCRIPT_URL="https://raw.githubusercontent.com/derlemue/honey-scan/main/scripts/banned_ips.sh"
 
 # --- AESTHETICS ---
@@ -39,7 +39,7 @@ print_banner() {
     echo "██║  ██║╚██████╔╝██║ ╚████║███████╗   ██║       ███████║███████╗╚██████╗"
     echo "╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚══════╝╚══════╝ ╚═════╝"
     echo -e "${NC}"
-    echo -e "${BLUE}[INFO]${NC} Honey-Scan Dynamic Manager - Version 4.0.2"
+    echo -e "${BLUE}[INFO]${NC} Honey-Scan Dynamic Manager - Version 4.0.3"
 }
 
 print_banner
@@ -466,9 +466,22 @@ sync_feed() {
     rm -f "$EXISTING_BANS_FILE" "$IPS_TO_BAN_FILE" "$REMOTE_FILE" "$IPS_TO_UNBAN_FILE"
     
     # 3. Summary
-    echo -e "${BLUE}[STEP 3/3]${NC} Verification..."
-    TOTAL_BANS=$(fail2ban-client status "$FEED_JAIL" 2>/dev/null | grep "Currently banned:" | sed 's/.*Currently banned://' | tr -d ' ')
-    echo -e "${BLUE}[INFO]${NC} Total currently banned IPs in jail '$FEED_JAIL': ${YELLOW}$TOTAL_BANS${NC}"
+    echo -e "${BLUE}[STEP 3/3]${NC} Jail Status Summary..."
+    
+    # Get list of all jails
+    ALL_JAILS=$(fail2ban-client status | grep "Jail list:" | sed 's/.*Jail list://; s/,//g')
+    
+    for jail in $ALL_JAILS; do
+        COUNT=$(fail2ban-client status "$jail" 2>/dev/null | grep "Currently banned:" | sed 's/.*Currently banned://' | tr -d ' ')
+        
+        # Formatting
+        jail_clean=$(echo "$jail" | xargs)
+        if [[ "$jail_clean" == "$FEED_JAIL" ]]; then
+             echo -e "${BLUE}[INFO]${NC} Jail '${CYAN}$jail_clean${NC}' (Feed):   \t${YELLOW}$COUNT${NC} IPs"
+        else
+             echo -e "${BLUE}[INFO]${NC} Jail '${CYAN}$jail_clean${NC}' (Sensor): \t${YELLOW}$COUNT${NC} IPs"
+        fi
+    done
 }
 
 sync_feed
