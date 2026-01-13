@@ -449,23 +449,27 @@ def _push_single_ip(ip, is_retry=False):
     if not urls:
         return False
         
-    success = False
+    all_success = True
+    attempted = False
+    
     for url in urls:
+        attempted = True
         try:
             payload = {"attack_ip": ip}
             resp = requests.post(url, json=payload, timeout=5)
             if resp.status_code == 200:
                 if not is_retry:
                     logger.info(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [200 OK]")
-                success = True
             else:
                 if not is_retry:
                     logger.error(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [{Colors.RED}FAILED{Colors.RESET}: {resp.status_code}]")
+                all_success = False
         except Exception as e:
             if not is_retry:
                 logger.error(f"[{Colors.CYAN}SYNC{Colors.RESET}] {ip} -> {url} [{Colors.RED}ERROR{Colors.RESET}: {e}]")
+            all_success = False
     
-    return success
+    return all_success and attempted
 
 def push_intelligence(ip, is_new_hint=None):
     if is_blacklisted(ip):
