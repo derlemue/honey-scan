@@ -44,12 +44,15 @@ SCANS_DIR = "/app/scans"
 FEED_DIR = "/app/feed"
 ASSETS_DIR = "/app/assets"
 BANNED_IPS_FILE = os.path.join(FEED_DIR, "banned_ips.txt")
-BLACKLIST_CONF_FILE = "/app/scan-blacklist.conf"
+BANNED_IPS_FILE = os.path.join(FEED_DIR, "banned_ips.txt")
+BLACKLIST_SOURCE_FILE = "/app/scan-blacklist.conf" # Mounted Read-Only from Git
+BLACKLIST_LIVE_FILE = "/app/scan-blacklist-live.conf" # Writable local update
 BLACKLIST_CUSTOM_CONF_FILE = "/app/scan-blacklist-custom.conf"
 INDEX_FILE = os.path.join(FEED_DIR, "index.html")
 LIVE_THREATS_FILE = os.path.join(ASSETS_DIR, "live_threats.json")
 STATS_FILE = os.path.join(ASSETS_DIR, "stats.json")
 REPORT_DIR = SCANS_DIR
+BLACKLIST_GITHUB_URL = "https://raw.githubusercontent.com/derlemue/honey-scan/refs/heads/main/sidecar/scan-blacklist.conf"
 scanning_ips = set() # Track IPs currently in queue or being scanned
 
 
@@ -131,8 +134,11 @@ def load_blacklist():
             except Exception as e:
                 logger.error(f"Error loading blacklist {filepath}: {e}")
 
-    # Load Standard List
-    parse_file(BLACKLIST_CONF_FILE)
+    # Load Standard List (Prefer Live Update > Git Mount)
+    if os.path.exists(BLACKLIST_LIVE_FILE):
+        parse_file(BLACKLIST_LIVE_FILE)
+    else:
+        parse_file(BLACKLIST_SOURCE_FILE)
     
     # Load Custom List
     parse_file(BLACKLIST_CUSTOM_CONF_FILE)
@@ -140,6 +146,36 @@ def load_blacklist():
     cached_blacklist = networks
     last_blacklist_load = now
     return networks
+
+def update_global_blacklist():
+    """Fetch the latest blacklist from GitHub and update local file."""
+    try:
+        resp = requests.get(BLACKLIST_GITHUB_URL, timeout=10)
+        if resp.status_code == 200:
+            content = resp.text
+            if content and "#" in content: # Basic validation
+                # Check if content actually changed
+                existing_content = ""
+                if os.path.exists(BLACKLIST_LIVE_FILE):
+                    with open(BLACKLIST_LIVE_FILE, 'r') as f:
+                        existing_content = f.read()
+                
+                if content != existing_content:
+                    with open(BLACKLIST_LIVE_FILE, 'w') as f:
+                        f.write(content)
+                    logger.info(f"[{Colors.GREEN}UPDATE{Colors.RESET}] Updated global blacklist from GitHub.")
+                    # Force reload on next check
+                    global last_blacklist_load
+                    last_blacklist_load = 0 
+                # else:
+                #    logger.info(f"[{Colors.BLUE}UPDATE{Colors.RESET}] Global blacklist is up to date.")
+            else:
+                 logger.warning(f"[{Colors.YELLOW}UPDATE{Colors.RESET}] Invalid content received from GitHub blacklist.")
+        else:
+            logger.warning(f"[{Colors.YELLOW}UPDATE{Colors.RESET}] Failed to fetch blacklist: {resp.status_code}")
+    except Exception as e:
+        logger.error(f"Error updating global blacklist: {e}")
+
 
 def is_blacklisted(ip):
     """Check if IP is in the blacklist or loopback."""
@@ -525,7 +561,8 @@ def sync_to_bridge():
         if not rows:
             return
 
-        logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Processing batch sync for {len(rows)} IPs...")
+        logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Loading pending webhooks from cache (unsynced IPs)...")
+        # logger.info(f"[{Colors.CYAN}BRIDGE{Colors.RESET}] Processing batch sync for {len(rows)} IPs...")
         for row in rows:
             ip = row['ip']
             # During full sync, they are technically 'new' for the bridge status check
@@ -671,6 +708,9 @@ def update_threat_feed():
             json.dump(output, f)
             f.flush()
             os.fsync(f.fileno())
+        
+        logger.info(f"[{Colors.GREEN}FEED{Colors.RESET}] Refreshed API Cache ({len(recent_hackers)} Hackers, {len(suspicious_cs)} CS).")
+
 
         # Generate General Stats (Throttled to 60s)
         STATS_FILE_UPDATE_INTERVAL = 60
@@ -1468,8 +1508,10 @@ def main():
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     
     last_maintenance = 0
+    last_blacklist_update = 0
     
     logger.info(f"[{Colors.GREEN}INIT{Colors.RESET}] Starting main loop...")
+    logger.info(f"[{Colors.CYAN}CONFIG{Colors.RESET}] Auto-Update Blacklist enabled (Interval: 10m).")
     
     try:
         while True:
@@ -1494,6 +1536,12 @@ def main():
                     fix_unknown_countries() # Background GeoIP resolution
                     last_maintenance = time.time()
                     logger.info(f"[{Colors.HEADER}MAINTENANCE{Colors.RESET}] Periodic system optimization complete.")
+
+                # Update Blacklist every 10 minutes (600s)
+                if time.time() - last_blacklist_update > 600:
+                     update_global_blacklist()
+                     last_blacklist_update = time.time()
+
 
                 # Run background tasks
                 # fix_unknown_countries() # Moved above

@@ -507,7 +507,10 @@ sync_feed() {
     echo -e "${BLUE}[STEP 2/3]${NC} Syncing IPs to Fail2Ban jail '$FEED_JAIL'..."
 
     EXISTING_BANS_FILE=$(mktemp)
-    fail2ban-client status "$FEED_JAIL" 2>/dev/null | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -s ' ' '\n' | sort -u > "$EXISTING_BANS_FILE"
+    # Use 'get' for reliable retrieval (v0.10+), fallback to status
+    if ! fail2ban-client get "$FEED_JAIL" banip 2>/dev/null | tr -s ' ' '\n' | sort -u > "$EXISTING_BANS_FILE"; then
+         fail2ban-client status "$FEED_JAIL" 2>/dev/null | grep "Banned IP list:" | sed 's/.*Banned IP list://' | tr -s ' ' '\n' | sort -u > "$EXISTING_BANS_FILE"
+    fi
 
     IPS_TO_BAN_FILE=$(mktemp)
     sort -u "$REMOTE_FILE" | comm -23 - "$EXISTING_BANS_FILE" > "$IPS_TO_BAN_FILE"
@@ -532,7 +535,9 @@ sync_feed() {
             fail2ban-client set "$FEED_JAIL" banip "$ip" &>/dev/null
             ((CURRENT++))
             if ((CURRENT % 50 == 0)); then
-                 echo -ne "\r${BLUE}[INFO]${NC} Banning progress: $CURRENT / $COUNT_TO_BAN"
+                 if [ -t 1 ]; then
+                     echo -ne "\r${BLUE}[INFO]${NC} Banning progress: $CURRENT / $COUNT_TO_BAN"
+                 fi
             fi
         done < "$IPS_TO_BAN_FILE"
         echo -e "\n${GREEN}[OK]${NC} Finished banning new IPs."
@@ -552,7 +557,9 @@ sync_feed() {
             fail2ban-client set "$FEED_JAIL" unbanip "$ip" &>/dev/null
             ((UNBANNED++))
             if ((UNBANNED % 50 == 0)); then
-                 echo -ne "\r${BLUE}[INFO]${NC} Unbanning progress: $UNBANNED / $COUNT_TO_UNBAN"
+                if [ -t 1 ]; then
+                     echo -ne "\r${BLUE}[INFO]${NC} Unbanning progress: $UNBANNED / $COUNT_TO_UNBAN"
+                fi
             fi
         done < "$IPS_TO_UNBAN_FILE"
         echo -e "\n${GREEN}[OK]${NC} Finished unbanning stale IPs."
