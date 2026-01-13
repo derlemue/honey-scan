@@ -117,7 +117,7 @@ flowchart TD
     
     subgraph "Feed Synchronization"
         SyncProcess[Fetch feed.sec.lemue.org] --> Validate{Valid IPs?}
-        Validate -- Yes --> Diff[Calculate Diff (Local vs Remote)]
+        Validate -- Yes --> Diff[Calculate Diff "(Local vs Remote)"]
         Diff --> ImportLoop[Ban New IPs (Silent / No Report)]
         ImportLoop --> Cleanup[Unban Stale IPs]
     end
