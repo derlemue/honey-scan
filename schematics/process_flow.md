@@ -13,7 +13,7 @@ graph TD
     subgraph "External World"
         Attacker[🔴 Attacker]
         FeedServer["🟢 Feed Server (Lemue-Sec)"]
-        API[🔵 Report API (Lemue-Sec)]
+        API["🔵 Report API (Lemue-Sec)"]
     end
 
     subgraph "Honey-Scan Client"
